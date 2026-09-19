@@ -492,7 +492,7 @@ class World:
         for a in list(self.live.values()) + self._res_cur + self._res_obs:
             if id(a) not in amap:
                 c = copy.copy(a)
-                c.params = dict(a.params)
+                c.params = copy.deepcopy(a.params)
                 amap[id(a)] = c
         new.live = {k: amap[id(a)] for k, a in self.live.items()}
         new._res_cur = [amap[id(a)] for a in self._res_cur]

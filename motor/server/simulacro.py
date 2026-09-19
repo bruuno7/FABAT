@@ -19,6 +19,7 @@ from motor.caos.chaos import catalogue
 from motor.contracts import ActionStatus
 from motor.harness.metrics import score
 from motor.harness.runner import SimOperator, code_fingerprint, needs_approval
+from motor.mando import Mando
 from motor.world import SimComms
 from .views import Humanizer
 
@@ -37,6 +38,11 @@ def clone_pair(world: Any, agent: Any) -> tuple[Any, Any]:
         if key in w.live:
             memo[id(action)] = w.live[key]
     ag = copy.deepcopy(agent, memo)
+    if isinstance(ag, Mando):
+        ag.__dict__.pop("_plan_dirty", None)
+        ag.__dict__.pop("_send", None)
+        ag.__dict__.pop("approve", None)
+        ag.__dict__.pop("_cerebro_wrapped", None)
     if hasattr(ag, "triage"):
         ag.triage.new_id = lambda: ag.new_id("M")
     if hasattr(ag, "rehearsal"):

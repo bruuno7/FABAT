@@ -8,6 +8,8 @@ Comprobado contra un servidor real en local (`TELEGRAM_MODE=off`, `MANDO_DB=off`
 
 ---
 
+> **Para entender cómo decide:** [`COMO-DECIDE.md`](COMO-DECIDE.md) (fórmulas y umbrales reales) y la pantalla `/porque` (las seis preguntas del reto, en vivo). **Qué cubre del reto y cómo demostrarlo en 30 segundos:** [`COBERTURA-RETO.md`](COBERTURA-RETO.md).
+
 ## 0. En un minuto
 
 **MANDO** coordina muchos incidentes a la vez en un macroconcierto simulado: recibe avisos, decide qué va primero, manda al equipo más rápido, escribe de qué depende el plan y lo tira cuando eso deja de ser cierto. Lo grave no lo ejecuta solo: te lo pone delante y espera tu sí o tu no.

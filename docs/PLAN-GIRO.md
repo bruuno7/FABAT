@@ -109,3 +109,12 @@ confianza), abrir el abanico (`acciones_posibles`: ≥ 6 opciones por incidente 
 comparar (`ensayar` hasta 5 opciones en el gemelo, `comparar_opciones` con criterios declarados, sin elegir) y decidir la rama
 (`analizar_situacion` da señales; el coordinador elige qué especialistas activar y lo explica). Cada especialista revisa al que
 depende de él; el crítico revisa todo.
+
+## Sistema agéntico ADAPTATIVO: tres escalas (16:22)
+- **Dentro del incidente:** el vigía replanifica ante cada cambio y el sistema elige estrategia según la situación: calma
+  (resolver bien, ahorrar medios), carga (priorizar y reservar), crisis (reasignar, escalar antes, avisar más arriba).
+- **Dentro del día:** autonomía adaptativa por agente (quien acierta con N suficiente actúa directo; quien falla pasa por
+  revisión), ritmo adaptativo del vigía (más a menudo cuando todo se mueve) y activación adaptativa de especialistas.
+- **Entre días:** lecciones por agente y **evolución de prompts** propuesta por el agente de aprendizaje, aprobada por una
+  persona, versionada, reversible y comparada en los mismos escenarios.
+Todo visible en la Sala (modo en la cabecera; autonomía y ritmo en «Enjambre»; versiones en «Aprendizaje») y en /api/adaptacion.

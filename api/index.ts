@@ -1,7 +1,7 @@
 /**
- * Vercel serverless entry (Framework Preset: Other).
- * All routes rewrite here: /telegram/webhook, /hr/events, /health
+ * Vercel Node function. Import compiled JS (tsc), not TS sources —
+ * importing ../src/*.js from here is what made Production fail (NOT_FOUND).
  */
-import { createApp } from "../motor/server/src/app.js";
+import { createApp } from "../motor/server/dist/app.js";
 
 export default createApp();

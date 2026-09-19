@@ -9,6 +9,7 @@
     "poll": "tsx src/telegram/poll.ts",
     "test": "tsx --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit",
+    "build": "tsc",
     "telegram:set-webhook": "tsx scripts/telegram-set-webhook.ts",
     "telegram:delete-webhook": "tsx scripts/telegram-set-webhook.ts --delete"
   },

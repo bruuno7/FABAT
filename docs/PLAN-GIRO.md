@@ -97,3 +97,8 @@ Lo que nos separa de todos: no es una cadena fija de agentes, es una **red** que
 5. **A la vista**: pestaña «Enjambre» en la Sala: red de agentes con los mensajes entre ellos, revisiones, confianza de cada
    uno a lo largo del día y lecciones activas.
 Barandillas intactas: nada de esto puede saltarse que lo grave lo decide una persona ni que lo vital no espera.
+
+## Nunca deterministas (regla de Ana, 16:17)
+Decide siempre un agente que razona: HappyRobot → si no contesta, el mismo equipo con un LLM local → reglas solo como último
+recurso, rotulado en rojo en la Sala («modo degradado»). Lo único fijo son las barandillas, que no deciden qué hacer: impiden
+lo prohibido (lo grave sin persona) y garantizan lo mínimo (lo vital no espera).

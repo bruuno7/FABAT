@@ -30,7 +30,7 @@ de reglas. El backend de MANDO deja de decidir: pasa a ser las HERRAMIENTAS del 
  (simulador del recinto, gemelo, previsiones, ledger SQLite, barandillas)                                (ver, aprobar, vetar)
 ```
 
-**Qué se conserva:** simulador y gemelo, previsiones, Sala, ledger, espejo de Telegram, evals. El planificador con reglas
+**Qué se conserva:** simulador y gemelo, previsiones, Sala, ledger, espejo de Telegram, evals. Si la plataforma no contesta decide el MISMO equipo de agentes con un LLM local; el planificador con reglas
 queda como **plan B** (si la plataforma cae) y como **vara de medir**: mismo banco de casos, tres brazos — lista fija, reglas,
 agente LLM — con su N.
 

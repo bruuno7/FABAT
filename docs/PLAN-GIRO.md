@@ -102,3 +102,10 @@ Barandillas intactas: nada de esto puede saltarse que lo grave lo decide una per
 Decide siempre un agente que razona: HappyRobot → si no contesta, el mismo equipo con un LLM local → reglas solo como último
 recurso, rotulado en rojo en la Sala («modo degradado»). Lo único fijo son las barandillas, que no deciden qué hacer: impiden
 lo prohibido (lo grave sin persona) y garantizan lo mínimo (lo vital no espera).
+
+## Muchas opciones, muchas herramientas, rama elegida por el agente (16:20)
+Herramientas pequeñas y específicas para observar (zona, recurso, rutas, staff, previsiones, incidentes parecidos, protocolo,
+confianza), abrir el abanico (`acciones_posibles`: ≥ 6 opciones por incidente con coste, tiempo, riesgo y si exige persona),
+comparar (`ensayar` hasta 5 opciones en el gemelo, `comparar_opciones` con criterios declarados, sin elegir) y decidir la rama
+(`analizar_situacion` da señales; el coordinador elige qué especialistas activar y lo explica). Cada especialista revisa al que
+depende de él; el crítico revisa todo.

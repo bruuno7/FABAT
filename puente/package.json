@@ -8,12 +8,15 @@
     "start": "tsx src/index.ts",
     "poll": "tsx src/telegram/poll.ts",
     "test": "tsx --test src/**/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "telegram:set-webhook": "tsx scripts/telegram-set-webhook.ts",
+    "telegram:delete-webhook": "tsx scripts/telegram-set-webhook.ts --delete"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
+    "dotenv": "^18.0.1",
     "express": "^4.21.2"
   },
   "devDependencies": {

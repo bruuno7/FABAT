@@ -21,7 +21,7 @@ Cómo arrancar todo: `./mvp.sh` (local, simulado) · `./mvp.sh lan` (móviles de
 
 ## 3. Puerta pública en Vercel (`puente/`)
 
-Vercel no ejecuta un servidor que escucha: `puente/` debe desplegarse como función (rama `codex/vercel-telegram-bridge`, en revisión). En el panel de Vercel: **Root Directory = `puente`**, variables `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `HR_SECRET`, `HR_HOOK_TG`, `MANDO_BACKEND_URL` (la URL del túnel del punto 1). Después, `setWebhook` hacia `https://fabat.vercel.app/telegram/webhook` (comando exacto en `puente/README.md`).
+Vercel no ejecuta un servidor que escucha: `puente/` debe desplegarse como función (rama `codex/vercel-telegram-bridge`, en revisión). En el panel de Vercel: **Root Directory = raíz del repo (el `vercel.json` y `api/index.ts` están en la raíz; el código del puente vive en `puente/`)**, variables `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `HR_SECRET`, `HR_HOOK_TG`, `MANDO_BACKEND_URL` (la URL del túnel del punto 1). Después, `setWebhook` hacia `https://fabat.vercel.app/telegram/webhook` (comando exacto en `puente/README.md`).
 **Un bot de Telegram solo admite UN consumidor**: mientras el webhook esté activo, arrancar el backend con `TELEGRAM_MODE=send_only`; para volver a local, `deleteWebhook` y `TELEGRAM_MODE=poll`.
 
 ## 4. Código (en curso; quien lo coja que avise)

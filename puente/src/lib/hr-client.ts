@@ -10,6 +10,8 @@ export type Env = {
   hrSecret: string | undefined;
   mandoCallbackUrl: string;
   allowDemoInject: boolean;
+  /** En despliegue público (Vercel / producción) los secretos son obligatorios: sin ellos se rechaza. */
+  requireSecrets: boolean;
 };
 
 export function loadEnv(env: NodeJS.ProcessEnv = process.env): Env {
@@ -24,7 +26,33 @@ export function loadEnv(env: NodeJS.ProcessEnv = process.env): Env {
     hrSecret: emptyToUndef(env.HR_SECRET),
     mandoCallbackUrl: env.MANDO_CALLBACK_URL ?? "http://127.0.0.1:8787",
     allowDemoInject: env.ALLOW_DEMO_INJECT === "1",
+    requireSecrets:
+      Boolean(env.VERCEL) ||
+      env.NODE_ENV === "production" ||
+      env.REQUIRE_SECRETS === "1",
   };
+}
+
+/** Ninguna llamada saliente puede dejar colgada la función (Telegram reintenta si no respondemos). */
+export const FETCH_TIMEOUT_MS = 5000;
+
+/**
+ * Comprueba un secreto compartido. Sin secreto configurado: en local se deja pasar,
+ * en despliegue público se rechaza (fallo cerrado).
+ */
+export function checkSecret(
+  env: Env,
+  expected: string | undefined,
+  got: string | undefined,
+): { ok: true } | { ok: false; status: number; error: string } {
+  if (!expected) {
+    return env.requireSecrets
+      ? { ok: false, status: 503, error: "secret not configured" }
+      : { ok: true };
+  }
+  return got === expected
+    ? { ok: true }
+    : { ok: false, status: 401, error: "invalid secret" };
 }
 
 function emptyToUndef(v: string | undefined): string | undefined {
@@ -55,6 +83,7 @@ export async function forwardToHappyRobot(
     method: "POST",
     headers,
     body: JSON.stringify(report),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   const body = await res.text();
   return { ok: res.ok, status: res.status, body };
@@ -79,6 +108,7 @@ export async function telegramSendMessage(
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text }),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   const body = await res.text();
   return { ok: res.ok, status: res.status, body };

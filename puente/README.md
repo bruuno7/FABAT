@@ -14,7 +14,7 @@ También: `POST /hr/events` genérico para webcall y otros canales.
 ## Arranque local
 
 ```bash
-cd motor/server
+cd puente
 cp .env.example .env   # rellenar sin commitear
 npm install
 npm test

@@ -10,6 +10,8 @@ export type Env = {
   telegramMode: "webhook" | "poll";
   hrHookTg: string | undefined;
   hrHookTgResponse: string | undefined;
+  /** Incoming Hook de `fa-rol-tg`: directorio rol↔chat_id en HappyRobot (Redis). */
+  hrHookTgRoster: string | undefined;
   hrHookApiKey: string | undefined;
   hrSecret: string | undefined;
   staffPin: string | undefined;
@@ -29,6 +31,7 @@ export function loadEnv(env: NodeJS.ProcessEnv = process.env): Env {
     telegramMode: mode === "poll" ? "poll" : "webhook",
     hrHookTg: emptyToUndef(env.HR_HOOK_TG),
     hrHookTgResponse: emptyToUndef(env.HR_HOOK_TG_RESPONSE),
+    hrHookTgRoster: emptyToUndef(env.HR_HOOK_TG_ROSTER),
     hrHookApiKey: emptyToUndef(env.HR_HOOK_API_KEY),
     hrSecret: emptyToUndef(env.HR_SECRET),
     staffPin: emptyToUndef(env.STAFF_PIN),
@@ -221,12 +224,20 @@ export type RosterView = {
 function parseRoster(body: string): RosterView | null {
   try {
     const parsed = JSON.parse(body) as Partial<RosterView>;
-    if (!parsed || !Array.isArray(parsed.seats)) return null;
+    let seats: RosterSeat[];
+    if (!parsed || !Array.isArray(parsed.seats)) {
+      if (!parsed || (typeof parsed.ok !== "boolean" && typeof parsed.reason !== "string")) {
+        return null;
+      }
+      seats = [];
+    } else {
+      seats = parsed.seats;
+    }
     return {
       ok: parsed.ok,
       reason: parsed.reason,
-      seats: parsed.seats,
-      total: Number(parsed.total ?? parsed.seats.length),
+      seats,
+      total: Number(parsed.total ?? seats.length),
       claimed: Number(parsed.claimed ?? 0),
       disponibles: Number(parsed.disponibles ?? 0),
       previous: parsed.previous,
@@ -235,6 +246,22 @@ function parseRoster(body: string): RosterView | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Directorio de puestos en HappyRobot (`fa-rol-tg`). El workflow lee/escribe Redis y responde
+ * al chat por su cuenta vía `/hr/events`; aquí solo se dispara el hook.
+ */
+export async function postHappyRobotRoster(
+  env: Env,
+  payload: { action: "claim" | "release" | "list"; role?: string; chat_id: string; alias?: string },
+): Promise<ForwardResult> {
+  return forwardToHappyRobot(
+    env.hrHookTgRoster,
+    payload,
+    env.hrHookApiKey,
+    "HR_HOOK_TG_ROSTER not configured",
+  );
 }
 
 export async function fetchMandoRoster(

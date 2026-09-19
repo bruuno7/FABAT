@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it, mock } from "node:test";
-import { isHrToMando, isPublicReport } from "./contract.js";
+import {
+  isHrToMando,
+  isPublicReport,
+  toMandoPublicReport,
+} from "./contract.js";
 import {
   guessLocationHint,
   parseCommand,
@@ -44,6 +48,44 @@ describe("contract guards", () => {
         reply_text: "Recibido",
       }),
       true,
+    );
+  });
+
+  it("adapts an HR reply to the backend public_report contract", () => {
+    const report = toMandoPublicReport({
+      event: "agent_reply",
+      correlation_id: "tg-1-2",
+      chat_id: "1",
+      hr_run_id: "run-1",
+      report: {
+        channel: "telegram",
+        text: "Persona desmayada en entrada VIP",
+        zone_hint: "entrada VIP",
+      },
+      extract: {
+        incident_type: "medica",
+        sector: "entrada VIP",
+        severity: 3,
+        triage_color: "desconocido",
+        summary: "Una persona desmayada",
+      },
+    });
+
+    assert.ok(report);
+    assert.equal(report.type, "public_report");
+    assert.equal(report.event_id, "tg-1-2-final");
+    assert.equal(report.report.text, "Persona desmayada en entrada VIP");
+    assert.equal(report.extracted.category, "medica");
+    assert.equal(report.extracted.location, "entrada VIP");
+  });
+
+  it("does not create backend reports for non-final HR events", () => {
+    assert.equal(
+      toMandoPublicReport({
+        event: "needs_human",
+        correlation_id: "tg-1-2",
+      }),
+      null,
     );
   });
 });
@@ -109,6 +151,7 @@ describe("loadEnv", () => {
     });
     assert.equal(e.telegramBotToken, undefined);
     assert.equal(e.hrHookTg, undefined);
+    assert.equal(e.mandoBackendUrl, undefined);
     assert.equal(e.telegramMode, "poll");
     assert.equal(e.port, 9000);
   });

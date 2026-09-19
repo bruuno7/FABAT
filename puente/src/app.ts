@@ -26,6 +26,7 @@ export function createApp(
       service: "mando-telegram-bridge",
       telegram_token: Boolean(env.telegramBotToken),
       hr_hook_tg: Boolean(env.hrHookTg),
+      mando_backend: Boolean(env.mandoBackendUrl),
       mode: env.telegramMode,
     });
   });

@@ -6,7 +6,7 @@ Dueña: **Ana** (`AGENTS.md`). Bruno posee specs en `motor/happyrobot`.
 
 ```
 Usuario TG → Bot → POST /telegram/webhook → public_report → HR Incoming Hook
-HR agente → POST /hr/events → sendMessage TG
+HR → POST /hr/events → backend MANDO → sendMessage TG
 ```
 
 También: `POST /hr/events` genérico para webcall y otros canales.
@@ -47,6 +47,7 @@ Ver `.env.example`. Nunca commitear `.env`.
 | `HR_API_KEY` | API Editor (crear workflows; opcional en runtime) |
 | `HR_WORKFLOW_WEBCALL` | id/slug demo webcall |
 | `MANDO_CALLBACK_URL` | URL pública de este server |
+| `MANDO_BACKEND_URL` | Backend MANDO público; recibe el aviso estructurado en `/hr/events` |
 | `PORT` | default 8787 |
 
 ## Endpoints

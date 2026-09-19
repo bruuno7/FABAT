@@ -27,6 +27,14 @@ export type HrToMando = {
   channel?: string;
   chat_id?: string;
   reply_text?: string;
+  hr_run_id?: string;
+  report?: {
+    channel?: string;
+    text?: string;
+    zone_hint?: string;
+    source?: string;
+    lang?: string;
+  };
   extract?: {
     incident_type?: string;
     sector?: string;
@@ -35,7 +43,25 @@ export type HrToMando = {
     perfil_color?: PerfilColor;
     summary?: string;
   };
-  hr_run_id?: string;
+};
+
+export type MandoPublicReport = {
+  schema: "mando.hr.v1";
+  type: "public_report";
+  message: "public_report";
+  final: true;
+  event_id: string;
+  hr_run_id: string;
+  channel: string;
+  reply_to: string;
+  report: {
+    channel: string;
+    text: string;
+    zone_hint: string;
+    source: string;
+    lang: string;
+  };
+  extracted: Record<string, unknown>;
 };
 
 export function isPublicReport(body: unknown): body is PublicReport {
@@ -64,4 +90,43 @@ export function isHrToMando(body: unknown): body is HrToMando {
     events.has(b.event) &&
     typeof b.correlation_id === "string"
   );
+}
+
+/** Adapta la respuesta de fa-entrada-tg al contrato estable del backend MANDO. */
+export function toMandoPublicReport(
+  body: HrToMando,
+  fallbackText?: string,
+): MandoPublicReport | null {
+  if (body.event !== "agent_reply") return null;
+
+  const text = (body.report?.text ?? fallbackText ?? "").trim();
+  if (!text) return null;
+
+  const channel = body.report?.channel ?? body.channel ?? "telegram";
+  const extracted = body.extract ?? {};
+  return {
+    schema: "mando.hr.v1",
+    type: "public_report",
+    message: "public_report",
+    final: true,
+    event_id: `${body.correlation_id}-final`,
+    hr_run_id: body.hr_run_id ?? "",
+    channel,
+    reply_to: body.chat_id ?? "",
+    report: {
+      channel,
+      text,
+      zone_hint: body.report?.zone_hint ?? extracted.sector ?? "",
+      source: body.report?.source ?? "telegram_bridge",
+      lang: body.report?.lang ?? "es",
+    },
+    extracted: {
+      category: extracted.incident_type ?? "otro",
+      location: extracted.sector ?? "",
+      description: extracted.summary ?? "",
+      severity: extracted.severity ?? 1,
+      triage_color: extracted.triage_color ?? "desconocido",
+      perfil_color: extracted.perfil_color ?? "desconocido",
+    },
+  };
 }

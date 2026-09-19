@@ -151,9 +151,17 @@ npm test
 npm run build
 ```
 
-Desde la raíz: `python3 -m unittest motor.happyrobot.sandbox.test_operaciones` comprueba el primer
-núcleo puro de transiciones (aceptación, rechazo, ETA, hitos, cierre y preguntas). No crea ni publica
-workflows. Los eventos aún no implementados fallan explícitamente; no se convierten en incidentes nuevos.
+Desde la raíz, `python3 -m unittest motor.happyrobot.sandbox.test_operaciones motor.happyrobot.sandbox.test_operation_artifact`
+comprueba el núcleo puro: creación/actualización de avisos, ofertas por capacidad, permisos de rol,
+aceptación, rechazo, disponibilidad, ETA, hitos, cierre y preguntas. No crea ni publica workflows.
+Los eventos aún no implementados (por ejemplo revisión y aprobación de decisiones) fallan explícitamente;
+no se convierten en incidentes nuevos. La asignación de un rol requiere un permiso previo de un
+adaptador autenticado, vinculado a esa persona y con caducidad; el PIN no viaja en el evento.
+
+`build_nodes.py fa_operaciones TRIGGER_PID=<UUID-persistente>` exporta el archivo Python completo
+más su entrada `run_input`, sin recortarlo ni reescribirlo. Si falta una entidad en el snapshot,
+la salida pide su lectura (`needs_snapshot`), no supone que está libre o vacía. Si la entrada es
+inválida, no genera ningún commit. El consumidor con reintentos acotados todavía debe conectarse.
 
 La prueba real de CAS es opt-in. Configura de forma privada `FABAT_TEST_REDIS_URL` y
 `FABAT_TEST_REDIS_TOKEN` de una base de pruebas y ejecuta desde `puente/`:

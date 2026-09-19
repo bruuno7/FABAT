@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { it } from "node:test";
 import { RedisStateStore, upstashCommand } from "./redis-state.js";
 
@@ -70,6 +72,42 @@ it("Redis integration: concurrent CAS, replay and delivery leases", {
     await t.test("unregistered events cannot commit state", async () => {
       assert.equal((await store.commit(proposal("not-ingested", 1, "message-3"))).status, "event_missing");
       assert.equal((await store.snapshot(["incident/incident-1"]))["incident/incident-1"].version, 1);
+    });
+    await t.test("Python operations commit to real Redis and share task reservations across channels", async () => {
+      const seed: Record<string, Record<string, unknown>> = {
+        "actor/worker-1": { roles: ["medico"], preferred_channel: "telegram" },
+        "actor/worker-2": { roles: ["medico"], preferred_channel: "phone" },
+        "actor/reporter-1": { roles: [], preferred_channel: "telegram" },
+        "incident/core-incident": { status: "open", reporter_id: "reporter-1", location: "barra 3", assignment_ids: ["core-a1", "core-a2"] },
+        "assignment/core-a1": { status: "offered", actor_id: "worker-1", incident_id: "core-incident", task_id: "core-task", role: "medico" },
+        "assignment/core-a2": { status: "offered", actor_id: "worker-2", incident_id: "core-incident", task_id: "core-task", role: "medico" },
+      };
+      const names = [...Object.keys(seed), "reservation/actor:worker-1", "reservation/actor:worker-2", "reservation/task:core-task"];
+      const before = await store.snapshot(names);
+      await store.enqueue({ ...event("core-seed"), event_type: "message.received" });
+      assert.equal((await store.commit({
+        event_id: "core-seed", expected: Object.fromEntries(Object.entries(before).map(([key, doc]) => [key, doc.version])),
+        writes: Object.entries(seed).map(([entity, value]) => ({ entity, value })), messages: [],
+      })).status, "applied");
+      const snapshot = await store.snapshot(names);
+      const applyPython = (input: unknown) => {
+        const child = spawnSync("python3", ["-c",
+          "import json,sys; from motor.happyrobot.sandbox.fa_operaciones import apply_event; d=json.load(sys.stdin); print(json.dumps(apply_event(d['event'], d['snapshot'])))",
+        ], { cwd: fileURLToPath(new URL("../../../", import.meta.url)), input: JSON.stringify(input), encoding: "utf8" });
+        assert.equal(child.status, 0, child.stderr);
+        return JSON.parse(child.stdout);
+      };
+      const first = { ...event("core-accept-1"), actor_id: "worker-1", incident_id: "core-incident", assignment_id: "core-a1" };
+      const second = { ...event("core-accept-2"), actor_id: "worker-2", incident_id: "core-incident", assignment_id: "core-a2", channel: "phone" };
+      await store.enqueue(first);
+      await store.enqueue(second);
+      const outcomes = await Promise.all([
+        store.commit(applyPython({ event: first, snapshot })), store.commit(applyPython({ event: second, snapshot })),
+      ]);
+      assert.deepEqual(outcomes.map((outcome) => outcome.status).sort(), ["applied", "conflict"]);
+      const reserved = (await store.snapshot(["reservation/task:core-task"]))["reservation/task:core-task"].value;
+      assert.ok(reserved?.assignment_id === "core-a1" || reserved?.assignment_id === "core-a2");
+      assert.equal((await store.pending("outbox")).length, 1);
     });
   } finally {
     for (const key of keys) {

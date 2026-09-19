@@ -17,10 +17,16 @@ class OperacionesTest(unittest.TestCase):
             "question/question-1": None,
         }
         self.versions = {key: 1 if value is not None else 0 for key, value in self.docs.items()}
+        self.sequence = 0
+
+    def seed(self, entity, value=None):
+        self.docs[entity] = value
+        self.versions[entity] = 1 if value is not None else 0
 
     def event(self, kind, actor="worker-1", **payload):
+        self.sequence += 1
         return {
-            "schema_version": 2, "event_id": "event-1", "event_type": kind,
+            "schema_version": 2, "event_id": "event-" + str(self.sequence), "event_type": kind,
             "actor_id": actor, "incident_id": "incident-1", "assignment_id": "assignment-1",
             "conversation_id": "conversation-1", "correlation_id": "trace-1", "channel": "telegram",
             "occurred_at": "2026-09-19T14:00:00Z", "received_at": "2026-09-19T14:00:01Z",
@@ -53,11 +59,11 @@ class OperacionesTest(unittest.TestCase):
             self.apply(self.event("assignment.accepted"))
 
     def test_busy_worker_and_taken_task_cannot_accept(self):
-        self.docs["reservation/actor:worker-1"] = {"assignment_id": "different"}
+        self.seed("reservation/actor:worker-1", {"assignment_id": "different"})
         with self.assertRaisesRegex(OperationError, "actor_busy"):
             self.apply(self.event("assignment.accepted"))
-        self.docs["reservation/actor:worker-1"] = None
-        self.docs["reservation/task:medical-task"] = {"assignment_id": "different"}
+        self.seed("reservation/actor:worker-1")
+        self.seed("reservation/task:medical-task", {"assignment_id": "different"})
         with self.assertRaisesRegex(OperationError, "task_covered"):
             self.apply(self.event("assignment.accepted"))
 
@@ -84,6 +90,14 @@ class OperacionesTest(unittest.TestCase):
         self.docs["incident/incident-1"]["assignment_ids"].append("assignment-2")
         self.docs["assignment/assignment-2"] = {"status": "accepted", "actor_id": "worker-2", "incident_id": "incident-1"}
         self.versions["assignment/assignment-2"] = 1
+        self.apply(self.event("assignment.accepted"))
+        self.apply(self.event("assignment.arrived"))
+        self.apply(self.event("assignment.located"))
+        self.apply(self.event("assignment.completed"))
+        self.assertEqual(self.docs["incident/incident-1"]["status"], "open")
+
+    def test_required_task_without_an_offer_prevents_automatic_closure(self):
+        self.docs["incident/incident-1"]["tasks"] = {"medical-task": {"role": "medico"}, "fire-task": {"role": "bomberos"}}
         self.apply(self.event("assignment.accepted"))
         self.apply(self.event("assignment.arrived"))
         self.apply(self.event("assignment.located"))
@@ -141,6 +155,131 @@ class OperacionesTest(unittest.TestCase):
         self.assertEqual(result["messages"][0]["recipient_id"], "worker-1")
         with self.assertRaisesRegex(OperationError, "invalid_transition"):
             self.apply(self.event("assignment.accepted"))
+
+    def test_report_persists_incident_and_conversation_without_promising_dispatch(self):
+        self.seed("incident/new-incident")
+        self.seed("conversation/conversation-1")
+        event = dict(self.event("incident.reported", actor="reporter-1", text="Humo en un móvil", location="barra 3"), incident_id="new-incident")
+        result = self.apply(event)
+        self.assertEqual(self.docs["incident/new-incident"]["reporter_id"], "reporter-1")
+        self.assertEqual(self.docs["conversation/conversation-1"]["incident_ids"], ["new-incident"])
+        self.assertEqual(self.docs["incident/new-incident"]["assignment_ids"], [])
+        self.assertNotIn("avisando", result["messages"][0]["text"])
+        with self.assertRaisesRegex(OperationError, "incident_exists"):
+            self.apply(event)
+
+    def test_context_keeps_two_incidents_without_expiring_incident_state(self):
+        self.seed("incident/new-incident")
+        self.seed("conversation/conversation-1", {"actor_id": "reporter-1", "incident_ids": ["incident-1"]})
+        self.apply(dict(self.event("incident.reported", actor="reporter-1", text="Hay otro incidente"), incident_id="new-incident"))
+        self.assertEqual(self.docs["conversation/conversation-1"]["incident_ids"], ["incident-1", "new-incident"])
+        self.assertEqual(self.docs["incident/incident-1"]["status"], "open")
+
+    def test_offer_requires_coordinator_permission_and_matching_capacity(self):
+        self.seed("actor/coordinator", {"permissions": ["coordinate"]})
+        self.seed("assignment/new-assignment")
+        event = dict(self.event("assignment.offered", recipient_id="worker-2", role="medico", task_id="medical-task"), assignment_id="new-assignment")
+        with self.assertRaisesRegex(OperationError, "coordinator_required"):
+            self.apply(event)
+        event["actor_id"] = "coordinator"
+        event["payload"]["role"] = "bomberos"
+        with self.assertRaisesRegex(OperationError, "capacity_mismatch"):
+            self.apply(event)
+        event["payload"]["role"] = "medico"
+        self.seed("reservation/actor:worker-2")
+        result = self.apply(event)
+        self.assertEqual(self.docs["assignment/new-assignment"]["status"], "offered")
+        self.assertEqual(result["messages"][0]["purpose"], "offer")
+        self.assertEqual(result["messages"][0]["assignment_id"], "new-assignment")
+        self.assertEqual(self.docs["reservation/actor:worker-2"]["assignment_id"], "new-assignment")
+
+    def test_offer_cannot_change_capacity_for_existing_task(self):
+        self.seed("actor/coordinator", {"permissions": ["coordinate"]})
+        self.seed("assignment/new-assignment")
+        self.docs["incident/incident-1"]["tasks"] = {"medical-task": {"role": "bomberos"}}
+        with self.assertRaisesRegex(OperationError, "task_capacity_mismatch"):
+            self.apply(dict(self.event("assignment.offered", actor="coordinator", recipient_id="worker-2", role="medico", task_id="medical-task"), assignment_id="new-assignment"))
+
+    def test_role_claim_requires_an_unexpired_actor_bound_grant(self):
+        self.docs["actor/worker-1"]["roles"] = []
+        self.seed("approval/grant-1", {"kind": "role_claim", "actor_id": "worker-2", "role": "medico", "expires_at": "2026-09-19T15:00:00Z", "status": "approved"})
+        self.seed("reservation/role:medico")
+        event = self.event("actor.role_claimed", role="medico", grant_id="grant-1")
+        with self.assertRaisesRegex(OperationError, "invalid_role_grant"):
+            self.apply(event)
+        self.docs["approval/grant-1"]["actor_id"] = "worker-1"
+        self.docs["approval/grant-1"]["expires_at"] = "2026-09-19T13:00:00Z"
+        with self.assertRaisesRegex(OperationError, "invalid_role_grant"):
+            self.apply(event)
+        self.docs["approval/grant-1"]["expires_at"] = "2026-09-19T15:00:00Z"
+        self.apply(event)
+        self.assertEqual(self.docs["actor/worker-1"]["roles"], ["medico"])
+        self.assertEqual(self.docs["reservation/role:medico"]["actor_id"], "worker-1")
+        self.assertEqual(self.docs["approval/grant-1"]["status"], "consumed")
+
+    def test_taken_role_and_release_while_assigned_are_rejected(self):
+        self.seed("approval/grant-1", {"kind": "role_claim", "actor_id": "worker-1", "role": "medico", "expires_at": "2026-09-19T15:00:00Z", "status": "approved"})
+        self.seed("reservation/role:medico", {"actor_id": "worker-2"})
+        with self.assertRaisesRegex(OperationError, "role_taken"):
+            self.apply(self.event("actor.role_claimed", role="medico", grant_id="grant-1"))
+        self.apply(self.event("assignment.accepted"))
+        with self.assertRaisesRegex(OperationError, "actor_busy"):
+            self.apply(self.event("actor.role_released"))
+
+    def test_unknown_availability_keeps_question_open_and_never_means_now(self):
+        self.seed("question/availability:assignment-1")
+        self.apply(self.event("assignment.declined", reason="Estoy ocupado"))
+        event = dict(self.event("question.answered", text="No sé cuándo podré", available_in_min=None), question_id="availability:assignment-1")
+        self.apply(event)
+        self.assertEqual(self.docs["actor/worker-1"]["availability"], "unknown")
+        self.assertEqual(self.docs["question/availability:assignment-1"]["status"], "pending")
+        event = dict(self.event("question.answered", text="En quince minutos", available_in_min=15), question_id="availability:assignment-1")
+        self.apply(event)
+        self.assertEqual(self.docs["actor/worker-1"]["available_after"], "2026-09-19T14:15:01Z")
+        self.assertEqual(self.docs["question/availability:assignment-1"]["status"], "answered")
+
+    def test_unavailable_actor_cannot_accept_even_without_active_reservation(self):
+        self.docs["actor/worker-1"].update(availability="unknown", available_after=None)
+        with self.assertRaisesRegex(OperationError, "actor_unavailable"):
+            self.apply(self.event("assignment.accepted"))
+        self.docs["actor/worker-1"].update(availability="unavailable", available_after="2026-09-19T14:05:00Z")
+        with self.assertRaisesRegex(OperationError, "actor_unavailable"):
+            self.apply(self.event("assignment.accepted"))
+        self.docs["actor/worker-1"]["available_after"] = "2026-09-19T13:59:00Z"
+        self.apply(self.event("assignment.accepted"))
+
+    def test_reporter_location_update_preserves_incident_and_question_reference(self):
+        self.apply(self.event("assignment.accepted"))
+        result = self.apply(self.event("incident.updated", actor="reporter-1", text="Estamos en la barra 4, no en la 3", location="barra 4"))
+        self.assertEqual(self.docs["incident/incident-1"]["location"], "barra 4")
+        self.assertEqual(result["messages"][0]["recipient_id"], "worker-1")
+        with self.assertRaisesRegex(OperationError, "incident_for_other_actor"):
+            self.apply(self.event("incident.updated", actor="worker-2", text="Esto no es mi incidente"))
+
+    def test_closure_request_asks_reporter_before_closing(self):
+        self.seed("actor/coordinator", {"permissions": ["coordinate"]})
+        self.apply(self.event("assignment.accepted"))
+        event = dict(self.event("incident.close_requested", actor="coordinator"), question_id="question-1")
+        self.apply(event)
+        self.assertEqual(self.docs["incident/incident-1"]["status"], "open")
+        self.assertEqual(self.docs["question/question-1"]["kind"], "closure")
+        result = self.apply(dict(self.event("question.answered", actor="reporter-1", text="Sí, está resuelto", confirmed=True), question_id="question-1"))
+        self.assertEqual(self.docs["incident/incident-1"]["status"], "closed")
+        self.assertEqual(self.docs["assignment/assignment-1"]["status"], "cancelled")
+        self.assertEqual(self.docs["reservation/actor:worker-1"], {})
+        self.assertIn("worker-1", [m["recipient_id"] for m in result["messages"]])
+
+    def test_rejected_closure_keeps_incident_open(self):
+        self.apply(dict(self.event("incident.close_requested", actor="reporter-1"), question_id="question-1"))
+        self.apply(dict(self.event("question.answered", actor="reporter-1", text="No, todavía necesitamos ayuda", confirmed=False), question_id="question-1"))
+        self.assertEqual(self.docs["incident/incident-1"]["status"], "open")
+        self.assertEqual(self.docs["question/question-1"]["status"], "answered")
+
+    def test_snapshot_version_zero_is_required_for_missing_entities(self):
+        snapshot = {key: {"version": self.versions[key], "value": value} for key, value in self.docs.items()}
+        snapshot["actor/worker-1"]["value"] = None
+        with self.assertRaisesRegex(OperationError, "invalid_snapshot"):
+            apply_event(self.event("assignment.accepted"), snapshot)
 
     def test_unimplemented_events_fail_instead_of_creating_incidents(self):
         with self.assertRaisesRegex(OperationError, "unsupported_operation"):

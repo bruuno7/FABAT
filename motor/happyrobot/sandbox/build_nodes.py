@@ -2,7 +2,12 @@
 y sus input_data. Uso: python3 build_nodes.py <sandbox> > /tmp/u.json
 Recorta funciones no usadas para que el payload sea pequeño y valida ejecutando el código con input vacío."""
 import json, re, sys
-import plate
+from uuid import UUID
+
+if __package__:
+    from . import plate
+else:
+    import plate
 
 T_ENT = '01a0b846-7d26-7213-b716-20c90765a016'   # trigger fa-entrada-tg
 E = '01a0b8d6-cfa8-7d99-a896-185306754ca4'       # Identify Explicit Data
@@ -64,6 +69,19 @@ INPUTS = {
 
 
 def updates(name, **override):
+    if name == 'fa_operaciones':
+        raw = override.get('TRIGGER_PID')
+        if not isinstance(raw, str) or not raw:
+            raise ValueError('TRIGGER_PID must be a persistent UUID')
+        trigger = str(UUID(raw))
+        source = (plate.HERE / 'fa_operaciones.py').read_text()
+        code = source + '\noutput = run_input(input_data)\n'
+        compile(code, 'fa_operaciones', 'exec')
+        return json.dumps({'configuration': {
+            'code': code, 'execution_profile': 'standard',
+            'input_data': [{'key': key, 'value': plate.plate('{{%s.%s}}' % (trigger, key), 'p')}
+                           for key in ('event_json', 'snapshot_json')],
+        }})
     inputs = dict(INPUTS[name])
     for k, v in override.items():
         for ik in inputs:

@@ -97,7 +97,7 @@ def operator_authenticated(request):
     return verify_operator(request.scope)
 
 
-def require_operator(request):
+def require_operator(request: Request) -> None:
     """Raise 401 missing credential, 403 bad credential, or 503 unconfigured token."""
     status = _auth_status(request.scope)
     if status:
@@ -181,6 +181,10 @@ class SecurityGuard:
         login = path == '/api/operator/login' and method == 'POST'
         public_intake = path == '/api/personal/status' or path.startswith('/api/personal/order/') or path in ('/api/chat', '/api/report', '/api/strike') or (
             path.startswith('/api/report/') and path.endswith('/answer'))
+        if os.environ.get('MANDO_OPERATIONAL') == '1' and (
+                path == '/api/operations/telegram' or path == '/hr/events'
+                or path.startswith('/hr/tools/')):
+            public_intake = True
         headers = Request(scope).headers
         cors = _cors(headers.get('origin'))
         if cors and method == 'OPTIONS' and headers.get('access-control-request-method'):

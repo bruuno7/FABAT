@@ -1,5 +1,7 @@
 # MANDO
 
+**MVP multicanal:** [arranque, contratos y verificación de la Sala persistente](MVP-OPERATIVO.md).
+
 **Sabe cuándo su plan ha dejado de valer.**
 
 > **In English (30 seconds).** MANDO is an incident-coordination agent for a 40,000-person open-air concert. Every

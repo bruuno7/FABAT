@@ -18,7 +18,7 @@
 <nav aria-label="Secciones">
   <a href="#incidentes">Incidentes</a><a href="#personal">Personal</a>
   <a href="#asignaciones">Asignaciones</a><a href="#aprobaciones">Aprobaciones</a>
-  <a href="#entregas">Entregas</a><a href="#cronologia">Cronología</a>
+  <a href="#entregas">Entregas</a><a href="#agentes">Agentes</a><a href="#cronologia">Cronología</a>
 </nav>
 <main>
   <section class="panel" aria-labelledby="canales-title">
@@ -61,7 +61,7 @@
             <label for="staff-zone">Ubicación<select id="staff-zone" name="zone"><option value="">Sin confirmar</option></select></label>
             <label for="staff-availability">Disponibilidad<select id="staff-availability" name="availability"><option value="unknown">Sin confirmar</option><option value="available">Disponible</option><option value="unavailable">No disponible</option></select></label>
           </div>
-          <p id="contact-help" class="muted">Telegram: identificador del chat verificado. Voz: contacto autorizado. Se envía al servidor y se borra del formulario; no se guarda en el navegador. Web no necesita contacto.</p>
+          <p id="contact-help" class="muted">Telegram: usa tg: seguido del ID de la persona como identificador estable y el mismo ID numérico como contacto privado. Voz: móvil autorizado con prefijo internacional. El contacto se borra del formulario y no se guarda en el navegador. Web no necesita contacto.</p>
           <fieldset class="roles"><legend>Roles autorizados por este operador</legend>
             <label><input type="checkbox" name="roles" value="medico">Médico</label>
             <label><input type="checkbox" name="roles" value="bomberos">Bomberos</label>
@@ -90,6 +90,10 @@
   </section>
   <section id="cronologia" class="panel" aria-labelledby="cronologia-title">
     <h2 id="cronologia-title">Cronología</h2><ol id="events" class="timeline"></ol>
+  </section>
+  <section id="agentes" class="panel" aria-labelledby="agentes-title">
+    <h2 id="agentes-title">Llamadas y propuestas de HappyRobot</h2>
+    <div id="workflows" class="cards"></div>
   </section>
 </main>
 <dialog id="command-dialog" aria-labelledby="command-title" aria-describedby="command-context">

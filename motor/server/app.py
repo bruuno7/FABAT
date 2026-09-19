@@ -43,6 +43,7 @@ from .espejo_telegram import TelegramMirror
 from . import tg_roster
 from .state_refresh import StateRefresh
 from .evidence_runtime import ReceiptService, action_from_dict, evidence
+from .operational_http import create_operational_app
 
 HERE = Path(__file__).resolve().parent
 MOTOR = HERE.parent
@@ -838,7 +839,8 @@ class Session:
         return {**st, **extra} if extra else st
 
     def state(self) -> dict[str, Any]:
-        return self._with_live_channels(self._state)
+        with self.lock:
+            return self._with_live_channels(self._state)
 
     def state_json(self) -> str:
         extra = Session.extra_state() if Session.extra_state is not None else None
@@ -1306,6 +1308,8 @@ def lan_ip() -> str:
 def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: float = 1.0, comms_mode: str = "sim",
                autoplay: bool = False, threaded: bool = True, secret: str | None = None, port: int = 8000,
                playbook: str = "auto", local_params: bool = True) -> FastAPI:
+    if os.environ.get("MANDO_OPERATIONAL") == "1":
+        return create_operational_app(port=port)
     import contextlib
 
     @contextlib.asynccontextmanager

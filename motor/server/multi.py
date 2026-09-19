@@ -81,7 +81,7 @@ def local_cookie(name, role):
     return payload + '.' + sig
 
 
-def identity(request):
+def identity(request: Request) -> dict[str, str]:
     from .security import require_operator
     require_operator(request)
     row = credential_identity(request.scope)

@@ -14,15 +14,23 @@ import time
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import cast
+from typing import ClassVar, cast
 
-from motor.contracts import Channel, Family, Incident as ParsedIncident, Report, Zone
+from motor.contracts import Channel, Family, Report, Zone
+from motor.contracts import Incident as ParsedIncident
 from motor.mando.lexicon import spec_for
 from motor.mando.parser import HeuristicParser
 from motor.mando.priority import compute
 
 from .operational_types import (
-    Actor, Approval, Assignment, Document, Entity, Incident, JSON, State,
+    JSON,
+    Actor,
+    Approval,
+    Assignment,
+    Document,
+    Entity,
+    Incident,
+    State,
 )
 from .privacy import scrub
 
@@ -176,6 +184,9 @@ def _version(entity: Entity, command: Mapping[str, object]) -> None:
 
 
 class OperationalStore:
+    command_fields: ClassVar[dict[str, set[str]]] = FIELDS
+    command_permissions: ClassVar[dict[str, set[str]]] = PERMISSIONS
+
     def __init__(self, path: str | Path, festival: Document, *,
                  clock: Callable[[], float] = time.time) -> None:
         self._clock = clock
@@ -258,12 +269,12 @@ class OperationalStore:
         if not isinstance(command, dict) or len(_encode(command)) > 16384:
             raise OperationalError("invalid_command", 400)
         cid = _id(command.get("command_id"), "command_id")
-        kind = _choice(command.get("kind"), set(FIELDS), "kind")
+        kind = _choice(command.get("kind"), set(self.command_fields), "kind")
         principal = _id(principal, "principal")
         channel = _choice(channel, CHANNELS, "channel")
-        if scope not in PERMISSIONS or kind not in PERMISSIONS[scope]:
+        if scope not in self.command_permissions or kind not in self.command_permissions[scope]:
             raise OperationalError("forbidden", 403)
-        if set(command) - FIELDS[kind] - {"command_id", "kind"}:
+        if set(command) - self.command_fields[kind] - {"command_id", "kind"}:
             raise OperationalError("unknown_fields", 400)
         fingerprint = _hash({"command": command, "principal": principal, "scope": scope, "channel": channel})
         error: OperationalError | None = None
@@ -280,6 +291,7 @@ class OperationalStore:
                     raise OperationalError(str(result["error"]), cast(int, result["status"]), str(result["message"]))
                 return {**result, "duplicate": True}
             before = copy.deepcopy(data)
+            self._db.execute("SAVEPOINT apply_command")
             try:
                 result = self._dispatch(data, command, principal, scope, channel, now)
                 self._maintain(data, now)
@@ -287,16 +299,26 @@ class OperationalStore:
                             cast(str | None, result.get("assignment_id")))
                 result.update(ok=True, duplicate=False, revision=data["revision"] + 1)
             except OperationalError as exc:
+                self._db.execute("ROLLBACK TO apply_command")
                 data.update(before)
+                self._failure(data, command, exc, now)
                 error = exc
                 result = {"ok": False, "error": exc.code, "message": exc.message, "status": exc.status}
+            self._db.execute("RELEASE apply_command")
             self._db.execute("INSERT INTO operational_commands VALUES (?,?,?)", (cid, fingerprint, _encode(result)))
         if error:
             raise error
         return result
 
+    def _failure(self, data: State, command: Document, error: OperationalError, now: float) -> None:
+        pass
+
     def state(self) -> Document:
         with self._transaction() as (data, now):
+            assignment_order = {
+                event["assignment_id"]: index for index, event in enumerate(data["events"])
+                if event["kind"] == "assignment.offered" and event["assignment_id"]
+            }
             actors = [{k: v for k, v in _document(actor).items() if k != "address"}
                       for actor in data["actors"].values()]
             incidents = [{k: v for k, v in _document(incident).items()
@@ -306,7 +328,13 @@ class OperationalStore:
                 "id", "version", "incident_id", "actor_id", "role", "task_id", "zone",
                 "status", "eta_min", "expires_at",
             }}
-                           for assignment in data["assignments"].values()]
+                           for assignment in sorted(data["assignments"].values(),
+                                                    key=lambda row: assignment_order.get(row["id"], -1))]
+            for assignment_view in assignments:
+                communication = data["assignments"][str(assignment_view["id"])]["communication"]
+                assignment_view["communication"] = {
+                    k: v for k, v in communication.items() if k in {"result", "occurred_at"}
+                }
             deliveries = [
                 {k: v for k, v in _document(delivery).items() if k in {
                     "id", "version", "channel", "purpose", "status", "attempts",
@@ -526,7 +554,7 @@ class OperationalStore:
         channel = _choice(command.get("channel"), CHANNELS, "channel")
         if identify and scope in {"telegram", "phone"} and channel != scope:
             raise OperationalError("channel_mismatch", 403)
-        address = _text(command.get("address"), "address", 300)
+        address = _text(command.get("address") or (aid if channel == "web" else None), "address", 300)
         name = _text(command.get("name", aid), "name", 120)
         zone = self._zone(command.get("zone"))
         previous = data["actors"].get(aid)
@@ -695,7 +723,9 @@ class OperationalStore:
         if kind == "call_result":
             if status not in ACTIVE or (status == "offered" and assignment["expires_at"] <= now):
                 raise OperationalError("stale_assignment", 409)
-            result = _text(command.get("result"), "result", 120)
+            result = _choice(command.get("result"), {
+                "accept", "reject", "unclear", "unknown", "no_answer", "timeout", "provider_failed",
+            }, "result")
             metadata = command.get("metadata", {})
             if not isinstance(metadata, dict):
                 raise OperationalError("invalid_metadata", 400)
@@ -884,7 +914,7 @@ class OperationalStore:
         for delivery in data["deliveries"].values():
             if delivery["status"] == "leased" and delivery["lease_until"] <= now:
                 delivery.update({
-                    "status": "uncertain" if delivery["channel"] == "phone" else "retry",
+                    "status": "uncertain" if delivery["channel"] in {"phone", "happyrobot"} else "retry",
                     "lease_token": "", "lease_until": 0, "last_error": "lease_expired",
                     "version": delivery["version"] + 1,
                 })

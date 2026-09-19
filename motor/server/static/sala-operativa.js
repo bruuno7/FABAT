@@ -268,6 +268,7 @@
       showList("assignments", state.assignments, (a) => {
         const item = card(`${a.incident_id} · ${actorName(a.actor_id)}`, a.status, ["offered", "pending"].includes(a.status) ? "pending" : ["accepted", "en_route"].includes(a.status) ? "accepted" : "");
         item.append(facts([["Asignación / tarea", `${a.id} / ${a.task_id || "—"}`], ["Rol", a.role], ["Destino", zoneName(a.zone)], ["ETA", a.eta_min == null ? "Sin confirmar" : `${a.eta_min} min`], ["Caduca", date(a.expires_at)], ["Versión", a.version]]));
+        if (a.communication?.result) item.append(facts([["Resultado de comunicación", a.communication.result]]));
         const names = { accept: "Aceptar", decline: "Rechazar", eta: "ETA", arrive: "Llegada", locate: "Localizar", complete: "Completar" };
         item.append(actionGroup(a.id, assignmentActions(a.status).map((kind) => [names[kind], () => assignmentDialog(a, kind)])));
         return item;
@@ -283,6 +284,11 @@
         item.append(facts([["Entrega", d.id], ["Incidente / asignación", `${d.incident_id || "—"} / ${d.assignment_id || "—"}`], ["Intentos", d.attempts], ["Último error", d.last_error || "Sin error comunicado"]]));
         return item;
       }, "Sin entregas registradas.");
+      showList("workflows", state.workflows || [], (w) => {
+        const item = card(`${w.channel} · ${w.incident_id}`, w.status);
+        item.append(facts([["Entrega", w.delivery_id], ["Resultado", w.last_result || "Pendiente"], ["Error", w.last_error || "—"], ["Límite", date(w.deadline)]]));
+        return item;
+      }, "Sin ejecuciones externas registradas.");
       showList("events", state.events.slice().reverse(), (e) => {
         const item = node("li");
         item.append(node("time", date(e.occurred_at)), node("strong", `${e.kind} · ${e.principal}`), node("p", e.summary, "detail"), node("small", `${e.incident_id || ""} ${e.assignment_id || ""}`));

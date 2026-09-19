@@ -4,7 +4,7 @@ import { FETCH_TIMEOUT_MS, type Env } from "../lib/hr-client.js";
 
 const UPDATE_LIMIT = 1024 * 1024;
 const ACCEPTANCE_LIMIT = 8192;
-const DEFINITIVE_REJECTIONS = new Set([400, 401, 403, 409, 422]);
+const DEFINITIVE_REJECTIONS = new Set([400, 401, 403, 409, 413, 422]);
 
 type Readiness = { ready: boolean; missing: string[]; invalid: string[] };
 

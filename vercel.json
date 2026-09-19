@@ -1,6 +1,8 @@
 {
+  "framework": null,
   "installCommand": "npm install && npm --prefix motor/server install",
   "buildCommand": "npm --prefix motor/server run build",
+  "outputDirectory": "public",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
   "functions": {
     "api/index.ts": {

@@ -6,7 +6,7 @@ import os
 import re
 import threading
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
 
@@ -14,7 +14,7 @@ import httpx
 
 from motor.mando.mando import Mando
 
-from . import abanico, cerebro, hr_config
+from . import abanico, cerebro, equipo, hr_config
 
 if TYPE_CHECKING:
     from .app import Session
@@ -70,6 +70,10 @@ class Run:
     run_id: str = ""
     error: str = ""
     received: bool = False
+    deadline: float = 0.0
+    decision: dict = field(default_factory=dict)
+    result: dict = field(default_factory=dict)
+    review_deadline: float = 0.0
 
 
 class RapidoRunner:
@@ -98,7 +102,8 @@ class RapidoRunner:
             if rid is None or active >= MAX_INFLIGHT or len(self.runs) >= MAX_RUNS:
                 continue
             aviso = self.reports[rid]
-            run = Run(inc.id, rid, f"{self.session.session_id}:{rid}")
+            run = Run(inc.id, rid, f"{self.session.session_id}:{rid}",
+                      deadline=time.monotonic() + cerebro.timeout_s())
             self.runs[inc.id] = run
             entrada = {"texto": aviso.text, "canal": aviso.channel, "zona_sugerida": aviso.zone or "",
                        "idioma": aviso.lang, "remitente": "informante", "correlation_id": run.correlation_id,
@@ -137,22 +142,58 @@ class RapidoRunner:
 
     def bind_decision(self, body: dict) -> dict:
         correlation = str(body.get("correlation_id") or "")
-        if not re.fullmatch(r"s-[0-9a-f]{16}:.+", correlation):
+        phase = equipo.parse_fase(body.get("fase"), equipo.parse_agente(body.get("agente")))
+        if not correlation and phase is None:
             return body
         with self.session.lock:
-            run = next((r for r in self.runs.values() if r.correlation_id == correlation), None)
+            run = (next((r for r in self.runs.values() if r.correlation_id == correlation), None)
+                   if correlation else self.runs.get(str(body.get("incident_id") or "")))
+            if run is None and not correlation:
+                if os.environ.get("HR_WORKFLOW_RAPIDO"):
+                    raise ValueError("hace falta correlation_id de una ejecución emitida")
+                return body
             if run is None or self.stop.is_set():
                 raise ValueError("correlation_id no corresponde a una ejecución de esta sesión")
+            if not correlation:
+                raise ValueError("hace falta correlation_id de la ejecución")
             if body.get("incident_id") not in (None, "", "nuevo", run.incident_id):
                 raise ValueError("incident_id no corresponde a correlation_id")
+            incident = self.session.agent.incidents.get(run.incident_id)
+            if incident is None or str(incident.status) in ("resolved", "dismissed", "merged", "closed"):
+                raise ValueError("la ejecución pertenece a un incidente cerrado")
+            if run.status in ("timeout", "fallido", "cancelado", "superseded"):
+                raise ValueError(f"ejecución rápida no vigente: {run.status}")
+            if not run.received and run.deadline and time.monotonic() >= run.deadline:
+                self._update(run, "timeout", "No llegó la decisión rápida dentro del plazo")
+                raise ValueError("ejecución rápida expirada")
+            failure = body.get("error") or str(body.get("status") or body.get("estado") or
+                                               body.get("revision_status") or "").lower() in (
+                                                   "failed", "fallido", "timeout", "degraded", "degradado")
+            if (phase == "revision" and run.received and not failure
+                    and run.review_deadline and time.monotonic() >= run.review_deadline):
+                raise ValueError("revisión expirada")
+            if not run.received and run.incident_id in self.session._cerebro_decided:
+                self._update(run, "superseded", "Otro decisor ya sustituyó esta ejecución")
+                raise ValueError("ejecución rápida sustituida")
             return dict(body, incident_id=run.incident_id)
 
-    def record_decision(self, result: dict) -> None:
+    def replay(self, body: dict) -> dict | None:
+        run = self.runs.get(str(body.get("incident_id") or ""))
+        if run is None or not run.received:
+            return None
+        if run.decision != body:
+            raise ValueError("la ejecución ya recibió otra decisión")
+        return dict(run.result, duplicate=True)
+
+    def record_decision(self, result: dict, body: dict | None = None) -> None:
         with self.session.lock:
             run = self.runs.get(str(result.get("incident_id") or ""))
             if run is None:
                 return
             run.received = True
+            run.decision = dict(body or {})
+            run.result = dict(result)
+            run.review_deadline = time.monotonic() + max(1.0, cerebro.timeout_s())
             status = "decision_recibida" if result.get("ok") else "decision_bloqueada"
             self._update(run, status)
 
@@ -160,9 +201,24 @@ class RapidoRunner:
         rows = []
         for run in self.runs.values():
             row = asdict(run)
+            row.pop("decision")
+            row.pop("result")
             phases = self.session._equipo.get(run.incident_id, {}).get("fases", {})
             row["rapida"] = run.received or "rapida" in phases
-            row["revision"] = "revision" in phases
+            review = phases.get("revision") or {}
+            row["revision"] = bool(review and not review.get("tardia"))
+            failure = phases.get("revision_timeout") or phases.get("revision_fallida")
+            if failure:
+                row["revision"] = False
+                row["revision_status"] = "timeout" if "revision_timeout" in phases else "fallido"
+                row["revision_error"] = failure.get("porque", "")
+            elif run.received and not row["revision"]:
+                expired = bool(run.review_deadline and time.monotonic() >= run.review_deadline)
+                row["revision_status"] = "timeout" if expired else "pendiente"
+                row["revision_error"] = "No llegó una revisión válida dentro del plazo" if expired else ""
+            elif row["revision"]:
+                row["revision_status"] = "revisado"
+                row["revision_error"] = ""
             if row["rapida"] and not run.received:
                 row["status"] = "decision_recibida"
             rows.append(row)
@@ -195,7 +251,7 @@ class RapidoRunner:
             return run.received or "rapida" in self.session._equipo.get(run.incident_id, {}).get("fases", {})
 
     def _run(self, run: Run, payload: dict) -> None:
-        deadline = time.monotonic() + cerebro.timeout_s()
+        deadline = run.deadline or time.monotonic() + cerebro.timeout_s()
         try:
             with httpx.Client(timeout=8.0) as client:
                 if self.stop.is_set():

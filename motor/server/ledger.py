@@ -35,6 +35,7 @@ class Ledger:
         self.path = Path(path) if path is not None else default_path()
         self._store = memoria_db.open_store(self.path)
         self._warn = self._store.warning
+        self._closed = False
 
     @classmethod
     def open(cls, path: Path | str | None = None) -> "Ledger":
@@ -53,10 +54,13 @@ class Ledger:
         return self._store.warning or self._warn
 
     def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
         self._store.release()
 
     def _exec(self, fn, default=None):
-        if not self.enabled:
+        if self._closed or not self.enabled:
             return default
         out = self._store.write(fn)
         if not self._store.enabled:

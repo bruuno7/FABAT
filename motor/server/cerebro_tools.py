@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import secrets
+from copy import deepcopy
 from typing import Any
 
 from fastapi import HTTPException, Request
@@ -18,7 +20,7 @@ from motor.mando.triage import IncidentMeta
 from . import forecast as forecast_mod
 from . import privacy, recibo, whatif
 from . import equipo
-from .cerebro import ORIGEN_AGENTE, ORIGEN_BARANDILLA, attach, mark_decided, mode
+from . import cerebro
 from .comms_happyrobot import NEVER_DIAL, allowed_numbers, normalize_number
 from .hr_routing import WORKFLOW_NAMES, slot_for_role
 from .telegram_bot import match_zone
@@ -162,7 +164,7 @@ def sync_agent(session: Any) -> None:
     agent.zones, agent.resources = obs.zones, obs.resources
     agent.weather, agent.clock = obs.weather, obs.clock
     if not getattr(session, "_cerebro_seen", None):
-        attach(session)
+        cerebro.attach(session)
 
 
 def contexto(session: Any, aviso: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -253,7 +255,7 @@ def contexto(session: Any, aviso: dict[str, Any] | None = None) -> dict[str, Any
         "incidentes": abiertos[:20], "recursos_libres": libres, "recursos_ocupados": ocupados,
         "zonas": zonas, "previsiones": previsiones, "decisiones_pendientes": pendientes,
         "memoria": {"lecciones_aprobadas": lecciones, "casos_parecidos": parecidos[:3]},
-        "cerebro": mode(),
+        "cerebro": cerebro.mode(),
         "confianza_agentes": conf_mod.resumen(session, familia=tipo_aviso),
         "regla_peso": conf_mod.REGLA_PESO,
     }
@@ -317,7 +319,7 @@ def _respuesta_bloqueada(session: Any, blocked: dict[str, Any], iid: Any,
     with session.lock:
         session._rebuild()
     blocked["incident_id"] = iid
-    blocked["origen"] = ORIGEN_AGENTE
+    blocked["origen"] = cerebro.ORIGEN_AGENTE
     blocked.update(extra)
     return blocked
 
@@ -329,6 +331,11 @@ def _anotar_papeles(session: Any, incident_id: str, papeles: dict) -> None:
 
 
 def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
+    with session.lock:
+        return _decidir_locked(session, body)
+
+
+def _decidir_locked(session, body: dict) -> dict:
     from . import adaptativo, confianza as conf_mod, enjambre
     sync_agent(session)
     body = _unwrap_body(dict(body or {}))
@@ -342,8 +349,20 @@ def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
     if fase == "revision":
         return _decidir_revision(session, body, d, papeles, agente)
     if fase == "rapida":
+        replay = session.rapido.replay(body)
+        if replay is not None:
+            return replay
+    try:
+        _validate_targets(session, d)
+    except ValueError as exc:
+        invalid = {"ok": False, "incident_id": d.get("incident_id") or "", "texto": str(exc),
+                   "aceptadas": [], "bloqueadas": [{"que": "decisión", "motivo": str(exc)}]}
+        if fase == "rapida":
+            session.rapido.record_decision(invalid, body)
+        return invalid
+    if fase == "rapida":
         out = _decidir_rapida(session, body, d, papeles, agente)
-        session.rapido.record_decision(out)
+        session.rapido.record_decision(out, body)
         return out
     key = _vote_key(session, d)
     if key:
@@ -360,7 +379,7 @@ def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
             return {
                 "ok": False, "texto": "conflicto entre agentes; no se ejecuta",
                 "conflicto": conflicts, "incident_id": key,
-                "aceptadas": [], "bloqueadas": [], "origen": ORIGEN_AGENTE,
+                "aceptadas": [], "bloqueadas": [], "origen": cerebro.ORIGEN_AGENTE,
             }
         if not (joint.get("porque") or "").strip():
             _anotar_papeles(session, key, papeles)
@@ -422,7 +441,7 @@ def _decidir_rapida(session: Any, body: dict[str, Any], d: dict[str, Any],
 
 def _revision_anotada(session: Any, iid: str, *, s: int, agente: str, porque: str,
                       veredicto: str, texto: str, tardia: bool = False) -> dict[str, Any]:
-    equipo.record_fase(session, iid, "revision", s=s, agente=agente, porque=porque,
+    equipo.record_fase(session, iid, "revision", s=s, agente=agente, porque=texto if tardia else porque,
                        veredicto=veredicto, tardia=tardia)
     with session.lock:
         session._rebuild()
@@ -430,7 +449,7 @@ def _revision_anotada(session: Any, iid: str, *, s: int, agente: str, porque: st
         "ok": True, "texto": texto,
         "fase": "revision", "revision": veredicto,
         "incident_id": iid, "aceptadas": [], "bloqueadas": [],
-        "origen": ORIGEN_AGENTE,
+        "origen": cerebro.ORIGEN_AGENTE,
     }
     if tardia:
         out["tardia"] = True
@@ -445,6 +464,14 @@ def _decidir_revision(session: Any, body: dict[str, Any], d: dict[str, Any],
         raise ValueError("la revisión necesita un incident_id existente")
     box = equipo.card(session, iid)
     s = equipo.latencia_s(session, iid, body)
+    status = str(body.get("status") or body.get("estado") or body.get("revision_status") or "").lower()
+    if status in ("failed", "fallido", "timeout", "degraded", "degradado") or body.get("error"):
+        phase = "revision_timeout" if status == "timeout" else "revision_fallida"
+        reason = str(body.get("error") or d["porque"])[:400]
+        equipo.record_fase(session, iid, phase, s=s, agente=agente, porque=reason)
+        session._rebuild()
+        return {"ok": False, "incident_id": iid, "fase": phase, "revision": status or "fallido",
+                "texto": reason, "aceptadas": [], "bloqueadas": []}
     equipo.record_papeles(session, iid, papeles)
     tardia = equipo.revision_tardia(session, iid)
     old = dict(box.get("decision_rapida") or {})
@@ -564,10 +591,10 @@ def _escalar_objeciones(session: Any, inc: Any, objeciones: list) -> None:
     texto = "Objeciones altas sin resolver: " + "; ".join(
         f"{o.get('de')}: {o.get('texto')}" for o in objeciones[:4])
     a = session.agent._emit(ActionKind.NOTIFY, inc, texto[:200], channel=Channel.OPERATOR,
-                            params={"origen": ORIGEN_AGENTE, "decision_card": True,
+                            params={"origen": cerebro.ORIGEN_AGENTE, "decision_card": True,
                                     "objeciones": objeciones[:8]},
                             status=ActionStatus.AWAITING_APPROVAL)
-    a.params["origen"] = ORIGEN_AGENTE
+    a.params["origen"] = cerebro.ORIGEN_AGENTE
 
 
 def cambio(session: Any, body: dict[str, Any]) -> dict[str, Any]:
@@ -597,56 +624,173 @@ def _vote_key(session: Any, d: dict[str, Any]) -> str | None:
 
 
 def _aplicar_decision(session: Any, d: dict[str, Any]) -> dict[str, Any]:
+    with session.lock:
+        validate_decision(d)
+        _validate_targets(session, d)
+        agent = session.agent
+        saved = deepcopy((
+            session.world.__dict__,
+            agent.incidents, agent.meta, agent.actions, agent.assign, agent.live,
+            agent._out, agent._inflight, agent._dispatch_of, agent._ids, agent.log,
+            agent.counters, agent.reroutes, agent.restricted,
+        ))
+        send = agent._send
+        memory = agent.memory
+        previous_actions = set(agent.actions)
+        pending: list[Action] = []
+        capture = session.receipts.capture
+        receipts = []
+        agent._send = pending.append
+        agent.memory = None
+        session.receipts.capture = lambda world, action, **kw: receipts.append((world.clone(), deepcopy(action), kw))
+        try:
+            out = _commit_decision(session, d)
+        except Exception:
+            (world, agent.incidents, agent.meta, agent.actions, agent.assign, agent.live,
+             agent._out, agent._inflight, agent._dispatch_of, agent._ids, agent.log,
+             agent.counters, agent.reroutes, agent.restricted) = saved
+            session.world.__dict__.clear()
+            session.world.__dict__.update(world)
+            agent.triage.incidents, agent.triage.meta, agent.triage.live = agent.incidents, agent.meta, agent.live
+            sync_agent(session)
+            raise
+        finally:
+            agent._send = send
+            agent.memory = memory
+            session.receipts.capture = capture
+        if memory is not None:
+            for aid in agent.actions.keys() - previous_actions:
+                action = agent.actions[aid]
+                memory.on_preparation(action, agent.incidents.get(action.incident))
+        for world, action, kwargs in receipts:
+            capture(world, action, **kwargs)
+        for action in pending:
+            if action.status not in (ActionStatus.EXECUTING, ActionStatus.DONE):
+                continue
+            status = action.status
+            try:
+                action.status = ActionStatus.EXECUTING
+                send(action)
+            except Exception as exc:
+                out["bloqueadas"].append({"que": "comunicacion", "action_id": action.id,
+                                          "motivo": type(exc).__name__})
+                out["ok"] = False
+                action.params["communication_error"] = type(exc).__name__
+                if action.incident in agent.meta:
+                    agent.meta[action.incident].dirty = "falló la comunicación"
+                    agent.meta[action.incident].broken = "falló la comunicación"
+                    session._cerebro_decided.discard(action.incident)
+            finally:
+                action.status = status
+        session._rebuild()
+        return out
+
+
+def _commit_decision(session, d: dict) -> dict:
     agent = session.agent
     aceptadas: list[dict[str, Any]] = []
     bloqueadas: list[dict[str, Any]] = []
     inc, creado = _ensure_incident(session, d)
-    if d.get("prioridad") is not None:
+    if d.get("prioridad") is not None and not d.get("requiere_persona"):
         inc.priority = float(d["prioridad"])
     meta = agent.meta[inc.id]
-    meta.origin = ORIGEN_AGENTE
+    meta.origin = cerebro.ORIGEN_AGENTE
     meta.dirty = None
     porque = d["porque"]
-    if d.get("fusionar_con") and d["fusionar_con"] != inc.id and d["fusionar_con"] in agent.incidents:
-        other = agent.incidents[d["fusionar_con"]]
-        for rid in other.reports:
-            if rid not in inc.reports:
-                inc.reports.append(rid)
-        other.notes.append(f"fusionado en {inc.id} por agente HR")
-        aceptadas.append({"que": "fusionar", "con": other.id})
-
-    for act in d.get("acciones") or []:
+    actions = d.get("acciones") or []
+    if d.get("requiere_persona"):
+        grave = [act for act in actions
+                 if _KIND[str(act.get("kind") or act.get("tipo")).strip().lower()] in _GRAVE_KIND]
+        pending = dict(d, requiere_persona=False, acciones=[act for act in actions if act not in grave])
+        if pending["acciones"] or pending.get("recursos") or pending.get("avisar") or not grave:
+            a = agent._emit(ActionKind.NOTIFY, inc, porque, channel=Channel.OPERATOR,
+                            params={"origen": cerebro.ORIGEN_AGENTE, "safety_decision": pending},
+                            status=ActionStatus.AWAITING_APPROVAL)
+            a.autonomy = Autonomy.APPROVE
+            agent._decision_card(a, inc)
+            agent.counters["approvals"] += 1
+            aceptadas.append({"ok": True, "kind": "notify", "action_id": a.id, "tarjeta": True})
+        actions = grave
+    for act in actions:
         _aplicar_accion(session, inc, act, porque, aceptadas, bloqueadas)
-    for rec in d.get("recursos") or []:
+    for rec in ([] if d.get("requiere_persona") else d.get("recursos") or []):
         _aplicar_recurso(session, inc, rec, porque, aceptadas, bloqueadas)
-    for aviso in d.get("avisar") or []:
+    for aviso in ([] if d.get("requiere_persona") else d.get("avisar") or []):
         _aplicar_aviso(session, inc, aviso, aceptadas, bloqueadas)
 
     if d.get("requiere_persona") and not any(x.get("tarjeta") for x in aceptadas):
         bloqueadas.append({"que": "requiere_persona", "motivo": "marcado para una persona; no se ejecuta solo"})
 
-    if meta.life_threat and not any(x.get("kind") == "dispatch" and x.get("ok") for x in aceptadas):
-        rid = _primer_libre(session, ("medical", "ambulance"))
+    if meta.life_threat and not _medical_committed(session, inc):
+        rid = _primer_libre(session, ("medical", "ambulance"), inc.zone)
         if rid:
             _aplicar_recurso(session, inc, rid, "barandilla: riesgo vital, despacho inmediato",
-                             aceptadas, bloqueadas, origen=ORIGEN_BARANDILLA)
-        else:
-            bloqueadas.append({"que": "despacho vital", "motivo": "no hay médico ni ambulancia libre"})
+                             aceptadas, bloqueadas, origen=cerebro.ORIGEN_BARANDILLA)
+        if not _medical_committed(session, inc):
+            bloqueadas.append({"que": "despacho vital", "motivo": "necesidad médica sin cobertura comprometida"})
+            if not any(a.incident == inc.id and a.kind == ActionKind.REQUEST_EXTERNAL
+                       and a.status == ActionStatus.AWAITING_APPROVAL for a in agent.actions.values()):
+                _aplicar_accion(session, inc, {"kind": "request_external", "service": "ambulance"},
+                                "Riesgo vital sin cobertura médica: solicitar apoyo sanitario",
+                                aceptadas, bloqueadas)
+    elif meta.life_threat and not any(x.get("kind") == "dispatch" for x in aceptadas):
+        rid = _medical_committed(session, inc)
+        if rid is not None:
+            _dispatch(session, inc, rid, inc.zone, "cobertura médica ya comprometida",
+                      aceptadas, bloqueadas, cerebro.ORIGEN_BARANDILLA)
 
     ids = [x["action_id"] for x in aceptadas if x.get("action_id")]
-    mark_decided(session, inc.id, ids)
-    session.log("action", f"DECISIÓN {ORIGEN_AGENTE}: {porque}", inc.id,
-                origen=ORIGEN_AGENTE, confianza=d.get("confianza"), supuesto=d.get("supuestos"))
+    if ids and not d.get("requiere_persona"):
+        cerebro.mark_decided(session, inc.id, ids)
+    if bloqueadas or (meta.life_threat and not _medical_committed(session, inc)):
+        meta.dirty = "necesidades pendientes tras decisión"
+        session._cerebro_decided.discard(inc.id)
+    session.log("action", f"DECISIÓN {cerebro.ORIGEN_AGENTE}: {porque}", inc.id,
+                origen=cerebro.ORIGEN_AGENTE, confianza=d.get("confianza"), supuesto=d.get("supuestos"))
     with session.lock:
         session._rebuild()
     session._wake.set()
     texto = (f"Aceptadas {len(aceptadas)}, bloqueadas {len(bloqueadas)}."
              + (f" Porque: {porque}" if porque else ""))
     return {
-        "ok": True, "texto": texto, "incident_id": inc.id, "nuevo": creado,
-        "origen": ORIGEN_AGENTE, "aceptadas": aceptadas, "bloqueadas": bloqueadas,
+        "ok": not bloqueadas, "texto": texto, "incident_id": inc.id, "nuevo": creado,
+        "origen": cerebro.ORIGEN_AGENTE, "aceptadas": aceptadas, "bloqueadas": bloqueadas,
         "confianza": d.get("confianza"), "requiere_persona": bool(d.get("requiere_persona")),
+        "pendiente": any(x.get("tarjeta") for x in aceptadas),
     }
+
+
+def approve_decision(session, action: Action, ok: bool, note: str) -> None:
+    with session.lock:
+        if action.status != ActionStatus.AWAITING_APPROVAL:
+            return
+        if not ok:
+            action.status = ActionStatus.REJECTED
+            action.params["operator_note"] = note
+            session.agent.meta[action.incident].dirty = "la persona rechazó la decisión"
+            return
+        decision = dict(action.params["safety_decision"], incident_id=action.incident)
+        try:
+            result = _aplicar_decision(session, decision)
+        except (ValueError, RuntimeError) as exc:
+            action = session.agent.actions[action.id]
+            action.status = ActionStatus.FAILED
+            action.params["error"] = str(exc)
+        else:
+            action.status = ActionStatus.DONE if not result["bloqueadas"] else ActionStatus.FAILED
+            action.params["application"] = result
+        action.params["operator_note"] = note
+
+
+def _medical_committed(session, inc: Incident) -> str | None:
+    return next((
+        rid for rid in inc.assigned
+        if rid in session.world.resources
+        and str(session.world.resources[rid].kind) in ("medical", "ambulance")
+        and session.world.resources[rid].task == inc.id
+        and str(session.world.resources[rid].status) in ("en_route", "on_scene", "busy")
+        and session.agent.assign.get(rid, (None, ""))[0] == inc.id
+    ), None)
 
 
 def memoria_guardar(session: Any, body: dict[str, Any]) -> dict[str, Any]:
@@ -762,9 +906,20 @@ def validate_decision(body: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("cada aviso es {rol|recurso, canal, mensaje}")
         if a.get("mensaje") is not None and (not isinstance(a["mensaje"], str) or len(a["mensaje"]) > 240):
             raise ValueError("mensaje de aviso demasiado largo")
+        for key in ("rol", "recurso", "to", "destino", "canal"):
+            _opt_str(a, key, 120)
     recursos = body.get("recursos") or []
     if not isinstance(recursos, list) or len(recursos) > 8:
         raise ValueError("recursos debe ser una lista corta")
+    for resource in recursos:
+        if isinstance(resource, str) and resource.strip():
+            continue
+        if not isinstance(resource, dict):
+            raise ValueError("cada recurso debe ser texto o un objeto")
+        for key in ("id", "recurso", "zona", "zone"):
+            _opt_str(resource, key, 120)
+        if not (resource.get("id") or resource.get("recurso")):
+            raise ValueError("el recurso necesita id")
     supuestos = body.get("supuestos") or []
     vigilar = body.get("vigilar") or []
     for name, seq in (("supuestos", supuestos), ("vigilar", vigilar)):
@@ -779,12 +934,30 @@ def validate_decision(body: dict[str, Any]) -> dict[str, Any]:
     for a in acciones:
         if not isinstance(a, dict) or not isinstance(a.get("kind") or a.get("tipo") or "", str):
             raise ValueError("cada acción es {kind, ...}")
+        kind = _KIND.get(str(a.get("kind") or a.get("tipo") or "").strip().lower())
+        if kind is None or kind in (ActionKind.MERGE, ActionKind.DISMISS):
+            raise ValueError("tipo de acción desconocido o no permitido")
+        for key in ("resource", "zone", "zona", "to", "hacia", "state", "message"):
+            _opt_str(a, key, 400)
+        for key in ("fraction", "minutes", "eta", "dest_peak_density"):
+            if key in a and (type(a[key]) not in (int, float) or not math.isfinite(a[key]) or a[key] < 0):
+                raise ValueError(f"{key} debe ser un número finito no negativo")
+        if kind in (ActionKind.DISPATCH, ActionKind.RECALL, ActionKind.RESUPPLY) and not a.get("resource"):
+            raise ValueError("la acción necesita resource")
+        if kind == ActionKind.REROUTE and not a.get("cancel") and not (a.get("to") or a.get("hacia")):
+            raise ValueError("el desvío necesita un destino")
+        if kind == ActionKind.SET_ZONE and a.get("state") not in ("open", "restricted", "closed"):
+            raise ValueError("estado de zona no válido")
     iid = body.get("incident_id") or body.get("incidente")
     if iid is not None and not isinstance(iid, str):
         raise ValueError("incident_id debe ser texto")
     fuse = body.get("fusionar_con")
     if fuse is not None and not isinstance(fuse, str):
         raise ValueError("fusionar_con debe ser texto")
+    if fuse:
+        raise ValueError("fusión explícita no soportada: conserva ambos incidentes y sus reservas")
+    _opt_str(body, "zona", 120)
+    _opt_str(body, "zone", 120)
     return {
         "incident_id": (iid or "").strip(), "fusionar_con": (fuse or "").strip(),
         "prioridad": prio, "porque": porque.strip(), "avisar": avisar, "recursos": recursos,
@@ -794,6 +967,64 @@ def validate_decision(body: dict[str, Any]) -> dict[str, Any]:
         "tipo": str(body.get("tipo") or "")[:40],
         "agente": str(body.get("agente") or "equipo")[:40],
     }
+
+
+def _validate_targets(session, decision: dict) -> None:
+    zones = {z["id"]: z["name"] for z in session.festival["zones"]}
+    if decision.get("zona") and not _zona(decision["zona"], zones):
+        raise ValueError("destino fuera de la lista blanca de zonas")
+    incident = session.agent.incidents.get(decision.get("incident_id"))
+    if incident and str(incident.status) in ("resolved", "closed", "dismissed", "merged"):
+        raise ValueError("el incidente ya está cerrado")
+    default = decision.get("zona") or (incident.zone if incident else None)
+    for action in decision.get("acciones") or []:
+        for key in ("zone", "zona"):
+            if action.get(key) and action[key] not in zones:
+                raise ValueError("destino fuera de la lista blanca de zonas")
+        if _KIND[str(action.get("kind") or action.get("tipo")).strip().lower()] == ActionKind.REROUTE:
+            dest = action.get("to") or action.get("hacia")
+            if dest and dest not in zones:
+                raise ValueError("destino fuera de la lista blanca de zonas")
+    resources = list(decision.get("recursos") or [])
+    resources.extend({"id": a["resource"], "zone": a.get("zone") or a.get("zona")}
+                     for a in decision.get("acciones") or []
+                     if _KIND[str(a.get("kind") or a.get("tipo")).strip().lower()] == ActionKind.DISPATCH)
+    for entry in resources:
+        rid = entry if isinstance(entry, str) else entry.get("id") or entry.get("recurso")
+        dest = default if isinstance(entry, str) else entry.get("zona") or entry.get("zone") or default
+        if dest and not _zona(dest, zones):
+            raise ValueError("destino fuera de la lista blanca de zonas")
+        resource = session.world.resources.get(rid)
+        if resource is None:
+            alias = _alias_recurso(rid, session.world.resources)
+            resource = session.world.resources.get(alias)
+            rid = alias or rid
+        if resource is None:
+            raise ValueError(f"recurso inexistente: {rid}")
+        owner = session.agent.assign.get(rid)
+        if owner and incident and owner[0] == incident.id and resource.task == incident.id:
+            continue
+        if str(resource.status) != "available" or owner:
+            raise ValueError(f"recurso ocupado: {rid}")
+        if not dest:
+            report = Report("validation", session.world.t, Channel.OPERATOR,
+                            decision.get("texto") or decision["porque"])
+            dest = HeuristicParser().parse(report, session.world.observe().zones)["zone"]
+        if not dest:
+            raise ValueError("el despacho necesita un destino confirmado")
+        if resource is not None and str(resource.status) == "available" and dest:
+            eta = session.world.travel_time(resource.zone, _zona(dest, zones), rid)
+            if eta is None or not math.isfinite(eta):
+                raise ValueError("ruta no disponible")
+    for notice in decision.get("avisar") or []:
+        role = notice.get("rol") or notice.get("recurso") or notice.get("to") or ""
+        dest = notice.get("destino") or role
+        if _PHONE.search(dest) or dest.lstrip("+").isdigit():
+            number = normalize_number(dest)
+            if number in NEVER_DIAL or number.lstrip("+") in NEVER_DIAL or number not in allowed_numbers():
+                raise ValueError("destino fuera de la lista blanca")
+        if not slot_for_role(role) and role not in session.world.resources and role not in WORKFLOW_NAMES:
+            raise ValueError("destino fuera de la lista blanca")
 
 
 def parse_opcion(texto: str, zone_names: dict[str, str], resources: dict[str, Any]) -> dict[str, Any]:
@@ -1006,7 +1237,7 @@ def _ensure_incident(session: Any, d: dict[str, Any]) -> tuple[Any, bool]:
                    severity=max(1, int(p["severity"] or 5)), t_open=session.world.t,
                    deadline=(session.world.t + spec.deadline) if spec.deadline else None,
                    needs=dict(p.get("needs") or {}), reports=[], confidence=float(p.get("confidence") or 0.7))
-    meta = IncidentMeta(group=spec.group, origin=ORIGEN_AGENTE,
+    meta = IncidentMeta(group=spec.group, origin=cerebro.ORIGEN_AGENTE,
                         life_threat=bool(p.get("life_threat", spec.life_threat)),
                         reserved=bool(p.get("reserved", spec.reserved)), last_report_t=session.world.t)
     agent.incidents[nid] = inc
@@ -1017,12 +1248,12 @@ def _ensure_incident(session: Any, d: dict[str, Any]) -> tuple[Any, bool]:
 
 
 def _aplicar_recurso(session: Any, inc: Any, rec: Any, porque: str, aceptadas: list, bloqueadas: list,
-                     origen: str = ORIGEN_AGENTE) -> None:
+                     origen: str | None = None) -> None:
     rid = rec if isinstance(rec, str) else str((rec or {}).get("id") or (rec or {}).get("recurso") or "")
     zona = None
     if isinstance(rec, dict):
         zona = rec.get("zona") or rec.get("zone")
-    _dispatch(session, inc, rid, zona, porque, aceptadas, bloqueadas, origen)
+    _dispatch(session, inc, rid, zona, porque, aceptadas, bloqueadas, origen or cerebro.ORIGEN_AGENTE)
 
 
 def _dispatch(session: Any, inc: Any, rid: str, zona: str | None, porque: str,
@@ -1037,7 +1268,7 @@ def _dispatch(session: Any, inc: Any, rid: str, zona: str | None, porque: str,
         bloqueadas.append({"que": "recurso", "id": rid, "motivo": "recurso inexistente"})
         return
     prev = getattr(agent, "assign", {}).get(rid)
-    if (prev and prev[0] == inc.id) or rid in (inc.assigned or []):
+    if prev and prev[0] == inc.id and r.task == inc.id and str(r.status) != "available":
         dest = zona or inc.zone
         aceptadas.append({"ok": True, "kind": "dispatch", "recurso": rid, "zona": dest,
                           "ya_cumplido": True, "origen": origen,
@@ -1051,6 +1282,9 @@ def _dispatch(session: Any, inc: Any, rid: str, zona: str | None, porque: str,
         bloqueadas.append({"que": "recurso", "id": rid, "motivo": "destino fuera de la lista blanca de zonas"})
         return
     eta = session.world.travel_time(r.zone, dest, rid) if dest else None
+    if eta is None or not math.isfinite(eta):
+        bloqueadas.append({"que": "recurso", "id": rid, "motivo": "ruta no disponible"})
+        return
     agent.assign[rid] = (inc.id, str(r.kind))
     if rid not in inc.assigned:
         inc.assigned.append(rid)
@@ -1078,24 +1312,24 @@ def _aplicar_accion(session: Any, inc: Any, act: dict, porque: str, aceptadas: l
         bloqueadas.append({"que": kind_s, "motivo": "destino fuera de la lista blanca de zonas"})
         return
     params = {k: v for k, v in act.items() if k not in ("kind", "tipo", "zone", "zona")}
-    params["origen"] = ORIGEN_AGENTE
+    params["origen"] = cerebro.ORIGEN_AGENTE
     if kind in _GRAVE_KIND:
         a = session.agent._emit(kind, inc, porque, zone=None if kind == ActionKind.STOP_SHOW else zona,
                                 params=params)
-        a.params["origen"] = ORIGEN_AGENTE
+        a.params["origen"] = cerebro.ORIGEN_AGENTE
         aceptadas.append({"ok": True, "kind": kind_s, "action_id": a.id, "tarjeta": True,
                           "status": str(a.status), "motivo": "evacuar / parar / ayuda externa → persona",
-                          "origen": ORIGEN_AGENTE})
+                          "origen": cerebro.ORIGEN_AGENTE})
         return
     if kind == ActionKind.DISPATCH:
-        _dispatch(session, inc, str(act.get("resource") or ""), zona, porque, aceptadas, bloqueadas, ORIGEN_AGENTE)
+        _dispatch(session, inc, str(act.get("resource") or ""), zona, porque, aceptadas, bloqueadas, cerebro.ORIGEN_AGENTE)
         return
     a = session.agent._emit(kind, inc, porque, zone=zona, resource=act.get("resource"),
                             channel=Channel.OPERATOR if kind not in (ActionKind.NOTIFY, ActionKind.ASK) else Channel.VOICE,
                             params=params)
-    a.params["origen"] = ORIGEN_AGENTE
+    a.params["origen"] = cerebro.ORIGEN_AGENTE
     _apply_auto(session, a)
-    aceptadas.append({"ok": True, "kind": kind_s, "action_id": a.id, "status": str(a.status), "origen": ORIGEN_AGENTE})
+    aceptadas.append({"ok": True, "kind": kind_s, "action_id": a.id, "status": str(a.status), "origen": cerebro.ORIGEN_AGENTE})
 
 
 def _aplicar_aviso(session: Any, inc: Any, aviso: dict, aceptadas: list, bloqueadas: list) -> None:
@@ -1118,14 +1352,14 @@ def _aplicar_aviso(session: Any, inc: Any, aviso: dict, aceptadas: list, bloquea
         if not destino:
             bloqueadas.append({"que": "avisar", "rol": rol, "motivo": "destino fuera de la lista blanca"})
             return
-    params = {"to": rol or slot, "message": mensaje, "origen": ORIGEN_AGENTE, "canal": canal}
+    params = {"to": rol or slot, "message": mensaje, "origen": cerebro.ORIGEN_AGENTE, "canal": canal}
     a = session.agent._emit(ActionKind.NOTIFY, inc, mensaje or "aviso del agente",
                             resource=rol if rol in session.world.observe().resources else None,
                             channel=Channel.VOICE, params=params)
-    a.params["origen"] = ORIGEN_AGENTE
+    a.params["origen"] = cerebro.ORIGEN_AGENTE
     _apply_auto(session, a)
     aceptadas.append({"ok": True, "kind": "notify", "action_id": a.id, "rol": rol, "canal": canal,
-                      "origen": ORIGEN_AGENTE})
+                      "origen": cerebro.ORIGEN_AGENTE})
 
 
 def _apply_auto(session: Any, a: Action) -> None:
@@ -1136,15 +1370,19 @@ def _apply_auto(session: Any, a: Action) -> None:
     try:
         session.receipts.capture(session.world, a, human=False)
         session.world.apply(a)
-    except Exception:
-        pass
+    except Exception as exc:
+        raise ValueError(f"falló la aplicación de {a.kind}: {type(exc).__name__}") from exc
+    if a.status not in (ActionStatus.EXECUTING, ActionStatus.DONE):
+        raise ValueError(f"falló la aplicación de {a.kind}: {a.params.get('error') or a.status}")
 
 
-def _primer_libre(session: Any, kinds: tuple[str, ...]) -> str | None:
+def _primer_libre(session, kinds: tuple[str, ...], zone: str | None = None) -> str | None:
     obs = session.world.observe()
-    assigned = getattr(session.agent, "assign", {})
+    assigned = session.agent.assign
     for kind in kinds:
         for r in obs.resources.values():
             if str(r.kind) == kind and str(r.status) == "available" and r.id not in assigned:
-                return r.id
+                eta = session.world.travel_time(r.zone, zone, r.id) if zone else None
+                if eta is not None and math.isfinite(eta):
+                    return r.id
     return None

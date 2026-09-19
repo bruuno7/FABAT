@@ -14,6 +14,7 @@ import time
 from typing import Any
 
 from motor.contracts import Action, ActionKind, ActionStatus, ALWAYS_APPROVE
+from . import cerebro_tools
 
 ORIGEN_AGENTE = "agente HR"
 ORIGEN_PLAN_B = "plan B reglas"
@@ -58,6 +59,7 @@ def attach(session: Any) -> None:
     agent._cerebro_wrapped = True
     original_plan = agent._plan_dirty
     original_send = agent._send
+    original_approve = agent.approve
 
     def plan_dirty() -> None:
         _plan_dirty_gated(session, original_plan)
@@ -66,8 +68,17 @@ def attach(session: Any) -> None:
         if _should_send(session, a):
             original_send(a)
 
+    def approve(action_id: str, ok: bool, note: str = "") -> None:
+        with session.lock:
+            action = agent.actions.get(action_id)
+            if action and action.params.get("safety_decision"):
+                cerebro_tools.approve_decision(session, action, ok, note)
+            else:
+                original_approve(action_id, ok, note)
+
     agent._plan_dirty = plan_dirty
     agent._send = send
+    agent.approve = approve
 
 
 def after_tick(session: Any, actions: list[Action]) -> list[Action]:
@@ -146,7 +157,9 @@ def _plan_dirty_gated(session: Any, original: Any) -> None:
         if meta.life_threat:
             allow = True
         elif inc.id in session._cerebro_decided:
-            allow = bool(meta.broken and meta.dirty)
+            allow = bool(meta.dirty or meta.broken)
+            if allow:
+                session._cerebro_seen[inc.id] = now - to
         elif m == "abanico":
             allow = inc.id in getattr(session, "_abanico_allow_reglas", set())
             if allow and inc.id not in logged_b and meta.dirty:
@@ -197,6 +210,8 @@ def _should_send(session: Any, a: Action) -> bool:
         return True
     inc = a.incident
     meta = session.agent.meta.get(inc) if inc and hasattr(session.agent, "meta") else None
+    if meta and inc in session._cerebro_decided and (meta.dirty or meta.broken):
+        return True
     if meta and meta.life_threat and a.kind == ActionKind.DISPATCH:
         return True
     if inc and time.monotonic() - float(session._cerebro_seen.get(inc, time.monotonic())) >= timeout_s():

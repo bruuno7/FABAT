@@ -20,6 +20,7 @@ import tempfile
 import threading
 import time
 from datetime import datetime, timezone
+from dataclasses import dataclass
 from pathlib import Path
 from statistics import median
 from typing import Any, Callable
@@ -28,7 +29,7 @@ from . import privacy
 
 
 DEFAULT_PATH = Path(__file__).resolve().parent / "data" / "mando.db"
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 _STOP = object()
 _SECRET_KEYS = ("token", "secret", "phone", "telefono", "teléfono", "contact", "number")
 _LOG = logging.getLogger(__name__)
@@ -132,6 +133,7 @@ def _migrate(db: sqlite3.Connection) -> None:
     if version >= SCHEMA_VERSION:
         return
     db.executescript("""
+        BEGIN IMMEDIATE;
         CREATE TABLE IF NOT EXISTS escenas (
             id TEXT PRIMARY KEY, caso TEXT, semilla INTEGER, inicio TEXT NOT NULL,
             fin TEXT, fin_min INTEGER, modo_comunicaciones TEXT
@@ -222,8 +224,6 @@ def _migrate(db: sqlite3.Connection) -> None:
         CREATE INDEX IF NOT EXISTS idx_partes_unidad ON partes_personal(escena_id, unidad, minuto);
         CREATE INDEX IF NOT EXISTS idx_servicios_minuto ON servicios_muestras(escena_id, servicio, minuto);
         CREATE INDEX IF NOT EXISTS idx_eventos_minuto ON eventos(escena_id, minuto);
-    """)
-    db.executescript("""
         CREATE TABLE IF NOT EXISTS sessions (
             session_id TEXT PRIMARY KEY, started_at REAL NOT NULL, case_id TEXT,
             voice_mode TEXT, speed REAL, comms_mode TEXT
@@ -241,7 +241,6 @@ def _migrate(db: sqlite3.Connection) -> None:
             closed_at REAL NOT NULL, text_scrubbed TEXT, t INTEGER, seed INTEGER
         );
         CREATE INDEX IF NOT EXISTS idx_events_session_ts ON events(session_id, ts_unix);
-        CREATE INDEX IF NOT EXISTS idx_events_corr ON events(incidente_id, accion_id);
         CREATE INDEX IF NOT EXISTS idx_episodes_kind_result ON episodes(kind, result);
         CREATE INDEX IF NOT EXISTS idx_episodes_real_fb ON episodes(real, fell_back);
         CREATE TABLE IF NOT EXISTS cerebro_episodes (
@@ -257,7 +256,6 @@ def _migrate(db: sqlite3.Connection) -> None:
         CREATE INDEX IF NOT EXISTS idx_cerebro_tipo_zona ON cerebro_episodes(tipo, zona);
         CREATE INDEX IF NOT EXISTS idx_cerebro_franja ON cerebro_episodes(franja);
         CREATE INDEX IF NOT EXISTS idx_cerebro_texto ON cerebro_episodes(texto_busqueda);
-        CREATE INDEX IF NOT EXISTS idx_cerebro_agente ON cerebro_episodes(agente);
         CREATE TABLE IF NOT EXISTS cerebro_lecciones (
             id TEXT PRIMARY KEY, ts_unix REAL NOT NULL, texto TEXT NOT NULL,
             evidencia_json TEXT NOT NULL DEFAULT '{}', estado TEXT NOT NULL,
@@ -311,6 +309,8 @@ def _migrate(db: sqlite3.Connection) -> None:
     _ensure_column(db, "cerebro_episodes", "supuestos_json", "TEXT")
     _ensure_column(db, "cerebro_lecciones", "para_agente", "TEXT")
     _ensure_column(db, "cerebro_lecciones", "revocada", "INTEGER")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_events_corr ON events(incidente_id, accion_id)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_cerebro_agente ON cerebro_episodes(agente)")
     db.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     db.commit()
 
@@ -329,8 +329,13 @@ class _SqlJob:
         self.error: BaseException | None = None
 
 
+@dataclass
+class _Snapshot:
+    state: dict
+
+
 class Store:
-    """Un fichero, un hilo escritor, cola acotada. Si falla, los productores no lanzan."""
+    """Un escritor SQLite con snapshots acotados y trabajos SQL fiables."""
 
     def __init__(self, path: Path | None, *, queue_size: int = 16,
                  on_warning: Callable[[str], None] | None = None) -> None:
@@ -343,7 +348,9 @@ class Store:
         self.refcount = 0
         self.host: Any = None
         self._warning = on_warning
-        self._queue: queue.Queue[Any] = queue.Queue(maxsize=max(1, int(queue_size)))
+        self._queue: queue.Queue = queue.Queue()
+        self._snapshot_limit = max(1, int(queue_size))
+        self._snapshots: list[_Snapshot] = []
         self._lifecycle = threading.Lock()
         self._ready = threading.Event()
         self._previous: dict[tuple[str, str, str], str] = {}
@@ -383,29 +390,22 @@ class Store:
                 session = snapshot.get("session") if isinstance(snapshot.get("session"), dict) else {}
                 self._last_scene = str(session.get("id") or "") or self._last_scene
                 self._last_minute = int(snapshot.get("t") or 0)
-                try:
-                    self._queue.put_nowait(snapshot)
-                except queue.Full:
-                    try:
-                        self._queue.get_nowait()
-                        self._queue.task_done()
-                        self.dropped += 1
-                    except queue.Empty:
-                        pass
-                    self._queue.put_nowait(snapshot)
+                if len(self._snapshots) >= self._snapshot_limit:
+                    self._snapshots[-1].state = snapshot
+                    self.dropped += 1
+                else:
+                    item = _Snapshot(snapshot)
+                    self._snapshots.append(item)
+                    self._queue.put_nowait(item)
             except Exception as exc:
                 self._fail(exc)
 
     def write(self, fn: Callable[[sqlite3.Connection], Any], *, timeout: float = 5.0) -> Any:
-        if self.path is None or self.closed or not self.enabled:
-            return None
-        job = _SqlJob(fn)
-        try:
-            self._queue.put(job, timeout=min(1.0, timeout))
-        except queue.Full:
-            self.dropped += 1
-            self._fail(RuntimeError("cola SQLite llena"))
-            return None
+        with self._lifecycle:
+            if self.path is None or self.closed or not self.enabled:
+                return None
+            job = _SqlJob(fn)
+            self._queue.put_nowait(job)
         if not job.event.wait(timeout):
             self._fail(TimeoutError("escritura SQLite sin respuesta"))
             return None
@@ -489,10 +489,16 @@ class Store:
                         finally:
                             item.event.set()
                         continue
+                    if not isinstance(item, _Snapshot):
+                        continue
+                    with self._lifecycle:
+                        self._snapshots.remove(item)
+                        snapshot = item.state
                     host = self.host
                     if host is not None:
-                        host._record(db, item)
-                    elif isinstance(item, dict):
+                        with db:
+                            host._record(db, snapshot)
+                    else:
                         continue
                 except Exception as exc:
                     if db is not None:
@@ -506,9 +512,19 @@ class Store:
             self._fail(exc)
             self._ready.set()
         finally:
+            self.enabled = False
             self._ready.set()
             if db is not None:
                 db.close()
+            while True:
+                try:
+                    item = self._queue.get_nowait()
+                except queue.Empty:
+                    break
+                if isinstance(item, _SqlJob):
+                    item.error = RuntimeError("el escritor SQLite está cerrado")
+                    item.event.set()
+                self._queue.task_done()
 
 
 def open_store(path: str | Path | None, *, queue_size: int = 16,

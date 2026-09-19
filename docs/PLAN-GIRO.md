@@ -80,3 +80,20 @@ que el agente observa, las herramientas que usa y la pantalla donde se le superv
   lecciones a la vista) y vídeo; Ana = cerebro, herramientas, reevalúa, aprende, evals y limpieza.
 - ¿Twin está aprovisionado? ¿Hay API key de HappyRobot con rol de edición y túnel estable?
 - Decidir hoy la interfaz única.
+
+## Enjambre de agentes que se regulan entre ellos (añadido 16:15)
+Lo que nos separa de todos: no es una cadena fija de agentes, es una **red** que se habla, se corrige y aprende.
+1. **Pizarra común** (blackboard): cada agente PUBLICA lo que ha visto, propuesto y decidido, y LEE lo de los demás antes de
+   actuar. Los workflows se llaman entre ellos cuando hace falta (el vigía reactiva a prioridad y recursos solo de lo
+   afectado; el crítico devuelve una corrección al especialista que se equivocó, que vuelve a decidir).
+2. **Revisión entre pares**: el crítico —y cualquier agente sobre la salida de otro— deja una revisión (acuerdo, objeción,
+   corrección) en la pizarra; los desacuerdos no resueltos se escalan a una persona.
+3. **Confianza aprendida por agente**: al cerrar cada incidente se compara lo que propuso cada agente con lo que pasó; cada
+   agente acumula una puntuación de acierto por tipo de situación (con su N). El coordinador pesa las propuestas por esa
+   confianza: un agente que acierta gana voz, uno que falla la pierde y recibe más revisión. Es la «regularización» entre ellos.
+4. **Lecciones por agente**: el agente de aprendizaje propone lecciones dirigidas a un agente concreto («Recursos: en incendios
+   de restauración manda técnico y seguridad a la vez», evidencia N), una persona las aprueba, y ese agente las recibe en su
+   contexto. Así cada uno va a mejor y se ve.
+5. **A la vista**: pestaña «Enjambre» en la Sala: red de agentes con los mensajes entre ellos, revisiones, confianza de cada
+   uno a lo largo del día y lecciones activas.
+Barandillas intactas: nada de esto puede saltarse que lo grave lo decide una persona ni que lo vital no espera.

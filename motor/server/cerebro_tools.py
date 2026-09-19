@@ -32,51 +32,47 @@ _KIND.update({"evacuar": ActionKind.EVACUATE, "parar": ActionKind.STOP_SHOW,
 _ZONA_ALIAS = {"foso": "front_pit", "pit": "front_pit", "foso de escenario": "front_pit"}
 
 
+def _invoke(fn, *args, **kwargs):
+    try:
+        return _safe(fn(*args, **kwargs))
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    except (TypeError, OverflowError):
+        raise HTTPException(422, "entrada de tipo incorrecto")
+
+
 def mount(app: Any, get_session: Any, check_token: Any, operator: Any) -> None:
     @app.post("/hr/tools/contexto")
     async def hr_contexto(request: Request) -> dict[str, Any]:
         check_token(request)
-        try:
-            return _safe(contexto(get_session(), await _body(request)))
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        return _invoke(contexto, get_session(), await _body(request))
 
     @app.post("/hr/tools/ensayar")
     async def hr_ensayar(request: Request) -> dict[str, Any]:
         check_token(request)
-        try:
-            return _safe(ensayar(get_session(), await _body(request)))
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        return _invoke(ensayar, get_session(), await _body(request))
 
     @app.post("/hr/tools/decidir")
     async def hr_decidir(request: Request) -> dict[str, Any]:
         check_token(request)
-        try:
-            return _safe(decidir(get_session(), await _body(request)))
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        return _invoke(decidir, get_session(), await _body(request))
 
     @app.post("/hr/tools/cambio")
     async def hr_cambio(request: Request) -> dict[str, Any]:
         check_token(request)
-        try:
-            return _safe(cambio(get_session(), await _body(request)))
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        return _invoke(cambio, get_session(), await _body(request))
 
     @app.post("/hr/tools/memoria/guardar")
     async def hr_mem_guardar(request: Request) -> dict[str, Any]:
         check_token(request)
-        try:
-            return _safe(memoria_guardar(get_session(), await _body(request)))
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        return _invoke(memoria_guardar, get_session(), await _body(request))
 
     @app.post("/hr/tools/memoria/buscar")
     async def hr_mem_buscar(request: Request) -> dict[str, Any]:
         check_token(request)
-        return _safe(memoria_buscar(get_session(), await _body(request)))
+        return _invoke(memoria_buscar, get_session(), await _body(request))
 
     @app.post("/hr/tools/memoria/lecciones")
     async def hr_mem_lecciones(request: Request) -> dict[str, Any]:
@@ -85,10 +81,7 @@ def mount(app: Any, get_session: Any, check_token: Any, operator: Any) -> None:
         accion = str(body.get("accion") or "listar").strip().lower()
         if accion in ("aprobar", "rechazar", "revocar"):
             operator(request)
-        try:
-            return _safe(memoria_lecciones(get_session(), body, by=str(body.get("by") or "")[:40]))
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        return _invoke(memoria_lecciones, get_session(), body, by=str(body.get("by") or "")[:40])
 
     @app.post("/api/memoria/lecciones")
     async def api_mem_lecciones(request: Request) -> dict[str, Any]:
@@ -96,10 +89,7 @@ def mount(app: Any, get_session: Any, check_token: Any, operator: Any) -> None:
         body = await _body(request)
         if "accion" not in body:
             body = dict(body, accion="aprobar" if body.get("approve") else "rechazar")
-        try:
-            return _safe(memoria_lecciones(get_session(), body, by=str(body.get("by") or "operador")[:40]))
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        return _invoke(memoria_lecciones, get_session(), body, by=str(body.get("by") or "operador")[:40])
 
     @app.get("/api/agentes/{incident_id}")
     def api_agentes(incident_id: str) -> dict[str, Any]:
@@ -112,16 +102,13 @@ def mount(app: Any, get_session: Any, check_token: Any, operator: Any) -> None:
     from . import adaptativo, enjambre, observar
 
     def _tool(path: str, fn: Any, *, need_operator: bool = False):
-        @app.post(path)
-        async def _h(request: Request, _fn=fn, _op=need_operator) -> dict[str, Any]:
+        async def _h(request: Request) -> dict[str, Any]:
             check_token(request)
-            if _op:
+            if need_operator:
                 operator(request)
-            try:
-                return _safe(_fn(get_session(), await _body(request)))
-            except ValueError as exc:
-                raise HTTPException(422, str(exc))
-        _h.__name__ = path.replace("/", "_")
+            return _invoke(fn, get_session(), await _body(request))
+        _h.__name__ = path.replace("/", "_").strip("_")
+        app.add_api_route(path, _h, methods=["POST"])
         return _h
 
     _tool("/hr/tools/pizarra/publicar", enjambre.publicar)
@@ -142,10 +129,7 @@ def mount(app: Any, get_session: Any, check_token: Any, operator: Any) -> None:
     @app.post("/hr/tools/prompt/proponer")
     async def hr_prompt_prop(request: Request) -> dict[str, Any]:
         check_token(request)
-        try:
-            return _safe(adaptativo.proponer_prompt(get_session(), await _body(request)))
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        return _invoke(adaptativo.proponer_prompt, get_session(), await _body(request))
 
     @app.post("/hr/tools/prompt/listar")
     async def hr_prompt_list(request: Request) -> dict[str, Any]:
@@ -158,16 +142,13 @@ def mount(app: Any, get_session: Any, check_token: Any, operator: Any) -> None:
     @app.post("/hr/tools/prompt/comparar")
     async def hr_prompt_cmp(request: Request) -> dict[str, Any]:
         check_token(request)
-        return _safe(adaptativo.comparar_prompts(get_session(), await _body(request)))
+        return _invoke(adaptativo.comparar_prompts, get_session(), await _body(request))
 
     @app.post("/api/prompt/versiones")
     async def api_prompt_ver(request: Request) -> dict[str, Any]:
         operator(request)
         body = await _body(request)
-        try:
-            return _safe(adaptativo.decidir_prompt(get_session(), body, by=str(body.get("by") or "operador")[:40]))
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        return _invoke(adaptativo.decidir_prompt, get_session(), body, by=str(body.get("by") or "operador")[:40])
 
     @app.get("/api/adaptacion")
     def api_adaptacion() -> dict[str, Any]:

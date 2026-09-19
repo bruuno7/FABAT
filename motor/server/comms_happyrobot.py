@@ -1178,7 +1178,9 @@ class HappyRobotComms:
 
     def takeover_token(self, action_id: str, takeover: bool) -> dict[str, Any]:
         """Escucha oculta (takeover=False) o TOMA de la llamada por una persona: el agente de voz se cae."""
-        call = self.calls.get(action_id) or {}
+        call = self.calls.get(action_id)
+        if not call:
+            raise KeyError(action_id)
         session_id = call.get("hr_session_id")
         if not session_id:
             raise RuntimeError("todavía no se conoce la sesión de esa llamada")

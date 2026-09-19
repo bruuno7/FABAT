@@ -1,5 +1,33 @@
 # Publicar el equipo de agentes — development
 
+Actualización 19-09-2026: corrección de retorno y espera síncrona, basada en los runs `cbd133ee-2c67-4a5d-a88a-1cb21f65c4e1` y `8959a3fd-f2ff-49cf-84ca-bb3e5d841d7c`.
+
+Los seis especialistas usan `entregar_resultado.payload_json` si es un objeto JSON; en su ausencia recuperan el último evento `_terminate` del agente (`events[].reasoning`). Si contiene JSON, lo devuelven; si es texto, devuelven `{agente,razonamiento,confianza:null}`. El retorno está fuera de las tools, con **Response node** activo. El prompt exige siempre `entregar_resultado`.
+
+El coordinador espera a los seis especialistas (`fire_and_forget=false`, timeout 90 s, development explícito) y selecciona sus nuevos nodos de respuesta. Su prompt exige triaje → prioridad → recursos → avisos (planificar) → crítico → decidir → memoria_guardar. Vigía precede esa secuencia para cambios. Ante evidencia incompleta, conserva el error y escala sin fabricar aprobación ni ejecutar el plan. Avisos no recibe fase ejecutar del coordinador, evitando aplicar dos veces.
+
+| Workflow | Versión LIVE development | Nodo final (node-id) | Clics pendientes |
+|---|---|---|---|
+| `prueba-ana-agente-triaje` | v3 | `01a0ba36-0e84-7a68-893b-2c49a1af3d73` | Ninguno |
+| `prueba-ana-agente-prioridad` | v2 | `01a0ba39-0041-7ff4-a46b-17caf3c50bb4` | Ninguno |
+| `prueba-ana-agente-recursos` | v2 | `01a0ba39-2ae3-7c7a-bd04-1277dce4033f` | Ninguno |
+| `prueba-ana-agente-avisos` | v2 | `01a0ba39-5e4b-7319-b1d3-35dd7ada8149` | Ninguno |
+| `prueba-ana-agente-vigia` | v2 | `01a0ba39-88d7-7edc-8acb-f11d82665bbe` | Ninguno |
+| `prueba-ana-agente-critico` | v2 | `01a0ba39-b2d4-7278-b4c6-f95e819de0f0` | Ninguno |
+| `prueba-ana-equipo` | v5 | No añadido; cambio de prompt y seis Call Workflow | Ninguno |
+
+URLs exactas de los editores: fichero privado `/Users/anayang/workspace/hackspain-2026/motor/happyrobot/PLATAFORMA_REAL.md`, sección «Retorno robusto y espera síncrona — 19-09-2026». No hubo bloqueo de View Tool Call Result.
+
+Verificación: cuatro casos locales del Python de retorno pasaron sin red (JSON de tool, JSON final sin tool, texto final y entrada vacía). Los seis Call Workflow se releían correctamente con espera, 90 s, development y nuevo nodo final. Las referencias events/payload se comprobaron disponibles. Publicación aceptada con avisos informativos Missing variables; no se acredita prueba extremo a extremo.
+
+La revisión automática rechazó fix_broken_vars para avisos, vigía, crítico y coordinador: su dry-run invoca test-all e intenta POST. En triaje, prioridad y recursos los intentos con callback de ejemplo fallaron por URL sin protocolo; no hubo envío válido. Se sustituyó por inspección sin ejecución y pruebas locales. No se usó trigger_run, git ni hackspain; sin compras ni acciones en production. La próxima ejecución la lanza Ana.
+
+---
+
+## Historial anterior (sustituido por el estado de arriba)
+
+# Publicar el equipo de agentes — development
+
 Estado comprobado por MCP EU el 19-09-2026: **10 workflows LIVE en development; prueba-ana-cerebro sigue en borrador**. Hubo publicaciones concurrentes durante la revisión. Esta tabla describe los pendientes finales, no los errores iniciales. No republicar los que ya están LIVE.
 
 | Workflow | Estado | Tools con «View Tool Call Result» pendiente |

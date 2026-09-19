@@ -46,11 +46,6 @@ def parse_fase(raw: Any, agente: str = "") -> str | None:
     raise ValueError("fase debe ser rapida o revision")
 
 
-_REVISION_TOKEN = {"confirma", "corrige", "confirmar", "corregir", "aprobar", "confirm"}
-_CONFIRMA = {"confirma", "confirmar", "confirm", "aprobar", "aprueba", "ok", "acuerdo"}
-_CORRIGE = {"corrige", "corregir", "correct", "objecion"}
-
-
 def parse_veredicto(body: dict[str, Any]) -> str | None:
     raw = body.get("veredicto")
     if raw is None and isinstance(body.get("revision"), str):

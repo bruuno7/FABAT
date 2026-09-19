@@ -729,12 +729,17 @@
     const revS = fmtLatency(v.revision_s);
     const ver = String(v.revision || "pendiente").toUpperCase();
     let line = "Decisión rápida en " + (rap || "—");
-    if (ver === "PENDIENTE" && revS == null) line += " · revisión del enjambre: PENDIENTE";
-    else line += " · revisión del enjambre en " + (revS || "—") + ": " + ver;
-    const cls = ver === "CORRIGE" ? " corrige" : ver === "CONFIRMA" ? " confirma" : "";
+    if (ver === "PENDIENTE" && revS == null) {
+      line += " · revisión del enjambre: PENDIENTE";
+    } else {
+      line += " · revisión del enjambre en " + (revS || "—") + ": " + ver;
+    }
+    let cls = "";
+    if (ver === "CORRIGE") cls = " corrige";
+    else if (ver === "CONFIRMA") cls = " confirma";
     let extra = "";
     if (ver === "CORRIGE") {
-      const fase = ((card.fases || {}).revision || {});
+      const fase = (card.fases || {}).revision || {};
       const cambio = card.plan_cambio || {};
       const why = fase.porque || cambio.porque || "";
       const plan = cambio.nuevo || cambio.objetivo || "";

@@ -1,7 +1,7 @@
 # Workflows de HappyRobot para Mando
 
 Carpeta privada. Nada de esto se sube a ningún repo ni servicio externo. Este documento es la
-especificación para montar los workflows a mano en `platform.eu.happyrobot.ai/hackspainteam6`.
+especificación para montar los workflows a mano en `platform.eu.happyrobot.ai/<workspace>`.
 El JSON exacto de cada mensaje está en `webhook_contract.json` (fuente de verdad: si este documento
 y el contrato discrepan, manda el contrato). Los prompts están en `PROMPTS.md`, las reglas en
 `NORTHSTARS.md`, las pruebas en `TESTS.md`.

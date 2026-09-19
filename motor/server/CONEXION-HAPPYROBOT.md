@@ -7,6 +7,10 @@ URLs y payloads: [registro de plataforma](../happyrobot/PLATAFORMA_REAL.md),
    Mantenerla fuera del repo. No reutilizar la clave como token de webhooks.
 2. Abrir los triggers de development y copiar sus URLs. Slugs: teléfono `slug-despacho-telefono`, Web call
    despacho `slug-despacho-webcall`, voz pública `slug-ingesta-voz`, texto `slug-ingesta-texto`, chat `slug-asistente-chat`.
+   Son marcadores neutros: configura los slugs reales en `.env` mediante `HR_WORKFLOW_DISPATCH`,
+   `HR_WORKFLOW_WEBCALL`, `HR_WORKFLOW_VOICE`, `HR_WORKFLOW_INTAKE` y `HR_WORKFLOW_CHAT`, o copia las URLs
+   explícitas en `HR_HOOK_DISPATCH`, `HR_DISPATCH_WEBCALL_URL`, `HR_WEBCALL_PUBLIC_URL`, `HR_HOOK_INTAKE`
+   y `HR_CHAT_PUBLIC_URL`, respectivamente. Las URLs explícitas prevalecen; el chat requiere su URL explícita.
    Los hooks construidos siguen la documentación; confirmar la URL exacta en el editor.
 3. Copiar `.env.example` a `.env` local y rellenar la clave, URLs y tokens distintos de operador,
    MCP y callbacks. `HR_ENV=development`. Un enlace explícito prevalece sobre el construido.

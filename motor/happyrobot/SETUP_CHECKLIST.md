@@ -1,6 +1,6 @@
 # Montaje en la plataforma en menos de 2 horas, y preguntas para los mentores
 
-Carpeta privada. Workspace: `platform.eu.happyrobot.ai/hackspainteam6` («HackSpain - Team 6», EU, motor V3).
+Carpeta privada. Workspace: `platform.eu.happyrobot.ai/<workspace>` («<nombre del workspace>», EU, motor V3).
 Quien monte esto necesita abiertos: `WORKFLOWS.md` (nodos), `PROMPTS.md` (textos), `webhook_contract.json`
 (ejemplos para pegar) y, al final, `TESTS.md`.
 

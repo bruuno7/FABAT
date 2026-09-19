@@ -4,3 +4,4 @@ contacts.local.json
 .env
 *.local.json
 static/vendor/
+data/

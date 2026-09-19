@@ -116,6 +116,23 @@ def diagnosticar(sondear_red: bool = True, env: dict[str, str] | None = None) ->
             detalle: str = "", grupo: str = "plataforma") -> None:
         d.anadir(Comprobacion(clave, estado, consecuencia, nivel, detalle, grupo))
 
+    # .env en la raíz FABAT (cargado por __main__ con python-dotenv; aquí solo informamos).
+    env_file = RAIZ.parent.parent / ".env"
+    if env_file.is_file():
+        try:
+            keys = [ln.split("=", 1)[0].strip() for ln in env_file.read_text(encoding="utf-8").splitlines()
+                    if ln.strip() and not ln.lstrip().startswith("#") and "=" in ln]
+            present = sum(1 for k in keys if e.get(k))
+            add(".env", "ok",
+                f"encontrado: {len(keys)} claves en fichero, {present} visibles en el proceso",
+                OPCIONAL, grupo="ficheros", detalle=str(env_file))
+        except OSError as ex:
+            add(".env", "aviso", f"existe pero no se pudo leer: {ex}", OPCIONAL, grupo="ficheros")
+    else:
+        add(".env", "aviso",
+            "no hay .env en la raíz FABAT: MANDO_VOICE_MODE/HR_* usan defaults del código",
+            OPCIONAL, grupo="ficheros", detalle=str(env_file))
+
     voice_mode = e.get("MANDO_VOICE_MODE", "web_call").strip()
     phone = voice_mode == "phone"
     launch = e.get("HR_LAUNCH_MODE", "hook")
@@ -214,6 +231,45 @@ def diagnosticar(sondear_red: bool = True, env: dict[str, str] | None = None) ->
     add("harness/out/playbook.learned.json", "ok" if lessons is not None else "degradado",
         f"manual aprendido con {lessons} lecciones" if lessons is not None else
         "sin manual aprendido válido, --playbook auto usa el de siembra", OPCIONAL, grupo="ficheros")
+
+    # Ledger SQLite: auditoría durable; si no escribe, la demo sigue (degradado).
+    try:
+        from .ledger import open_ledger
+        led = open_ledger()
+        st = led.stats()
+        led.close()
+        if st.get("enabled"):
+            add("ledger.sqlite", "ok",
+                f"auditoría local: {st.get('episodes', 0)} episodios, {st.get('events', 0)} eventos"
+                + (f" ({st['path']})" if st.get("path") else ""),
+                OPCIONAL, grupo="ficheros", detalle=str(st.get("path") or ""))
+        else:
+            add("ledger.sqlite", "degradado",
+                "no escribible; las llamadas no se auditan en disco (demo sigue)",
+                OPCIONAL, grupo="ficheros", detalle=str(st.get("warning") or ""))
+    except Exception as ex:
+        add("ledger.sqlite", "degradado", f"ledger no disponible: {type(ex).__name__}", OPCIONAL, grupo="ficheros")
+
+    # LLM cascada (Helmcode / AI Gateway): solo si hay clave y MANDO_LLM=1; no gasta cuota en doctor.
+    try:
+        from . import llm_parser_factory
+        st = llm_parser_factory.status_for_doctor()
+        ok_cfg, detail = llm_parser_factory.llm_configured()
+        if ok_cfg:
+            add("MANDO_LLM / Helmcode", "ok",
+                f"cascada lista vía {st['gateway']}: {st['model']}", OPCIONAL, grupo="plataforma",
+                detalle=st["base"])
+        elif st["key_set"] == "yes":
+            add("MANDO_LLM / Helmcode", "aviso",
+                "clave presente pero MANDO_LLM≠1: demo usa solo heurístico (no gasta tokens)",
+                OPCIONAL, grupo="plataforma", detalle=detail)
+        else:
+            add("MANDO_LLM / Helmcode", "degradado",
+                "sin AGENTES_LLM_KEY: avisos libres solo con reglas; confirma crédito Helmcode",
+                OPCIONAL, grupo="plataforma", detalle=detail)
+    except Exception as ex:
+        add("MANDO_LLM / Helmcode", "degradado", f"factory LLM: {type(ex).__name__}", OPCIONAL, grupo="plataforma")
+
     for name, why in (("HR_HOOK_INTAKE", "sin intake remoto se entienden avisos en local"),
                       ("HR_WEBCALL_PUBLIC_URL", "sin enlace público para avisar por voz"),
                       ("HR_INTAKE_EMAIL", "sin dirección de avisos por email"), ("HR_SMS_NUMBER", "sin canal SMS")):

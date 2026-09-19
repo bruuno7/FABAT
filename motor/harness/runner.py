@@ -1,9 +1,10 @@
 """Ejecuta casos sin pantalla siguiendo el ciclo de INTERFACES.md, con operador simulado.
 
-    run_case(case, agent_factory, seed, chaos=None, operator=None) -> RunResult
+    run_case(case, agent_factory, seed, chaos=None, operator=None, ledger=None) -> RunResult
     run_many(cases, agent_factory, workers=N, chaos="none|random|smart", label=...) -> list[RunResult]
 
 Determinista: mismo caso + misma semilla + mismo agente + mismo adversario = mismo resultado.
+Ledger opcional (best-effort): no altera métricas ni RNG; ver `ledger_comms.py`.
 """
 from __future__ import annotations
 
@@ -250,55 +251,85 @@ def _record(a: Action, t: int, approved: bool) -> dict[str, Any]:
 
 
 def run_case(case: dict[str, Any], agent_factory: Callable[[Any], Any], seed: int | None = None,
-             chaos: Any = None, operator: SimOperator | None = None, detail: bool = True) -> RunResult:
+             chaos: Any = None, operator: SimOperator | None = None, detail: bool = True,
+             ledger: Any = None) -> RunResult:
+    """Ejecuta un caso. `ledger`: None=según env, True=abrir, False=off, o instancia de Ledger.
+
+    El ledger es best-effort: no altera RNG ni métricas. Activación por env:
+    `MANDO_HARNESS_LEDGER=1` o `MANDO_LEDGER_PATH` definido (salvo `MANDO_HARNESS_LEDGER=0`).
+    """
     t0 = time.perf_counter()
     seed = int(case.get("seed", 0) if seed is None else seed)
     world = World.from_case(case, seed)
-    comms = SimComms(world, seed)
-    agent = agent_factory(comms)
-    op = operator or SimOperator()
-    op.start(case, seed)
-    if chaos is not None:
-        chaos.start(case, seed)
-    applied: list[dict[str, Any]] = []
-    reports: dict[str, dict[str, Any]] = {}
-    while not world.done():
-        op.decide(world.t, world, agent)
-        obs = world.observe()
-        op.see_reports(obs.new_reports)
-        for r in obs.new_reports:
-            reports.setdefault(r.id, {"t": r.t, "text": r.text, "channel": str(r.channel), "zone_hint": r.zone_hint})
-        for a in agent.tick(obs):
-            if a.status == ActionStatus.AWAITING_APPROVAL:
-                op.enqueue(a, world.t)
-            else:
-                applied.append(_record(a, world.t, a.id in op.approved))
-                world.apply(a)
+    comms: Any = SimComms(world, seed)
+    led, owns_ledger = None, False
+    session_id = ""
+    try:
+        from .ledger_comms import open_harness_ledger, LedgerSimComms
+        led, owns_ledger = open_harness_ledger(ledger)
+        if led is not None:
+            session_id = f"h-{case.get('id', 'case')}-s{seed}"
+            try:
+                led.session_start(session_id, case_id=str(case.get("id") or ""),
+                                  voice_mode="sim", speed=1.0, comms_mode="sim")
+            except Exception:
+                pass
+            comms = LedgerSimComms(comms, led, session_id=session_id, seed=seed)
+    except Exception:
+        led, owns_ledger = None, False
+    try:
+        agent = agent_factory(comms)
+        op = operator or SimOperator()
+        op.start(case, seed)
         if chaos is not None:
-            chaos.maybe_strike(world, agent)
-        world.step()
-    truth, snap = world.truth(), agent.snapshot()
-    extras = {"applied": applied, "approved": list(op.approved), "vetoed": list(op.vetoed),
-              "requested": list(op.requested), "reports": reports}
-    met = M.score(truth, snap, case, extras)
-    strikes = list(getattr(chaos, "strikes", [])) if chaos is not None else []
-    arm = getattr(agent_factory, "name", None) or getattr(agent, "name", type(agent).__name__.lower())
-    res = RunResult(case.get("id", "?"), seed, arm + ("_twin" if getattr(agent_factory, "twin", False) else ""),
-                    getattr(chaos, "name", "none") if chaos is not None else "none", met,
-                    list(case.get("families", [])), int(case.get("difficulty", 0)), case.get("split", ""),
-                    strikes, list(op.vetoed))
-    if detail:
-        res.detail = _detail(truth, snap, applied)
-    res.detail["ops"] = M.ops_metrics(truth, applied)
-    memory = getattr(agent, "memory", None)
-    if memory is not None:
-        memory.end_run()
-        res.detail["memory"] = memory.to_dict()
-    if isinstance(snap.get("params"), dict):
-        res.detail["params_applied"] = dict(snap["params"].get("applied") or {})
-    res.wall_ms = round((time.perf_counter() - t0) * 1000, 2)
-    res.code = loaded_fingerprint()
-    return res
+            chaos.start(case, seed)
+        applied: list[dict[str, Any]] = []
+        reports: dict[str, dict[str, Any]] = {}
+        while not world.done():
+            op.decide(world.t, world, agent)
+            obs = world.observe()
+            op.see_reports(obs.new_reports)
+            for r in obs.new_reports:
+                reports.setdefault(r.id, {"t": r.t, "text": r.text, "channel": str(r.channel), "zone_hint": r.zone_hint})
+            for a in agent.tick(obs):
+                if a.status == ActionStatus.AWAITING_APPROVAL:
+                    op.enqueue(a, world.t)
+                else:
+                    applied.append(_record(a, world.t, a.id in op.approved))
+                    world.apply(a)
+            if chaos is not None:
+                chaos.maybe_strike(world, agent)
+            world.step()
+        truth, snap = world.truth(), agent.snapshot()
+        extras = {"applied": applied, "approved": list(op.approved), "vetoed": list(op.vetoed),
+                  "requested": list(op.requested), "reports": reports}
+        met = M.score(truth, snap, case, extras)
+        strikes = list(getattr(chaos, "strikes", [])) if chaos is not None else []
+        arm = getattr(agent_factory, "name", None) or getattr(agent, "name", type(agent).__name__.lower())
+        res = RunResult(case.get("id", "?"), seed, arm + ("_twin" if getattr(agent_factory, "twin", False) else ""),
+                        getattr(chaos, "name", "none") if chaos is not None else "none", met,
+                        list(case.get("families", [])), int(case.get("difficulty", 0)), case.get("split", ""),
+                        strikes, list(op.vetoed))
+        if detail:
+            res.detail = _detail(truth, snap, applied)
+        res.detail["ops"] = M.ops_metrics(truth, applied)
+        if led is not None and session_id:
+            res.detail["ledger_session"] = session_id
+        memory = getattr(agent, "memory", None)
+        if memory is not None:
+            memory.end_run()
+            res.detail["memory"] = memory.to_dict()
+        if isinstance(snap.get("params"), dict):
+            res.detail["params_applied"] = dict(snap["params"].get("applied") or {})
+        res.wall_ms = round((time.perf_counter() - t0) * 1000, 2)
+        res.code = loaded_fingerprint()
+        return res
+    finally:
+        if owns_ledger and led is not None:
+            try:
+                led.close()
+            except Exception:
+                pass
 
 
 def _detail(truth: dict[str, Any], snap: dict[str, Any], applied: list[dict[str, Any]], max_log: int = 80) -> dict[str, Any]:

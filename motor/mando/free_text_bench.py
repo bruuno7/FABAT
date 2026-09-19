@@ -102,9 +102,30 @@ def score(rows, parser=None, zones=None) -> dict:
 
 
 if __name__ == "__main__":
+    import argparse
+    import os
+    ap = argparse.ArgumentParser(description="Banco de avisos libres (N aparte; no mezclar con headline)")
+    ap.add_argument("--llm", action="store_true",
+                    help="CascadeParser+LLM (gasta cuota). Requiere AGENTES_LLM_KEY y MANDO_LLM=1")
+    args = ap.parse_args()
+    parser = None
+    tag = "heurístico"
+    if args.llm:
+        os.environ.setdefault("MANDO_LLM", "1")
+        try:
+            from motor.server.llm_parser_factory import build_cascade_parser, llm_configured
+            ok, why = llm_configured()
+            if not ok:
+                raise SystemExit(f"--llm no disponible: {why}")
+            parser = build_cascade_parser()
+            tag = "cascada+LLM"
+        except SystemExit:
+            raise
+        except Exception as ex:
+            raise SystemExit(f"--llm falló al construir parser: {ex}") from ex
     for name, rows in (("DEV", DEV), ("HOLDOUT", HOLDOUT), ("UBICACIONES DIFÍCILES", HARD_ZONES)):
-        r = score(rows)
-        print(f"{name}: N={r['n']} · familia {r['family']}/{r['n']} · zona {r['zone']}/{r['n']} · "
+        r = score(rows, parser=parser)
+        print(f"{name} [{tag}]: N={r['n']} · familia {r['family']}/{r['n']} · zona {r['zone']}/{r['n']} · "
               f"tipo {r['type']}/{r['type_n']} (solo filas con tipo esperado)")
         for miss in r["misses"]:
             print("   ✗", *miss, sep=" | ")

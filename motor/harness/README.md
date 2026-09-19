@@ -18,6 +18,7 @@ python3 -m motor.harness day2 --n 400 [--approve criterion|all|none|file --decis
 | Fichero | Qué es |
 |---|---|
 | `runner.py` | `run_case`, `run_many` (multiprocessing, determinista), `SimOperator`, `AgentFactory` (con `twin=True`), `code_fingerprint`, `assert_same_cases`. |
+| `ledger_comms.py` | Proxy opcional de `SimComms` → ledger SQLite (`real=0`). Off por defecto; `MANDO_HARNESS_LEDGER=1` o `ledger=True`/`Ledger`. No altera métricas. |
 | `metrics.py` | `score()` → `score` y `world_score`, evaluación de `expected.must`/`must_not`, `failed_metrics`, `aggregate`, `paired_diff`. |
 | `reviewer.py` | `Reviewer` (analiza fallos → propone lecciones → valida con IC pareado en la otra mitad de train), `top_failures`, gancho `LLMReviewer`. |
 | `regression.py` | `lock_fixed`, `regress`: casos arreglados que quedan bloqueados. |

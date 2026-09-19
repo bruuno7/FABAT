@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 from motor.baseline import Baseline, BaselinePlus
 from motor.caos import Chaos, RandomChaos
@@ -470,6 +472,55 @@ class TestDay2(unittest.TestCase):
             self.assertEqual(code_fingerprint(root), before)                   # datos que escribe day2: no son código
             (root / "mando" / "tuning.py").write_text("# tocado", encoding="utf-8")
             self.assertNotEqual(code_fingerprint(root), before)
+
+
+class TestHarnessLedger(unittest.TestCase):
+    """Ledger best-effort: métricas idénticas; Mando deja episodios real=0."""
+
+    def test_metrics_unchanged_with_ledger_on(self) -> None:
+        from motor.server.ledger import Ledger
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ledger.sqlite"
+            off = run_case(SIMPLE, AgentFactory("mando"), 3, ledger=False)
+            led = Ledger(path)
+            try:
+                on = run_case(SIMPLE, AgentFactory("mando"), 3, ledger=led)
+            finally:
+                led.close()
+            self.assertEqual(off.metrics, on.metrics)
+            self.assertEqual(off.detail["log"], on.detail["log"])
+            self.assertEqual(on.detail.get("ledger_session"), "h-t-simple-s3")
+
+    def test_mando_writes_sim_episodes(self) -> None:
+        from motor.server.ledger import Ledger
+        import sqlite3
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ledger.sqlite"
+            led = Ledger(path)
+            try:
+                r = run_case(SIMPLE, AgentFactory("mando"), 3, ledger=led)
+                st = led.stats()
+            finally:
+                led.close()
+            self.assertGreaterEqual(st["episodes"], 1, "Mando debe dejar al menos un episodio de voz")
+            self.assertEqual(st["real_ok"], 0)
+            con = sqlite3.connect(path)
+            try:
+                rows = con.execute(
+                    "SELECT action_id, real, seed, result FROM episodes"
+                ).fetchall()
+            finally:
+                con.close()
+            self.assertTrue(all(row[0].startswith("h-t-simple-s3:") for row in rows))
+            self.assertTrue(all(row[1] == 0 for row in rows))
+            self.assertTrue(all(row[2] == 3 for row in rows))
+            self.assertTrue(any(row[3] for row in rows))
+            self.assertIn("ledger_session", r.detail)
+
+    def test_env_off_skips_even_if_path_set(self) -> None:
+        from motor.harness.ledger_comms import harness_ledger_enabled
+        with patch.dict(os.environ, {"MANDO_HARNESS_LEDGER": "0", "MANDO_LEDGER_PATH": "/tmp/x.sqlite"}, clear=False):
+            self.assertFalse(harness_ledger_enabled(None))
 
 
 def M_code() -> str:

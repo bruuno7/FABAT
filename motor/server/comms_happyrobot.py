@@ -20,6 +20,9 @@
   (`DISPATCH_PARAMS`); `callback_url` = `MANDO_PUBLIC_URL + /hr/events` y `callback_token` = `HR_SECRET`. Lo que devuelven
   esos workflows (`type: dispatch_result | dispatch_progress`, todo cadenas) se normaliza en `normalize_platform_event`.
 - Lista blanca OBLIGATORIA para marcar un teléfono: `MANDO_ALLOWED_NUMBERS`. Sin ella no se marca a nadie.
+- En `MANDO_VOICE_MODE=phone`, solo las clases de `MANDO_HR_PHONE_KINDS` (por defecto `dispatch,recall,resupply`)
+  salen a la plataforma; ASK/NOTIFY van a SimComms. Además `MANDO_HR_MAX_INFLIGHT` (por defecto 1) evita
+  ráfagas de Runs cuando el reloj va a ×16.
 - `external_ask`: una pregunta dirigida a un informante que llegó por otro canal propio (bot de Telegram) no pasa por
   HappyRobot ni por la simulación: la contesta esa persona y vuelve por `answer_external`.
 
@@ -202,9 +205,11 @@ class HappyRobotComms:
                  incident_lookup: Callable[[str | None], dict[str, Any] | None] | None = None,
                  is_approved: Callable[[str], dict[str, Any] | None] | None = None,
                  on_log: Callable[..., None] | None = None,
-                 fallback_s: float | None = None, http_timeout_s: float | None = None) -> None:
+                 fallback_s: float | None = None, http_timeout_s: float | None = None,
+                 ledger: Any = None) -> None:
         self.world, self.sim = world, sim
         self.session_id = session_id
+        self.ledger = ledger
         self.mode = mode if mode in ("sim", "happyrobot") else "sim"
         self.contacts = contacts if contacts is not None else load_contacts()
         self.incident_lookup = incident_lookup or (lambda _id: None)
@@ -225,11 +230,19 @@ class HappyRobotComms:
         self.voice_mode = "phone" if _env("MANDO_VOICE_MODE", default="web_call") == "phone" else "web_call"
         self.hr_env = hr_config.environment()
         self.disclaimer_s = float(_env("HR_DISCLAIMER_S", default="4"))  # aviso legal UE: suena antes y no es latencia del agente
+        # Teléfono PSTN: por defecto solo despacho/recall/resupply. ASK/NOTIFY al mismo hook llenaban Runs sin conversación útil (×16).
+        kinds_raw = _env("MANDO_HR_PHONE_KINDS", default="dispatch,recall,resupply")
+        self._phone_kinds = {k.strip().lower() for k in kinds_raw.split(",") if k.strip()} or {"dispatch"}
+        try:
+            self.max_inflight = max(1, min(5, int(_env("MANDO_HR_MAX_INFLIGHT", default="1"))))
+        except ValueError:
+            self.max_inflight = 1
         cat = _catalogs()
         self._zone_spoken = {k: v.get("spoken", k) for k, v in cat.get("zones", {}).items() if isinstance(v, dict)}
         self._res_spoken = dict(cat.get("resources_spoken", {}))
         self._allowed = allowed_numbers()  # OBLIGATORIA: vacía = no se marca a nadie, esté quien esté en contacts.local.json
         self._warned_no_list = False
+        self._warned_inflight = False
 
         self.revision = 0
         self.workflow_status = hr_config.WorkflowStatus()
@@ -276,6 +289,63 @@ class HappyRobotComms:
             self._wire_to_action.clear()
             self._run_to_action.clear()
 
+    def _ledger_event(self, event_type: str, action_id: str | None = None,
+                      payload: dict[str, Any] | None = None) -> None:
+        led = self.ledger
+        if led is None:
+            return
+        try:
+            led.append_event(self.session_id, event_type, action_id, payload)
+        except Exception:
+            pass
+
+    def _ledger_episode(self, action_id: str, *, result: str | None = None, fell_back: bool = False,
+                        text: str = "", real: bool | None = None) -> None:
+        led = self.ledger
+        if led is None or not action_id:
+            return
+        call = self.calls.get(action_id) or {}
+        flight = self._inflight.get(action_id) or {}
+        answer_ms = call.get("answer_ms")
+        if answer_ms is None and flight.get("answered_at") and flight.get("started"):
+            answer_ms = round((flight["answered_at"] - flight["started"]) * 1000)
+        hook_rtt = self.stats["hook_rtt_ms"][-1] if self.stats.get("hook_rtt_ms") else None
+        is_real = bool(call.get("real")) if real is None else real
+        if fell_back:
+            is_real = False
+        resource_id = str(call.get("resource") or "")
+        resource_kind = ""
+        if resource_id:
+            try:
+                res_obj = getattr(self.world, "resources", {}).get(resource_id)
+                if res_obj is not None:
+                    resource_kind = str(getattr(res_obj, "kind", "") or "")
+            except Exception:
+                resource_kind = ""
+        try:
+            t_sim = call.get("t")
+            if t_sim is None:
+                t_sim = getattr(self.world, "t", None)
+            seed_val = getattr(self.world, "seed", None)
+            led.upsert_episode(
+                self.session_id, action_id,
+                kind=str(call.get("kind") or ""),
+                zone=str(call.get("zone") or ""),
+                resource=resource_id,
+                resource_kind=resource_kind,
+                real=is_real,
+                result=result if result is not None else call.get("result"),
+                eta_min=call.get("eta_min"),
+                fell_back=fell_back or bool(call.get("fell_back")),
+                answer_ms=answer_ms,
+                hook_rtt_ms=hook_rtt,
+                text=text or str(call.get("text") or ""),
+                t=int(t_sim) if t_sim is not None else None,
+                seed=int(seed_val) if seed_val is not None else None,
+            )
+        except Exception:
+            pass
+
     def send(self, action: Action, resource: Resource | None = None) -> None:
         if self._stop.is_set():
             return
@@ -292,6 +362,8 @@ class HappyRobotComms:
             return
         route = self._real_route(action, resource)
         if route is None:
+            self._ledger_event("send_sim", action.id, {"kind": str(action.kind), "zone": action.zone,
+                                                       "resource": action.resource, "reason": "no_real_route"})
             with self._lock:
                 if action.params.get('decision_for') or action.kind == ActionKind.BROADCAST:
                     call.update(stage='pendiente: comunicación no configurada', result='no_answer')
@@ -308,6 +380,9 @@ class HappyRobotComms:
                                          "deadline": time.monotonic() + (self.webcall_pickup_s if hook == "webcall" else self.fallback_s)}
             self.payloads[action.id] = payload
             self.stats["real_sent"] += 1
+        self._ledger_event("send_real", action.id, {"kind": str(action.kind), "zone": action.zone,
+                                                    "resource": action.resource,
+                                                    "channel": "webcall" if hook == "webcall" else "hook"})
         if hook == "webcall":
             call_id = secrets.token_urlsafe(9)
             call.update(web_call=True, stage="esperando a que descuelgue", channel="voice")
@@ -423,6 +498,8 @@ class HappyRobotComms:
             payload = build(action, resource, entry, "")
             payload["to_number"] = None
             return "webcall", payload
+        if self.voice_mode == "phone" and str(kind).lower() not in self._phone_kinds:
+            return None  # ASK/NOTIFY/… → SimComms; evita Runs basura en el Outbound Voice Agent
         if not entry.get("to_number"):
             return None
         number = normalize_number(entry["to_number"])
@@ -436,6 +513,15 @@ class HappyRobotComms:
             return None
         if number not in self._allowed:
             self.on_log("action", f"Número fuera de la lista blanca para {action.id}. Sigue en simulación", action.id)
+            return None
+        with self._lock:
+            pstn_inflight = sum(1 for meta in self._inflight.values() if not meta.get("external"))
+        if pstn_inflight >= self.max_inflight:
+            if not self._warned_inflight:
+                self._warned_inflight = True
+                self.on_log("action",
+                            f"Ya hay {pstn_inflight} llamada(s) real(es) en curso (máx. {self.max_inflight}): "
+                            f"{action.id} sigue en simulación. Sube MANDO_HR_MAX_INFLIGHT solo si hace falta.")
             return None
         if kind in (ActionKind.DISPATCH, ActionKind.RECALL, ActionKind.RESUPPLY):
             hook, build = self.hooks["dispatch"], self._dispatch_payload
@@ -676,6 +762,11 @@ class HappyRobotComms:
                                     "t": self.world.t, "data": {}, "channel": (call or {}).get("channel")})
             else:
                 self.sim.send(flight["action"], flight["resource"])
+        self._ledger_event("fallback", action_id, {"why": why, "external": bool(flight.get("external"))})
+        self._ledger_episode(action_id, result="no_answer" if flight.get("external") else None,
+                             fell_back=not flight.get("external"),
+                             real=False if not flight.get("external") else True,
+                             text=why)
         who = "Sin respuesta" if flight.get("external") else "HappyRobot no contesta"
         suffix = "Se sigue con la información disponible" if flight.get("external") else "Se sigue en SIMULACIÓN"
         self.on_log("outcome", f"{who} para {action_id}: {why}. {suffix}", action_id, fallback=not flight.get("external"))
@@ -708,6 +799,7 @@ class HappyRobotComms:
         known_run = self._run_to_action.get(run_id) if run_id else None
         if platform and not issued and not known_run:
             self.stats["stale_events"] += 1
+            self._ledger_event("stale", action_id or None, {"message": message, "run_id": run_id})
             return {"ok": True, "stale": True}
         if issued:
             action_id = issued
@@ -723,6 +815,7 @@ class HappyRobotComms:
         with self._lock:
             if event_id and event_id in self._seen_events:
                 self.stats["duplicates"] += 1
+                self._ledger_event("duplicate", action_id or None, {"event_id": event_id, "message": message})
                 return {"ok": True, "duplicate": True}
             if event_id:
                 self._seen_events.add(event_id)
@@ -756,10 +849,14 @@ class HappyRobotComms:
                     if ev.get("channel_used"):
                         call["channel"] = "voice" if ev["channel_used"] == "web_call" else ev["channel_used"]
                 if flight and stage == "call_answered":
-                    self.stats["answer_ms"].append(round((time.monotonic() - flight["started"]) * 1000))
+                    ms = round((time.monotonic() - flight["started"]) * 1000)
+                    self.stats["answer_ms"].append(ms)
                     flight["answered_at"] = time.monotonic()
+                    if call:
+                        call["answer_ms"] = ms
             self.on_log("action", f"HappyRobot {action_id}: {_STAGE_ES.get(stage, stage)}"
                         + (f" — {ev['text']}" if ev.get("text") else ""), action_id, real=True)
+            self._ledger_event("progress", action_id, {"stage": stage})
             return {"ok": True, "duplicate": False}
 
         if message == "transcript":  # línea suelta de la conversación (desde un Tool node o desde el SSE de la sesión)
@@ -821,6 +918,8 @@ class HappyRobotComms:
                 item['data'] = {}
             with self._lock:
                 self._inbox.append(item)
+            self._ledger_event("result", action_id, {"result": item["result"], "eta_min": item.get("eta_min")})
+            self._ledger_episode(action_id, result=item["result"], text=str(item.get("text") or ""), real=True)
             return {"ok": True, "duplicate": False, "result": item["result"], "eta_min": item["eta_min"]}
         return {"ok": False, "duplicate": False, "error": "unknown_message"}
 
@@ -887,6 +986,8 @@ class HappyRobotComms:
             if flight and "answered_at" not in flight:
                 self.stats["answer_ms"].append(round((time.monotonic() - flight["started"]) * 1000))
             self._inbox.append(item)
+        self._ledger_event("result", action_id, {"result": item["result"], "early": True})
+        self._ledger_episode(action_id, result=item["result"], text=str(item.get("text") or ""), real=True)
         return {"ok": True, "duplicate": False, "result": item["result"], "eta_min": item["eta_min"]}
 
     def _transcript_from(self, action_id: str, transcript: Any) -> None:
@@ -916,7 +1017,8 @@ class HappyRobotComms:
                 return
 
     def _track_result(self, item: dict[str, Any]) -> None:
-        call = self.calls.get(str(item.get("action_id") or ""))
+        action_id = str(item.get("action_id") or "")
+        call = self.calls.get(action_id)
         if call is None:
             return
         call.update(result=item.get("result"), text=str(item.get("text") or "")[:160], t_end=self.world.t,
@@ -925,6 +1027,9 @@ class HappyRobotComms:
             m = re.search(r"(\d+)\s*min", call["text"])
             if m:
                 call["eta_min"] = int(m.group(1))
+        # Cierra episodio para sim y real. Los caminos reales ya hicieron upsert en on_event;
+        # el upsert es idempotente por action_id. No emitimos otro evento «result» aquí.
+        self._ledger_episode(action_id, result=call.get("result"), text=str(call.get("text") or ""))
 
     # ================================================================ API de la plataforma (run, sesión, web call, signals)
     def _api(self, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:

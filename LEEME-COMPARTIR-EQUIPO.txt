@@ -1,0 +1,31 @@
+FABAT — como usar lo que te pasan por WhatsApp
+==============================================
+
+Archivos que te deben llegar:
+  1) .env.equipo
+  2) contacts.equipo.local.json  (o contacts.local.json)
+
+En tu clon de https://github.com/bruuno7/FABAT :
+
+  1. git checkout main && git pull
+     (si el PR de login no esta mergeado: git fetch && git checkout fix/login-localhost-con-tunel)
+
+  2. Copia .env.equipo  ->  .env
+     (en la raiz FABAT, mismo sitio que mvp.sh)
+
+  3. Copia contacts.equipo.local.json  ->  motor/server/contacts.local.json
+
+  4. En otra terminal:  ngrok http 8000
+     Copia la URL https://….ngrok-free.dev en .env como MANDO_PUBLIC_URL=
+     (si la URL cambio respecto a la del companero, OBLIGATORIO actualizarla)
+
+  5. Arranca (speed 1 para demo de llamada; a ×16 el tope de 1 llamada PSTN evita Runs basura):
+     uv run --project motor/server python -m motor.server --case demo-gates --speed 1 --port 8000 --comms happyrobot --lan
+     En .env deben estar: MANDO_HR_PHONE_KINDS=dispatch,recall,resupply y MANDO_HR_MAX_INFLIGHT=1
+
+  6. Entra en http://127.0.0.1:8000/acceso
+     Token = valor de MANDO_OPERATOR_TOKEN en el .env
+
+NO subas .env ni contacts*.local.json a git.
+NO reenvies estos ficheros fuera del equipo FABAT.
+HappyRobot workspace: mismo del hackathon (From Twilio ya configurado en mando-despacho-telefono).

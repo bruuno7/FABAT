@@ -165,7 +165,7 @@ export function parseSnapshotRequest(value: unknown): string[] {
   return entities;
 }
 
-function parseMessage(value: unknown): PendingMessage {
+export function parseMessage(value: unknown): PendingMessage {
   const input = object(value);
   exactKeys(input, ["id", "recipient_id", "channel", "incident_id", "assignment_id", "question_id", "purpose", "text"]);
   if (typeof input.text !== "string" || !input.text.trim() || input.text.length > 3500) throw new ContractError("invalid_text");

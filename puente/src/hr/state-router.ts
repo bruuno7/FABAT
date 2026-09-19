@@ -3,6 +3,7 @@ import { Router, type Response } from "express";
 import { ContractError, object, parseId, parseSnapshotRequest, unwrapEvent } from "../lib/event-contract.js";
 import { RedisStateStore, StateStoreError, upstashCommand } from "../lib/redis-state.js";
 import type { StateApiConfig } from "../lib/state-env.js";
+import { deliver, type DeliveryConfig } from "../lib/state-delivery.js";
 
 function matches(expected: string, actual: string): boolean {
   const digest = (value: string) => createHash("sha256").update(value).digest();
@@ -16,7 +17,7 @@ function respond(res: Response, output: unknown): void {
   res.status(code).json(output);
 }
 
-export function stateRouter(config: StateApiConfig = { enabled: false }, injected?: RedisStateStore): Router {
+export function stateRouter(config: StateApiConfig = { enabled: false }, injected?: RedisStateStore, delivery: DeliveryConfig = { mode: "sink" }): Router {
   const router = Router();
   let store = injected;
   if (!store && config.enabled && config.url && config.token && config.namespace) {
@@ -51,10 +52,12 @@ export function stateRouter(config: StateApiConfig = { enabled: false }, injecte
   route("/inbox", "ingressSecret", (s, body) => s.enqueue(unwrapEvent(body)));
   route("/inbox/event", "readSecret", (s, body) => s.event(parseId(body.id)));
   route("/inbox/pending", "readSecret", (s, body) => s.pending("inbox", body.limit === undefined ? 16 : body.limit as number));
+  route("/inbox/settle", "commitSecret", (s, body) => s.settleEvent(parseId(body.id), body.status as "rejected" | "deferred", body.reason as string));
   route("/snapshot", "readSecret", (s, body) => s.snapshot(parseSnapshotRequest(body)));
   route("/commit", "commitSecret", (s, body) => s.commit(body));
   route("/outbox/pending", "deliverySecret", (s, body) => s.pending("outbox", body.limit === undefined ? 16 : body.limit as number));
   route("/outbox/claim", "deliverySecret", (s, body) => s.claim(parseId(body.id)));
+  route("/outbox/deliver", "deliverySecret", (s, body) => deliver(s, parseId(body.id), delivery));
   route("/outbox/settle", "deliverySecret", (s, body) => {
     if (typeof body.lease !== "string" || !["succeeded", "failed", "unknown"].includes(String(body.status))) {
       throw new ContractError("invalid_delivery_result");

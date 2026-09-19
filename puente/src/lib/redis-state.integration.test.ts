@@ -73,6 +73,70 @@ it("Redis integration: concurrent CAS, replay and delivery leases", {
       assert.equal((await store.commit(proposal("not-ingested", 1, "message-3"))).status, "event_missing");
       assert.equal((await store.snapshot(["incident/incident-1"]))["incident/incident-1"].version, 1);
     });
+    await t.test("invalid events are quarantined and retries are bounded without losing applied events", async () => {
+      await store.enqueue(event("invalid-event"));
+      assert.equal((await store.settleEvent("invalid-event", "rejected", "unsupported_operation")).status, "rejected");
+      assert.ok(!(await store.pending("inbox")).includes("invalid-event"));
+      assert.equal((await store.event("invalid-event"))?.reason, "unsupported_operation");
+      assert.equal((await store.commit(proposal("invalid-event", 1, "invalid-message"))).status, "rejected");
+      assert.equal((await store.settleEvent(winner, "rejected", "invalid_operation")).status, "duplicate");
+      await store.enqueue(event("retry-event"));
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        assert.equal((await store.settleEvent("retry-event", "deferred", "conflict")).status, attempt < 5 ? "deferred" : "rejected");
+        assert.ok(!(await store.pending("inbox")).includes("retry-event"));
+        if (attempt < 5) {
+          assert.equal((await store.settleEvent("retry-event", "deferred", "conflict")).status, "deferred");
+          assert.equal((await store.event("retry-event"))?.attempts, attempt);
+          now += 5000 * 2 ** (attempt - 1);
+          assert.ok((await store.pending("inbox")).includes("retry-event"));
+        }
+      }
+      assert.equal((await store.event("retry-event"))?.reason, "retry_exhausted");
+    });
+    await t.test("Telegram registration preserves identity, empty arrays and consumed privileges on replay", async () => {
+      const roleEvent = { ...event("tg-role-1"), event_type: "actor.role_claimed", actor_id: "tg-123", conversation_id: "tg-123",
+        payload: { role: "medico", grant_id: "grant:tg-role-1" } };
+      assert.equal((await store.ingestTelegram(roleEvent, "123")).status, "accepted");
+      const snapshot = await store.snapshot(["actor/tg-123", "approval/grant:tg-role-1"]);
+      const actor = snapshot["actor/tg-123"].value!;
+      assert.deepEqual(actor.roles, []);
+      assert.deepEqual(actor.permissions, []);
+      assert.equal(snapshot["approval/grant:tg-role-1"].value?.actor_id, "tg-123");
+      assert.equal((await store.commit({ event_id: "tg-role-1", expected: { "actor/tg-123": 1 },
+        writes: [{ entity: "actor/tg-123", value: { ...actor, roles: ["medico"] } }], messages: [] })).status, "applied");
+      assert.equal((await store.ingestTelegram(roleEvent, "123")).status, "duplicate");
+      const next = { ...roleEvent, event_id: "tg-text-1", event_type: "message.received", payload: { text: "Estoy disponible", answers: [] } };
+      assert.equal((await store.ingestTelegram(next, "123")).status, "accepted");
+      assert.deepEqual((await store.snapshot(["actor/tg-123"]))["actor/tg-123"].value?.roles, ["medico"]);
+      assert.deepEqual((await store.event("tg-text-1"))?.event, next);
+      await store.settleEvent("tg-text-1", "rejected", "test_complete");
+    });
+    await t.test("Lua writes preserve empty lists separately from empty objects", async () => {
+      const input = { ...event("array-event"), payload: { values: [] } };
+      await store.enqueue(input);
+      await store.commit({ event_id: "array-event", expected: { "incident/array-test": 0 },
+        writes: [{ entity: "incident/array-test", value: { assignment_ids: [], tasks: {}, nested: [[], {}] } }], messages: [] });
+      assert.deepEqual((await store.snapshot(["incident/array-test"]))["incident/array-test"].value,
+        { assignment_ids: [], tasks: {}, nested: [[], {}] });
+      assert.deepEqual((await store.event("array-event"))?.event, input);
+    });
+    await t.test("confirmed provider rejections retry at most three times and cannot bypass the wait", async () => {
+      await store.enqueue(event("delivery-retry"));
+      await store.commit({ event_id: "delivery-retry", expected: {}, writes: [], messages: [{
+        id: "retry-message", recipient_id: "reporter-1", channel: "telegram", incident_id: "incident-1", purpose: "status", text: "Prueba sin envío",
+      }] });
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const claimed = await store.claim("retry-message");
+        assert.equal(claimed.status, "claimed");
+        assert.equal((await store.settle("retry-message", String(claimed.lease), "retry", "", 12000)).status, attempt < 3 ? "pending" : "failed");
+        if (attempt < 3) {
+          assert.equal((await store.claim("retry-message")).status, "deferred");
+          assert.ok(!(await store.pending("outbox")).includes("retry-message"));
+          now += 12000;
+        }
+      }
+      assert.equal((await store.claim("retry-message")).status, "failed");
+    });
     await t.test("Python operations commit to real Redis and share task reservations across channels", async () => {
       const seed: Record<string, Record<string, unknown>> = {
         "actor/worker-1": { roles: ["medico"], preferred_channel: "telegram" },

@@ -47,6 +47,7 @@ describe("private state API", () => {
       assert.equal((await s.request("/commit", {}, settings.readSecret)).status, 401);
       assert.equal((await s.request("/outbox/claim", { id: "m1" }, settings.commitSecret)).status, 401);
       assert.equal((await s.request("/inbox", {}, settings.deliverySecret)).status, 401);
+      assert.equal((await s.request("/inbox/settle", { id: "e1", status: "rejected", reason: "invalid_operation" }, settings.readSecret)).status, 401);
       assert.equal(calls, 0);
     } finally { await s.close(); }
   });

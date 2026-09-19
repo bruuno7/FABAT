@@ -40,7 +40,10 @@ export function createApp(
   });
 
   app.use("/telegram", telegramRouter(env, store, staff));
-  app.use("/hr/state", stateRouter(env.stateApi));
+  app.use("/hr/state", stateRouter(env.stateApi, undefined, {
+    mode: env.stateApi?.deliveryMode ?? "sink", telegramToken: env.telegramBotToken,
+    allowedTelegramChats: env.stateApi?.allowedTelegramChats ?? [],
+  }));
   app.use("/hr", hrRouter(env, store));
   app.use("/demo", demoRouter(env, store));
 

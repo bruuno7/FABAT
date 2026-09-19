@@ -1,9 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   ContractError, object, parseCommit, parseEntity, parseEvent, parseId, parseSnapshotRequest,
-  type Json, type JsonObject,
+  type CanonicalEvent, type Json, type JsonObject,
 } from "./event-contract.js";
-import { CLAIM_MESSAGE, COMMIT_STATE, ENQUEUE_EVENT, SETTLE_MESSAGE } from "./redis-scripts.js";
+import { STAFF_ROLES } from "./contract.js";
+import { CLAIM_MESSAGE, COMMIT_STATE, ENQUEUE_EVENT, INGEST_TELEGRAM, SETTLE_EVENT, SETTLE_MESSAGE } from "./redis-scripts.js";
 
 export type RedisCommand = (args: (string | number)[]) => Promise<unknown>;
 export type StateSnapshot = Record<string, { version: number; value: JsonObject | null }>;
@@ -53,6 +54,12 @@ function canonical(value: Json): string {
   return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
 }
 
+function eventFingerprint(event: CanonicalEvent): string {
+  const { received_at: _receivedAt, ...stable } = event;
+  const fingerprinted = event.payload.timestamp_source === "received" ? { ...stable, occurred_at: null } : stable;
+  return createHash("sha256").update(canonical(fingerprinted as unknown as Json)).digest("hex");
+}
+
 function decode(value: unknown): Record<string, unknown> {
   try {
     if (typeof value !== "string") throw new StateStoreError();
@@ -82,15 +89,53 @@ export class RedisStateStore {
 
   async enqueue(input: unknown): Promise<StoreResult> {
     const event = parseEvent(input);
-    const { received_at: _receivedAt, ...stable } = event;
-    const fingerprint = createHash("sha256").update(canonical(stable as unknown as Json)).digest("hex");
     return this.eval(ENQUEUE_EVENT, [this.key(`inbox:${event.event_id}`), this.key("inbox-pending")],
-      [JSON.stringify(event), fingerprint, this.clock()]);
+      [JSON.stringify(event), eventFingerprint(event), this.clock()]);
+  }
+
+  async ingestTelegram(input: unknown, chatId: string): Promise<StoreResult> {
+    const event = parseEvent(input);
+    if (!/^[1-9][0-9]{0,15}$/.test(chatId) || event.actor_id !== `tg-${chatId}` ||
+        event.conversation_id !== event.actor_id || event.channel !== "telegram" ||
+        !["message.received", "actor.role_claimed", "actor.role_released", "assignment.accepted", "assignment.declined"].includes(event.event_type)) {
+      throw new ContractError("invalid_telegram_identity");
+    }
+    const keys = [this.key(`inbox:${event.event_id}`), this.key("inbox-pending"), this.key(`actor/${event.actor_id}`)];
+    let grant = {};
+    if (event.event_type === "actor.role_claimed") {
+      const role = event.payload.role;
+      if (typeof role !== "string" || !(STAFF_ROLES as readonly string[]).includes(role) || event.payload.grant_id !== `grant:${event.event_id}`) {
+        throw new ContractError("invalid_role_grant");
+      }
+      keys.push(this.key(parseEntity(`approval/${event.payload.grant_id}`)));
+      grant = { kind: "role_claim", status: "approved", actor_id: event.actor_id, role,
+        expires_at: new Date(this.clock() + 300000).toISOString() };
+    }
+    const actor = { roles: [], permissions: [], preferred_channel: "telegram",
+      channels: { telegram: { verified: true, chat_id: chatId } } };
+    return this.eval(INGEST_TELEGRAM, keys, [JSON.stringify(event), eventFingerprint(event), this.clock(), JSON.stringify(actor), JSON.stringify(grant)]);
   }
 
   async event(id: string): Promise<Record<string, unknown> | null> {
     const raw = await this.command(["GET", this.key(`inbox:${parseId(id)}`)]);
+    if (raw === null) return null;
+    const record = decode(raw);
+    if (record.event_json !== undefined) record.event = parseEvent(decode(record.event_json));
+    delete record.event_json;
+    return record;
+  }
+
+  async message(id: string): Promise<Record<string, unknown> | null> {
+    const raw = await this.command(["GET", this.key(`outbox:${parseId(id)}`)]);
     return raw === null ? null : decode(raw);
+  }
+
+  async settleEvent(id: string, status: "rejected" | "deferred", reason: string): Promise<StoreResult> {
+    if (!["rejected", "deferred"].includes(status) || typeof reason !== "string" || !/^[a-z_]{1,64}$/.test(reason)) {
+      throw new ContractError("invalid_event_result");
+    }
+    return this.eval(SETTLE_EVENT, [this.key(`inbox:${parseId(id)}`), this.key("inbox-pending")],
+      [status, reason, this.clock()]);
   }
 
   async snapshot(entities: string[]): Promise<StateSnapshot> {
@@ -119,7 +164,7 @@ export class RedisStateStore {
       return { index: keys.length, entity, version };
     });
     const indexes = new Map(reads.map((read) => [read.entity, read.index]));
-    const writes = commit.writes.map((write) => ({ ...write, index: indexes.get(write.entity)! }));
+    const writes = commit.writes.map((write) => ({ entity: write.entity, value_json: JSON.stringify(write.value), index: indexes.get(write.entity)! }));
     const messages = commit.messages.map((message) => {
       keys.push(this.key(`outbox:${message.id}`));
       return { index: keys.length, value: message };
@@ -139,11 +184,12 @@ export class RedisStateStore {
       [this.clock(), randomUUID(), 60000]);
   }
 
-  async settle(id: string, lease: string, status: "succeeded" | "failed" | "unknown", providerMessageId = ""): Promise<StoreResult> {
+  async settle(id: string, lease: string, status: "succeeded" | "failed" | "unknown" | "simulated" | "retry", providerMessageId = "", retryAfterMs = 5000): Promise<StoreResult> {
     parseId(id);
-    if (!/^[0-9a-f-]{36}$/.test(lease) || !["succeeded", "failed", "unknown"].includes(status) ||
-        typeof providerMessageId !== "string" || providerMessageId.length > 120) throw new ContractError("invalid_delivery_result");
+    if (!/^[0-9a-f-]{36}$/.test(lease) || !["succeeded", "failed", "unknown", "simulated", "retry"].includes(status) ||
+        typeof providerMessageId !== "string" || providerMessageId.length > 120 ||
+        !Number.isInteger(retryAfterMs) || retryAfterMs < 1000 || retryAfterMs > 300000) throw new ContractError("invalid_delivery_result");
     return this.eval(SETTLE_MESSAGE, [this.key(`outbox:${id}`), this.key("outbox-pending")],
-      [lease, status, providerMessageId, this.clock()]);
+      [lease, status, providerMessageId, this.clock(), retryAfterMs]);
   }
 }

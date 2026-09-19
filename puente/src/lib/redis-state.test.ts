@@ -93,6 +93,71 @@ describe("state transport boundaries", () => {
     assert.equal(calls, 0);
   });
 
+  it("preserves empty arrays in stored documents instead of Lua cjson turning them into objects", async () => {
+    let payload: { writes: { value_json: string }[] } = { writes: [] };
+    const store = new RedisStateStore(async (args) => {
+      payload = JSON.parse(String(args[args.length - 2]));
+      return JSON.stringify({ status: "applied" });
+    }, "test-contract");
+    await store.commit({ event_id: "e1", expected: { "incident/i1": 0 },
+      writes: [{ entity: "incident/i1", value: { assignment_ids: [], tasks: {} } }], messages: [] });
+    assert.equal(payload.writes[0].value_json, '{"assignment_ids":[],"tasks":{}}');
+    const reader = new RedisStateStore(async () => JSON.stringify({
+      status: "pending", event: { ...event, payload: { values: {} } },
+      event_json: JSON.stringify({ ...event, payload: { values: [] } }),
+    }), "test-contract");
+    assert.deepEqual((await reader.event("event-1"))?.event, { ...event, payload: { values: [] } });
+  });
+
+  it("atomically registers verified Telegram identity and a bounded role grant with ingress", async () => {
+    const calls: unknown[][] = [];
+    const store = new RedisStateStore(async (args) => {
+      calls.push(args);
+      return JSON.stringify({ status: "accepted" });
+    }, "test-contract", () => 1000);
+    const claimed = { ...event, event_id: "tg-update-42", channel: "telegram", actor_id: "tg-123",
+      conversation_id: "tg-123", event_type: "actor.role_claimed", payload: { role: "medico", grant_id: "grant:tg-update-42" } };
+    await store.ingestTelegram(claimed, "123");
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], "EVAL");
+    assert.equal(calls[0][2], 4);
+    assert.deepEqual(calls[0].slice(3, 7), ["fa:v2:{test-contract}:inbox:tg-update-42", "fa:v2:{test-contract}:inbox-pending",
+      "fa:v2:{test-contract}:actor/tg-123", "fa:v2:{test-contract}:approval/grant:tg-update-42"]);
+    const actor = JSON.parse(String(calls[0][10]));
+    assert.deepEqual(actor.roles, []);
+    assert.deepEqual(actor.permissions, []);
+    assert.equal(actor.channels.telegram.chat_id, "123");
+    const grant = JSON.parse(String(calls[0][11]));
+    assert.equal(grant.actor_id, "tg-123");
+    assert.equal(grant.expires_at, new Date(301000).toISOString());
+    await assert.rejects(() => store.ingestTelegram({ ...claimed, actor_id: "coordinator" }, "123"));
+    await assert.rejects(() => store.ingestTelegram({ ...claimed, payload: { role: "admin", grant_id: "grant:tg-update-42" } }, "123"));
+    assert.equal(calls.length, 1);
+  });
+
+  it("deduplicates Telegram callbacks whose provider has no timestamp", async () => {
+    const calls: unknown[][] = [];
+    const store = new RedisStateStore(async (args) => { calls.push(args); return JSON.stringify({ status: "accepted" }); }, "test-contract");
+    const callback = { ...event, payload: { timestamp_source: "received", callback_query_id: "c1" } };
+    await store.enqueue(callback);
+    await store.enqueue({ ...callback, occurred_at: "2026-09-19T14:00:10Z", received_at: "2026-09-19T14:00:10Z" });
+    assert.equal(calls[0][6], calls[1][6]);
+  });
+
+  it("quarantines invalid events and schedules bounded retries with server time", async () => {
+    const calls: unknown[][] = [];
+    const store = new RedisStateStore(async (args) => {
+      calls.push(args);
+      return JSON.stringify({ status: "deferred" });
+    }, "test-contract", () => 1000);
+    await store.settleEvent("event-1", "deferred", "conflict");
+    assert.equal(calls[0][0], "EVAL");
+    assert.equal(calls[0][3], "fa:v2:{test-contract}:inbox:event-1");
+    assert.deepEqual(calls[0].slice(-3), ["deferred", "conflict", 1000]);
+    await assert.rejects(() => store.settleEvent("event-1", "rejected", "sensitive error contents"));
+    assert.equal(calls.length, 1);
+  });
+
   it("rejects untrusted URLs and never includes secrets or provider errors in thrown errors", async () => {
     assert.throws(() => upstashCommand("http://example.invalid", "token"), StateStoreError);
     assert.throws(() => upstashCommand("https://upstash.io.evil.invalid", "token"), StateStoreError);

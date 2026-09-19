@@ -69,18 +69,24 @@ INPUTS = {
 
 
 def updates(name, **override):
-    if name == 'fa_operaciones':
+    if name in ('fa_operaciones', 'fa_consumidor'):
         raw = override.get('TRIGGER_PID')
         if not isinstance(raw, str) or not raw:
             raise ValueError('TRIGGER_PID must be a persistent UUID')
         trigger = str(UUID(raw))
         source = (plate.HERE / 'fa_operaciones.py').read_text()
-        code = source + '\noutput = run_input(input_data)\n'
-        compile(code, 'fa_operaciones', 'exec')
+        keys = ('event_json', 'snapshot_json')
+        entry = 'run_input'
+        if name == 'fa_consumidor':
+            source += '\n' + (plate.HERE / 'fa_consumidor.py').read_text()
+            keys = ('event_id', 'state_json', 'response_json', 'status_code')
+            entry = 'consumer_input'
+        code = source + '\noutput = %s(input_data)\n' % entry
+        compile(code, name, 'exec')
         return json.dumps({'configuration': {
             'code': code, 'execution_profile': 'standard',
             'input_data': [{'key': key, 'value': plate.plate('{{%s.%s}}' % (trigger, key), 'p')}
-                           for key in ('event_json', 'snapshot_json')],
+                           for key in keys],
         }})
     inputs = dict(INPUTS[name])
     for k, v in override.items():

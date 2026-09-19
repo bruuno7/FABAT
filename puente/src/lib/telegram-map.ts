@@ -39,6 +39,7 @@ export type TelegramChatMessage = {
   location?: TelegramLocation;
   chat: { id: number; type: string };
   from?: TelegramUser;
+  reply_to_message?: { message_id: number };
 };
 
 export type TelegramCallbackQuery = {

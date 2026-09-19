@@ -136,12 +136,15 @@ Variables: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `HR_STATE_NAMES
 | `/inbox` | `HR_STATE_INGRESS_SECRET` | Acepta evento de un adaptador autenticado; deduplica por ID y contenido |
 | `/inbox/event`, `/inbox/pending`, `/snapshot` | `HR_STATE_READ_SECRET` | Lectura privada y versionada |
 | `/commit` | `HR_STATE_COMMIT_SECRET` | CAS de entidades + evento aplicado + mensajes pendientes; conflicto devuelve 409 |
+| `/inbox/settle` | `HR_STATE_COMMIT_SECRET` | Cuarentena o reintento con espera exponencial, máximo cinco intentos; no altera eventos aplicados |
 | `/outbox/pending`, `/outbox/claim`, `/outbox/settle` | `HR_STATE_DELIVERY_SECRET` | Reserva temporal de envío y confirmación del resultado |
+| `/outbox/deliver` | `HR_STATE_DELIVERY_SECRET` | Reclama un mensaje persistido y lo entrega mediante el adaptador configurado; simulación por defecto |
 
 Los scripts Lua son fijos y solo escriben bajo `fa:v2:{namespace}:...`; no se admiten comandos
 Redis ni URLs de destinatarios arbitrarios. Un lease vencido pasa a entrega `unknown`, no a reenvío
-automático: un timeout puede haber ocurrido después de entregar el mensaje. Todavía falta conectar
-los consumidores, la recuperación programada, los adaptadores de identidad y todas las operaciones.
+automático: un timeout puede haber ocurrido después de entregar el mensaje. El consumidor y los
+adaptadores Telegram tienen implementación y pruebas locales; falta desplegar los grafos de HappyRobot,
+verificar la recuperación programada y completar identidad de voz, coordinación y el resto de operaciones.
 
 Pruebas sin red externa:
 
@@ -161,7 +164,44 @@ adaptador autenticado, vinculado a esa persona y con caducidad; el PIN no viaja 
 `build_nodes.py fa_operaciones TRIGGER_PID=<UUID-persistente>` exporta el archivo Python completo
 más su entrada `run_input`, sin recortarlo ni reescribirlo. Si falta una entidad en el snapshot,
 la salida pide su lectura (`needs_snapshot`), no supone que está libre o vacía. Si la entrada es
-inválida, no genera ningún commit. El consumidor con reintentos acotados todavía debe conectarse.
+inválida, no genera ningún commit.
+
+### Consumidor y Telegram aislado: avance local, no migración completada
+
+`fa_consumidor.py` separa la lógica pura de las peticiones HTTP. `consumer_input` devuelve un paso
+(`path`, `scope`, `body_json`, `state_json`) que ejecuta un nodo Webhook de HappyRobot; el Sandbox
+Python no tiene red. El estado intermedio procede de nodos internos, nunca de un trigger público.
+Se exporta con `build_nodes.py fa_consumidor TRIGGER_PID=<UUID-persistente>`: código exacto del núcleo
+y consumidor, sin reescritura. Hay máximo tres intentos CAS; tras conflicto se refrescan todas las
+versiones. Los eventos aplicados no se repiten; los inválidos quedan en cuarentena. Texto libre,
+plazos y solicitudes de revisión devuelven `needs_coordination`, no se interpretan en el puente.
+La recuperación local procesa lotes acotados; todavía falta cablear y comprobar sus nodos Cron/Webhook.
+
+Telegram mantiene v1 salvo `HR_STATE_TELEGRAM_MODE=isolated`, API habilitada y remitentes incluidos
+explícitamente en `HR_STATE_TELEGRAM_USERS` (IDs privados separados por comas). Solo se admite un
+namespace `test-` o `dev-`; no permite el corte a un namespace `live-`. Hace falta el secreto del
+webhook incluso en local. La identidad verificada, el permiso temporal de `/rol` y el evento se
+persisten juntos; no se guarda el PIN. Los callbacks v2 se vinculan al destinatario, mensaje enviado,
+incidente y asignación guardados. Fallo de persistencia devuelve 503 para permitir reintento del
+proveedor. `HR_STATE_COORDINATOR_HOOK`, cuando se configure, recibe solo el ID durable; un fallo al
+despertar el workflow no borra el evento. Los hooks v1 no se ejecutan para la cohorte v2.
+
+`HR_STATE_DELIVERY_MODE=sink` deja entregas `simulated` sin contactar proveedores. Para Telegram real
+hacen falta `live`, token, contacto verificado y `HR_STATE_ALLOWED_TELEGRAM_CHATS` explícito. El cuerpo
+de Telegram debe confirmar `ok:true` y un `message_id`; HTTP 200 por sí solo no basta. Un 429 explícito
+permite hasta tres intentos con la espera del proveedor; timeout/5xx ambiguo queda `unknown`, sin
+reenvío ciego. No se envía una oferta ya cancelada ni una pregunta a otra persona. Voz aún no está
+implementada en este adaptador. No activar la cohorte hasta validar el coordinador y la recuperación.
+
+Los documentos y eventos conservan el JSON original para que Lua/cjson no convierta listas vacías en
+objetos. Las nuevas regresiones Lua están en la suite Redis opt-in: los tests HTTP con dobles no
+acreditan su atomicidad real. No se han reejecutado las pruebas Redis ni del Preview en este avance.
+
+Pruebas locales del consumidor y artefacto:
+
+```bash
+python3 -B -m unittest motor.happyrobot.sandbox.test_consumidor motor.happyrobot.sandbox.test_operation_artifact motor.happyrobot.sandbox.test_operaciones
+```
 
 La prueba real de CAS es opt-in. Configura de forma privada `FABAT_TEST_REDIS_URL` y
 `FABAT_TEST_REDIS_TOKEN` de una base de pruebas y ejecuta desde `puente/`:

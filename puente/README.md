@@ -6,15 +6,18 @@ Dueña: **Ana** (`AGENTS.md`). Bruno posee specs en `motor/happyrobot`.
 
 ```
 Público TG → Bot → POST /telegram/webhook → public_report → HR_HOOK_TG (fa-entrada-tg)
-Personal TG → /rol /estado /baja (local) · botones → staff_response → HR_HOOK_TG_RESPONSE
-HR agent_reply → POST /hr/events → backend MANDO → sendMessage TG
+Personal TG → /rol /estado /baja → HR_HOOK_TG_ROSTER (fa-rol-tg) · botones → staff_response → HR_HOOK_TG_RESPONSE
+HR agent_reply → POST /hr/events → sendMessage TG (y espejo a MANDO si MANDO_BACKEND_URL)
 HR telegram_send / telegram_edit / answer_callback → Bot API
 ```
 
 También: `POST /hr/events` genérico para webcall y otros canales.
 
-Los puestos de personal se cachean en el puente y se persisten en MANDO (`POST /hr/tg/roster`).
-Sin `MANDO_BACKEND_URL` el mapa sigue siendo solo memoria (se pierde en un cold start de Vercel).
+El directorio rol↔chat_id, los incidentes y el cerrojo «primer acepta gana» viven en **HappyRobot**
+(workflows `fa-rol-tg`, `fa-despacho-tg`, `fa-respuesta-tg` sobre Redis). El puente solo transporta.
+`/rol`, `/baja` y `/estado` disparan `HR_HOOK_TG_ROSTER`; `fa-rol-tg` contesta al chat con la ocupación
+real. Sin ese hook, el mapa es solo memoria local (se pierde en un cold start de Vercel) y, si además hay
+`MANDO_BACKEND_URL`, se espeja en MANDO (`POST /hr/tg/roster`, ruta heredada).
 
 ## Arranque local
 
@@ -38,7 +41,9 @@ Webhook (con túnel CF / similar):
 2. `setWebhook` con `secret_token` = `TELEGRAM_WEBHOOK_SECRET` (incluye `callback_query`)
 3. Rellenar `HR_HOOK_TG` con URL development del Incoming Hook
 4. `HR_HOOK_TG_RESPONSE` = Incoming Hook development de `fa-respuesta-tg`
-5. `MANDO_BACKEND_URL` = URL pública de MANDO (túnel). `/rol` escribe el directorio ahí.
+5. `HR_HOOK_TG_ROSTER` = Incoming Hook development de `fa-rol-tg` (directorio de puestos)
+6. `HR_SECRET` con el MISMO valor que la variable `HR_SECRET` de `fa-entrada-tg`, `fa-despacho-tg`,
+   `fa-respuesta-tg` y `fa-rol-tg` en la plataforma; si no coincide, HappyRobot recibe `invalid secret`
 
 ## Variables
 
@@ -50,6 +55,7 @@ Ver `.env.example`. Nunca commitear `.env`.
 | `TELEGRAM_WEBHOOK_SECRET` | Header `X-Telegram-Bot-Api-Secret-Token` |
 | `HR_HOOK_TG` | Incoming Hook development `fa-entrada-tg` |
 | `HR_HOOK_TG_RESPONSE` | Incoming Hook `fa-respuesta-tg` (botones acc/dec/eta/loc/apr/vet) |
+| `HR_HOOK_TG_ROSTER` | Incoming Hook `fa-rol-tg` (`/rol`, `/baja`, `/estado`; el directorio vive en Redis vía HappyRobot) |
 | `HR_HOOK_API_KEY` | Si el hook exige `x-api-key` |
 | `HR_SECRET` | Valida callbacks HR → puente |
 | `STAFF_PIN` | PIN compartido para `/rol`. Obligatorio en producción |

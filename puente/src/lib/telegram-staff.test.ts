@@ -282,6 +282,38 @@ describe("staff commands", () => {
     mock.restoreAll();
   });
 
+  it("forwards /rol, /baja and /estado to HR_HOOK_TG_ROSTER (fa-rol-tg) when configured", async () => {
+    const calls = mockFetch();
+    const env = loadEnv({
+      TELEGRAM_BOT_TOKEN: "test-token",
+      HR_HOOK_TG_ROSTER: "https://example.invalid/rol",
+      HR_HOOK_API_KEY: "k",
+    });
+    const staff = createStaffStore();
+    const msg = (text: string, update_id: number) => ({
+      update_id,
+      message: {
+        message_id: update_id,
+        text,
+        chat: { id: 78, type: "private" as const },
+        from: { id: 78, first_name: "Marc" },
+      },
+    });
+    await handleTelegramUpdate(env, msg("/rol policia", 1), createIncidentStore(), staff);
+    const estado = await handleTelegramUpdate(env, msg("/estado", 2), createIncidentStore(), staff);
+    await handleTelegramUpdate(env, msg("/baja", 3), createIncidentStore(), staff);
+
+    const roster = calls.filter((c) => c.url === "https://example.invalid/rol");
+    assert.equal(roster.length, 3);
+    const actions = roster.map((c) => (JSON.parse(c.body) as { action: string }).action);
+    assert.deepEqual(actions, ["claim", "list", "release"]);
+    const claim = JSON.parse(roster[0].body) as { role: string; chat_id: string; alias: string };
+    assert.deepEqual(claim, { action: "claim", role: "policia", chat_id: "78", alias: "Marc" } as unknown);
+    // /estado lo contesta HappyRobot (fa-rol-tg) con la ocupación real; el puente no duplica el mensaje.
+    assert.deepEqual(estado.replies, []);
+    mock.restoreAll();
+  });
+
   it("persists /rol to MANDO so HR can read chat_id after a cold start", async () => {
     const calls = mockFetch();
     const env = loadEnv({

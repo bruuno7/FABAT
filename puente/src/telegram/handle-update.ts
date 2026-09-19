@@ -3,6 +3,7 @@ import type { Env } from "../lib/hr-client.js";
 import {
   fetchMandoRoster,
   forwardToHappyRobot,
+  postHappyRobotRoster,
   postMandoRoster,
   telegramAnswerCallback,
   telegramSendMessage,
@@ -119,6 +120,11 @@ export async function handleTelegramUpdate(
   }
 
   if (command === "estado") {
+    // Con HappyRobot como directorio, `fa-rol-tg` responde al chat con la ocupación real.
+    const hr = await safeRoster(env, { action: "list", chat_id: chatId });
+    if (hr.ok) {
+      return { ok: true, command, replies: [] };
+    }
     await hydrateStaff(env, staff);
     const mine = staff.getByChat(chatId);
     const reply = staffOccupancyText(staff.list(), mine?.role);
@@ -129,6 +135,7 @@ export async function handleTelegramUpdate(
   if (command === "baja") {
     await hydrateStaff(env, staff);
     const previous = staff.release(chatId);
+    await safeRoster(env, { action: "release", chat_id: chatId });
     try {
       await postMandoRoster(env.mandoBackendUrl, env.hrSecret, {
         action: "release",
@@ -316,6 +323,9 @@ async function claimRole(
     return `Ya tienes el puesto ${STAFF_ROLE_LABELS[role]}.`;
   }
 
+  // Directorio en HappyRobot (Redis): es quien manda si está configurado. MANDO queda como espejo.
+  await safeRoster(env, { action: "claim", role, chat_id: chatId, alias: display });
+
   let remote;
   try {
     remote = await postMandoRoster(env.mandoBackendUrl, env.hrSecret, {
@@ -370,6 +380,18 @@ async function claimRole(
       ? "\nSin PIN en local: cualquier miembro del equipo puede registrar puestos."
       : "";
   return switched + pinNote;
+}
+
+async function safeRoster(
+  env: Env,
+  payload: Parameters<typeof postHappyRobotRoster>[1],
+): Promise<{ ok: boolean; skipped: boolean }> {
+  try {
+    const r = await postHappyRobotRoster(env, payload);
+    return { ok: r.ok, skipped: r.skipped ?? false };
+  } catch {
+    return { ok: false, skipped: false };
+  }
 }
 
 async function hydrateStaff(env: Env, staff: StaffStore): Promise<void> {

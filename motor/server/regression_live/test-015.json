@@ -1,0 +1,176 @@
+{
+ "n": 15,
+ "author": "anónimo",
+ "note": "",
+ "locked_at": "2026-09-19 17:31:55",
+ "locked_t": 1,
+ "case_id": "demo-gates",
+ "seed": 7,
+ "playbook": "seed",
+ "inputs": [
+  {
+   "t": 1,
+   "kind": "report",
+   "channel": "whatsapp",
+   "text": "Una chica se ha desmayado por el calor junto a la valla, no responde bien",
+   "zone": "front_pit",
+   "preset": null,
+   "source": "HappyRobot · Telegram",
+   "lang": "es",
+   "wristband": null,
+   "via": "telegram",
+   "where": "front_pit",
+   "understood": "happyrobot",
+   "update_of": null
+  }
+ ],
+ "before": {
+  "critical_failed": 0,
+  "critical_total": 1,
+  "unsafe_actions": 0,
+  "replans": 0,
+  "peak_density": 2.167,
+  "minutes_over_5": 0
+ },
+ "limits": {
+  "max_critical_failed": 0,
+  "max_unsafe_actions": 0
+ },
+ "case": {
+  "id": "demo-gates",
+  "seed": 7,
+  "split": "demo",
+  "day": 2,
+  "start_hhmm": "18:30",
+  "duration_min": 90,
+  "families": [
+   "crowd",
+   "medical",
+   "info"
+  ],
+  "difficulty": 4,
+  "initial": {
+   "occupancy": {
+    "gate_b": 1300
+   },
+   "weather": {
+    "temp_c": 30
+   }
+  },
+  "events": [
+   {
+    "t": 2,
+    "kind": "world",
+    "effect": {
+     "kind": "zone_flag",
+     "zone": "gate_b",
+     "flag": "flow_factor",
+     "value": 0.5,
+     "reason": "dos tornos de la Puerta B no leen las pulseras"
+    }
+   },
+   {
+    "t": 2,
+    "kind": "world",
+    "effect": {
+     "kind": "zone_inflow",
+     "zone": "gate_b",
+     "per_min": 220,
+     "n": 45,
+     "reason": "llegan a la vez el metro y seis lanzaderas"
+    }
+   },
+   {
+    "t": 3,
+    "kind": "incident",
+    "incident": {
+     "id": "i1",
+     "family": "crowd",
+     "type": "gate_saturation",
+     "zone": "gate_b",
+     "severity": 7,
+     "deadline": 25,
+     "needs": {
+      "security": 2
+     }
+    },
+    "reports": [
+     {
+      "channel": "voice",
+      "source": "jefe seguridad 2",
+      "lang": "es",
+      "zone_hint": "gate_b",
+      "text": "La puerta B está atascada, dos tornos no leen las pulseras y sigue llegando gente del metro"
+     }
+    ]
+   },
+   {
+    "t": 9,
+    "kind": "report_only",
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "truth_incident": "i1",
+      "text": "En la entrada principal hay muchísima gente parada, nos estamos agobiando, no avanza nada"
+     }
+    ]
+   },
+   {
+    "t": 40,
+    "kind": "incident",
+    "incident": {
+     "id": "i2",
+     "family": "medical",
+     "type": "unconscious_person",
+     "zone": "front_pit",
+     "severity": 9,
+     "deadline": 48,
+     "needs": {
+      "medical": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "en",
+      "text": "Someone collapsed near the front left barrier, he is not moving, please send help"
+     },
+     {
+      "channel": "radio",
+      "source": "jefe seguridad 3",
+      "lang": "es",
+      "zone_hint": "front_pit",
+      "text": "Varón inconsciente en el foso, lado izquierdo, no responde. Necesito sanitarios"
+     }
+    ]
+   },
+   {
+    "t": 55,
+    "kind": "report_only",
+    "reports": [
+     {
+      "channel": "sms",
+      "source": "asistente",
+      "lang": "es",
+      "text": "huele a humo en la zona de comida creo que hay fuego"
+     }
+    ]
+   }
+  ],
+  "expected": {
+   "must": [
+    "dispatch security to i1 within 5 min",
+    "dispatch medical to i2 within 3 min",
+    "if reroute gate_b->gate_a then watch gate_a and cancel reroute before 5/m2"
+   ],
+   "must_not": [
+    "close gate_b without approval",
+    "evacuate without approval",
+    "dispatch to smoke report without asking"
+   ]
+  }
+ }
+}

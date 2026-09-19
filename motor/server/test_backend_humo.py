@@ -289,3 +289,138 @@ class HumoTest(unittest.TestCase):
         blob = json.dumps({"agentes": st["agentes"], "enjambre": st["enjambre"]}, ensure_ascii=False)
         self.assertNotIn(SECRET, blob)
         self.record("CICLO", "/hr/tools/*", 200, iid)
+
+
+def _clean_status(status: int, text: str) -> str | None:
+    if _trace(text):
+        return "traza"
+    if status == 500:
+        return "500"
+    return None
+
+
+def live_smoke(base: str, secret: str) -> dict:
+    """Humo contra un servidor vivo. Devuelve conteos y fallos."""
+    import httpx
+    token = {"X-Mando-Token": secret}
+    rows: list[dict] = []
+    failures: list[str] = []
+    app = create_app("demo-1", threaded=False, secret=secret)
+    try:
+        paths = []
+        for route in app.routes:
+            methods = getattr(route, "methods", None) or set()
+            path = getattr(route, "path", None)
+            if path:
+                for method in methods:
+                    if method in ("GET", "POST"):
+                        paths.append((method, path))
+    finally:
+        app.state.session.close()
+        app.state.chat.stop()
+    paths = sorted(set(paths + [("GET", "/"), ("GET", "/acceso"), ("POST", "/mcp")]))
+    with httpx.Client(base_url=base, timeout=8.0) as c:
+        n = 0
+        for method, path in paths:
+            url = _fill(path)
+            if "{" in url:
+                continue
+            if method == "GET":
+                if path in ("/api/stream", "/api/duel/stream"):
+                    url = path + "?limit=1"
+                r = c.get(url)
+            else:
+                if path.startswith("/hr/") or path == "/mcp":
+                    r = c.post(url, json={})
+                    err = _clean_status(r.status_code, r.text)
+                    if err:
+                        failures.append(f"{method} {url} sin token: {err} {r.status_code}")
+                    n += 1
+                    rows.append({"method": method, "path": path, "status": r.status_code, "note": "sin token"})
+                    if path == "/mcp":
+                        continue
+                    r = c.post(url, json=TOOL_VALID.get(path) or POST_VALID.get(path, {}), headers=token)
+                else:
+                    r = c.post(url, json=POST_VALID.get(path, {}))
+            err = _clean_status(r.status_code, r.text)
+            if err:
+                failures.append(f"{method} {url}: {err} {r.status_code} {r.text[:160]}")
+            rows.append({"method": method, "path": path, "status": r.status_code, "note": "vivo"})
+            n += 1
+        for path, body in TOOL_VALID.items():
+            for name, payload in (("vacio", {}), ("unicode", {"texto": UNICODE, "zona": UNICODE, "porque": UNICODE}),
+                                  ("tipos", {"limit": {"a": 1}, "prioridad": "alta", "zona": 1}),
+                                  ("valido", body)):
+                r = c.post(path, json=payload, headers=token)
+                err = _clean_status(r.status_code, r.text)
+                if err:
+                    failures.append(f"POST {path} {name}: {err} {r.status_code}")
+                rows.append({"method": "POST", "path": path, "status": r.status_code, "note": name})
+                n += 1
+            r = c.post(path, content=b"{", headers={**token, "Content-Type": "application/json"})
+            err = _clean_status(r.status_code, r.text)
+            if err:
+                failures.append(f"POST {path} json-roto: {err}")
+            n += 1
+        ctx = c.post("/hr/tools/contexto", json={"tipo": "crowd", "zona": "gate_b"}, headers=token)
+        sit = c.post("/hr/tools/analizar_situacion", json={}, headers=token)
+        d = c.post("/hr/tools/decidir", json={
+            "agente": "triaje", "incident_id": "nuevo", "prioridad": 6, "zona": "front_pit",
+            "porque": "Humo vivo, simulación N=1.", "tipo": "crowd",
+        }, headers=token)
+        n += 3
+        iid = (d.json() or {}).get("incident_id") if d.status_code == 200 else None
+        if iid:
+            c.post("/hr/tools/acciones_posibles", json={"incidente": iid}, headers=token)
+            c.post("/hr/tools/ensayar", json={"opciones": ["mandar M2 al foso"], "minutos": 8}, headers=token)
+            c.post("/hr/tools/comparar_opciones", json={"opciones": ["despachar", "vigilar"]}, headers=token)
+            c.post("/hr/tools/decidir", json={
+                "agente": "prioridad", "incident_id": iid, "prioridad": 7,
+                "porque": "El foso sube.", "tipo": "crowd",
+            }, headers=token)
+            prop = c.post("/hr/tools/pizarra/publicar", json={
+                "de": "recursos", "para": "todos", "incidente": iid, "tipo": "propuesta",
+                "texto": "Mandar med_2.",
+            }, headers=token)
+            pid = prop.json().get("id") if prop.status_code == 200 else ""
+            c.post("/hr/tools/pizarra/publicar", json={
+                "de": "critico", "para": "recursos", "incidente": iid, "tipo": "objecion",
+                "enlaza": pid, "texto": "Objeción de humo vivo.", "gravedad": "alta",
+            }, headers=token)
+            c.post("/hr/tools/memoria/guardar", json={
+                "id": "ce-vivo", "tipo": "crowd", "zona": "front_pit", "resultado": {"texto": "ok"},
+            }, headers=token)
+            c.post("/hr/tools/memoria/lecciones", json={
+                "accion": "proponer", "id": "L-vivo", "texto": "Lección de humo vivo.",
+                "evidencia": {"ids": ["ce-vivo"], "n": 3},
+            }, headers=token)
+            c.post("/api/memoria/lecciones", json={"id": "L-vivo", "accion": "aprobar", "by": "Ana"})
+            c.post("/api/memoria/lecciones", json={"id": "L-vivo", "accion": "revocar", "by": "Ana"})
+            n += 10
+            st = c.get("/api/state").json()
+            for key in ("agentes", "enjambre", "telegram"):
+                if key not in st:
+                    failures.append(f"estado público sin {key}")
+            ad = c.get("/api/adaptacion")
+            ag = c.get(f"/api/agentes/{iid}")
+            ex = c.get("/api/explica")
+            n += 4
+            for r, name in ((ctx, "contexto"), (sit, "analizar"), (d, "decidir"), (ad, "adaptacion"),
+                            (ag, "agentes"), (ex, "explica")):
+                err = _clean_status(r.status_code, r.text)
+                if err:
+                    failures.append(f"ciclo {name}: {err} {r.status_code}")
+    by_status: dict[str, int] = {}
+    for row in rows:
+        by_status[str(row["status"])] = by_status.get(str(row["status"]), 0) + 1
+    return {"base": base, "n": n, "by_status": by_status, "failures": failures, "rows": rows}
+
+
+if __name__ == "__main__":
+    import sys
+    base = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8861"
+    secret = os.environ.get("HR_SECRET") or SECRET
+    out = live_smoke(base, secret)
+    print(json.dumps({k: out[k] for k in ("base", "n", "by_status", "failures")}, ensure_ascii=False, indent=2))
+    raise SystemExit(1 if out["failures"] else 0)
+

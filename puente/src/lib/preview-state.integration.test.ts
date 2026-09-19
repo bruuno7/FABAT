@@ -86,7 +86,10 @@ it("isolated Preview API with real Redis and the Python consumer", {
     const second = event("accept-2", "worker-2", "phone");
     await post("/inbox", first, "ingress");
     await post("/inbox", second, "ingress");
-    const snapshot = (await post("/snapshot", { entities: names }, "read")).data;
+    const context = (await post("/operations/context", { id: first.event_id }, "read")).data;
+    assert.equal(context.status, "pending");
+    assert.equal(JSON.parse(context.event_json).event_id, first.event_id);
+    const snapshot = JSON.parse(context.snapshot_json);
     const proposals = [first, second].map((e) => python("apply_event", { event: e, snapshot }));
     const results = await Promise.all(proposals.map((proposal) => post("/commit", proposal, "commit")));
     assert.deepEqual(results.map((r) => r.data.status).sort(), ["applied", "conflict"]);

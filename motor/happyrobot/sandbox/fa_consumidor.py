@@ -2,7 +2,7 @@ import json
 import re
 
 if "apply_event" not in globals():
-    from .fa_operaciones import OperationError, apply_event, identifier
+    from .fa_operaciones import OperationError, apply_event, identifier, run_input
 
 
 ENTITY = re.compile(r"(?:actor|incident|assignment|question|conversation|reservation|decision|approval)/[A-Za-z0-9][A-Za-z0-9_.~:-]{0,119}\Z")
@@ -140,3 +140,74 @@ def consumer_input(input_data):
                 "body_json": json.dumps(action.get("body", {}), ensure_ascii=True)}
     except Exception:
         return {"status": "unavailable", "event_id": "", "state_json": "null", "path": "", "scope": "", "body_json": "{}"}
+
+
+def json_value(value):
+    return json.loads(value) if isinstance(value, str) else value
+
+
+def status_request(event_id, status="unavailable"):
+    return {"status": status, "path": "/inbox/status", "body_json": json.dumps({"id": identifier(event_id)})}
+
+
+def snapshot_input(input_data):
+    event_id = identifier(input_data.get("event_id"))
+    output = status_request(event_id)
+    try:
+        if int(input_data.get("status_code", 0)) != 200:
+            return output
+        status = input_data.get("state_status")
+        if status != "pending":
+            return status_request(event_id, status if status in ("applied", "rejected", "missing") else "unavailable")
+        event = json_value(input_data.get("event_json"))
+        if not isinstance(event, dict) or event.get("event_id") != event_id:
+            return output
+        if event.get("event_type") in ("message.received", "deadline.elapsed", "review.requested"):
+            return status_request(event_id, "needs_coordination")
+        result = run_input({"event_json": event, "snapshot_json": input_data.get("snapshot_json")})
+        if result["status"] == "ready":
+            return {"status": "ready", "path": "/commit", "body_json": result["commit_json"]}
+        reason = result.get("error", "invalid_input").split(":", 1)[0]
+        if not re.fullmatch(r"[a-z_]{1,64}", reason):
+            reason = "invalid_operation"
+        status = "deferred" if result["status"] == "needs_snapshot" or reason == "entity_missing" else "rejected"
+        return {"status": status, "path": "/inbox/settle",
+                "body_json": json.dumps({"id": event_id, "status": status, "reason": reason})}
+    except (ValueError, TypeError, KeyError, AttributeError):
+        return output
+
+
+def finish_input(input_data):
+    event_id = identifier(input_data.get("event_id"))
+    output = status_request(event_id)
+    try:
+        result = json_value(input_data.get("status_json"))
+        if int(input_data.get("status_code", 0)) != 200 or result.get("event_id") != event_id:
+            return output
+        if result.get("status") == "pending" and result.get("event_type") not in ("message.received", "deadline.elapsed", "review.requested"):
+            return {"status": "deferred", "path": "/inbox/settle",
+                    "body_json": json.dumps({"id": event_id, "status": "deferred", "reason": "conflict"})}
+        return status_request(event_id, result.get("status", "unavailable"))
+    except (ValueError, TypeError, AttributeError):
+        return output
+
+
+def result_input(input_data):
+    event_id = identifier(input_data.get("event_id"))
+    status = "unavailable"
+    try:
+        result = json_value(input_data.get("status_json"))
+        code = int(input_data.get("status_code", 0))
+        if result.get("event_id", event_id) != event_id:
+            return {"event_id": event_id, "status": status}
+        if code == 404 and result.get("status") == "missing":
+            status = "missing"
+        elif code == 200 and result.get("status") in ("applied", "duplicate", "rejected", "deferred", "pending"):
+            status = result["status"]
+            if status == "pending" and result.get("event_type") in ("message.received", "deadline.elapsed", "review.requested"):
+                status = "needs_coordination"
+            elif status == "pending" and result.get("next_at"):
+                status = "deferred"
+    except (ValueError, TypeError, AttributeError):
+        pass
+    return {"event_id": event_id, "status": status}

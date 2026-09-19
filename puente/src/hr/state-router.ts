@@ -4,6 +4,7 @@ import { ContractError, object, parseId, parseSnapshotRequest, unwrapEvent } fro
 import { RedisStateStore, StateStoreError, upstashCommand } from "../lib/redis-state.js";
 import type { StateApiConfig } from "../lib/state-env.js";
 import { deliver, type DeliveryConfig } from "../lib/state-delivery.js";
+import { operationContext } from "../lib/operation-context.js";
 
 function matches(expected: string, actual: string): boolean {
   const digest = (value: string) => createHash("sha256").update(value).digest();
@@ -54,6 +55,14 @@ export function stateRouter(config: StateApiConfig = { enabled: false }, injecte
   route("/inbox/pending", "readSecret", (s, body) => s.pending("inbox", body.limit === undefined ? 16 : body.limit as number));
   route("/inbox/settle", "commitSecret", (s, body) => s.settleEvent(parseId(body.id), body.status as "rejected" | "deferred", body.reason as string));
   route("/snapshot", "readSecret", (s, body) => s.snapshot(parseSnapshotRequest(body)));
+  route("/operations/context", "readSecret", (s, body) => operationContext(s, parseId(body.id)));
+  route("/inbox/status", "commitSecret", async (s, body) => {
+    const id = parseId(body.id);
+    const record = await s.event(id);
+    const summary = { status: record?.status ?? "missing", event_id: id, event_type: record ? object(record.event).event_type : null,
+      next_at: record?.next_at ?? null, reason: record?.reason ?? null, attempts: record?.attempts ?? 0 };
+    return { ...summary, api_status_code: record ? 200 : 404, result_json: JSON.stringify(summary) };
+  });
   route("/commit", "commitSecret", (s, body) => s.commit(body));
   route("/outbox/pending", "deliverySecret", (s, body) => s.pending("outbox", body.limit === undefined ? 16 : body.limit as number));
   route("/outbox/claim", "deliverySecret", (s, body) => s.claim(parseId(body.id)));

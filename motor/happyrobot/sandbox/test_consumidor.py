@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import Mock
 
 from motor.happyrobot.sandbox import test_operaciones
-from motor.happyrobot.sandbox.fa_consumidor import consume, consumer_input, recover
+from motor.happyrobot.sandbox.fa_consumidor import consume, consumer_input, finish_input, recover, snapshot_input
 from motor.happyrobot.sandbox.fa_operaciones import apply_event
 
 
@@ -124,6 +124,26 @@ class ConsumerTest(unittest.TestCase):
                                  "response_json": {"status": "pending", "event": self.event}, "status_code": 0})
         self.assertEqual(result["status"], "unavailable")
         self.assertEqual(result["path"], "")
+
+    def test_complete_snapshot_prepares_the_same_commit_without_extra_read_steps(self):
+        output = snapshot_input({"event_id": self.event["event_id"], "state_status": "pending", "status_code": 200,
+                                 "event_json": json.dumps(self.event), "snapshot_json": json.dumps(self.snapshots)})
+        self.assertEqual(output["path"], "/commit")
+        self.assertEqual(json.loads(output["body_json"]), apply_event(self.event, self.snapshots))
+
+    def test_snapshot_entry_never_commits_after_a_failed_http_read_or_replay(self):
+        for status, code in (("pending", 503), ("applied", 200), ("rejected", 200)):
+            output = snapshot_input({"event_id": self.event["event_id"], "state_status": status, "status_code": code,
+                                     "event_json": self.event, "snapshot_json": self.snapshots})
+            self.assertEqual(output["path"], "/inbox/status")
+
+    def test_native_loop_finish_defers_operations_but_keeps_coordination_events_pending(self):
+        for kind in ("assignment.accepted", "message.received"):
+            output = finish_input({"event_id": self.event["event_id"], "status_code": 200,
+                "status_json": {"event_id": self.event["event_id"], "status": "pending", "event_type": kind}})
+            self.assertEqual(output["path"], "/inbox/settle" if kind == "assignment.accepted" else "/inbox/status")
+        output = finish_input({"event_id": self.event["event_id"], "status_code": 503, "status_json": {}})
+        self.assertEqual(output["path"], "/inbox/status")
 
     def test_mismatched_event_id_cannot_be_processed(self):
         result = consume("other-event", self.api)

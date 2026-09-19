@@ -10,7 +10,7 @@ import {
   parseCommand,
   telegramUpdateToPublicReport,
 } from "./telegram-map.js";
-import { loadEnv } from "./hr-client.js";
+import { forwardToMando, loadEnv } from "./hr-client.js";
 import { handleTelegramUpdate } from "../telegram/handle-update.js";
 import { createIncidentStore } from "../hr/store.js";
 
@@ -154,6 +154,46 @@ describe("loadEnv", () => {
     assert.equal(e.mandoBackendUrl, undefined);
     assert.equal(e.telegramMode, "poll");
     assert.equal(e.port, 9000);
+  });
+});
+
+describe("forwardToMando", () => {
+  it("posts the public report to the authenticated backend endpoint", async () => {
+    let request: { url: string; init?: RequestInit } | undefined;
+    mock.method(
+      globalThis,
+      "fetch",
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        request = { url: String(input), init };
+        return new Response(JSON.stringify({ ok: true, report_id: "j-001" }), {
+          status: 200,
+        });
+      },
+    );
+
+    const report = toMandoPublicReport({
+      event: "agent_reply",
+      correlation_id: "tg-1-2",
+      report: { text: "Persona desmayada", channel: "telegram" },
+    });
+    assert.ok(report);
+    const result = await forwardToMando(
+      "https://mando.example",
+      "shared-secret",
+      report,
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(request?.url, "https://mando.example/hr/events");
+    assert.equal(
+      (request?.init?.headers as Record<string, string>)["x-hr-secret"],
+      "shared-secret",
+    );
+    assert.equal(
+      JSON.parse(String(request?.init?.body)).type,
+      "public_report",
+    );
+    mock.restoreAll();
   });
 });
 

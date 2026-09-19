@@ -1,3 +1,7 @@
+export function withTestExpiry(script: string): string {
+  return `local outcome = (function()\n${script}\nend)()\nfor _, key in ipairs(KEYS) do redis.call('EXPIRE', key, 3600) end\nreturn outcome`;
+}
+
 const TYPES = `
 local function valid_type(key, expected)
   local t = redis.call('TYPE', key).ok

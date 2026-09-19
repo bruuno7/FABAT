@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { RedisStateStore, StateStoreError, upstashCommand } from "./redis-state.js";
-import { COMMIT_STATE, ENQUEUE_EVENT } from "./redis-scripts.js";
+import { COMMIT_STATE, ENQUEUE_EVENT, withTestExpiry } from "./redis-scripts.js";
 
 const event = {
   schema_version: 2, event_id: "event-1", event_type: "message.received",
@@ -19,10 +19,20 @@ describe("state transport boundaries", () => {
     }, "test-contract");
     await store.enqueue(event);
     assert.equal(calls[0][0], "EVAL");
-    assert.equal(calls[0][1], ENQUEUE_EVENT);
+    assert.equal(calls[0][1], withTestExpiry(ENQUEUE_EVENT));
     assert.equal(calls[0][2], 2);
     assert.equal(calls[0][3], "fa:v2:{test-contract}:inbox:event-1");
     assert.throws(() => new RedisStateStore(async () => null, "../fa:seats"));
+  });
+
+  it("expires only isolated test namespaces, never live or development state", async () => {
+    for (const namespace of ["test-expiry", "dev-preserve", "live-preserve"]) {
+      const calls: unknown[][] = [];
+      const store = new RedisStateStore(async (args) => { calls.push(args); return JSON.stringify({ status: "accepted" }); }, namespace);
+      await store.enqueue(event);
+      assert.equal(calls[0][1], namespace.startsWith("test-") ? withTestExpiry(ENQUEUE_EVENT) : ENQUEUE_EVENT);
+      assert.equal(String(calls[0][1]).includes("redis.call('EXPIRE'"), namespace.startsWith("test-"));
+    }
   });
 
   it("compares the same event independently of retry receipt timestamp and object key order", async () => {
@@ -48,7 +58,7 @@ describe("state transport boundaries", () => {
       messages: [{ id: "message-1", recipient_id: "actor-1", channel: "telegram", incident_id: "inc-1", purpose: "status", text: "Recibido" }],
     });
     assert.equal(calls.length, 1);
-    assert.equal(calls[0][1], COMMIT_STATE);
+    assert.equal(calls[0][1], withTestExpiry(COMMIT_STATE));
     const keys = calls[0].slice(3, 9);
     assert.deepEqual(keys, [
       "fa:v2:{test-contract}:inbox:event-1", "fa:v2:{test-contract}:inbox-pending",

@@ -4,7 +4,7 @@ import {
   type CanonicalEvent, type Json, type JsonObject,
 } from "./event-contract.js";
 import { STAFF_ROLES } from "./contract.js";
-import { CLAIM_MESSAGE, COMMIT_STATE, ENQUEUE_EVENT, INGEST_TELEGRAM, SETTLE_EVENT, SETTLE_MESSAGE } from "./redis-scripts.js";
+import { CLAIM_MESSAGE, COMMIT_STATE, ENQUEUE_EVENT, INGEST_TELEGRAM, SETTLE_EVENT, SETTLE_MESSAGE, withTestExpiry } from "./redis-scripts.js";
 
 export type RedisCommand = (args: (string | number)[]) => Promise<unknown>;
 export type StateSnapshot = Record<string, { version: number; value: JsonObject | null }>;
@@ -82,7 +82,8 @@ export class RedisStateStore {
   }
 
   private async eval(script: string, keys: string[], args: (string | number)[]): Promise<StoreResult> {
-    const response = decode(await this.command(["EVAL", script, keys.length, ...keys, ...args]));
+    const scoped = this.prefix.startsWith("fa:v2:{test-") ? withTestExpiry(script) : script;
+    const response = decode(await this.command(["EVAL", scoped, keys.length, ...keys, ...args]));
     if (typeof response.status !== "string" || response.status === "storage_error") throw new StateStoreError("invalid_redis_response");
     return response as StoreResult;
   }

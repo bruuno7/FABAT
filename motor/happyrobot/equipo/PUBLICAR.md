@@ -42,3 +42,13 @@ Para versiones nuevas: los seis `prueba-ana-agente-*` de la tabla primero; despu
 - **«Missing variables» sigue apareciendo como aviso informativo de publicación**, aunque las variables están declaradas y disponibles. La API lo confirmó al publicar correctamente el hook de cerebro. No se afirma que ese texto haya desaparecido. La última validación bloqueante de cerebro contiene únicamente las cuatro tools anteriores.
 - `fix_broken_vars` no detectó referencias rotas en los borradores que pudo revisar. Las revisiones de workflows publicados concurrentemente fueron rechazadas por la plataforma por estar publicados; no se modificaron esas versiones. Los tests de nodos con fixtures fallan por JSON de ejemplo, falta de salida previa o callbacks ficticios, por lo que **no acreditan ejecución extremo a extremo**.
 - Sin git ni CLI hackspain, sin acciones en production, sin compras y sin llamadas ni mensajes reales. Solo se modificaron workflows autorizados `prueba-ana-*`.
+
+## Retorno de Workflow Function — 19-09-2026
+
+- `prueba-ana-agente-triaje`: versión 2 publicada LIVE en **development**, sustituyendo atómicamente la versión 1.
+- La plataforma no ofrece un evento separado Workflow Function Response: se activa **Response node → Send this output back to Call Workflow** en una acción.
+- Añadido **Devolver resultado validado** como hijo de **Triaje**, fuera de las tools; devuelve el objeto JSON de `entregar_resultado.payload_json`, cuya referencia se verificó con `get_available_variables`. El validador existente se conserva.
+- Nodo final: `01a0ba22-b4f5-733e-9dd7-d1931345162f`. Versión: `01a0ba20-300c-7099-a3a5-bd771a286e51`. Editor real registrado en el fichero local `PLATAFORMA_REAL.md`; sin slugs privados aquí.
+- Publicación aceptada sin bloqueos de **View Tool Call Result**. El test aislado falló por JSON vacío de ejemplo; no acredita el retorno en ejecución.
+- Repetición del coordinador pendiente: la revisión automática rechazó `trigger_run` por el reenvío del payload y token al callback externo. No se creó un nuevo run. Se necesita autorización explícita para ese destino.
+- Prioridad, recursos, avisos, vigía y crítico siguen intactos, pendientes de comprobar primero el retorno de triaje.

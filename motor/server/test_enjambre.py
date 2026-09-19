@@ -33,7 +33,8 @@ def _app(case="demo-gates", **env):
 
 class EnjambreTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.app, self._env = _app()
+        self.app, self._env, self._db = _app()
+        self.addCleanup(lambda p=self._db: Path(p).unlink(missing_ok=True))
         self.addCleanup(self._env.stop)
         self.c = TestClient(self.app)
         self.s = self.app.state.session
@@ -72,7 +73,8 @@ class EnjambreTest(unittest.TestCase):
         self.assertTrue(leer["ok"], leer)
         dests = [m["para"] for m in leer["mensajes"]]
         self.assertIn("prioridad", dests)
-        self.assertLessEqual(dests.index("prioridad"), dests.index("todos") if "todos" in dests else 99)
+        self.assertIn("todos", dests)
+        self.assertLess(dests.index("prioridad"), dests.index("todos"))
 
     def test_objecion_alta_bloquea_y_escala(self) -> None:
         iid = self._incidente()
@@ -251,7 +253,8 @@ class EnjambreTest(unittest.TestCase):
         self.assertTrue(conf["agentes"], conf)
 
     def test_acciones_posibles_demo_minimo_6(self) -> None:
-        app, env = _app("demo-1")
+        app, env, db = _app("demo-1")
+        self.addCleanup(lambda p=db: Path(p).unlink(missing_ok=True))
         self.addCleanup(env.stop)
         c = TestClient(app)
         s = app.state.session
@@ -289,12 +292,12 @@ class EnjambreTest(unittest.TestCase):
         self.assertEqual(elegir_modo({"varios_incidentes": True})["id"], "carga")
         self.assertEqual(elegir_modo({"recurso_critico_agotado": True, "riesgo_vital": True})["id"], "crisis")
         a = self.post("/hr/tools/analizar_situacion", {}).json()
-        self.assertIn(a["modo"]["id"], ("calma", "carga", "crisis"))
+        self.assertEqual(a["modo"]["id"], "calma")
         self._incidente()
         self._incidente(zona="gate_b", porque="Segundo aviso: cola en B.")
         b = self.post("/hr/tools/analizar_situacion", {}).json()
-        self.assertIn(b["modo"]["id"], ("carga", "crisis", "calma"))
-        self.assertEqual(self.s.state()["enjambre"]["modo"]["id"], b["modo"]["id"])
+        self.assertEqual(b["modo"]["id"], "carga")
+        self.assertEqual(self.s.state()["enjambre"]["modo"]["id"], "carga")
 
     def test_autonomia_y_grave_siempre_persona(self) -> None:
         for _ in range(3):
@@ -304,7 +307,11 @@ class EnjambreTest(unittest.TestCase):
         auto = self.c.get("/api/adaptacion").json()
         row = next(x for x in auto["autonomia"] if x["agente"] == "recursos")
         self.assertEqual(row["autonomia"], "revision")
-        iid = self._incidente(tipo="crowd")
+        opened = self.post("/hr/tools/decidir", {
+            "agente": "triaje", "incident_id": "nuevo", "zona": "front_pit", "tipo": "crowd",
+            "porque": "Aviso nuevo en el foso, no hay duplicado.",
+        }).json()
+        iid = opened["incident_id"]
         r = self.post("/hr/tools/decidir", {
             "agente": "recursos", "incident_id": iid, "prioridad": 5,
             "tipo": "crowd", "porque": "Mandar un médico con confianza baja.",

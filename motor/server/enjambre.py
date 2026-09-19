@@ -1,6 +1,7 @@
 """Pizarra del enjambre: mensajes entre agentes, revisión entre pares, vista pública."""
 from __future__ import annotations
 
+import json
 import os
 import secrets
 import time
@@ -97,6 +98,7 @@ def publicar(session: Any, body: dict[str, Any]) -> dict[str, Any]:
         led.save_pizarra(mid, de=de, para=para, incidente=incidente, tipo=tipo, texto=texto,
                          datos=datos, confianza=conf, enlaza=enlaza, gravedad=grav,
                          session_id=getattr(session, "session_id", ""), ts_unix=ts_unix)
+    refresh_public(session)
     return {"ok": True, "id": mid, "texto": f"{tipo} de {de} para {para}", **msg}
 
 
@@ -272,8 +274,23 @@ def marcar_modo(session: Any, modo: str, porque: str) -> dict[str, Any]:
             publicar(session, {"de": "vigia", "para": "todos", "tipo": "observacion",
                                "texto": f"modo {modo}: {porque}", "datos": {"modo": modo}})
         except ValueError:
-            pass
+            refresh_public(session)
+    else:
+        refresh_public(session)
     return {"modo": modo, "porque": porque, "cambio": prev != modo}
+
+
+def refresh_public(session: Any) -> None:
+    """S.enjambre sigue al ledger sin esperar al próximo tick."""
+    st = getattr(session, "_state", None)
+    if not isinstance(st, dict):
+        return
+    st["enjambre"] = public_view(session, st)
+    try:
+        session._state_json = json.dumps(st, ensure_ascii=False, default=str)
+        session.version = int(getattr(session, "version", 0) or 0) + 1
+    except (TypeError, ValueError):
+        pass
 
 
 def revisar_dependencias(session: Any, votos: dict[str, dict[str, Any]], incidente: str) -> None:

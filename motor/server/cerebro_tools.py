@@ -261,6 +261,7 @@ def contexto(session: Any, aviso: dict[str, Any] | None = None) -> dict[str, Any
                     parecidos.append(p)
                 if len(parecidos) >= 3:
                     break
+    from . import confianza as conf_mod
     texto = ["Contexto para decidir. Cifras de simulación."]
     texto.append(f"{len(abiertos)} incidentes abiertos. {sum(len(v) for v in libres.values())} recursos libres.")
     if pendientes:
@@ -272,8 +273,8 @@ def contexto(session: Any, aviso: dict[str, Any] | None = None) -> dict[str, Any
         "zonas": zonas, "previsiones": previsiones, "decisiones_pendientes": pendientes,
         "memoria": {"lecciones_aprobadas": lecciones, "casos_parecidos": parecidos[:3]},
         "cerebro": mode(),
-        "confianza_agentes": __import__("motor.server.confianza", fromlist=["resumen"]).resumen(session, familia=tipo_aviso),
-        "regla_peso": __import__("motor.server.confianza", fromlist=["REGLA_PESO"]).REGLA_PESO,
+        "confianza_agentes": conf_mod.resumen(session, familia=tipo_aviso),
+        "regla_peso": conf_mod.REGLA_PESO,
     }
 
 

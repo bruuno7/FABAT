@@ -86,6 +86,7 @@ class _Layout:
         self.transport = self.idx.get("exit_transport", -1)
         self.general = self.idx["general"]
         self.front = self.idx["front_pit"]
+        self.stages = frozenset(i for i, k in enumerate(self.kinds) if k == "stage_front")
         self.external_entry = self.idx[fest.get("external_entry", "exit_transport")]
 
         # grafo: `adj` para recursos (todas las aristas), `edges` para la multitud
@@ -228,6 +229,7 @@ class World:
         self.evac: dict[int, str | None] = {}         # zona -> id de la acción que la evacua
         self.evac_all: str | None = None
         self.show_stopped = False
+        self.stopped_stages: set[int] = set()
         self.no_answer: dict[str, int] = {}
         self.rejects: dict[str, int] = {}
         self.offline_until: dict[str, int] = {}
@@ -470,6 +472,7 @@ class World:
         for k in ("carry", "weather", "report_truth", "reroutes", "broadcasts", "evac", "no_answer", "rejects",
                   "offline_until", "comms_down", "dry_since", "sensor_last", "crush_open", "trend_last", "dry_minutes"):
             d[k] = dict(d[k])
+        new.stopped_stages = set(self.stopped_stages)
         new.stockouts = list(self.stockouts)
         new.flags = [dict(f) for f in self.flags]
         new.resources = {r.id: Resource(r.id, r.kind, r.name, r.zone, r.status, r.task, r.contact, r.eta, r.shift_ends)
@@ -825,7 +828,15 @@ class World:
         self._finish(a, ActionStatus.EXECUTING)
 
     def _do_stop_show(self, a: Action) -> None:
-        self.show_stopped = not a.params.get("resume", False)
+        resume = bool(a.params.get("resume", False))
+        zi = self.L.idx.get(a.zone or "")
+        if zi is None or zi not in self.L.stages:
+            self.stopped_stages = set() if resume else set(self.L.stages)
+        elif resume:
+            self.stopped_stages.discard(zi)
+        else:
+            self.stopped_stages.add(zi)
+        self.show_stopped = bool(self.L.stages) and self.L.stages <= self.stopped_stages
         self._finish(a, ActionStatus.DONE)
 
     def _do_request_external(self, a: Action) -> None:
@@ -1122,9 +1133,9 @@ class World:
             for i in L.water:
                 if i not in dry:
                     w[i] += moved / (len(L.water) - len(dry))
-        if self.show_stopped:
-            lost = w[L.front] * (1 - P["stop_show_factor"])
-            w[L.front] -= lost; w[g] += lost
+        for i in self.stopped_stages:
+            lost = w[i] * (1 - P["stop_show_factor"])
+            w[i] -= lost; w[g] += lost
         if leaving and self.transport_factor < 1.0 and L.transport >= 0:
             w[L.transport] *= max(self.transport_factor, P["transport_cut_weight"])
         for i in self.broadcasts:
@@ -1151,7 +1162,7 @@ class World:
         k = sum(occ) / (sum(w) or 1.0)
         p = [occ[i] - w[i] * k for i in range(n)]
         for zi, _, _ in self.inflows:  # mientras dura una oleada hacia una zona, de ahí no se va nadie por gusto
-            if not L.is_gate[zi] and p[zi] > 0 and not (self.show_stopped and zi == L.front):
+            if not L.is_gate[zi] and p[zi] > 0 and zi not in self.stopped_stages:
                 p[zi] = 0.0
         hard_d, state_fac, bfac = P["hard_density"], P["state_inflow"], P["broadcast_factor"]
         hardfac, infac = [0.0] * n, [0.0] * n  # entrada forzada (llegan igual) y voluntaria (se frena si está lleno)
@@ -1225,7 +1236,7 @@ class World:
             if not L.is_gate[zi]:
                 nb = L.crowd_nb[zi]
                 tot = sum(occ[j] for j in nb)
-                if self.show_stopped and zi == L.front:  # sin música nadie empuja hacia el foso
+                if zi in self.stopped_stages:  # sin música nadie empuja hacia ese escenario
                     rate *= P["stop_show_factor"]
                 if tot > 0:
                     for j in nb:

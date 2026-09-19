@@ -327,8 +327,8 @@
     $("speed-label").textContent = (S.session.speed || 1) + "x";
     $("live-chip").className = "live-chip" + (S.session.running ? "" : " paused");
     $("live-sub").textContent = S.session.running
-      ? "posición por zona · sin GPS"
-      : "en pausa · posición por zona";
+      ? "posición simulada por zona"
+      : "en pausa · posición simulada";
 
     // Enlace con HappyRobot: rótulo real / simulado según el propio estado.
     const mode = S.calls.mode === "happyrobot";
@@ -555,7 +555,7 @@
           : (r.task ? r.task + " · " : "") + statusES(r);
         return `<button class="res ${cls}${sel.resource === r.id ? " sel" : linkedResource(r.id) ? " linked" : ""}"
           data-resource="${E(r.id)}" data-incident="${E(r.task || "")}" title="${E(r.name + " · " + statusES(r))}">
-          <b>${E(shortName(r))} · ${E(r.name.split(" (")[0])}</b><span>${E(detail)}</span></button>`;
+          <b>${E(shortName(r))}</b><span class="res-name">${E(r.name.split(" (")[0])}</span><span>${E(detail)}</span></button>`;
       }).join("");
       return `<section class="res-group${out ? " out" : ""}"><h3>${E(grp.title)}
         <span>${free} / ${list.length} LIBRES${out ? " – AGOTADO" : ""}</span></h3>
@@ -976,9 +976,18 @@
     const dark = document.documentElement.dataset.theme === "dark";
     document.documentElement.dataset.theme = dark ? "light" : "dark";
     $("theme").setAttribute("aria-pressed", String(!dark));
+    $("theme").textContent = dark ? "Oscuro" : "Claro";
+    $("theme").title = dark ? "Cambiar a modo oscuro" : "Cambiar a modo claro";
     try { localStorage.setItem("mando-sala-tema", dark ? "light" : "dark"); } catch (e) { /* sin almacenamiento: da igual */ }
   };
-  try { if (localStorage.getItem("mando-sala-tema") === "dark") { document.documentElement.dataset.theme = "dark"; $("theme").setAttribute("aria-pressed", "true"); } } catch (e) { /* idem */ }
+  try {
+    if (localStorage.getItem("mando-sala-tema") === "dark") {
+      document.documentElement.dataset.theme = "dark";
+      $("theme").setAttribute("aria-pressed", "true");
+      $("theme").textContent = "Claro";
+      $("theme").title = "Cambiar a modo claro";
+    }
+  } catch (e) { /* idem */ }
 
   document.addEventListener("keydown", (ev) => {
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;

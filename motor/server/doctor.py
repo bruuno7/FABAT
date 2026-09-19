@@ -240,7 +240,7 @@ def diagnosticar(sondear_red: bool = True, env: dict[str, str] | None = None) ->
         led.close()
         if st.get("enabled"):
             add("ledger.sqlite", "ok",
-                f"una SQLite (MANDO_DB): {st.get('episodes', 0)} episodios, {st.get('events', 0)} eventos"
+                f"auditoría local: {st.get('episodes', 0)} episodios, {st.get('events', 0)} eventos"
                 + (f" ({st['path']})" if st.get("path") else ""),
                 OPCIONAL, grupo="ficheros", detalle=str(st.get("path") or ""))
         else:

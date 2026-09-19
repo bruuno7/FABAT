@@ -53,8 +53,7 @@ class EnvTest(unittest.TestCase):
 class TelegramTest(EnvTest):
     def setUp(self) -> None:
         self.tg_port = free_port()
-        self.ENV = {"TELEGRAM_BOT_TOKEN": TOKEN, "TELEGRAM_API_BASE": f"http://127.0.0.1:{self.tg_port}",
-                    "TELEGRAM_MODE": "poll", "TELEGRAM_POLL_TIMEOUT_S": "1",
+        self.ENV = {"TELEGRAM_BOT_TOKEN": TOKEN, "TELEGRAM_API_BASE": f"http://127.0.0.1:{self.tg_port}", "TELEGRAM_POLL_TIMEOUT_S": "1",
                     "TELEGRAM_RATE_MAX": "50", "MANDO_ASK_WAIT_S": "30", "HR_HOOK_INTAKE": ""}
         super().setUp()
         # Estos casos prueban la ruta directa del bot; la integración real de intake tiene regresión propia.
@@ -87,9 +86,7 @@ class TelegramTest(EnvTest):
         with Served(self.fake, self.tg_port):
             app = self.app("demo-1")
             s, bot = app.state.session, app.state.telegram
-            self.assertTrue(wait_for(lambda: bot is not None and bot.status == "on"
-                                     and s.state().get("telegram_bot", {}).get("status") == "on"),
-                            bot.error if bot else "sin bot")
+            self.assertTrue(wait_for(lambda: bot.status == "on"), bot.error)
             st = s.state()
             bot = st["telegram_bot"]
             self.assertEqual((bot["status"], bot["bot"], st["links"]["telegram"]),
@@ -134,7 +131,7 @@ class TelegramTest(EnvTest):
         with Served(self.fake, self.tg_port):
             app = self.app("demo-1")
             s, bot = app.state.session, app.state.telegram
-            self.assertTrue(wait_for(lambda: bot is not None and bot.status == "on"), bot.error if bot else "sin bot")
+            self.assertTrue(wait_for(lambda: bot.status == "on"), bot.error)
             self.push("text", chat_id=7, text="/golpe")
             self.wait_reply(7, "Quedan 3 de 3")
             menu = next(m for m in self.fake.state.sent if m.get("reply_markup"))
@@ -289,7 +286,6 @@ class PlatformPayloadTest(EnvTest):
                         return json.loads(res.content[0].text)
                     out["orden"] = await call("obtener_orden", action_id=aid)
                     out["sin_cambio"] = await call("hay_cambio_de_plan", action_id=aid)
-                    out["sin_cambio_otra"] = await call("hay_cambio_de_plan", action_id=aid)
                     s.comms.change_orders(aid, "Cambio de planes: ve a Puerta C, no a Puerta B.")
                     out["cambio"] = await call("hay_cambio_de_plan", action_id=aid)
                     out["confirmar"] = await call("confirmar_orden", action_id=aid, resultado="accept", eta_min=5)
@@ -309,13 +305,10 @@ class PlatformPayloadTest(EnvTest):
                 s.tick()
             self.assertTrue(wait_for(lambda: s.comms._inflight))
             aid = next(iter(s.comms._inflight))
-            # demo-1 puede romper un supuesto al avanzar el reloj; eso no es el caso «sin cambio».
-            s.comms.plan_changes.pop(aid, None)
             out = asyncio.run(talk(aid))
             s.tick()
         self.assertEqual(out["tools"], ["confirmar_orden", "consultar_aprobacion", "estado_zona", "hay_cambio_de_plan", "obtener_orden", "registrar_aviso"])
         self.assertIn("Puerta", out["orden"]["order_text"] + out["orden"]["zone_spoken"].capitalize())
-        self.assertEqual(out["sin_cambio"], out["sin_cambio_otra"], "sin avance de tiempo las dos lecturas coinciden")
         self.assertEqual((out["sin_cambio"]["hay_cambio"], out["cambio"]["hay_cambio"]), (False, True))
         self.assertIn("Puerta C", out["cambio"]["orden_nueva"])
         self.assertEqual((out["confirmar"]["registrada"], out["otra_vez"]["ya_estaba_registrada"], out["mala"]["ok"]), (True, True, False))

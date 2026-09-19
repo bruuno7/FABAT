@@ -55,7 +55,10 @@ def workflow_slot(action, resource=None):
     if resource is not None:
         return {'medical': 'sanitario', 'ambulance': 'sanitario', 'security': 'seguridad',
                 'tech': 'tecnico', 'logistics': 'logistica', 'volunteer': 'relevo'}.get(str(resource.kind), 'dispatch')
-    role_slot = slot_for_role(role)
+    role_slot = {'medical': 'sanitario', 'sanitario': 'sanitario', 'ambulance': 'sanitario',
+                 'ambulancia': 'sanitario', 'security': 'seguridad', 'seguridad': 'seguridad',
+                 'jefe_sector': 'seguridad', 'jefe de sector': 'seguridad', 'tech': 'tecnico',
+                 'tecnico': 'tecnico', 'técnico': 'tecnico', 'logistics': 'logistica'}.get(role)
     if role_slot:
         return role_slot
     if action.kind == ActionKind.ASK:

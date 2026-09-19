@@ -8,34 +8,9 @@ from __future__ import annotations
 import argparse
 import copy
 import json
-import os
-from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 
 from .app import Session, load_case
-
-# El CLI `python -m motor.server` carga `.env`. Ahí la demo local suele llevar
-# MANDO_CEREBRO=agente y MANDO_LLM=1: el cerebro espera al reloj REAL y el
-# número de llamadas deja de ser función de la semilla.
-_AUDIT_ENV = {"MANDO_CEREBRO": None, "MANDO_CEREBRO_TIMEOUT_S": None, "MANDO_LLM": "0"}
-
-
-@contextmanager
-def _seed_audit_env() -> Iterator[None]:
-    old = {key: os.environ.get(key) for key in _AUDIT_ENV}
-    try:
-        for key, value in _AUDIT_ENV.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
-                os.environ[key] = value
-        yield
-    finally:
-        for key, value in old.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
-                os.environ[key] = value
 
 
 MILESTONES = (
@@ -82,11 +57,6 @@ def prepare_key_moment(session: Session) -> dict[str, Any]:
 
 
 def run_ensayo(case_id: str = "demo-1") -> dict[str, Any]:
-    with _seed_audit_env():
-        return _run_ensayo(case_id)
-
-
-def _run_ensayo(case_id: str = "demo-1") -> dict[str, Any]:
     case = load_case(case_id)
     session = Session(case, seed=case.get("seed", 0), comms_mode="sim", threaded=False,
                       playbook="seed", local_params=False)

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Callable
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import FileResponse, Response
 
 from .db import History
 from .security import require_operator
@@ -24,12 +24,9 @@ def install(app: FastAPI, history: History, static: Path,
         return HTTPException(503, f"Historial no disponible: {type(exc).__name__}")
 
     @app.get("/historial", include_in_schema=False)
-    def historial_page(request: Request) -> HTMLResponse:
+    def historial_page(request: Request) -> FileResponse:
         ready(request)
-        return HTMLResponse(
-            '<!doctype html><meta charset="utf-8"><title>MANDO</title>'
-            '<p>Pantalla archivada. <a href="/">Sala de control</a>.</p>',
-            headers={"Cache-Control": "no-store"})
+        return FileResponse(static / "historial.html", headers={"Cache-Control": "no-store"})
 
     @app.get("/api/historial/escenas")
     def scenes(request: Request) -> dict:

@@ -36,13 +36,6 @@
     director: "director", externos: "externos", difusion: "difusión", relevo: "relevo",
     dispatch: "genérico", webcall: "llamada web", notify: "genérico", ask: "genérico", followup: "genérico" };
   const SPEEDS = [1, 4, 16];
-  const TAB_IDS = ["ahora", "equipo", "enjambre", "recursos", "comunicaciones", "aprendizaje", "historial"];
-  const AGENT_ROLES = [
-    { id: "triaje", label: "Triaje" }, { id: "prioridad", label: "Prioridad" },
-    { id: "recursos", label: "Recursos" }, { id: "avisos", label: "Avisos" },
-    { id: "vigia", label: "Vigía" }, { id: "critico", label: "Crítico" },
-  ];
-  const AGENT_EXTRA = { coordinador: "Coordinador", aprende: "Aprende" };
 
   // ---------------------------------------------------------------- estado local
   let S = null, F = null, plano = null, connected = false, firstPaint = true;
@@ -50,8 +43,6 @@
   let filter = "todos", query = "", showOldPlan = false;
   let chats = [], chatAt = 0, webcalls = [], webcallAt = 0;
   let whatif = null, toastTimer = 0;
-  let currentTab = "ahora", adaptacion = null, adaptAt = 0, lecciones = null, leccAt = 0;
-  let historial = null, histAt = 0, agentCache = {}, agentFetch = {};
   const beacons = new Map();
   const notes = new Map();   // nota escrita por el operador, por acción: sobrevive a cada repintado
   const armed = new Set();   // acciones graves esperando el segundo clic de confirmación
@@ -198,37 +189,8 @@
     s.session = s.session || {}; s.metrics = s.metrics || {}; s.clock = s.clock || {};
     s.calls = s.calls || {}; s.calls.calls = s.calls.calls || [];
     s.happyrobot = s.happyrobot || {}; s.presentation = s.presentation || {};
-    if (!s.agentes || typeof s.agentes !== "object" || Array.isArray(s.agentes)) s.agentes = {};
-    if (s.enjambre != null && (typeof s.enjambre !== "object" || Array.isArray(s.enjambre))) s.enjambre = null;
     return s;
   }
-
-  function cerebroMode() { return (S && S.session && S.session.cerebro) || "reglas"; }
-  function cerebroSimLabel() {
-    const mode = S.calls && S.calls.mode === "happyrobot";
-    const label = (S.presentation && S.presentation.happyrobot) || (mode ? "conectado" : "simulado");
-    const sim = !mode || /simulad/i.test(label);
-    return { mode: cerebroMode(), sim, label };
-  }
-  function switchTab(id) {
-    if (!TAB_IDS.includes(id)) return;
-    currentTab = id;
-    TAB_IDS.forEach((t) => {
-      const panel = $("tab-" + t), btn = $("tab-btn-" + (t === "comunicaciones" ? "comms" : t));
-      if (panel) { panel.classList.toggle("on", t === id); panel.hidden = t !== id; }
-      if (btn) btn.setAttribute("aria-selected", String(t === id));
-    });
-    try { sessionStorage.setItem("mando-sala-tab", id); } catch (e) { /* sin almacenamiento */ }
-    render();
-  }
-  try {
-    const saved = sessionStorage.getItem("mando-sala-tab");
-    if (saved && TAB_IDS.includes(saved)) currentTab = saved;
-  } catch (e) { /* idem */ }
-  $("tabs").addEventListener("click", (ev) => {
-    const b = ev.target.closest("button[data-tab]");
-    if (b) switchTab(b.dataset.tab);
-  });
 
   const ROL_TG = { medico: "médico", enfermero: "enfermero", sanitario: "sanitario", ambulancia: "ambulancia",
     seguridad: "seguridad", tecnico: "técnico", logistica: "logística", voluntario: "voluntario",
@@ -319,7 +281,6 @@
       z.g.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pick({ zone: id }); } });
     });
     connect();
-    if (currentTab !== "ahora") switchTab(currentTab);
     setInterval(() => {
       const tg = telegramState();
       if (tg && (tg.asignaciones || []).some((a) => a.estado === "pending")) schedule();
@@ -329,15 +290,7 @@
   // ---------------------------------------------------------------- pintado
   function render() {
     if (!S || !plano) return;
-    head(); sidebar(); renderModo(); renderEquipoStrip(); renderTabBadges();
-    if (currentTab === "ahora") { band(); map(); queue(); renderAhoraExtras(); }
-    else if (currentTab === "equipo") panelEquipo();
-    else if (currentTab === "enjambre") panelEnjambre();
-    else if (currentTab === "recursos") { aside(); panelCalls(); }
-    else if (currentTab === "comunicaciones") { chatPanel(); panelCommsCalls(); }
-    else if (currentTab === "aprendizaje") panelAprendizaje();
-    else if (currentTab === "historial") panelHistorial();
-    ficha();
+    head(); sidebar(); band(); map(); queue(); aside(); ficha();
     if ($("inyeccion").hidden === false) injection();
     if ($("externa").hidden === false) external();
     firstPaint = false;
@@ -387,135 +340,6 @@
     $("hr-link-text").textContent = `Enlace directo · ${label} · ${wired} workflows configurados`;
     link.title = `Modo de comunicaciones: ${S.calls.mode} · llamadas reales enviadas: ${S.calls.real_sent || 0}`
       + ` · caídas a simulación: ${S.calls.fallbacks || 0} · voz: ${S.presentation.voice || "—"}`;
-
-    const cb = cerebroSimLabel();
-    const chip = $("cerebro-chip"), lbl = $("cerebro-label");
-    chip.className = "cerebro-chip" + (cb.mode === "reglas" ? " degradado" : cb.mode === "agente" ? " agente" : "");
-    lbl.textContent = `Cerebro: ${cb.mode}${cb.sim ? " · simulado" : " · real"}`;
-    chip.title = cb.mode === "reglas"
-      ? "Modo degradado: deciden las reglas (plan B). El agente no manda todavía."
-      : `Modo ${cb.mode} · enlace ${cb.label}`;
-  }
-
-  function renderModo() {
-    const now = Date.now();
-    if (now - adaptAt > 5000) {
-      adaptAt = now;
-      fetch("/api/adaptacion").then((r) => (r.ok ? r.json() : null)).then((d) => { adaptacion = d; schedule(); }).catch(() => {});
-    }
-    const ej = S.enjambre && S.enjambre.modo;
-    const m = (adaptacion && adaptacion.modo) || (ej && ej.nombre) || (ej && ej.id) || null;
-    const why = (adaptacion && adaptacion.porque) || (ej && ej.porque) || (ej && ej.texto) || "";
-    const chip = $("modo-chip");
-    if (!m) { chip.hidden = true; return; }
-    chip.hidden = false;
-    const cls = String(m).toLowerCase();
-    chip.className = "modo-chip" + (cls.includes("crisis") ? " m-crisis" : cls.includes("carga") ? " m-carga" : " m-calma");
-    $("modo-label").textContent = String(m).toUpperCase();
-    $("modo-why").textContent = why;
-    chip.title = why || "Modo adaptativo del sistema";
-  }
-
-  function agentStatusText(role) {
-    const cards = S.agentes || {};
-    let bestS = null, latest = null, latestH = "";
-    Object.keys(cards).forEach((iid) => {
-      const card = cards[iid] || {};
-      const hit = ((card.abanico || {}).llegados || []).find((x) => x && x.papel === role);
-      const ag = (card.agentes || {})[role];
-      const s = (hit && hit.s != null) ? hit.s : (ag && ag.s);
-      if (s != null && (bestS == null || s < bestS)) bestS = s;
-      if (ag && ag.hora && (!latest || ag.hora > latestH)) { latest = ag; latestH = ag.hora; }
-    });
-    const lat = fmtLatency(bestS);
-    if (lat) return lat;
-    const ej = S.enjambre;
-    if (ej && ej.equipo_vivo && ej.equipo_vivo[role]) return ej.equipo_vivo[role];
-    if (latest) return `decidió · ${latest.hora}`;
-    if (cerebroMode() === "reglas") return "plan B de reglas activo";
-    return "en espera";
-  }
-
-  function renderEquipoStrip() {
-    const strip = $("equipo-strip");
-    const cb = cerebroSimLabel();
-    const pills = AGENT_ROLES.map((r) => {
-      const st = agentStatusText(r.id);
-      const cls = /pensando/i.test(st) ? "think" : /espera|pendiente/i.test(st) ? "wait"
-        : /plan B|reglas/i.test(st) ? "rules" : "";
-      return `<div class="equipo-pill ${cls}"><b>${E(r.label)}</b><span>${E(st)}</span></div>`;
-    }).join("");
-    setHTML(strip, `<div class="equipo-pill ${cb.mode === "reglas" ? "rules" : ""}"><b>Modo</b><span>${E(cb.mode)}${cb.sim ? " · simulado" : " · real"}</span></div>${pills}`);
-    strip.hidden = false;
-  }
-
-  function renderTabBadges() {
-    const pend = (S.approvals || []).length;
-    const badgeA = $("badge-ahora");
-    if (badgeA) { badgeA.hidden = !pend; badgeA.textContent = pend ? `${pend} decisión${pend > 1 ? "es" : ""}` : ""; }
-    const agentInc = Object.keys(S.agentes || {}).length;
-    const badgeE = $("badge-equipo");
-    if (badgeE) { badgeE.hidden = !agentInc; badgeE.textContent = agentInc ? `${agentInc} inc.` : ""; }
-    if (Date.now() - leccAt > 8000) {
-      leccAt = Date.now();
-      U.api("/api/memoria").then((d) => { lecciones = d.cerebro_lecciones || []; schedule(); }).catch(() => {});
-    }
-    const nuevas = (lecciones || []).filter((l) => l.estado === "propuesta").length;
-    const badgeL = $("badge-aprendizaje");
-    if (badgeL) { badgeL.hidden = !nuevas; badgeL.textContent = nuevas ? `${nuevas} nueva${nuevas > 1 ? "s" : ""}` : ""; }
-  }
-
-  function buildRecomendacion() {
-    const cards = S.agentes || {};
-    const open = openIncidents().sort((a, b) => (b.priority || 0) - (a.priority || 0));
-    for (const i of open) {
-      const c = cards[i.id];
-      if (!c) continue;
-      const rec = (c.agentes || {}).recursos, pri = (c.agentes || {}).prioridad;
-      const parts = [];
-      if (rec && rec.razonamiento) parts.push(rec.razonamiento);
-      else if (pri && pri.razonamiento) parts.push(pri.razonamiento);
-      const res = (c.ejecutado || []).filter((x) => x.recurso || x.resource).map((x) => x.recurso || x.resource);
-      const eta = (S.resources || []).filter((r) => res.includes(r.id) && r.eta != null).map((r) => `${shortName(r)} ${r.eta} min`);
-      if (parts.length || res.length) {
-        return `Recomendado: ${parts[0] || i.label || i.id}${res.length ? "; " + res.map((r) => {
-          const rr = (S.resources || []).find((x) => x.id === r);
-          return rr ? shortName(rr) + (rr.eta != null ? " en camino, " + rr.eta + " min" : "") : r;
-        }).join(", ") : ""}`;
-      }
-    }
-    const top = open[0];
-    if (!top) return "";
-    const f = (S.fronts || []).find((x) => x.id === top.id);
-    if (f && f.resources && f.resources.length) {
-      return `Recomendado: ${f.resources.join(", ")}${f.eta != null ? "; ETA " + f.eta + " min" : ""}`;
-    }
-    return "";
-  }
-
-  function renderAhoraExtras() {
-    const rec = buildRecomendacion();
-    const el = $("recom-main");
-    if (rec) { el.hidden = false; setHTML(el, `<b>Equipo de agentes:</b> ${E(rec)}`); }
-    else el.hidden = true;
-    const pend = (S.approvals || []);
-    const box = $("ahora-pend");
-    if (!pend.length) { box.hidden = true; return; }
-    box.hidden = false;
-    setHTML(box, pend.map((a) => {
-      const i = (S.incidents || []).find((x) => x.id === a.incident) || {};
-      return `<div class="ahora-card" data-incident="${E(a.incident)}"><b>${E(i.label || a.incident)}</b> · ${E(KIND_ES[a.kind] || a.kind)}
-        <p class="tiny">${E((a.card && a.card.question) || a.why || "")}</p>
-        <div class="row" style="margin-top:6px">
-          <button class="btn-ok" data-decide="1" data-id="${E(a.id)}" data-grave="0">APROBAR</button>
-          <button class="btn-no" data-decide="0" data-id="${E(a.id)}" data-grave="0">VETAR</button></div></div>`;
-    }).join(""));
-    box.onclick = (ev) => {
-      const d = ev.target.closest("[data-decide]");
-      if (d) decide(d.dataset.id, d.dataset.decide === "1", d.dataset.grave === "1");
-      const row = ev.target.closest("[data-incident]");
-      if (row) pick({ incident: row.dataset.incident });
-    };
   }
 
   function sidebar() {
@@ -719,302 +543,7 @@
     if (tr && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); pick({ incident: tr.dataset.incident, zone: tr.dataset.zone || null }); }
   });
 
-  function fmtLatency(s) {
-    if (s == null || !Number.isFinite(Number(s))) return null;
-    const n = Math.max(0, Math.round(Number(s)));
-    if (n < 60) return n + " s";
-    const m = Math.floor(n / 60), r = n % 60;
-    return r ? m + " min " + r + " s" : m + " min";
-  }
-
-  function velocidadLine(card) {
-    const parts = [];
-    const v = (card && card.velocidad) || {};
-    const rap = fmtLatency(v.rapida_s);
-    if (rap != null || v.revision || (card && card.fases && (card.fases.rapida || card.fases.revision))) {
-      const ver = String(v.revision || "pendiente");
-      const verShow = ver.toUpperCase() === "PENDIENTE" ? "pendiente" : ver.toUpperCase();
-      const line = "Decisión rápida en " + (rap || "—") + " · enjambre: " + verShow;
-      let cls = "";
-      if (ver.toUpperCase() === "CORRIGE") cls = " corrige";
-      else if (ver.toUpperCase() === "CONFIRMA") cls = " confirma";
-      let extra = "";
-      if (ver.toUpperCase() === "CORRIGE") {
-        const fase = (card.fases || {}).revision || {};
-        const cambio = card.plan_cambio || {};
-        const why = fase.porque || cambio.porque || "";
-        const plan = cambio.nuevo || cambio.objetivo || "";
-        extra = `<p class="tiny">${E(why)}${plan ? " · plan nuevo: " + E(plan) : ""}</p>`;
-      }
-      parts.push(`<p class="velocidad-line${cls}">${E(line)}</p>${extra}`);
-    }
-    const ab = card && card.abanico;
-    if (ab && (ab.lanzados || ab.llegados || ab.primera_decision_s != null || ab.fuente)) {
-      const first = fmtLatency(ab.primera_decision_s);
-      const fin = fmtLatency(ab.final_s);
-      let line = first ? ("Primera decisión en " + first) : "Enjambre en curso";
-      line += " · enjambre completo " + (fin ? ("en " + fin) : "pendiente");
-      let cls = "";
-      if (ab.fuente === "reglas") cls = " corrige";
-      else if (ab.fuente === "local") cls = " confirma";
-      const to = (ab.timeouts || []).length ? `<p class="tiny">Sin respuesta a tiempo: ${E(ab.timeouts.join(", "))}</p>` : "";
-      parts.push(`<p class="velocidad-line${cls}">${E(line)}</p>${to}`);
-    }
-    return parts.join("");
-  }
-
-  function agentCardHtml(name, ag, extra) {
-    const label = (AGENT_ROLES.find((r) => r.id === name) || {}).label || AGENT_EXTRA[name] || name;
-    const row = ag || {};
-    const lat = fmtLatency(row.s);
-    const title = lat ? (label + " · " + lat) : label;
-    const conf = row.confianza != null ? ` · confianza ${num(row.confianza, 2)}` : "";
-    const sup = (row.supuestos || []).length
-      ? `<ul>${row.supuestos.map((s) => `<li>${E(s)}</li>`).join("")}</ul>` : "";
-    return `<article class="agent-card"><h4>${E(title)}${E(conf)}</h4>
-      <p>${E(row.razonamiento || "—")}</p>
-      ${row.hora ? `<p class="tiny">Hora ${E(row.hora)}</p>` : ""}${sup}${extra || ""}</article>`;
-  }
-
-  function agentDetailBox(iid, card) {
-    const bloq = (card.bloqueado || []).map((b) =>
-      `<p class="blocked">Bloqueado: ${E(b.motivo || b.kind || JSON.stringify(b))}</p>`).join("");
-    const ejec = (card.ejecutado || []).length
-      ? `<p class="tiny"><b>Ejecutado:</b> ${E(card.ejecutado.map((x) => x.kind || x.recurso || x.id).join(", "))}</p>` : "";
-    const espera = (card.espera_persona || []).length
-      ? `<p class="tiny"><b>Espera a una persona:</b> ${E(card.espera_persona.map((x) => x.kind || x.motivo).join(", "))}</p>` : "";
-    const latBy = {};
-    ((card.abanico || {}).llegados || []).forEach((x) => { if (x && x.papel != null) latBy[x.papel] = x.s; });
-    const agents = AGENT_ROLES.map((r) => {
-      const ag = Object.assign({}, (card.agentes || {})[r.id] || {});
-      if (ag.s == null && latBy[r.id] != null) ag.s = latBy[r.id];
-      if (!ag.razonamiento) ag.razonamiento = "—";
-      return agentCardHtml(r.id, ag, "");
-    }).join("");
-    const vel = velocidadLine(card);
-    const planB = cerebroMode() === "reglas" ? '<p class="tiny">Plan B de reglas activo (modo degradado).</p>' : "";
-    return `<div class="box"><h3>CÓMO LO HA DECIDIDO EL EQUIPO</h3>${vel}${planB}
-      <div class="agent-grid">${agents}</div>
-      ${ejec}${bloq}${espera}</div>`;
-  }
-
-  function ensureAgentDetail(iid, cb) {
-    if (agentCache[iid]) { cb(agentCache[iid]); return; }
-    if (agentFetch[iid]) return;
-    const local = (S.agentes || {})[iid];
-    if (local && Object.keys(local.agentes || {}).length) {
-      agentCache[iid] = local;
-      cb(local);
-      return;
-    }
-    agentFetch[iid] = true;
-    U.api("/api/agentes/" + encodeURIComponent(iid)).then((d) => {
-      agentCache[iid] = d;
-      delete agentFetch[iid];
-      schedule();
-    }).catch(() => { delete agentFetch[iid]; });
-  }
-
-  function panelEquipo() {
-    const cards = S.agentes || {};
-    const ids = Object.keys(cards);
-    const el = $("panel-equipo");
-    if (!ids.length) {
-      setHTML(el, '<p class="tiny empty-tab">Sin votos del equipo de agentes todavía.</p>');
-      return;
-    }
-    const open = openIncidents().map((i) => i.id);
-    const sorted = ids.sort((a, b) => {
-      const ao = open.includes(a) ? 1 : 0, bo = open.includes(b) ? 1 : 0;
-      if (ao !== bo) return bo - ao;
-      const ia = (S.incidents || []).find((x) => x.id === a);
-      const ib = (S.incidents || []).find((x) => x.id === b);
-      return (ib && ib.priority || 0) - (ia && ia.priority || 0);
-    });
-    setHTML(el, sorted.map((iid) => {
-      const card = cards[iid];
-      const inc = (S.incidents || []).find((x) => x.id === iid) || {};
-      return `<section class="box"><h3>${E(inc.label || iid)} <span class="tiny">${E(iid)}</span></h3>
-        ${agentDetailBox(iid, card)}</section>`;
-    }).join(""));
-  }
-
-  function panelEnjambre() {
-    const ej = S.enjambre;
-    const el = $("panel-enjambre");
-    if (!ej || typeof ej !== "object") {
-      setHTML(el, '<p class="tiny empty-tab">Sin datos de enjambre todavía.</p>');
-      return;
-    }
-    const nodes = ["triaje", "prioridad", "recursos", "avisos", "vigia", "critico", "coordinador", "aprende"];
-    const msgs = (ej.mensajes || ej.pizarra || []).slice(-40);
-    const revs = (ej.revisiones || []).slice(-12);
-    const conf = ej.confianza || {};
-    const autonomia = ej.autonomia || {};
-    const ritmo = ej.ritmo_vigia || ej.vigia_ritmo;
-    const edges = {};
-    msgs.forEach((m) => {
-      const f = m.de || m.from, t = m.a || m.to;
-      if (!f || !t) return;
-      const k = f + "→" + t;
-      edges[k] = (edges[k] || 0) + 1;
-    });
-    const cx = 400, cy = 180, R = 130;
-    const pos = {};
-    nodes.forEach((n, i) => {
-      const a = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
-      pos[n] = { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
-    });
-    let svg = `<svg id="enjambre-svg" viewBox="0 0 800 360" role="img" aria-label="Red de agentes">`;
-    Object.keys(edges).forEach((k) => {
-      const parts = k.split("→"), f = parts[0], t = parts[1];
-      const p1 = pos[f], p2 = pos[t];
-      if (!p1 || !p2) return;
-      const w = Math.min(8, 1 + edges[k]), x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
-      svg += `<line class="enj-edge" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${w}"/>`;
-    });
-    nodes.forEach((n) => {
-      const p = pos[n], px = p.x, py = p.y;
-      const lbl = AGENT_EXTRA[n] || (AGENT_ROLES.find((r) => r.id === n) || {}).label || n;
-      svg += `<g class="enj-node"><circle cx="${px}" cy="${py}" r="22" fill="var(--paper)" stroke="var(--brand)"/>`;
-      svg += `<text x="${px}" y="${py + 4}" text-anchor="middle" font-size="9" font-weight="700">${E(lbl.slice(0, 8))}</text></g>`;
-    });
-    svg += "</svg>";
-    const msgList = msgs.length
-      ? msgs.slice(-10).reverse().map((m) =>
-        `<div class="enj-msg"><b>${E(m.de || m.from)} → ${E(m.a || m.to)}:</b> ${E(m.texto || m.text || "")}</div>`).join("")
-      : '<p class="tiny">Sin mensajes recientes en la pizarra.</p>';
-    const revList = revs.length
-      ? revs.map((r) => `<div class="enj-msg"><b>${E(r.de || r.from)} → ${E(r.a || r.to)}:</b> ${E(r.tipo || r.kind || "revisión")}: ${E(r.texto || r.text || "")}</div>`).join("")
-      : "";
-    const confList = Object.keys(conf).length
-      ? Object.entries(conf).map(([k, v]) => {
-        const n = (v && v.n) != null ? v.n : (typeof v === "object" ? v.N : "");
-        const score = (v && v.score) != null ? v.score : (typeof v === "number" ? v : "");
-        const trend = (v && v.tendencia) ? ` · ${v.tendencia}` : "";
-        return `<p class="tiny"><b>${E(k)}</b>: ${E(num(score, 2))}${n ? ` (N=${E(n)})` : ""}${E(trend)}</p>`;
-      }).join("")
-      : '<p class="tiny">Sin confianza aprendida publicada.</p>';
-    const autoList = Object.keys(autonomia).length
-      ? Object.entries(autonomia).map(([k, v]) => `<p class="tiny"><b>${E(k)}</b>: ${E(String(v))}</p>`).join("")
-      : '<p class="tiny">Sin autonomía adaptativa publicada.</p>';
-    const lecAct = (ej.lecciones_activas || {});
-    const lecHtml = Object.keys(lecAct).length
-      ? Object.entries(lecAct).map(([ag, ls]) =>
-        `<p class="tiny"><b>${E(ag)}</b>: ${E((ls || []).map((l) => l.texto || l).join(" · "))}</p>`).join("")
-      : "";
-    setHTML(el, `<div class="enjambre-grid"><div>${svg}<h3 class="tiny" style="margin-top:8px">MENSAJES RECIENTES</h3>${msgList}
-      ${revList ? `<h3 class="tiny" style="margin-top:8px">REVISIONES</h3>${revList}` : ""}</div>
-      <div><h3 class="tiny">CONFIANZA</h3>${confList}
-      <h3 class="tiny" style="margin-top:10px">AUTONOMÍA</h3>${autoList}
-      ${ritmo ? `<p class="tiny"><b>Ritmo del vigía:</b> ${E(String(ritmo))}</p>` : ""}
-      ${lecHtml ? `<h3 class="tiny" style="margin-top:10px">LECCIONES ACTIVAS</h3>${lecHtml}` : ""}</div></div>`);
-  }
-
-  function panelCalls() {
-    const calls = (S.calls.calls || []).slice(-12).reverse();
-    const el = $("calls-block");
-    if (!calls.length) { setHTML(el, ""); return; }
-    setHTML(el, `<h3>LLAMADAS RECIENTES</h3>${calls.map((c) => {
-      const res = c.result === "accept" ? "ACEPTA" : c.result === "reject" ? "RECHAZA" : c.result === "no_answer" ? "SIN RESPUESTA" : (c.stage || "—");
-      return `<div class="call-line"><b>${E(c.incident || "—")}</b> · ${E(c.title || c.to || "")}: <b>${E(res)}</b>
-        ${c.real ? " · real" : " · simulada"}${c.eta_min != null ? " · ETA " + E(c.eta_min) + " min" : ""}</div>`;
-    }).join("")}`);
-  }
-
-  function panelCommsCalls() {
-    panelCalls();
-    const el = $("comms-calls");
-    const calls = (S.calls.calls || []).slice(-20).reverse();
-    const byCh = {};
-    calls.forEach((c) => { const ch = c.channel || "voz"; (byCh[ch] = byCh[ch] || []).push(c); });
-    const chs = Object.keys(byCh);
-    if (!chs.length && !chats.length) {
-      setHTML(el, '<p class="tiny">Sin llamadas ni mensajes todavía.</p>');
-      return;
-    }
-    setHTML(el, chs.map((ch) => `<section class="box"><h3>${E(ch.toUpperCase())}</h3>
-      ${byCh[ch].map((c) => `<p class="tiny">${E(c.title || c.to || "")}: ${E(c.result || c.stage || "—")}</p>`).join("")}</section>`).join(""));
-  }
-
-  function renderPromptDiff(ev) {
-    if (!ev) return "";
-    if (ev.diff) return String(ev.diff).split("\n").map((ln) => {
-      if (ln.startsWith("+")) return `<span class="add">${E(ln)}</span>`;
-      if (ln.startsWith("-")) return `<span class="del">${E(ln)}</span>`;
-      return E(ln);
-    }).join("\n");
-    if (ev.anterior && ev.nuevo) {
-      return `<span class="del">${E(ev.anterior)}</span>\n<span class="add">${E(ev.nuevo)}</span>`;
-    }
-    return "";
-  }
-
-  function panelAprendizaje() {
-    const el = $("panel-aprendizaje");
-    const rows = lecciones || [];
-    const prompts = rows.filter((l) => (l.evidencia && l.evidencia.tipo === "prompt") || /^prompt/i.test(l.id || ""));
-    const normales = rows.filter((l) => !prompts.includes(l));
-    if (!rows.length) {
-      setHTML(el, '<p class="tiny empty-tab">Sin lecciones todavía.</p>');
-      return;
-    }
-    const card = (l, extra) => {
-      const n = l.n || (l.evidencia && l.evidencia.n) || "";
-      const diff = renderPromptDiff(l.evidencia);
-      return `<article class="lesson-card ${E(l.estado || "")}"><p><b>${E(l.id)}</b> · ${E(l.estado || "")}${n ? ` · N=${E(n)}` : ""}</p>
-        <p>${E(l.texto || "")}</p>${diff ? `<pre class="prompt-diff">${diff}</pre>` : ""}${extra || ""}</article>`;
-    };
-    const prop = normales.filter((l) => l.estado === "propuesta");
-    const ok = normales.filter((l) => l.estado === "aprobada");
-    const no = normales.filter((l) => l.estado === "rechazada");
-    const btns = (l) => l.estado === "propuesta" ? `<div class="row" style="margin-top:8px">
-      <button class="btn-ok" data-leccion="aprobar" data-id="${E(l.id)}">APROBAR</button>
-      <button class="btn-no" data-leccion="rechazar" data-id="${E(l.id)}">RECHAZAR</button></div>` : "";
-    const revert = (l) => l.estado === "aprobada" ? `<button data-leccion="rechazar" data-id="${E(l.id)}">VOLVER ATRÁS</button>` : "";
-    setHTML(el, `${prop.length ? `<h3 class="tiny">PROPUESTAS</h3>${prop.map((l) => card(l, btns(l))).join("")}` : ""}
-      ${prompts.length ? `<h3 class="tiny">VERSIONES DE PROMPT</h3>${prompts.map((l) => card(l, btns(l) + revert(l))).join("")}` : ""}
-      ${ok.length ? `<h3 class="tiny">ACTIVAS</h3>${ok.map((l) => card(l, `<p class="tiny">Aplica desde aprobación${l.by ? " · " + E(l.by) : ""}</p>` + revert(l))).join("")}` : ""}
-      ${no.length ? `<h3 class="tiny">RECHAZADAS</h3>${no.map((l) => card(l, "")).join("")}` : ""}`);
-    el.onclick = async (ev) => {
-      const b = ev.target.closest("[data-leccion]");
-      if (!b) return;
-      const r = await post("/api/memoria/lecciones", { id: b.dataset.id, accion: b.dataset.leccion, by: "operador-sala" });
-      if (r.ok !== false) { leccAt = 0; lecciones = null; toast("Lección actualizada."); schedule(); }
-    };
-  }
-
-  function panelHistorial() {
-    const el = $("panel-historial");
-    const closed = (S.incidents || []).filter((i) => CLOSED[i.status]);
-    if (Date.now() - histAt > 12000) {
-      histAt = Date.now();
-      fetch("/api/historial/incidentes?tamano=20").then((r) => (r.ok ? r.json() : null)).then((d) => {
-        if (d) historial = d.items || d.incidentes || [];
-        schedule();
-      }).catch(() => { historial = null; });
-    }
-    const items = (historial && historial.length) ? historial : closed.map((i) => ({
-      id: i.id, tipo: i.label || i.type, zona: i.zone_name || i.zone, estado: i.status, prioridad: i.priority,
-    }));
-    if (!items.length) {
-      setHTML(el, '<p class="tiny empty-tab">Sin incidentes cerrados todavía.</p>');
-      return;
-    }
-    setHTML(el, items.map((h) =>
-      `<div class="hist-row" data-hist="${E(h.id || h.incident_id)}"><b>${E(h.id || h.incident_id)}</b> · ${E(h.tipo || h.label || "")}
-      · ${E(h.zona || h.zone || "")} · ${E(h.estado || h.status || "cerrado")}</div>`).join(""));
-    el.onclick = (ev) => {
-      const row = ev.target.closest("[data-hist]");
-      if (!row) return;
-      fetch("/api/historial/incidente/" + encodeURIComponent(row.dataset.hist))
-        .then((r) => (r.ok ? r.json() : Promise.reject(new Error("sin historial"))))
-        .then((d) => toast(`Cronología cargada: ${(d.eventos || d.log || []).length} eventos.`))
-        .catch((e) => toast(e.message, true));
-    };
-  }
-
-  // ---------------------------------------------------------------- recursos (pestaña)
+  // ---------------------------------------------------------------- panel derecho
   function aside() {
     const html = GROUPS.map((grp) => {
       const list = (S.resources || []).filter((r) => grp.kinds.includes(r.kind));
@@ -1042,7 +571,7 @@
     setHTML($("sev-bars"), counts.map((c) => `<div class="bar g-${c.g}"><span>${E(({ vital: "Vital", emergencia: "Emerg.", urgente: "Urg.", leve: "Leve" })[c.g])} (${c.n})</span>
       <i><b style="width:${Math.round(c.n / max * 100)}%"></b></i></div>`).join(""));
 
-    if (currentTab === "comunicaciones") chatPanel();
+    chatPanel();
   }
   /* STAFF POR TELEGRAM: solo si el espejo ha publicado S.telegram. */
   function staffTelegramCard() {
@@ -1138,13 +667,7 @@
       : zone ? `Sector ${zoneName(zone)} · ${(S.zones.find((z) => z.id === zone) || {}).occupancy || 0} personas` : "";
 
     const parts = [];
-    if (i) {
-      parts.push(quePasa(i), fuentes(i), planBox(i));
-      const agCard = (S.agentes || {})[i.id];
-      if (agCard) parts.push(agentDetailBox(i.id, agCard));
-      else ensureAgentDetail(i.id, () => schedule());
-      parts.push(decisionBox(i), tgBox(i), hrBox(i), cronologia(i));
-    }
+    if (i) parts.push(quePasa(i), fuentes(i), planBox(i), decisionBox(i), tgBox(i), hrBox(i), cronologia(i));
     parts.push(previsiones(zone || (i && i.zone)), whatifBox(zone || (i && i.zone)));
     setHTML($("ficha-body"), parts.filter(Boolean).join(""));
   }
@@ -1489,7 +1012,6 @@
       if (!a) return toast("No hay ninguna decisión pendiente.");
       pick({ incident: a.incident, zone: a.zone });
       decide(a.id, k === "a", false);
-    }     else if (k === "e") document.body.classList.toggle("escena");
-    else if (/^[1-7]$/.test(k)) switchTab(TAB_IDS[Number(k) - 1]);
+    } else if (k === "e") document.body.classList.toggle("escena");
   });
 })();

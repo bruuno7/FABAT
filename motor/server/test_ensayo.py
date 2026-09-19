@@ -6,7 +6,6 @@ import importlib
 import importlib.util
 import io
 import json
-import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -100,14 +99,6 @@ class EnsayoTest(unittest.TestCase):
             with patch("motor.server.app.memoria.LOCAL_APPROVED_PATH", params), \
                  patch("motor.server.app.HARNESS_OUT", root):
                 self.assertEqual(ensayo.run_ensayo(), expected)
-
-    def test_local_cerebro_env_does_not_change_rehearsal(self):
-        """MANDO_CEREBRO=agente espera el reloj real: el CLI con .env no puede cambiar el guion."""
-        ensayo = self.module()
-        expected = ensayo.run_ensayo()
-        with patch.dict(os.environ, {"MANDO_CEREBRO": "agente", "MANDO_CEREBRO_TIMEOUT_S": "8",
-                                     "MANDO_LLM": "1"}, clear=False):
-            self.assertEqual(ensayo.run_ensayo(), expected)
 
 
 if __name__ == "__main__":

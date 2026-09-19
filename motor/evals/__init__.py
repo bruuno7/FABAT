@@ -27,14 +27,6 @@ def run(*, rapido: bool = False, out_dir: Path | None = None) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     import argparse
-    import sys
-    argv = list(sys.argv[1:] if argv is None else argv)
-    if argv[:1] == ["equipo"]:
-        from .equipo import main as equipo_main
-        return equipo_main(argv[1:])
-    if argv[:1] == ["aprende"]:
-        from .aprende import main as aprende_main
-        return aprende_main(argv[1:])
     p = argparse.ArgumentParser(description="Audits & Tests de MANDO (simulación).")
     p.add_argument("--rapido", action="store_true", help="pasada de menos de 60 s")
     p.add_argument("--out", type=Path, default=None, help="directorio de salida (por defecto motor/evals/out)")

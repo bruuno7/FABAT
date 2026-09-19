@@ -33,7 +33,10 @@ Expected payload:
 }
 ```
 
-Copiar URL **development** → `HR_HOOK_TG_RESPONSE` en Vercel / `.env` (nunca en git).
+LIVE en development: [fa-respuesta-tg](https://platform.eu.happyrobot.ai/hackspainteam6/workflows/9x6aihxeg9g2/editor/3wdztka8zmb2)
+
+Copiar URL **development** del Incoming Hook → `HR_HOOK_TG_RESPONSE` en Vercel / `.env` (nunca en git).
+Copiar `HR_SECRET` desde `fa-entrada-tg`.
 
 ## 2. Variables
 

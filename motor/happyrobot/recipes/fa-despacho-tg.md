@@ -20,7 +20,9 @@ Params del trigger:
 incident_id, texto, tipo, zona, gravedad, prioridad, alias_informante, correlation_id, summary
 ```
 
-Copiar la URL development del hook si se quiere disparar a mano. Lo normal es un nodo
+LIVE en development: [fa-despacho-tg](https://platform.eu.happyrobot.ai/hackspainteam6/workflows/eyg6a9kat3ea/editor/k2he4ujp4n1h)
+
+Copiar `HR_SECRET` desde `fa-entrada-tg` (variable oculta). Lo normal es un nodo
 **Call Workflow** al final de `fa-entrada-tg`.
 
 ## 2. Variables (nunca commitear secretos)

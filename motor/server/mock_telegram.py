@@ -32,6 +32,7 @@ def create_mock_telegram(token: str = TOKEN, username: str = "mando_demo_bot") -
     app.state.updates = []     # pendientes de entregar
     app.state.sent = []        # sendMessage recibidos
     app.state.calls = []       # (método, cuerpo) de todo lo que pide el bot
+    app.state.webhook_url = ""
     ids = itertools.count(1000)
 
     def push(update: dict[str, Any]) -> dict[str, Any]:
@@ -54,6 +55,8 @@ def create_mock_telegram(token: str = TOKEN, username: str = "mando_demo_bot") -
         app.state.calls.append((method, body))
         if method == "getMe":
             return {"ok": True, "result": {"id": 1, "is_bot": True, "first_name": "Mando (demo)", "username": username}}
+        if method == "getWebhookInfo":
+            return {"ok": True, "result": {"url": app.state.webhook_url, "pending_update_count": 0}}
         if method == "getUpdates":
             offset, timeout = int(body.get("offset") or 0), min(float(body.get("timeout") or 0), 1.0)
             if offset < 0:

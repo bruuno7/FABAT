@@ -10,9 +10,16 @@ from .app import create_app, lan_ip
 
 
 def main() -> None:
-    if len(sys.argv) > 1 and sys.argv[1] == "doctor":   # python -m motor.server doctor
+    if sys.argv[1:2] == ["doctor"]:   # python -m motor.server doctor
         from .doctor import main as doctor
-        raise SystemExit(doctor())
+        raise SystemExit(doctor(sys.argv[2:]))
+    if sys.argv[1:2] == ['ensayo']:
+        from .ensayo import main as ensayo
+        raise SystemExit(ensayo(sys.argv[2:]))
+    if sys.argv[1:2] == ['demo']:
+        from .presentation import demo
+        demo(sys.argv[2:])
+        return
     ap = argparse.ArgumentParser(description="Pantalla de mando (solo red local)")
     ap.add_argument("--case", default="demo-1", help="demo-N, demo-gates o un id de demo.jsonl / heldout.jsonl")
     ap.add_argument("--seed", type=int, default=None)

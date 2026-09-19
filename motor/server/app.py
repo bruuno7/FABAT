@@ -30,7 +30,8 @@ from motor.world import SimComms, World, load_festival
 
 from . import intake, memoria, regression_live, views, whatif, validation, privacy
 from .comms_happyrobot import HappyRobotComms, load_contacts, public_base, shared_secret
-from . import telegram_bot
+from . import telegram_bot, hr_config
+from .security import SecurityGuard, require_operator
 from .telegram_bot import safety_instruction
 
 HERE = Path(__file__).resolve().parent
@@ -205,9 +206,10 @@ class Session:
 
     def __init__(self, case: dict[str, Any], *, seed: int | None = None, speed: float = 1.0, comms_mode: str = "sim",
                  autoplay: bool = False, threaded: bool = True, playbook: str = "auto", agent_kind: str = "mando",
-                 replay: dict[str, Any] | None = None, auto_approve_min: int | None = None) -> None:
+                 replay: dict[str, Any] | None = None, auto_approve_min: int | None = None, local_params: bool = True) -> None:
         self.case = case
         self.playbook_choice = playbook
+        self.local_params = local_params
         self.agent_kind = agent_kind
         self.replay = replay                      # test bloqueado que se re-ejecuta: {n, author, inputs, before}
         self.auto_approve_min = auto_approve_min  # solo en /duelo: un «operador simulado» aprueba a los N minutos
@@ -261,7 +263,7 @@ class Session:
         agent_cls, self.agent_name = load_agent_class(agent_kind)
         pb, self.playbook_name = load_playbook(playbook) if agent_kind == "mando" else (None, "lista fija, sin manual")
         kwargs: dict[str, Any] = {"playbook": pb, "comms": self.comms}
-        if agent_kind == "mando" and memoria.LOCAL_APPROVED_PATH.exists():
+        if local_params and agent_kind == "mando" and memoria.LOCAL_APPROVED_PATH.exists():
             kwargs["params"] = str(memoria.LOCAL_APPROVED_PATH)
         self.twin = False
         try:  # el gemelo para ensayar: solo si el mundo ya lo ofrece y el agente lo acepta
@@ -322,6 +324,7 @@ class Session:
     def close(self) -> None:
         self._stop.set()
         self._wake.set()
+        self.comms.close()
 
     def tick(self) -> None:
         """Un minuto simulado, con el ciclo exacto de INTERFACES.md."""
@@ -1179,7 +1182,7 @@ def lan_ip() -> str:
 
 def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: float = 1.0, comms_mode: str = "sim",
                autoplay: bool = False, threaded: bool = True, secret: str | None = None, port: int = 8000,
-               playbook: str = "auto") -> FastAPI:
+               playbook: str = "auto", local_params: bool = True) -> FastAPI:
     import contextlib
 
     @contextlib.asynccontextmanager
@@ -1195,11 +1198,12 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
                 app.state.chat.stop()
 
     app = FastAPI(title="Mando", docs_url=None, redoc_url=None, lifespan=lifespan)
+    app.add_middleware(SecurityGuard)
     app.state.port = port
     app.state.mcp = app.state.telegram = None
     Session.callback_url = f"http://127.0.0.1:{port}"
     app.state.session = Session(load_case(case_id), seed=seed, speed=speed, comms_mode=comms_mode,
-                                autoplay=autoplay, threaded=threaded, playbook=playbook)
+                                autoplay=autoplay, threaded=threaded, playbook=playbook, local_params=local_params)
     app.state.threaded = threaded
     app.state.duel = None
 
@@ -1224,6 +1228,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
     def submit_report(channel: str, text: str, zone: str | None = None, *, delegate: bool = True, **kw: Any) -> dict[str, Any]:
         """Mismo camino para todos los canales. Con `HR_HOOK_INTAKE`, el texto libre lo ENTIENDE primero HappyRobot (bloquea
         como mucho `HR_INTAKE_TIMEOUT_S`: no llamar desde el bucle asyncio); si no contesta, entra con el parser propio."""
+        session = S()
         ev = None
         if delegate and text and not kw.get("preset") and delegated.hook:
             real = kw.get("via") or ("telegram" if str(kw.get("source", "")).startswith("telegram:") else "web")
@@ -1231,6 +1236,8 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
                                            lang=str(kw.get("lang") or "es"))
             if ev is None:
                 S().log("report", f"Entendimiento delegado no disponible ({why}): este aviso se entiende en local")
+        if S() is not session or session._stop.is_set():
+            return {'ok': False, 'stale': True, 'report_id': None}
         if ev is not None:
             sr = intake.structured_report(ev, {z["id"]: z["name"] for z in S().festival["zones"]})
             kw.update(understood="happyrobot", extracted=sr["extracted"], where=kw.get("where") or sr["where"],
@@ -1239,7 +1246,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
                 text = f"{text} Lugar: {sr['extracted']['location']}."[:400]
         if app.state.duel is not None:
             app.state.duel.report(channel, text, zone, **kw)
-        out = S().report(channel, text, zone, **kw)
+        out = session.report(channel, text, zone, **kw)
         delegated.remember(ev, out["report_id"])
         return out
 
@@ -1269,27 +1276,38 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         base = public_base() or f"http://{lan_ip()}:{app.state.port}"
         bot = (app.state.telegram.username if app.state.telegram is not None and app.state.telegram.username
                else os.environ.get("TELEGRAM_BOT_USERNAME", "")).lstrip("@")
-        return {"webcall_public": os.environ.get("HR_WEBCALL_PUBLIC_URL") or None, "telegram": f"https://t.me/{bot}" if bot else None,
+        urls = hr_config.workflow_urls()
+        return {"webcall_public": hr_config.safe_url(urls['voice']), "chat": hr_config.safe_url(urls['chat']), "telegram": f"https://t.me/{bot}" if bot else None,
                 "jurado": base + "/jurado", "asistente": base + "/asistente",
-                "email": os.environ.get("HR_INTAKE_EMAIL") or None, "sms": os.environ.get("HR_SMS_NUMBER") or None}
+                "email": os.environ.get("HR_INTAKE_EMAIL") or None, "sms": '/canal/sms' if os.environ.get("HR_SMS_NUMBER") else None}
 
     def extra_state() -> dict[str, Any]:
+        from .presentation import channels
         tg = app.state.telegram
+        workflows = S().comms.workflow_status.view()
+        workflows['intake'] = delegated.workflow_status.view()['intake']
+        workflows['intake']['configured'] = bool(delegated.hook)
         return {"telegram": tg.view() if tg is not None else {"status": "off"}, "links": links(),
+                "happyrobot": workflows,
+                "presentation": channels(S(), tg, delegated),
                 "intake": {"delegated": bool(delegated.hook), "timeout_s": delegated.timeout_s, **delegated.stats}}
 
     Session.extra_state = staticmethod(extra_state)
 
+    def replace_session(new: Session) -> None:
+        old = S()
+        old.close()
+        app.state.session = new
+        delegated.reset()
+        hub._sync()
+        if app.state.telegram is not None:
+            app.state.telegram._sync_session()
+        new._rebuild()
+
     def operator(request: Request) -> None:
         """Aprobar, mover el reloj, tomar una llamada o bloquear un test es cosa del puesto de control, no de un móvil
         del público: solo desde esta máquina, o con `MANDO_OPERATOR_TOKEN` en la cabecera `X-Mando-Operator`."""
-        host = request.client.host if request.client else ""
-        if host in ("127.0.0.1", "::1", "localhost", "testclient"):
-            return
-        expected = os.environ.get("MANDO_OPERATOR_TOKEN", "")
-        got = request.headers.get("X-Mando-Operator", "")
-        if not expected or not hmac.compare_digest(got.encode(), expected.encode()):
-            raise HTTPException(403, "Solo desde el puesto de control")
+        require_operator(request)
 
     def token() -> str:
         return secret if secret is not None else shared_secret()
@@ -1370,6 +1388,13 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         f = STATIC / "asistente.html"
         return FileResponse(f if f.exists() else STATIC / "jurado.html", headers={"Cache-Control": "no-store"})
 
+    @app.get('/canal/sms')
+    def sms_link():
+        number = os.environ.get('HR_SMS_NUMBER', '')
+        if not re.fullmatch(r'\+[1-9]\d{7,14}', number):
+            raise HTTPException(404, 'SMS sin configurar')
+        return Response(status_code=307, headers={'Location': 'sms:' + number, 'Cache-Control': 'no-store'})
+
     @app.get("/llamada/{call_id}", include_in_schema=False)
     def llamada_page(call_id: str) -> FileResponse:
         return FileResponse(STATIC / "llamada.html", headers={"Cache-Control": "no-store"})
@@ -1401,8 +1426,9 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
             last, sent, idle = -1, 0, 0.0
             while True:
                 s = S()
-                if s.version != last:
-                    last, idle = s.version, 0.0
+                revision = (s.session_id, s.version)
+                if revision != last:
+                    last, idle = revision, 0.0
                     yield f"event: state\ndata: {s.state_json()}\n\n"
                     sent += 1
                     if limit and sent >= limit:
@@ -1443,8 +1469,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
             raise
         except Exception as e:
             raise HTTPException(400, f"El caso no se puede cargar: {e}")
-        old.close()
-        app.state.session = new
+        replace_session(new)
         return {"ok": True, "session": new.state()["session"]}
 
     @app.post("/api/control")
@@ -1455,10 +1480,23 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         s = S()
         if cmd == "reset":
             new = Session(s.case, seed=s.seed, speed=s.speed, comms_mode=s.comms_mode, threaded=app.state.threaded,
-                          playbook=s.playbook_choice)
-            s.close()
-            app.state.session = new
+                          playbook=s.playbook_choice, local_params=s.local_params)
+            replace_session(new)
             return {"ok": True, "session": new.state()["session"]}
+        if cmd == 'key_moment':
+            from .ensayo import prepare_key_moment
+            new = Session(load_case(os.environ.get('MANDO_DEMO_CASE', 'demo-1')), speed=s.speed,
+                          comms_mode='sim', threaded=False, playbook='seed', local_params=False)
+            try:
+                moment = await asyncio.to_thread(prepare_key_moment, new)
+            except ValueError as exc:
+                new.close()
+                raise HTTPException(400, str(exc))
+            replace_session(new)
+            if app.state.threaded:
+                new._thread = threading.Thread(target=new._loop, name='mando-clock', daemon=True)
+                new._thread.start()
+            return {'ok': True, 'session': new.state()['session'], 'moment': moment}
         try:
             n = int(d.get("n", 1)) if cmd == "step" else 1
             for _ in range(max(1, min(n, 600))):
@@ -1713,7 +1751,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         except KeyError:
             raise HTTPException(404, "Esa llamada no existe")
         except Exception as e:
-            raise HTTPException(502, f"La plataforma no ha contestado: {e}")
+            raise HTTPException(502, f"La plataforma no ha contestado ({type(e).__name__})")
 
     @app.get("/api/webcalls")
     def webcalls(request: Request) -> list[dict[str, Any]]:
@@ -1745,7 +1783,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         run_id = c.calls.get(wc["action_id"], {}).get("hr_run_id")
         d = await body(request)
         root = c.api_base.split("/api/")[0]
-        httpx.post(f"{root}/mock/answer/{run_id}", json={"result": str(d.get("result") or "accept")}, timeout=5)
+        await asyncio.to_thread(httpx.post, f"{root}/mock/answer/{run_id}", json={"result": str(d.get("result") or "accept")}, timeout=5)
         return {"ok": True}
 
     @app.post("/api/call/{action_id}/token")
@@ -1753,13 +1791,13 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         """ESCUCHAR o TOMAR una llamada viva desde el puesto de control (`should_takeover`)."""
         operator(request)
         d = await body(request)
-        return _hr(S().comms.takeover_token, action_id, bool(d.get("takeover")))
+        return await asyncio.to_thread(_hr, S().comms.takeover_token, action_id, bool(d.get("takeover")))
 
     @app.post("/api/call/{action_id}/signal")
     async def call_signal(action_id: str, request: Request) -> dict[str, Any]:
         operator(request)
         d = await body(request)
-        return {"ok": S().comms.change_orders(action_id, str(d.get("text") or "")[:300])}
+        return {"ok": await asyncio.to_thread(S().comms.change_orders, action_id, str(d.get("text") or "")[:300])}
 
     @app.get("/api/chaos/suggest")
     def chaos_suggest() -> dict[str, Any]:
@@ -1798,6 +1836,16 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         kind = str(ev.get("type") or ev.get("message") or "")
         if who == "chat" and kind not in _CHAT_TYPES:
             raise HTTPException(403, "Ese token solo sirve para avisos y consultas de estado")
+        channel = ev.get('channel') or (ev.get('report') or {}).get('channel')
+        if who == 'chat' and channel not in (None, 'web', 'chat', 'chatbot'):
+            raise HTTPException(403, 'El token del widget solo admite su canal web')
+        if who == 'chat':
+            ev['channel'] = 'web'  # prevalece también sobre extracted.channel en structured_report
+        if kind in _CHAT_TYPES:
+            channel = ev.get('channel') or (ev.get('report') or {}).get('channel')
+            workflow = 'voice' if channel in ('voice', 'web_call') else 'chat' if channel in ('chat', 'chatbot') else 'intake'
+            tracker = delegated.workflow_status if workflow == 'intake' else s.comms.workflow_status
+            tracker.record(workflow, 'event', run_url=ev.get('run_url'))
         if kind == "report_status_query":
             return hr_status_query(ev)
         if kind == "public_report_update":
@@ -1867,6 +1915,14 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         if ev.get("mode") == "test":
             s.log("report", "Aviso de prueba recibido (no entra al mundo)")
             return none
+        if sr['real_channel'] == 'telegram' and sr['reply_to'] and app.state.telegram is not None:
+            try:
+                result = app.state.telegram.receive_report(sr['reply_to'], sr['text'], sr)
+                if ref and result.get('report_id'):
+                    s.report_refs[ref] = result['report_id']
+                return result
+            except ValueError:
+                raise HTTPException(422, 'reply_to de Telegram debe ser un chat_id')
         r = submit_report(sr["channel"], sr["text"], sr["zone"], delegate=False, source=sr["source"], lang=sr["lang"],
                           extracted=sr["extracted"], via=sr["real_channel"], where=sr["where"], understood="happyrobot",
                           preset_hint=sr["preset_hint"])

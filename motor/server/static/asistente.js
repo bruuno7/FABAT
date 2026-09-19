@@ -340,7 +340,7 @@
     const L = (S && S.links) || {};
     const value = (kind === "voice" ? L.webcall_public : L[kind]) || fromQs || "";
     if (kind === "email") { const email = String(value).replace(/^mailto:/i, ""); return /^[^\s@?&]+@[^\s@?&]+\.[^\s@?&]+$/.test(email) ? "mailto:" + email : null; }
-    if (kind === "sms") { const phone = String(value).replace(/^sms:/i, "").replace(/[ ()-]/g, ""); return /^\+?[0-9]{5,16}$/.test(phone) ? "sms:" + phone : null; }
+    if (kind === "sms") { if (value === '/canal/sms') return value; const phone = String(value).replace(/^sms:/i, "").replace(/[ ()-]/g, ""); return /^\+?[0-9]{5,16}$/.test(phone) ? "sms:" + phone : null; }
     return safeUrl(value);
   }
   function links() {

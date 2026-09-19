@@ -121,7 +121,7 @@ class ChatHub:
         def understand(text, detected_lang=lang, slots=None):
             if self.understand is None:
                 return {}
-            extracted = self.understand(text, channel, zone_hint, detected_lang) or {}
+            extracted = (self.chats.get(session_id) or {}).get('_turn_extracted') or {}
             aliases = {"breathing_normal": "breathing_normally", "location_point": "location"}
             out = {}
             for slot in slots or []:
@@ -151,6 +151,8 @@ class ChatHub:
                                        "pulsera": pulsera, "intake": self._new_intake(channel, lang, zone_hint, self.wristband(pulsera), sid),
                                        "reports": [], "ask": None, "events": deque(maxlen=50), "seq": 0, "told": None,
                                        "state": {}, "instruction": None, "done": False}
+                c['turn_lock'] = threading.RLock()
+                c['mando_session'] = self.get_session().session_id
             if zone_hint:
                 c["zone"] = zone_hint
             if pulsera:
@@ -161,12 +163,22 @@ class ChatHub:
         return c["id"].replace("tg-", "", 1) if c["id"].startswith("tg-telegram:") else c.get("source") or f"chat:{c['n']}"
 
     # ---------------------------------------------------------------- un turno
-    def turn(self, sid: str | None, text: str, *, channel: str = "web", lang: str = "es", zone_hint: str | None = None,
-             pulsera: str | None = None, source: str | None = None, preset: str | None = None, client_id: str | None = None, push: Callable[[str], None] | None = None) -> dict[str, Any]:
+    def turn(self, sid: str | None, text: str, **kwargs) -> dict[str, Any]:
+        self._sync()
+        c = self._chat(sid, kwargs.get('channel', 'web'), kwargs.get('lang', 'es'), kwargs.get('zone_hint'), kwargs.get('pulsera'))
+        with c['turn_lock']:
+            return self._turn(c['id'], text, **kwargs)
+
+    def _turn(self, sid: str | None, text: str, *, channel: str = "web", lang: str = "es", zone_hint: str | None = None,
+             pulsera: str | None = None, source: str | None = None, preset: str | None = None, client_id: str | None = None, push: Callable[[str], None] | None = None,
+             pre_extracted: dict | None = None) -> dict[str, Any]:
         """Bloquea lo que tarde el entendimiento delegado: llamar fuera del bucle asyncio."""
         self._sync()
         text = (text or "").strip()[:400]
         c = self._chat(sid, channel, lang, zone_hint, pulsera)
+        c['_turn_extracted'] = pre_extracted
+        if pre_extracted and str(pre_extracted.get('sensitive', '')).lower() == 'true':
+            c['reserved'] = True
         c["seen"] = time.monotonic()
         c["lang"] = lang if lang in ("en", "es") else c["lang"]
         if source and not source.startswith("telegram:"):
@@ -181,6 +193,14 @@ class ChatHub:
             answered = bool(self.get_session().comms.answer_external(aid, text, channel="telegram" if c["id"].startswith("tg-") else "web"))
         if c["intake"] is None:
             return self._degraded(c, text, answered)
+        # Cada mensaje libre pasa una vez por el workflow, aunque las reglas ya tengan todos los slots.
+        # Nunca desde el hilo del reloj ni bajo su cerrojo.
+        try:
+            c['_turn_extracted'] = pre_extracted if pre_extracted is not None else (self.understand(text, channel, c['zone'], c['lang']) if self.understand else None)
+        except Exception:
+            c['_turn_extracted'] = None
+        if c['mando_session'] != self.get_session().session_id:
+            return {'ok': False, 'stale': True, 'reports': [], 'report_id': None, 'session_id': c['id']}
         try:
             turn = c["intake"].receive(text)
         except Exception as e:   # el agente de recogida falla: el aviso NO se pierde
@@ -188,6 +208,8 @@ class ChatHub:
             out["why"] = (f"Guided intake failed ({type(e).__name__}); your message was sent directly." if c["lang"] == "en"
                           else f"el agente de recogida falló ({type(e).__name__}): este mensaje ha entrado como aviso directo")
             return out
+        if c['mando_session'] != self.get_session().session_id:
+            return {'ok': False, 'stale': True, 'reports': [], 'report_id': None, 'session_id': c['id']}
         new = []
         metas = _get(turn, "report_meta") or []
         for n, rep in enumerate(_get(turn, "reports") or []):
@@ -203,6 +225,8 @@ class ChatHub:
                 "why_next": _get(turn, "why_next"), "done": c["done"], "answered_mando": answered}
 
     def _submit(self, c: dict[str, Any], rep: Any, answered: bool, meta: dict | None = None) -> str | None:
+        if c['mando_session'] != self.get_session().session_id:
+            return None
         text = str(_get(rep, "text") or "").strip()
         if not text or (answered and c["reports"]):
             return None   # era la respuesta a Mando: ya ha vuelto por comunicaciones, no se duplica como aviso
@@ -215,8 +239,8 @@ class ChatHub:
                                  lang=str(_get(rep, "lang") or c["lang"]), wristband=c["pulsera"],
                                  via="telegram" if c["id"].startswith("tg-") else "chat", delegate=False,
                                  update_of=roots.get(root), preset=c.get("preset") if not c["reports"] else None,
-                                 extracted={"sensitive": True} if meta.get("reserved") else None,
-                                 understood="happyrobot" if _get(rep, "understood") == "happyrobot" else None)
+                                 extracted={"sensitive": True} if meta.get("reserved") or c.get('reserved') else c.get('_turn_extracted'),
+                                 understood="happyrobot" if c.get('_turn_extracted') or _get(rep, "understood") == "happyrobot" else None)
         rid = out.get("report_id")
         if rid:
             c["reports"].append(rid)
@@ -224,10 +248,14 @@ class ChatHub:
         return rid
 
     def _degraded(self, c: dict[str, Any], text: str, answered: bool) -> dict[str, Any]:
+        if c['mando_session'] != self.get_session().session_id:
+            return {'ok': False, 'stale': True, 'reports': [], 'report_id': None, 'session_id': c['id']}
         rid = None
         if text and not answered:
             out = self.submit_report("whatsapp", text, c["zone"], source=self.source(c), lang=c["lang"], wristband=c["pulsera"],
-                                     via="telegram" if c["id"].startswith("tg-") else "chat", preset=c.get("preset"))
+                                     via="telegram" if c["id"].startswith("tg-") else "chat", preset=c.get("preset"),
+                                     extracted={'sensitive': True} if c.get('reserved') else c.get('_turn_extracted'),
+                                     delegate=c.get('_turn_extracted') is None)
             rid = out.get("report_id")
             if rid:
                 c["reports"].append(rid)
@@ -248,6 +276,8 @@ class ChatHub:
     def _publish(self, c: dict[str, Any]) -> None:
         """Las fichas de la conversación, junto a sus avisos en la pantalla de mando."""
         s = self.get_session()
+        if c['mando_session'] != s.session_id:
+            return
         for n, rid in enumerate(c["reports"]):
             meta = s._report_meta.setdefault(rid, {})
             meta["chat"] = {"session": c["n"], "state": c["state"], "instruction": c["instruction"], "done": c["done"],
@@ -284,6 +314,8 @@ class ChatHub:
 
     # ---------------------------------------------------------------- avisos de estado
     def _event(self, c: dict[str, Any], kind: str, text: str, **extra: Any) -> None:
+        if c['mando_session'] != self.get_session().session_id:
+            return
         c["seq"] += 1
         text = scrub(text)
         c["events"].append(dict({"seq": c["seq"], "type": kind, "text": text}, **extra))
@@ -304,15 +336,14 @@ class ChatHub:
     def _sync(self) -> None:
         sid = getattr(self.get_session(), "session_id", "")
         if sid != self._mando_session:
-            self._mando_session = sid
             with self._lock:
-                for c in self.chats.values():
-                    c.update(reports=[], roots={}, ask=None, told=None, state={}, instruction=None, done=False)
-                    c["events"].clear()
-                    c["intake"] = self._new_intake(c["channel"], c["lang"], c["zone"], self.wristband(c["pulsera"]), c["id"])
+                self._mando_session = sid
+                self.chats.clear()
 
     def _status_of(self, c: dict[str, Any]) -> tuple[str, bool] | None:
         s = self.get_session()
+        if c['mando_session'] != s.session_id:
+            return None
         info = s.report_status(c["reports"][0])
         if not info.get("found"):
             return None

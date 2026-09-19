@@ -410,8 +410,8 @@ class HardeningTest(unittest.TestCase):
         self.assertNotEqual(ai.session_id, bi.session_id)
         self.c.post('/api/session', json={})
         hub._sync()
-        self.assertIsNot(ai, hub.chats[a['session_id']]['intake'])
-        self.assertFalse(hub.chats[a['session_id']]['state'])
+        self.assertNotIn(a['session_id'], hub.chats, 'reiniciar elimina la conversación anterior completa')
+        self.assertFalse(hub.chats)
         self.app.state.session.close()
 
     def test_duel_invalid_baseline_keeps_existing_session(self):

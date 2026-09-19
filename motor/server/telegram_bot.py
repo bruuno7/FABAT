@@ -1,4 +1,4 @@
-"""Bot de Telegram: el canal del público y del jurado. Cliente de la Bot API por LONG POLLING (`getUpdates`).
+"""Bot de Telegram: el canal del público y del jurado; poll, send_only u off.
 
 Sin webhook y sin túnel: este proceso PREGUNTA a Telegram; nadie entra aquí desde fuera. El token va en
 `TELEGRAM_BOT_TOKEN`; si no está, el bot no arranca y el servidor sigue igual (`/api/state` → `telegram.status = "off"`).
@@ -118,6 +118,9 @@ class TelegramBot:
                  wristband: Callable[[str], dict[str, Any] | None] | None = None, api_base: str | None = None,
                  poll_timeout: int | None = None) -> None:
         self.token = token
+        self.mode = os.environ.get("TELEGRAM_MODE", "poll")
+        if self.mode not in ("poll", "send_only", "off"):
+            raise ValueError("TELEGRAM_MODE debe ser poll, send_only u off")
         self.api = (api_base or os.environ.get("TELEGRAM_API_BASE") or "https://api.telegram.org").rstrip("/")
         self.get_session, self.submit_report, self.submit_strike = get_session, submit_report, submit_strike
         self.strike_presets, self.wristband = strike_presets, wristband or (lambda code: None)
@@ -162,7 +165,7 @@ class TelegramBot:
 
     def view(self) -> dict[str, Any]:
         """Lo que sale en `/api/state`: nunca el token, ni chat_id, ni nombres de usuario."""
-        return {"status": self.status, "bot": self.username, "link": f"https://t.me/{self.username}" if self.username else None,
+        return {"status": self.status, "mode": self.mode, "bot": self.username, "link": f"https://t.me/{self.username}" if self.username else None,
                 "error": self.error or None, "chats": len(self.chats), **self.stats}
 
     # ---------------------------------------------------------------- Bot API
@@ -193,20 +196,25 @@ class TelegramBot:
 
     def _poll_loop(self) -> None:
         backoff = 1.0
+        failures = 0
         while not self._stop.is_set():
             try:
                 if self.status != "on":
                     me = self._call("getMe")
                     self.username = str(me.get("username") or "")
                     # lo que se escribió con el bot parado no entra en esta partida
-                    old = self._call("getUpdates", {"offset": -1, "timeout": 0})
+                    old = self._call("getUpdates", {"offset": -1, "timeout": 0}) if self.mode == "poll" else []
                     if old:
                         self._offset = int(old[-1]["update_id"]) + 1
-                    self.status, self.error, backoff = "on", "", 1.0
+                    self.status, self.error = "on", ""
                     self._changed()
+                if self.mode == "send_only":
+                    self._stop.wait(1)
+                    continue
                 updates = self._call("getUpdates", {"offset": self._offset, "timeout": self.poll_timeout,
                                                     "allowed_updates": ["message", "callback_query"]},
                                      timeout=self.poll_timeout + 8)
+                failures, backoff = 0, 1.0
                 for u in updates or []:
                     self._offset = max(self._offset, int(u["update_id"]) + 1)
                     self.stats["updates"] += 1
@@ -220,6 +228,9 @@ class TelegramBot:
                     return
                 self.status, self.error = "error", f"{type(e).__name__}: {e}".replace(self.token, "***")[:160]
                 self._changed()
+                failures += 1
+                if failures >= 5:
+                    return
                 self._stop.wait(backoff)
                 backoff = min(30.0, backoff * 2)
 
@@ -272,7 +283,7 @@ class TelegramBot:
             return self._on_command(chat_id, c, text)
         if c["ask"] and self._answer(chat_id, c, text):
             return
-        self._report(chat_id, c, text)
+        self._report(chat_id, c, text, metadata=msg.get('metadata'))
 
     def _zones(self) -> dict[str, str]:
         return {z["id"]: z["name"] for z in self.get_session().festival["zones"]}
@@ -342,12 +353,14 @@ class TelegramBot:
         self.send(chat_id, f"Zona fijada: {name}." + (" (El recinto es ficticio: tu ubicación real se ha trasladado al plano.)" if folded else "")
                   + " Ahora escribe qué pasa.")
 
-    def _report(self, chat_id: int, c: dict[str, Any], text: str) -> None:
+    def _report(self, chat_id: int, c: dict[str, Any], text: str, metadata: dict | None = None) -> None:
+        metadata = metadata or {}
         hub = self.chat_hub
         if hub is not None and hub.available:   # EXACTAMENTE la misma sesión de recogida que la web, una por chat
             c["hub"] = True
             turn = hub.turn(f"tg-{c['alias']}", text, channel="telegram", zone_hint=c["zone"], pulsera=c["wristband"],
-                            push=lambda t, chat_id=chat_id: (self.send(chat_id, t), self._flush()))
+                            lang=metadata.get('lang', 'es'), pre_extracted=metadata.get('extracted') or None,
+                            push=lambda t, chat_id=chat_id: self.send(chat_id, t))
             for rid in turn.get("reports") or []:
                 c["reports"].append(rid)
             self.stats["reports"] += len(turn.get("reports") or [])
@@ -355,7 +368,9 @@ class TelegramBot:
                 if line:
                     self.send(chat_id, "\n".join(line.get("steps", [])) if isinstance(line, dict) else str(line))
             return
-        out = self.submit_report("whatsapp", text, c["zone"], source=c["alias"], wristband=c["wristband"])
+        out = self.submit_report("whatsapp", text, c["zone"], source=c["alias"], wristband=c["wristband"],
+                                 lang=metadata.get('lang', 'es'), extracted=metadata.get('extracted'),
+                                 delegate=not bool(metadata.get('extracted')))
         rid = out.get("report_id")
         if rid:
             c["reports"].append(rid)
@@ -425,8 +440,23 @@ class TelegramBot:
         if sid != self._session_id:
             self._session_id = sid
             with self._lock:
-                for c in self.chats.values():   # partida nueva: los avisos de la anterior ya no existen
-                    c.update(reports=[], ask=None, told={})
+                self.chats.clear()
+                self._alias.clear()
+                while not self._outbox.empty():
+                    try:
+                        self._outbox.get_nowait()
+                    except queue.Empty:
+                        break
+
+    def receive_report(self, reply_to: str, text: str, metadata: dict | None = None) -> dict[str, Any]:
+        """Entrada del puente autenticado; usa el mismo chat que getUpdates."""
+        chat_id = int(str(reply_to).removeprefix("tg:"))
+        self._sync_session()
+        if metadata and (metadata.get('zone') or metadata.get('where')):
+            self._chat(chat_id)['zone'] = metadata.get('zone') or metadata.get('where')
+        self._handle({"message": {"chat": {"id": chat_id}, "text": text, 'metadata': metadata}})
+        c = self._chat(chat_id)
+        return {"ok": True, "duplicate": False, "report_id": c["reports"][0] if c["reports"] else None}
 
     def _notify_loop(self) -> None:
         """Cierre del circuito con quien avisó: «Equipo en camino» y «Resuelto», una vez cada uno."""
@@ -455,4 +485,4 @@ class TelegramBot:
 
 def start_from_env(**kwargs: Any) -> TelegramBot | None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-    return TelegramBot(token, **kwargs).start() if token else None
+    return TelegramBot(token, **kwargs).start() if token and os.environ.get("TELEGRAM_MODE", "poll") != "off" else None

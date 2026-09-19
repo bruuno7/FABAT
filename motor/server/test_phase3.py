@@ -203,7 +203,7 @@ class PlatformPayloadTest(EnvTest):
 
     def test_accept_without_minutes_gets_backend_eta(self) -> None:
         s = self.run_call(eta="")
-        sent = self.mock.state.received[0]["payload"]
+        sent = next(r['payload'] for r in self.mock.state.received if 'Acude ya' in r['payload'].get('order_text', ''))
         self.assertEqual(list(sent), ["action_id", "to_number", "role", "order_text", "zone_spoken", "priority", "callback_url", "callback_token"])
         self.assertEqual((sent["callback_url"], sent["callback_token"]), (f"http://127.0.0.1:{self.port}/hr/events", SECRET))
         self.assertIn(sent["priority"], ("roja", "amarilla", "verde"), "la prioridad se DICE por teléfono: va como palabra")
@@ -211,7 +211,7 @@ class PlatformPayloadTest(EnvTest):
         mine = [p for p in self.mock.state.posted if p["action_id"] == sent["action_id"]]
         self.assertEqual([p["type"] for p in mine], ["dispatch_progress", "dispatch_result"], "en caliente y, al colgar, el final")
         self.assertTrue(all(isinstance(v, str) for k, v in mine[1].items() if k not in ("final", "data")), "todo cadenas, como la plataforma")
-        call = next(c for c in s.comms.calls.values() if c["real"])
+        call = next(c for c in s.comms.calls.values() if c["real"] and c['kind'] == 'dispatch')
         self.assertEqual(call["result"], "accept")
         self.assertIsInstance(call["eta_min"], int, "eta_min vacío → ETA estimada por el backend")
         self.assertIn("ETA estimada", call["text"])

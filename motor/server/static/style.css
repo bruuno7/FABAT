@@ -44,7 +44,7 @@ b, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 /* ---------- rejilla */
 .grid { display: grid; grid-template-columns: 25fr 46fr 29fr; gap: .45rem; min-height: 0; }
 .col { display: grid; gap: .45rem; min-height: 0; }
-.col.left { grid-template-rows: minmax(0, 58fr) minmax(0, 42fr); }
+.col.left { grid-template-rows: auto minmax(0, 58fr) minmax(0, 42fr); }
 .col.right { grid-template-rows: minmax(0, 1fr) minmax(0, auto); } .approvals { max-height: 27rem; overflow: hidden; }
 .fronts-mini, .strip { display: none; }
 .col.center { grid-template-rows: minmax(0, 1fr); }

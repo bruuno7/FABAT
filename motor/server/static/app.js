@@ -67,6 +67,11 @@
 
   // ------------------------------------------------------------------ pintado
   function render() {
+    const presentation = $('presentation-status');
+    if (presentation && S) { presentation.textContent = S.presentation?.banner || ''; presentation.hidden = !presentation.textContent; }
+    const hrPanel = $("happyrobot-status");
+    if (hrPanel && S) hrPanel.innerHTML = Object.entries(S.happyrobot || {}).map(([name, w]) =>
+      `<p><b>${esc(name)}</b> · ${w.configured ? "configurado" : "sin configurar"}<br><small>Envío: ${esc(w.last_request || "—")} · Evento: ${esc(w.last_event || "—")}${w.last_error ? " · " + esc(w.last_error) : ""}</small>${w.run_url && /^https?:\/\//.test(w.run_url) ? ` · <a href="${esc(w.run_url)}" target="_blank" rel="noopener">Ver run</a>` : ""}</p>`).join("");
     if (!S || !plano) return;
     resName = {}; S.resources.forEach((r) => (resName[r.id] = r.name));
     header(); map(); fronts(); reports(); plan(); approvals(); log(); calls(); score(); strip(); board(); events();
@@ -473,11 +478,13 @@
   $("btn-play").onclick = () => post("/api/control", { cmd: "toggle" });
   $("btn-step").onclick = () => post("/api/control", { cmd: "step" });
   $("btn-reset").onclick = reset;
+  $("btn-key-moment").onclick = keyMoment;
   $("speed").onclick = (ev) => { if (ev.target.dataset.speed) post("/api/control", { cmd: "speed", value: Number(ev.target.dataset.speed) }); };
   $("case-select").onchange = (ev) => { forget(); post("/api/session", { case_id: ev.target.value, comms: $("comms-select").value }); ev.target.blur(); };
   $("comms-select").onchange = (ev) => { forget(); post("/api/session", { case_id: $("case-select").value || S.session.case, comms: ev.target.value }); ev.target.blur(); };
   function forget() { seenReports = new Set(); seenBreaks = new Set(); seenStrikes = 0; sticky = null; firstState = true; }
   function reset() { forget(); post("/api/control", { cmd: "reset" }); }
+  function keyMoment() { forget(); post('/api/control', {cmd: 'key_moment'}); }
   function qr(show) {
     const o = $("qr-overlay");
     if (show === undefined) show = o.hidden;
@@ -502,6 +509,7 @@
     else if (k === "v") decide(false);
     else if (k === "s") post("/api/control", { cmd: "step" });
     else if (k === "r") reset();
+    else if (k === "k") keyMoment();
     else if (k === "q") qr();
     else if (k === "e") scene();
     else if (k === "escape") qr(false);

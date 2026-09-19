@@ -40,6 +40,7 @@ import httpx
 
 from .validation import webhook
 from . import privacy
+from . import hr_config
 
 from motor.contracts import ALWAYS_APPROVE, Action, ActionKind, Resource
 
@@ -74,25 +75,26 @@ def _env(*names: str, default: str = "") -> str:
 def hook_urls() -> dict[str, str]:
     """Una URL por workflow. Se aceptan los nombres del encargo y los del contrato. Cada entorno de la plataforma tiene su
     propia URL de hook: `HR_HOOK_DISPATCH_DEVELOPMENT` (según `HR_ENV`) gana a `HR_HOOK_DISPATCH`."""
-    env = _env("HR_ENV", default="production").upper()
+    env = hr_config.environment().upper()
+    dispatch = hr_config.workflow_urls()["dispatch"]
     return {
-        "dispatch": _env(f"HR_HOOK_DISPATCH_{env}", "HR_HOOK_DISPATCH"),
-        "ask": _env("HR_HOOK_ASK", "HR_HOOK_CLARIFY"),
-        "notify": _env("HR_HOOK_NOTIFY"),
-        "external": _env("HR_HOOK_EXTERNAL"),
-        "followup": _env("HR_HOOK_FOLLOWUP"),
+        "dispatch": dispatch,
+        "ask": _env("HR_HOOK_ASK", "HR_HOOK_CLARIFY", default=dispatch),
+        "notify": _env("HR_HOOK_NOTIFY", default=dispatch),
+        "external": _env("HR_HOOK_EXTERNAL", default=dispatch),
+        "followup": _env("HR_HOOK_FOLLOWUP", default=dispatch),
     }
 
 
 def api_base() -> str:
     """Clúster por configuración. EU: https://platform.eu.happyrobot.ai/api/v2"""
-    return _env("HR_API_BASE").rstrip("/")
+    return hr_config.api_base()
 
 
 def workflow_ids() -> dict[str, str]:
-    return {"dispatch": _env("HR_WORKFLOW_DISPATCH"), "ask": _env("HR_WORKFLOW_ASK", "HR_WORKFLOW_CLARIFY"),
-            "notify": _env("HR_WORKFLOW_NOTIFY"), "external": _env("HR_WORKFLOW_EXTERNAL"),
-            "followup": _env("HR_WORKFLOW_FOLLOWUP"), "webcall": _env("HR_WORKFLOW_WEBCALL")}
+    ids = hr_config.workflow_ids()
+    return {**ids, **{k: _env('HR_WORKFLOW_' + k.upper(), default=ids['dispatch'])
+                     for k in ('ask', 'notify', 'external', 'followup')}}
 
 
 def shared_secret() -> str:
@@ -206,9 +208,9 @@ class HappyRobotComms:
         self.incident_lookup = incident_lookup or (lambda _id: None)
         self.is_approved = is_approved or (lambda _id: None)
         self.on_log = on_log or (lambda *a, **k: None)
-        self.fallback_s = float(fallback_s if fallback_s is not None else _env("HR_FALLBACK_S", default="75"))
-        self.http_timeout_s = float(http_timeout_s if http_timeout_s is not None else _env("HR_TIMEOUT_S", default="5"))
-        self.retries = int(_env("HR_RETRIES", default="1"))
+        self.fallback_s = max(0.1, min(75.0, float(fallback_s if fallback_s is not None else _env("HR_FALLBACK_S", default="12"))))
+        self.http_timeout_s = max(0.1, min(10.0, float(http_timeout_s if http_timeout_s is not None else _env("HR_TIMEOUT_S", default="5"))))
+        self.retries = max(0, min(3, int(_env("HR_RETRIES", default="1"))))
         self.callback_url = public_base("http://127.0.0.1:8000")
         self.external_ask: Callable[[Action], Any] | None = None   # ¿esta pregunta es para alguien de un canal nuestro? → "telegram" | "web" | ""
         self.ask_wait_s = self.fallback_s
@@ -217,7 +219,7 @@ class HappyRobotComms:
         self.workflows = workflow_ids()
         self.launch_mode = "runs" if _env("HR_LAUNCH_MODE", default="hook") == "runs" else "hook"
         self.voice_mode = "phone" if _env("MANDO_VOICE_MODE", default="web_call") == "phone" else "web_call"
-        self.hr_env = _env("HR_ENV", default="production")
+        self.hr_env = hr_config.environment()
         self.disclaimer_s = float(_env("HR_DISCLAIMER_S", default="4"))  # aviso legal UE: suena antes y no es latencia del agente
         cat = _catalogs()
         self._zone_spoken = {k: v.get("spoken", k) for k, v in cat.get("zones", {}).items() if isinstance(v, dict)}
@@ -226,6 +228,8 @@ class HappyRobotComms:
         self._warned_no_list = False
 
         self.revision = 0
+        self.workflow_status = hr_config.WorkflowStatus()
+        self._stop = threading.Event()
         self._lock = threading.RLock()
         self._inbox: list[dict[str, Any]] = []            # resultados reales listos para poll()
         self._inflight: dict[str, dict[str, Any]] = {}    # action_id -> envío real pendiente
@@ -257,7 +261,19 @@ class HappyRobotComms:
         return sim
 
     # ================================================================ CommsAPI
+    def close(self) -> None:
+        self._stop.set()
+        with self._lock:
+            self._closed.update(self._inflight)
+            self._inflight.clear()
+            self._inbox.clear()
+            self.webcalls.clear()
+            self._wire_to_action.clear()
+            self._run_to_action.clear()
+
     def send(self, action: Action, resource: Resource | None = None) -> None:
+        if self._stop.is_set():
+            return
         name = resource.name if resource is not None else str(action.params.get("to") or "destinatario")
         call = {"action_id": action.id, "kind": str(action.kind), "to": name, "resource": action.resource,
                 "incident": action.incident, "zone": action.zone, "channel": str(action.channel or "voice"),
@@ -327,11 +343,11 @@ class HappyRobotComms:
         wire_id = f"{self._nonce}:{action_id}"
         with self._lock:
             self._wire_to_action[wire_id] = action_id
-        if p.get("message") != "dispatch_request":
-            return dict(p, action_id=wire_id, callback_token=shared_secret()) if p else {}
         wire = {"action_id": wire_id, "to_number": p.get("to_number") or "",
-                "role": p.get("contact_title") or p.get("resource_spoken") or "", "order_text": p.get("order_text") or "",
-                "zone_spoken": p.get("zone_spoken") or "", "priority": p.get("priority_label") or "",
+                "role": p.get("contact_title") or p.get("resource_spoken") or p.get("recipient_role") or p.get("contact_role") or "responsable",
+                "order_text": p.get("order_text") or p.get("question_text") or p.get("message_text") or p.get("parte_text") or "",
+                "zone_spoken": p.get("zone_spoken") or self._zone_name((self.calls.get(action_id) or {}).get("zone")),
+                "priority": p.get("priority_label") or "amarilla",
                 "callback_url": self.callback_url.rstrip("/") + EVENTS_PATH, "callback_token": shared_secret()}
         assert tuple(wire) == DISPATCH_PARAMS
         if (self.calls.get(action_id) or {}).get("web_call"):
@@ -367,11 +383,12 @@ class HappyRobotComms:
             entry = {"to_number": entry}
         if not entry:
             return None
-        voice = kind in (ActionKind.DISPATCH, ActionKind.RECALL, ActionKind.RESUPPLY) and str(action.channel or "voice") == "voice"
+        voice = kind in (ActionKind.DISPATCH, ActionKind.RECALL, ActionKind.RESUPPLY, ActionKind.ASK, ActionKind.NOTIFY)
         if voice and self.voice_mode == "web_call":
             if not (self.api_base and _env("HR_API_KEY") and self.workflows["webcall"]):
                 return None
-            payload = self._dispatch_payload(action, resource, entry, "")
+            build = self._clarify_payload if kind == ActionKind.ASK else self._notify_payload if kind == ActionKind.NOTIFY else self._dispatch_payload
+            payload = build(action, resource, entry, "")
             payload["to_number"] = None
             return "webcall", payload
         if not entry.get("to_number"):
@@ -464,6 +481,7 @@ class HappyRobotComms:
 
     def _clarify_payload(self, a: Action, r: Resource | None, entry: dict[str, Any], number: str) -> dict[str, Any]:
         p = self._envelope(a, "clarify_request")
+        p['contact_title'] = entry.get('title') or (f"Jefe de {_KIND_ES.get(str(r.kind), 'equipo')} · {r.name}" if r else entry.get('role', 'responsable'))
         channel = str(a.channel or "voice")
         reports = a.params.get("reports") or []
         p.update({
@@ -497,6 +515,7 @@ class HappyRobotComms:
 
     def _notify_payload(self, a: Action, r: Resource | None, entry: dict[str, Any], number: str) -> dict[str, Any]:
         p = self._envelope(a, "notify_request")
+        p['contact_title'] = entry.get('title') or (f"Jefe de {_KIND_ES.get(str(r.kind), 'equipo')} · {r.name}" if r else entry.get('role', 'responsable'))
         channel = str(a.channel or "sms")
         p.update({"to_number": number, "channel": channel if channel in ("voice", "sms", "whatsapp") else "sms",
                   "recipient_role": entry.get("role", "staff"),
@@ -532,6 +551,7 @@ class HappyRobotComms:
         return p
 
     def _post(self, action_id: str, hook: str, payload: dict[str, Any]) -> None:
+        self.workflow_status.record('dispatch', 'request')
         headers = {"Content-Type": "application/json"}
         key = _env("HR_API_KEY")
         body: dict[str, Any] = payload
@@ -542,6 +562,8 @@ class HappyRobotComms:
             headers["x-api-key"] = key  # solo hace falta con «Enhanced Security» en el trigger; si no, se ignora
         err = ""
         for attempt in range(self.retries + 1):
+            if self._stop.is_set() or action_id in self._closed:
+                return
             t0 = time.monotonic()
             try:
                 resp = httpx.post(hook, json=body, headers=headers, timeout=self.http_timeout_s)
@@ -554,6 +576,7 @@ class HappyRobotComms:
                         queued = data.get("queued_run_ids") if isinstance(data, dict) else None
                         run_id = (data.get("run_id") or (queued[0] if isinstance(queued, list) and queued else "")) if isinstance(data, dict) else ""
                         self._bind_run(action_id, str(run_id or ""))
+                        self.workflow_status.record('dispatch', 'response', error='', run_url=data.get('run_url'))
                     except (ValueError, AttributeError):
                         pass
                     return
@@ -561,8 +584,9 @@ class HappyRobotComms:
             except httpx.HTTPError as e:  # timeout, conexión rechazada, DNS
                 err = type(e).__name__
             if attempt < self.retries:
-                time.sleep(0.4)
+                self._stop.wait(0.4)
         self._fall_back(action_id, f"el hook no responde ({err})")
+        self.workflow_status.record('dispatch', 'error', error=err)
 
     # ================================================================ caída a simulación
     def sweep(self) -> None:
@@ -600,9 +624,14 @@ class HappyRobotComms:
 
     # ================================================================ webhooks entrantes
     def on_event(self, ev: dict[str, Any]) -> dict[str, Any]:
+        if self._stop.is_set():
+            return {'ok': True, 'stale': True}
         ev = webhook(ev)
         with self._lock:
             out = self._on_event(ev)
+            if not out.get('stale'):
+                self.workflow_status.record('webcall' if ev.get('channel_used') == 'web_call' else 'dispatch', 'event',
+                                            run_url=ev.get('run_url'))
             self.revision += 1
             return out
 
@@ -651,6 +680,8 @@ class HappyRobotComms:
             self.on_log("action", f"HappyRobot habla de una acción que no es de esta partida ({message} {action_id}): se ignora", None)
             return {"ok": True, "duplicate": False, "unknown_action": True}
         if message == "progress" and ev.get("early_result"):
+            if (self.calls.get(action_id) or {}).get('kind') == 'ask':
+                return {'ok': True, 'awaiting_answer': True}
             return self._early_result(action_id, ev)
         if message == "progress":
             stage = str(ev.get("stage") or "")
@@ -673,6 +704,11 @@ class HappyRobotComms:
             return {"ok": True, "duplicate": False}
 
         if message in _RESULT_MESSAGES:
+            if platform and (self.calls.get(action_id) or {}).get('kind') == 'ask':
+                self._transcript_from(action_id, ev.get('transcript'))
+                words = [line['text'] for line in self.calls[action_id].get('transcript', []) if line['who'] == 'persona']
+                ev['result'] = 'answer' if words else 'no_answer'
+                ev['text'] = ' '.join(words)
             with self._lock:
                 if action_id in self._closed:
                     late = True
@@ -718,6 +754,8 @@ class HappyRobotComms:
                 data = {}   # respuesta en texto libre: Mando solo la LEE (su parser) si `data` llega vacío
             self._transcript_from(action_id, ev.get("transcript"))
             item = self._result_item(action_id, str(ev.get("result") or "no_answer"), ev, channel, data)
+            if item['result'] == 'answer' and platform and (self.calls.get(action_id) or {}).get('kind') == 'ask':
+                item['data'] = {}
             with self._lock:
                 self._inbox.append(item)
             return {"ok": True, "duplicate": False, "result": item["result"], "eta_min": item["eta_min"]}
@@ -827,6 +865,8 @@ class HappyRobotComms:
 
     # ================================================================ API de la plataforma (run, sesión, web call, signals)
     def _api(self, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+        if self._stop.is_set():
+            raise RuntimeError('Partida cerrada')
         if not (self.api_base and _env("HR_API_KEY")):
             raise RuntimeError("HR_API_BASE o HR_API_KEY sin configurar")
         resp = httpx.request(method, self.api_base + path, json=body, timeout=self.http_timeout_s,
@@ -836,7 +876,7 @@ class HappyRobotComms:
         return resp.json() if resp.content else {}
 
     def _bind_run(self, action_id: str, run_id: str, session_id: Any = None) -> None:
-        if not run_id:
+        if not run_id or self._stop.is_set():
             return
         with self._lock:
             new = run_id not in self._run_to_action
@@ -854,6 +894,8 @@ class HappyRobotComms:
         """Busca la sesión del run (hace falta para Signals, escucha y toma) y sigue su transcripción en vivo."""
         session_id = (self.calls.get(action_id) or {}).get("hr_session_id")
         for _ in range(40):
+            if self._stop.is_set():
+                return
             if session_id or (action_id in self._closed and action_id not in self._early):
                 break  # confirmada en caliente = la llamada sigue viva unos segundos: se sigue su transcripción
             try:
@@ -862,29 +904,39 @@ class HappyRobotComms:
             except (RuntimeError, httpx.HTTPError, ValueError):
                 pass
             if not session_id:
-                time.sleep(0.5)
+                self._stop.wait(0.5)
         if not session_id:
             return
         with self._lock:
             if action_id in self.calls:
                 self.calls[action_id]["hr_session_id"] = session_id
-        try:  # SSE de la sesión: eventos `message` {role, content} y `session_ended`
-            with httpx.stream("GET", f"{self.api_base}/sessions/{session_id}/stream", timeout=None,
-                              headers={"Authorization": f"Bearer {_env('HR_API_KEY')}"}) as resp:
-                event = ""
-                for line in resp.iter_lines():
-                    if line.startswith("event:"):
-                        event = line[6:].strip()
-                    elif line.startswith("data:") and event in ("message", ""):
-                        try:
-                            m = json.loads(line[5:])
-                        except ValueError:
-                            continue
-                        if not m.get("is_filler"):
-                            self._say(action_id, str(m.get("role") or "agent"), str(m.get("content") or ""))
-                    if event == "session_ended":
-                        break
-        except (httpx.HTTPError, RuntimeError):
+        for attempt in range(3):  # silencio de red: reconexión acotada, nunca bloquea el reloj
+            if self._stop.is_set():
+                return
+            try:
+                with httpx.stream("GET", f"{self.api_base}/sessions/{session_id}/stream", timeout=self.http_timeout_s,
+                                  headers={"Authorization": f"Bearer {_env('HR_API_KEY')}"}) as resp:
+                    resp.raise_for_status()
+                    event = ""
+                    for line in resp.iter_lines():
+                        if self._stop.is_set():
+                            return
+                        if line.startswith("event:"):
+                            event = line[6:].strip()
+                        elif line.startswith("data:") and event in ("message", ""):
+                            try:
+                                m = json.loads(line[5:])
+                            except ValueError:
+                                continue
+                            if not m.get("is_filler"):
+                                self._say(action_id, str(m.get("role") or "agent"), str(m.get("content") or ""))
+                        if event == "session_ended":
+                            return
+            except (httpx.HTTPError, RuntimeError):
+                pass
+            if attempt < 2:
+                self._stop.wait(0.4)
+        if not self._stop.is_set():
             self._transcript_at_close(action_id, session_id)
 
     def _transcript_at_close(self, action_id: str, session_id: str) -> None:
@@ -926,14 +978,21 @@ class HappyRobotComms:
             if action_id in self._closed:
                 raise RuntimeError("la llamada ya no está en curso")
         payload = self.wire_payload(action_id)
-        out = self._api("POST", "/voice/tokens/", {"workflow_id": self.workflows["webcall"], "data": payload,
-                                                   "env": self.hr_env, "ttl_seconds": 900})
+        self.workflow_status.record('webcall', 'request')
+        try:
+            out = self._api("POST", "/voice/tokens/", {"workflow_id": self.workflows["webcall"], "data": payload,
+                                                       "env": self.hr_env, "ttl_seconds": 900})
+        except (httpx.HTTPError, RuntimeError, ValueError) as exc:
+            self.workflow_status.record('webcall', 'error', error=type(exc).__name__)
+            self._fall_back(action_id, 'sin conexión con la plataforma')
+            raise
+        self.workflow_status.record('webcall', 'response', error='', run_url=out.get('run_url'))
         with self._lock:
             wc["answered"] = True
             flight = self._inflight.get(action_id)
             if flight:
                 flight["answered_at"] = time.monotonic()
-                flight["deadline"] = time.monotonic() + max(self.fallback_s, 120)
+                flight["deadline"] = time.monotonic() + self.fallback_s
                 self.stats["answer_ms"].append(round((flight["answered_at"] - flight["started"]) * 1000))
             if action_id in self.calls:
                 self.calls[action_id]["stage"] = "ha descolgado"

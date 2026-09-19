@@ -390,7 +390,7 @@ class HappyRobotCircuitTest(unittest.TestCase):
         os.environ["HR_LAUNCH_MODE"] = "runs"
         self.mock.state.config["omit_action_id"] = True
         st, received = self._run("30")
-        self.assertEqual((received[0]["via"], received[0]["workflow"], received[0]["environment"]), ("runs", "fa-despacho", "production"))
+        self.assertEqual((received[0]["via"], received[0]["workflow"], received[0]["environment"]), ("runs", "fa-despacho", "development"))
         call = next(c for c in st["calls"]["calls"] if c["real"])
         self.assertEqual(call["result"], "accept")
 

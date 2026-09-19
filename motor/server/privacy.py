@@ -1,5 +1,6 @@
 """Proyección pública única: conserva la estructura y elimina datos reservados y teléfonos."""
 import re
+import os
 from ipaddress import ip_address
 from typing import Any
 
@@ -19,12 +20,17 @@ def _phone(match: re.Match) -> str:
 
 def scrub(value: Any) -> Any:
     if isinstance(value, str):
+        for key in ('HR_SECRET', 'MANDO_HR_TOKEN', 'HR_API_KEY', 'HR_CHAT_TOKEN', 'TELEGRAM_BOT_TOKEN',
+                    'MANDO_OPERATOR_TOKEN', 'MANDO_MCP_TOKEN'):
+            secret = os.environ.get(key, '')
+            if len(secret) >= 4:
+                value = value.replace(secret, '(secreto oculto)')
         return PHONE.sub(_phone, value)
     if isinstance(value, list):
         return [scrub(v) for v in value]
     if isinstance(value, dict):
         return {k: scrub(v) for k, v in value.items() if k not in
-                ("phone", "to_number", "from_number", "contact", "callback_token", "reply_to")}
+                ("phone", "to_number", "from_number", "contact", "callback_token", "reply_to", "token", "api_key", "secret", "password", "authorization")}
     return value
 
 

@@ -18,6 +18,7 @@ import httpx
 
 from .comms_happyrobot import EVENTS_PATH, _blank, shared_secret
 from .telegram_bot import _plain, match_zone
+from . import hr_config
 
 HERE = Path(__file__).resolve().parent
 WRISTBANDS_PATH = HERE / "static" / "pulseras.json"
@@ -127,17 +128,31 @@ class DelegatedIntake:
         self._pending: dict[str, dict[str, Any]] = {}
         self._n = 0
         self.stats = {"happyrobot": 0, "local": 0, "late": 0}
+        self.workflow_status = hr_config.WorkflowStatus()
 
     @property
     def hook(self) -> str:
-        return os.environ.get("HR_HOOK_INTAKE", "").strip()
+        scoped = 'HR_HOOK_INTAKE_' + hr_config.environment().upper()
+        if os.environ.get(scoped):
+            return os.environ[scoped].strip()
+        if 'HR_HOOK_INTAKE' in os.environ:
+            return os.environ['HR_HOOK_INTAKE'].strip()
+        return hr_config.workflow_urls()['intake'] if os.environ.get('HR_API_KEY') else ''
 
     @property
     def timeout_s(self) -> float:
         try:
-            return max(0.2, float(os.environ.get("HR_INTAKE_TIMEOUT_S", "6")))
+            return max(0.2, min(10.0, float(os.environ.get("HR_INTAKE_TIMEOUT_S", "6"))))
         except ValueError:
             return 6.0
+
+    def reset(self) -> None:
+        with self._lock:
+            for slot in self._pending.values():
+                slot['timed_out'] = True
+                slot['event'].set()
+            self.stats = {'happyrobot': 0, 'local': 0, 'late': 0}
+            self.workflow_status = hr_config.WorkflowStatus()
 
     def understand(self, *, text: str, channel: str, source: str, zone_hint: str | None, lang: str) -> tuple[dict[str, Any] | None, str]:
         """Devuelve (evento estructurado | None, por qué). Bloquea como mucho `timeout_s`: llamar SIEMPRE fuera del bucle asyncio."""
@@ -153,17 +168,20 @@ class DelegatedIntake:
         if os.environ.get("HR_API_KEY") and os.environ.get("HR_HOOK_ENHANCED", "1") != "0":
             headers["x-api-key"] = os.environ["HR_API_KEY"]
         t0 = time.monotonic()
+        self.workflow_status.record('intake', 'request')
         try:
             resp = httpx.post(self.hook, json=body, headers=headers, timeout=self.timeout_s)
             if resp.status_code >= 300:
                 raise httpx.HTTPError(f"HTTP {resp.status_code}")
         except httpx.HTTPError as e:
+            self.workflow_status.record('intake', 'error', error=type(e).__name__)
             with self._lock:
                 slot["timed_out"] = True
             return None, f"el workflow de texto no responde ({type(e).__name__})"
         slot["event"].wait(max(0.05, self.timeout_s - (time.monotonic() - t0)))
         with self._lock:
             if slot["ev"] is None:
+                self.workflow_status.record('intake', 'error', error='Tiempo de espera agotado; comprensión local')
                 slot["timed_out"] = True
                 return None, f"sin respuesta de HappyRobot en {self.timeout_s:g} s"
             return slot["ev"], "ok"
@@ -179,6 +197,7 @@ class DelegatedIntake:
                 self.stats["late"] += 1
                 return "late"
             slot["ev"] = ev
+            self.workflow_status.record('intake', 'event', error='', run_url=ev.get('run_url'))
         slot["event"].set()
         return "taken"
 

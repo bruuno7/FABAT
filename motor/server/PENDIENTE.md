@@ -1,5 +1,20 @@
 # PENDIENTE — servidor, corte del 19-sep tras revisión Codex
 
+## Actualización B + C, 19-sep 10:11
+
+Integración por configuración y presentación implementadas: `hr_config.py`, adaptador de comunicaciones,
+ingesta/chat, Telegram `poll|send_only|off`, doctor fusionado con Aibo, estado por workflow y enlaces públicos.
+`./mvp.sh demo` prepara el caso; R limpia sesiones/llamadas locales/presupuesto y K recupera minuto 7 simulado.
+`security.py` exige operador con URL pública y limita avisos por IP/tamaño. `ensayo.py` comprueba siete hitos.
+Guías: `CONEXION-HAPPYROBOT.md` y `PRESENTACION-SEGURA.md`. También hay cambios localizados en HTML/JS del mando/asistente.
+
+Verificación posterior a este corte histórico: servidor `Ran 138 tests in 59.717s` / `OK`;
+núcleo solicitado `Ran 83 tests in 0.689s` / `OK`; sintaxis de shell y JS correcta.
+Tres ejecuciones consecutivas de ensayo demo-1 idénticas: 7/7 hitos, N=1 por ejecución, críticos fallidos 1/2.
+Solo mocks: pendientes publicación/audio/Telegram reales y revisión visual (navegador denegado por permisos).
+Parte A (`/gemelo`, pronóstico visible y accuracy) no realizada, conforme al orden de prioridad.
+Lo siguiente conserva el corte anterior como contexto; sus cifras y afirmación de no tocar frontend son históricas.
+
 Este corte sustituye el estado anterior de fase 3. Trabajo limitado al servidor y al reenganche H8 en
 `motor/caos/chaos.py`. No se ha ejecutado git, ni hackspain, ni publicado nada, ni abierto túneles.
 No se han editado los HTML/JS/CSS: otro proceso está trabajando sobre ellos.

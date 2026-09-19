@@ -5,6 +5,10 @@ local (para los móviles del jurado). Nunca se abre a internet desde aquí.
 
 ## Arrancar
 
+Para la entrega: `./mvp.sh demo` hace diagnóstico previo sin red y arranca `demo-1` pausado, con canales rotulados.
+Ver [PRESENTACION-SEGURA.md](PRESENTACION-SEGURA.md) para el recorrido de 15 minutos y planes B.
+`uv run --project motor/server python -m motor.server ensayo --case demo-1` comprueba siete hitos sin pantalla ni plataforma.
+
 ```sh
 # desde la raíz del proyecto
 uv run --project motor/server python -m motor.server --case demo-1 --speed 1          # o: motor/server/run.sh --case demo-1
@@ -22,12 +26,15 @@ Páginas: `/` mando (`/?escena=1` o tecla E = MODO ESCENA) · `/duelo` pantalla 
 adversario · `/informe` informe posterior · `/curva` curva de aprendizaje · `/qr?path=/jurado` SVG con el QR de una ruta local.
 
 Teclado en `/`: espacio = pausa · flechas = velocidad (×1/×4/×16) · A / V = aprobar / vetar la primera pendiente ·
-E = modo escena · S = +1 min · R = reiniciar · Q = QR del jurado a pantalla completa.
+E = modo escena · S = +1 min · R = reiniciar escena · K = momento clave simulado (minuto 7, pausado) · Q = QR del jurado a pantalla completa.
 
 **Quién puede qué.** Avisar y golpear (3 por `client_id`, además de 3 globales por partida) puede cualquiera de la red local. Aprobar, mover el reloj,
 cambiar de caso, la consola de Caos, tomar una llamada y bloquear un test solo se aceptan desde esta máquina o con la
 cabecera `X-Mando-Operator` = `MANDO_OPERATOR_TOKEN`. El enlace secreto de una llamada web y su token no salen nunca en
 `/api/state`: el enlace solo lo ve el puesto de control (`/api/webcalls`) y el token solo va a la página que descuelga.
+Con `MANDO_PUBLIC_URL`, también en localhost se exige token para mando y operaciones: entrar por `/acceso`
+(cookie HttpOnly) o usar `X-Mando-Operator`. `/mcp` siempre exige su propio token. Avisos públicos limitados
+por IP de conexión, 400 caracteres y 8192 bytes de cuerpo; no se confía en `client_id` ni cabeceras reenviadas.
 
 ## Endpoints
 
@@ -37,7 +44,7 @@ cabecera `X-Mando-Operator` = `MANDO_OPERATOR_TOKEN`. El enlace secreto de una l
 | GET | `/api/stream` | SSE, evento `state` en cada tick o cambio (`?limit=N` corta tras N eventos: pruebas) |
 | GET | `/api/cases`, `/api/festival` | casos de demo · zonas, aristas, incidentes típicos y golpes del jurado |
 | POST | `/api/session` | `{case_id | case:{...}, seed?, speed?, comms?: sim|happyrobot, playbook?, autoplay?}` |
-| POST | `/api/control` | `{cmd: play|pause|toggle|step|speed|reset, value?, n?}` |
+| POST | `/api/control` | `{cmd: play|pause|toggle|step|speed|reset|key_moment, value?, n?}` |
 | POST | `/api/report` | `{channel, text, zone?, preset?}` aviso del jurado → `world.inject`. Devuelve `report_id` |
 | GET | `/api/report/{id}` | qué ha hecho Mando con ese aviso (lo ve el jurado en su móvil) |
 | POST | `/api/strike` | `{preset}` o `{effect:{...}}` validado y acotado, `client_id?`, `origin: jury|chaos` |
@@ -72,18 +79,20 @@ aviso y Mando tendrá que preguntar.
 | `HR_API_BASE` | API de la plataforma. Clúster EU: `https://platform.eu.happyrobot.ai/api/v2` |
 | `HR_API_KEY` | Bearer de la API (`/workflows/{id}/runs`, `/voice/tokens/`, `/signals`, `/runs/{id}/sessions`, `/sessions/{id}/stream`) y cabecera `x-api-key` del hook con Enhanced Security (`HR_HOOK_ENHANCED=0` para no mandarla) |
 | `HR_LAUNCH_MODE` (`hook`) | `hook` = POST a `/hooks/{slug}` (no se usa su respuesta: no está documentada) · `runs` = `POST {HR_API_BASE}/workflows/{id}/runs`, que devuelve `run_id` |
-| `HR_WORKFLOW_DISPATCH`, `_ASK`, `_NOTIFY`, `_EXTERNAL`, `_FOLLOWUP`, `HR_WORKFLOW_WEBCALL` | id o slug de cada workflow (modo `runs` y llamada web) · `HR_ENV` (`production`) |
+| `HR_WORKFLOW_DISPATCH`, `_ASK`, `_NOTIFY`, `_EXTERNAL`, `_FOLLOWUP`, `HR_WORKFLOW_WEBCALL` | id o slug de cada workflow (modo `runs` y llamada web) · `HR_ENV` (`development`) |
+| `HR_PLATFORM_BASE` | `https://platform.eu.happyrobot.ai`; hooks y deployments incluyen entorno salvo production. URLs explícitas prevalecen; confirmar hooks en el editor. |
 | `MANDO_VOICE_MODE` (`web_call`) | `web_call` = la voz va por llamada web (sin números +34) · `phone` = teléfono por hook/runs |
 | `HR_DISCLAIMER_S` (4) | segundos del aviso legal UE al descolgar: se restan, no son latencia del agente |
 | `MANDO_OPERATOR_TOKEN` | permite operar (aprobar, reloj, tomar llamadas) desde otra máquina de la red |
 | `MANDO_CALLBACK_URL` | URL a la que HappyRobot devuelve los webhooks (por defecto `http://127.0.0.1:<puerto>`). El túnel, si hace falta, lo abre una persona, no este código |
 | `MANDO_ALLOWED_NUMBERS` | lista blanca OBLIGATORIA de teléfonos (E.164, comas) |
 | `MANDO_CONTACTS` | ruta alternativa a `contacts.local.json` |
-| `HR_FALLBACK_S` (75), `HR_TIMEOUT_S` (5), `HR_RETRIES` (1) | segundos reales sin resultado antes de caer a simulación · timeout y reintentos del POST |
+| `HR_FALLBACK_S` (12), `HR_TIMEOUT_S` (5), `HR_RETRIES` (1) | segundos reales sin resultado antes de caer a simulación (máx. 75) · timeout (máx. 10) y reintentos del POST (máx. 3) |
 | `HR_SLOW_ON_CALL` (1) | con una llamada real en curso el reloj baja a 1 min simulado cada 5 s |
 | `MANDO_PUBLIC_URL` | URL base de callbacks y QR; prevalece sobre `MANDO_CALLBACK_URL` |
 | `MANDO_ASK_WAIT_S` (45) | plazo real para que conteste una persona; al vencer se sigue con lo conocido |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_API_BASE`, `TELEGRAM_BOT_USERNAME` | bot y API; sin token permanece apagado |
+| `TELEGRAM_MODE` (`poll`) | `poll`: getUpdates; `send_only`: webhook del puente entra por /hr/events, respuestas por sendMessage; `off`: desactivado. Ambos caminos comparten recogida por chat. |
 | `TELEGRAM_POLL_TIMEOUT_S` (25), `TELEGRAM_RATE_MAX` (6), `TELEGRAM_RATE_WINDOW_S` (60), `TELEGRAM_MAX_CHARS` (400) | sondeo, frecuencia y tamaño |
 | `MANDO_MCP_TOKEN` | Bearer de `/mcp` |
 | `HR_HOOK_INTAKE`, `HR_INTAKE_TIMEOUT_S` (6), `HR_CHAT_TOKEN` | extracción delegada opcional, plazo y token público limitado a avisos/consultas |

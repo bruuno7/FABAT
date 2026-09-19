@@ -3,6 +3,7 @@
 #   ./mvp.sh            arranca la pantalla de mando en local, todo simulado
 #   ./mvp.sh lan        igual, accesible desde los móviles de la misma wifi
 #   ./mvp.sh real       con HappyRobot y Telegram reales (lee .env)
+#   ./mvp.sh demo       doctor previo + caso reproducible, pausado y con plan B
 #   ./mvp.sh check      tests de todos los módulos + comprobación de configuración
 #   ./mvp.sh cifras     recalcula el titular del banco de pruebas (con N e intervalo)
 set -e
@@ -14,6 +15,7 @@ command -v uv >/dev/null || { echo "Falta uv: brew install uv"; exit 1; }
 [ -f motor/cases/data/train.jsonl ]   || python3 -m motor.cases generate --n 3000 --seed 1 --split train   --out motor/cases/data/train.jsonl
 [ -f motor/cases/data/heldout.jsonl ] || python3 -m motor.cases generate --n 1000 --seed 1 --split heldout --out motor/cases/data/heldout.jsonl
 case "${1:-local}" in
+  demo) exec uv run --project motor/server python -m motor.server demo --case "${MANDO_DEMO_CASE:-demo-1}" --port "$PORT" ;;
   local) echo "Pantalla de mando:  http://127.0.0.1:$PORT      App del asistente:  http://127.0.0.1:$PORT/asistente"
          exec uv run --project motor/server python -m motor.server --case "$CASE" --speed "$SPEED" --port "$PORT" ;;
   lan)   exec uv run --project motor/server python -m motor.server --case "$CASE" --speed "$SPEED" --port "$PORT" --lan ;;
@@ -21,7 +23,7 @@ case "${1:-local}" in
          uv run --project motor/server python -m motor.server doctor || true
          exec uv run --project motor/server python -m motor.server --case "$CASE" --speed "$SPEED" --port "$PORT" --comms happyrobot --lan ;;
   check) python3 -m unittest motor.world.test_world motor.cases.test_cases motor.mando.test_mando motor.harness.test_harness
-         uv run --project motor/server python -m unittest motor.server.test_server
+         uv run --project motor/server python -m unittest discover -s motor/server -p "test_*.py" -t .
          python3 -m motor.cases check-world motor/cases/data/demo.jsonl
          uv run --project motor/server python -m motor.server doctor || true ;;
   cifras) exec python3 -m motor.harness headline ;;

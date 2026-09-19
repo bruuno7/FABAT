@@ -13,7 +13,7 @@ En los ejemplos: `B=https://<tu-túnel>` (= `MANDO_PUBLIC_URL`), `S=$HR_SECRET`.
 | Cambio de orden en plena llamada | `POST $HR_API_BASE/signals` `{key: "session.<hr_session_id>", env, payload}` | `payload = {type: "orden_cambiada", orden_cambiada: true, orden_nueva, text, action_id}` | `change_orders`, `signal` |
 | Escuchar / tomar una llamada | `POST $HR_API_BASE/voice/tokens/` `{session_id, should_takeover}` | — | `takeover_token` |
 | Entendimiento delegado de un texto | `POST $HR_HOOK_INTAKE` | `text, channel, source, zone_hint, lang, reply_to, callback_url, callback_token` | `intake.DelegatedIntake.understand` |
-| Otros workflows del contrato (ask, notify, external, followup) | `HR_HOOK_ASK/NOTIFY/EXTERNAL/FOLLOWUP` | contrato `mando.hr.v1` + `callback_token` | `_clarify_payload`… (no hay workflows reales montados) |
+| ASK / NOTIFY / external / followup | overrides `HR_HOOK_ASK/NOTIFY/EXTERNAL/FOLLOWUP` o despacho por defecto | ocho claves del trigger de teléfono; ASK/NOTIFY por Web call usan siete | `wire_payload`, texto de pregunta o notificación en `order_text` |
 
 Guardas antes de marcar: número en `MANDO_ALLOWED_NUMBERS` (OBLIGATORIA), nunca `NEVER_DIAL`, E.164, y `REQUEST_EXTERNAL` solo con aprobación registrada.
 
@@ -73,10 +73,15 @@ curl -X POST $B/mcp -H "Authorization: Bearer $MANDO_MCP_TOKEN" -H 'Content-Type
  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-## 3. Telegram (no es un webhook: el servidor PREGUNTA)
+## 3. Telegram (un único consumidor)
 
 `telegram_bot.py` hace long polling a `https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getUpdates`; contesta con `sendMessage`.
 No hace falta túnel ni URL pública. Para probar sin Telegram: `python -m motor.server.mock_telegram` + `TELEGRAM_API_BASE`.
+
+`TELEGRAM_MODE=send_only` desactiva totalmente `getUpdates` y conserva `sendMessage`. El puente con webhook
+envía `public_report`, `channel:"telegram"`, `reply_to:<chat_id>` (también `tg:<chat_id>`), texto y `event_id`
+único a `/hr/events`, con `X-Mando-Token`. Continúa la misma sesión de recogida por chat que el sondeo.
+`TELEGRAM_MODE=off` apaga ambos. El valor por defecto es `poll`; doctor avisa si hay webhook activo.
 
 Comprobación de todo lo anterior sin lanzar ninguna llamada: `uv run --project motor/server python -m motor.server doctor`.
 

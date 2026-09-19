@@ -39,15 +39,17 @@
     <div class="speed" id="speed"><button data-speed="1">×1</button><button data-speed="4">×4</button><button data-speed="16">×16</button></div>
     <select id="case-select" title="Caso"></select>
     <select id="comms-select" title="Comunicaciones"><option value="sim">Llamadas simuladas</option><option value="happyrobot">HappyRobot (híbrido)</option></select>
-    <button id="btn-reset" class="btn ghost" title="R">REINICIAR</button>
+    <button id="btn-reset" class="btn ghost" title="R">Reiniciar escena · R</button>
+    <button id="btn-key-moment" class="btn ghost" title="K">Saltar al momento clave · K</button>
     <button id="btn-qr" class="btn ghost" title="Q">QR JURADO</button>
     <button id="btn-scene" class="btn ghost" title="E">ESCENA</button>
   </div>
 </header>
 
-<section class="overview" aria-label="Avisos y conexiones"><div id="funnel"></div><p id="integrations" role="status"></p><button class="btn ghost" id="btn-sound" aria-pressed="false">Sonido no · M</button><nav><a href="/duelo">Duelo</a> · <a href="/memoria">Memoria</a> · <a href="/asistente">Asistente</a></nav></section>
+<section class="overview" aria-label="Avisos y conexiones"><div id="funnel"></div><p id="integrations" role="status"></p><p id="presentation-status" class="data-note" role="status" hidden></p><button class="btn ghost" id="btn-sound" aria-pressed="false">Sonido no · M</button><nav><a href="/duelo">Duelo</a> · <a href="/memoria">Memoria</a> · <a href="/asistente">Asistente</a></nav></section>
 <main class="grid">
   <section class="col left">
+    <details class="panel"><summary>HappyRobot · estado de workflows</summary><div id="happyrobot-status" role="status"></div></details>
     <div class="panel incidents">
       <h2>FRENTES <span class="count" id="inc-count"></span></h2>
       <div id="fronts" class="scroll fronts"></div>

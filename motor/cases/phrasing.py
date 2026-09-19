@@ -574,6 +574,7 @@ FAMILY_GENERIC: dict[str, dict[str, list[str]]] = {
 LOC_STAFF: dict[str, list[str]] = {
     "gate_a": ["en puerta A", "acceso A"], "gate_b": ["en puerta B", "acceso B"], "gate_c": ["en puerta C", "acceso C"],
     "front_pit": ["en el foso, frente de escenario", "primera línea, lado {side}"],
+    "stage_2": ["en el escenario dos", "en el escenario secundario, lado {side}"],
     "general": ["en pista general, a la altura de la torre de sonido", "pista general, cuadrante {side}"],
     "vip": ["en zona VIP"], "pmr": ["en la plataforma PMR"],
     "food": ["en restauración", "zona de barras y food trucks"], "toilets": ["en el bloque de baños"],
@@ -587,6 +588,7 @@ LOC_PUBLIC: dict[str, dict[str, list[str]]] = {
         "gate_a": ["en la entrada A", "en la puerta A", "en la cola de la entrada A"],
         "gate_b": ["en la entrada B", "en la puerta B"], "gate_c": ["en la puerta C", "en la entrada pequeña, la C"],
         "front_pit": ["delante del todo", "en primera fila", "pegados a la valla del escenario"],
+        "stage_2": ["en el escenario dos", "junto al escenario secundario"],
         "general": ["en medio de la pista", "por la torre de sonido", "a la altura de la mesa de mezclas"],
         "vip": ["en la zona vip"], "pmr": ["en la plataforma de las sillas de ruedas"],
         "food": ["en los food trucks", "en la zona de comida", "al lado del puesto de hamburguesas"],
@@ -602,6 +604,7 @@ LOC_PUBLIC: dict[str, dict[str, list[str]]] = {
     "en": {
         "gate_a": ["at gate A"], "gate_b": ["at gate B"], "gate_c": ["at gate C"],
         "front_pit": ["right at the front barrier", "in the front rows"], "general": ["in the main crowd near the sound tower"],
+        "stage_2": ["at stage two", "by the second stage"],
         "vip": ["in the VIP area"], "pmr": ["on the accessible platform"], "food": ["at the food trucks"],
         "toilets": ["by the toilets"], "water_n": ["at the north water point"], "water_s": ["at the south water point"],
         "medical_1": ["at the medical tent near the stage"], "medical_2": ["at the north medical tent"],
@@ -611,12 +614,14 @@ LOC_PUBLIC: dict[str, dict[str, list[str]]] = {
     "fr": {z: [n] for z, n in {
         "gate_a": "vers l'entrée A", "gate_b": "vers l'entrée B", "gate_c": "vers l'entrée C",
         "front_pit": "contre la barrière devant la scène", "general": "vers la tour du son", "vip": "dans la zone VIP",
+        "stage_2": "devant la deuxième scène",
         "pmr": "sur la plateforme PMR", "food": "vers les food trucks", "toilets": "vers les toilettes",
         "water_n": "au point d'eau nord", "water_s": "au point d'eau sud", "medical_1": "devant la tente médicale",
         "medical_2": "devant la tente médicale", "corridor_n": "dans l'allée nord", "corridor_s": "dans l'allée sud",
         "backstage": "derrière la scène", "exit_transport": "à la sortie des navettes"}.items()},
     "de": {z: [f"bei {n}"] for z, n in {
         "gate_a": "Eingang A", "gate_b": "Eingang B", "gate_c": "Eingang C", "front_pit": "der Absperrung vor der Bühne",
+        "stage_2": "der zweiten Bühne",
         "general": "dem Soundturm", "vip": "dem VIP-Bereich", "pmr": "der Rollstuhlplattform", "food": "den Foodtrucks",
         "toilets": "den Toiletten", "water_n": "der Wasserstelle Nord", "water_s": "der Wasserstelle Süd",
         "medical_1": "dem Sanitätszelt", "medical_2": "dem Sanitätszelt", "corridor_n": "dem Nordweg",
@@ -624,6 +629,7 @@ LOC_PUBLIC: dict[str, dict[str, list[str]]] = {
     "pt": {z: [n] for z, n in {
         "gate_a": "junto à entrada A", "gate_b": "junto à entrada B", "gate_c": "junto à entrada C",
         "front_pit": "junto à grade em frente ao palco", "general": "junto à torre de som", "vip": "na zona VIP",
+        "stage_2": "junto ao segundo palco",
         "pmr": "na plataforma de mobilidade reduzida", "food": "junto às roulottes de comida",
         "toilets": "junto às casas de banho", "water_n": "no ponto de água norte", "water_s": "no ponto de água sul",
         "medical_1": "junto à tenda médica", "medical_2": "junto à tenda médica", "corridor_n": "no corredor norte",

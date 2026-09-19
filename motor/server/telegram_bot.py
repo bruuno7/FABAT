@@ -102,6 +102,10 @@ def match_zone(text: str, zones: dict[str, str]) -> str | None:
         return None
     if q in zones:
         return q
+    if q in ("escenario", "escenario principal", "escenario uno", "escenario 1"):
+        return "front_pit" if "front_pit" in zones else None
+    if q in ("escenario dos", "escenario 2", "escenario secundario", "segundo escenario", "secundario"):
+        return "stage_2" if "stage_2" in zones else None
     names = {z: _plain(n) for z, n in zones.items()}
     m = re.fullmatch(r"(?:puerta\s*)?([abc])", q)
     if m:

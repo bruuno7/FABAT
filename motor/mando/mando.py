@@ -837,7 +837,8 @@ class Mando:
             return
         was_blocked = m.hold or m.missing or m.contradicted
         inc.confidence = max(inc.confidence, 0.9)
-        m.hold, m.contradicted, m.missing = False, False, []
+        m.hold, m.contradicted = False, False
+        m.missing = [item for item in m.missing if item == "identity"]
         have: dict[str, int] = {}
         for rid in inc.assigned:
             k = self.assign.get(rid, (None, ""))[1]
@@ -866,7 +867,7 @@ class Mando:
     def _fold_duplicate(self, inc: Incident) -> bool:
         """Al saber por fin dónde (o qué) es, puede resultar que ya se estaba atendiendo: se funde, no se duplica."""
         m = self.meta[inc.id]
-        if inc.assigned or not inc.zone:
+        if inc.assigned or not inc.zone or inc.family == Family.MEDICAL:
             return False
         for other in self.live:
             om = self.meta[other.id]
@@ -1254,4 +1255,3 @@ class Mando:
             return a
         self._launch(a, inc)
         return a
-

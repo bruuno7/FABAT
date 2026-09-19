@@ -9,12 +9,14 @@ Triaje no emite acciones: devuelve `TriageEvent` y Mando decide qué hacer con e
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from ..contracts import Channel, Family, Incident, IncidentStatus, Report
 from .assumptions import CLOSED
 from .lexicon import TYPES, spec_for
+from .parser import normalize
 
 MERGE_WINDOW = 15        # minutos sin avisos nuevos a partir de los cuales un aviso igual es otro incidente
 CONFIRM_BELOW = 0.5      # por debajo, no se gasta un equipo sin confirmar (salvo riesgo vital)
@@ -24,6 +26,16 @@ NEIGHBOR_FAMILIES = (Family.CROWD, Family.INFRA, Family.WEATHER, Family.SUPPLY, 
 CONTRADICTION_GAP = 4    # diferencia de gravedad entre versiones que cuenta como contradicción
 # «asistente» no identifica a nadie: dos avisos con ese origen son dos personas distintas
 GENERIC_SOURCES = frozenset({"", "asistente", "publico", "público", "attendee", "anonimo", "anónimo", "whatsapp", "sms"})
+_DISTINCT_PERSON = re.compile(
+    r"\b(otr[oa] (?:persona|victima|paciente|chic[oa]|herid[oa])|"
+    r"(?:another|different|second) (?:person|victim|patient)|"
+    r"autre (?:personne|victime)|andere person|outra pessoa|"
+    r"no es (?:la |el )?mism[oa] (?:persona|victima|paciente)|"
+    r"not the same (?:person|victim|patient))\b")
+_SAME_PERSON = re.compile(
+    r"\b(mism[oa] (?:persona|victima|paciente|chic[oa]|herid[oa])|"
+    r"same (?:person|victim|patient)|meme (?:personne|victime)|"
+    r"selbe person|mesma pessoa)\b")
 
 
 @dataclass
@@ -104,9 +116,16 @@ class Triage:
         Con 2 puntos o menos solo se funde si no hay ambigüedad, y nunca un riesgo vital: dos desmayos sin zona
         pueden ser dos personas, así que se pregunta."""
         spec = spec_for(p["type"], p["family"])
+        identity_text = normalize(report.text)
+        if spec.family == Family.MEDICAL or _SAME_PERSON.search(identity_text) or any(
+                re.search(rf"\b{re.escape(normalize(inc.id))}\b", identity_text)
+                for inc in self.live if inc.family == Family.MEDICAL):
+            return self._find_person(report, p["zone"], t)
         best, best_score, ties = None, 0, 0
         for inc in self.live:
             m = self.meta[inc.id]
+            if inc.family == Family.MEDICAL:
+                continue
             # la ventana aprendida (más larga) NUNCA se aplica a un riesgo vital: a los 20 min puede ser otra persona
             window = MERGE_WINDOW if (spec.life_threat or m.life_threat or p.get("life_threat")) else self.merge_window
             if m.origin == "pattern" or t - m.last_report_t > window:
@@ -142,6 +161,24 @@ class Triage:
                 ties += 1
         return None if best_score <= 2 and ties > 1 else best
 
+    def _find_person(self, report: Report, zone: str | None, t: int) -> Incident | None:
+        text = normalize(report.text)
+        if _DISTINCT_PERSON.search(text):
+            return None
+        candidates = [
+            inc for inc in self.live
+            if inc.family == Family.MEDICAL and self.meta[inc.id].origin != "pattern"
+            and t - self.meta[inc.id].last_report_t <= MERGE_WINDOW
+            and (not zone or not inc.zone or inc.zone == zone)
+        ]
+        referenced = [inc for inc in candidates
+                      if re.search(rf"\b{re.escape(normalize(inc.id))}\b", text)]
+        if referenced:
+            return referenced[0] if len(referenced) == 1 else None
+        if not _SAME_PERSON.search(text):
+            return None
+        return candidates[0] if len(candidates) == 1 else None
+
     def ingest(self, report: Report, p: dict[str, Any], t: int) -> TriageEvent:
         if p.get("informational"):
             return TriageEvent("noise", None, f"lectura normal de {report.source or report.channel}")
@@ -170,6 +207,14 @@ class Triage:
                          missing=list(p["missing"]), dirty="nuevo")
         m.hold = not life and inc.confidence < CONFIRM_BELOW
         m.hold_since = t
+        if inc.family == Family.MEDICAL and not _DISTINCT_PERSON.search(normalize(report.text)):
+            nearby = [other for other in self.live if other.family == Family.MEDICAL
+                      and self.meta[other.id].origin != "pattern"
+                      and (not inc.zone or not other.zone or other.zone == inc.zone)
+                      and t - self.meta[other.id].last_report_t <= MERGE_WINDOW]
+            if nearby:
+                m.missing.append("identity")
+                inc.notes.append("Identidad sin confirmar; se conserva la demanda de otra posible víctima.")
         self.incidents[inc.id], self.meta[inc.id] = inc, m
         self.live.append(inc)
         return TriageEvent("new", inc, "", {"hold": m.hold})

@@ -320,6 +320,10 @@ RELATIVE = re.compile(r"\b(detras de|delante de|junto a|al lado de|cerca de|enfr
                       r"hinter|perto de|ao lado de)\b")
 
 ZONE_ALIASES: list[tuple[str, str]] = [
+    ("stage_2", r"escenario (?:2|dos|secundario)|segundo escenario|"
+                r"stage (?:2|two)|(?:second|secondary) stage|"
+                r"(?:deuxieme|seconde) scene|scene (?:2|deux)|"
+                r"zweiten? buhne|buhne (?:2|zwei)|segundo palco|palco (?:2|dois)"),
     ("backstage", r"backstage|camerinos?|detras del escenario|bambalinas|zona de artistas|behind the stage|"
                   r"derriere la scene|hinter der buhne|bastidores"),
     ("front_pit", r"\bfoso\b|primeras? (filas?|lineas?)|front ?pit|\bpit\b|(frente|delante) (de|del|al) escenario|"

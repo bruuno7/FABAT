@@ -1,4 +1,4 @@
-/* Plano de la Sala de control: disposición del diseño de las compañeras sobre las 17 zonas REALES de
+/* Plano de la Sala de control: disposición del diseño de las compañeras sobre las 18 zonas REALES de
    motor/world/festival.json. No se inventa ninguna zona: cada caja es un id del motor y la etiqueta grande
    es el nombre del diseño; debajo va siempre el nombre real que da el servidor.
    No hay GPS: la posición de las balizas es la zona que publica el simulador. */
@@ -13,6 +13,7 @@
     exit_transport: { x: 14,  y: 330, w: 172, h: 190, label: "SALIDA · LANZADERAS Y METRO", out: true },
     medical_2:      { x: 206, y: 52,  w: 104, h: 76,  label: "PMA-N · MÉDICO 2", pma: true },
     front_pit:      { x: 352, y: 116, w: 320, h: 48,  label: "FOSO · FRONT STAGE" },
+    stage_2:        { x: 14,  y: 234, w: 172, h: 76,  label: "ESCENARIO 2" },
     vip:            { x: 716, y: 48,  w: 212, h: 92,  label: "ZONA VIP & PRODUCCIÓN" },
     water_n:        { x: 946, y: 48,  w: 82,  h: 92,  label: "AGUA NORTE" },
     corridor_n:     { x: 206, y: 184, w: 76,  h: 184, label: "PASILLO NORTE", vertical: true },

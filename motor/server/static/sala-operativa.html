@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MANDO · Sala operativa</title>
+  <link rel="stylesheet" href="/static/sala-operativa.css">
+  <script defer src="/static/sala-sync.js"></script>
+  <script defer src="/static/sala-operativa.js"></script>
+</head>
+<body>
+<a class="skip" href="#incidentes">Ir a incidentes</a>
+<header>
+  <div><strong class="brand">MANDO</strong><span>Sala operativa · coordinación del festival</span></div>
+  <p id="connection" role="status" aria-live="polite">Conectando…</p>
+  <button id="refresh" type="button">Actualizar</button>
+</header>
+<nav aria-label="Secciones">
+  <a href="#incidentes">Incidentes</a><a href="#personal">Personal</a>
+  <a href="#asignaciones">Asignaciones</a><a href="#aprobaciones">Aprobaciones</a>
+  <a href="#entregas">Entregas</a><a href="#cronologia">Cronología</a>
+</nav>
+<main>
+  <section class="panel" aria-labelledby="canales-title">
+    <div class="section-head"><h1 id="canales-title">Coordinación en directo</h1><span id="revision">Sin snapshot</span></div>
+    <p id="mode">Modo de canales pendiente de confirmar por el servidor.</p>
+    <div id="channels" class="channels"></div>
+    <p class="muted">Una llamada terminada no confirma aceptación, llegada ni resolución. La entrega de un mensaje tampoco.</p>
+  </section>
+  <p id="feedback" role="status" aria-live="polite" tabindex="-1"></p>
+  <p id="error" role="alert" tabindex="-1" hidden></p>
+  <section class="panel" aria-labelledby="aviso-title">
+    <h2 id="aviso-title">Registrar aviso</h2>
+    <form id="report-form">
+      <fieldset disabled>
+        <label for="report-text">Qué ocurre<textarea id="report-text" name="text" required maxlength="4000" rows="3" placeholder="Describe el incidente y qué ayuda se necesita."></textarea></label>
+        <div class="form-row">
+          <label for="report-zone">Ubicación<select id="report-zone" name="zone"><option value="">Sin confirmar · solicitar ubicación</option></select></label>
+          <button type="submit">Registrar incidente</button>
+        </div>
+      </fieldset>
+    </form>
+  </section>
+  <section id="incidentes" class="panel" aria-labelledby="incidentes-title">
+    <div class="section-head"><h2 id="incidentes-title">Incidentes <span id="incident-count"></span></h2>
+      <label for="incident-filter">Mostrar<select id="incident-filter"><option value="active">Activos</option><option value="all">Todos</option></select></label></div>
+    <div id="incidents" class="cards"><p>Esperando el estado operativo…</p></div>
+  </section>
+  <section id="personal" class="panel" aria-labelledby="personal-title">
+    <h2 id="personal-title">Personal y disponibilidad</h2>
+    <details>
+      <summary>Registrar personal autorizado</summary>
+      <p>Solo el operador concede roles. Cada registro representa una persona o equipo con capacidad para una tarea.</p>
+      <form id="staff-form" autocomplete="off">
+        <fieldset disabled>
+          <div class="form-grid">
+            <label for="staff-id">Identificador estable<input id="staff-id" name="actor_id" required maxlength="120"></label>
+            <label for="staff-name">Nombre<input id="staff-name" name="name" required maxlength="160"></label>
+            <label for="staff-channel">Canal<select id="staff-channel" name="channel"><option value="web">Sala web</option><option value="telegram">Telegram</option><option value="phone">Voz · HappyRobot</option></select></label>
+            <label for="staff-address">Contacto privado del canal<input id="staff-address" name="address" type="password" autocomplete="new-password" maxlength="200" aria-describedby="contact-help"></label>
+            <label for="staff-zone">Ubicación<select id="staff-zone" name="zone"><option value="">Sin confirmar</option></select></label>
+            <label for="staff-availability">Disponibilidad<select id="staff-availability" name="availability"><option value="unknown">Sin confirmar</option><option value="available">Disponible</option><option value="unavailable">No disponible</option></select></label>
+          </div>
+          <p id="contact-help" class="muted">Telegram: identificador del chat verificado. Voz: contacto autorizado. Se envía al servidor y se borra del formulario; no se guarda en el navegador. Web no necesita contacto.</p>
+          <fieldset class="roles"><legend>Roles autorizados por este operador</legend>
+            <label><input type="checkbox" name="roles" value="medico">Médico</label>
+            <label><input type="checkbox" name="roles" value="bomberos">Bomberos</label>
+            <label><input type="checkbox" name="roles" value="policia">Policía</label>
+            <label><input type="checkbox" name="roles" value="staff_entradas">Entradas</label>
+            <label><input type="checkbox" name="roles" value="organizador">Organizador</label>
+          </fieldset>
+          <button type="submit">Conceder roles y registrar</button>
+        </fieldset>
+      </form>
+    </details>
+    <div id="actors" class="cards"></div>
+  </section>
+  <section id="asignaciones" class="panel" aria-labelledby="asignaciones-title">
+    <h2 id="asignaciones-title">Asignaciones</h2>
+    <p class="muted">Las ofertas reservan capacidad, pero siguen pendientes hasta una aceptación explícita del personal u operador.</p>
+    <div id="assignments" class="cards"></div>
+  </section>
+  <section id="aprobaciones" class="panel" aria-labelledby="aprobaciones-title">
+    <h2 id="aprobaciones-title">Aprobaciones humanas</h2><div id="approvals" class="cards"></div>
+  </section>
+  <section id="entregas" class="panel" aria-labelledby="entregas-title">
+    <h2 id="entregas-title">Entregas y errores de canal</h2>
+    <p class="muted">El servidor gestiona los reintentos. Una llamada con entrega incierta requiere revisión y no se vuelve a marcar automáticamente.</p>
+    <div id="deliveries" class="cards"></div>
+  </section>
+  <section id="cronologia" class="panel" aria-labelledby="cronologia-title">
+    <h2 id="cronologia-title">Cronología</h2><ol id="events" class="timeline"></ol>
+  </section>
+</main>
+<dialog id="command-dialog" aria-labelledby="command-title" aria-describedby="command-context">
+  <form id="command-form">
+    <h2 id="command-title"></h2><p id="command-context"></p>
+    <div id="command-fields"></div>
+    <p id="command-error" role="alert" tabindex="-1" hidden></p>
+    <div class="actions"><button id="command-submit" type="submit">Confirmar</button><button id="command-cancel" type="button" class="secondary">Cancelar</button></div>
+  </form>
+</dialog>
+<noscript>Esta Sala necesita JavaScript para recibir el estado y enviar decisiones.</noscript>
+</body>
+</html>

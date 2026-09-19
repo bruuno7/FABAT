@@ -52,10 +52,38 @@
   let whatif = null, toastTimer = 0;
   let currentTab = "ahora", adaptacion = null, adaptAt = 0, lecciones = null, leccAt = 0;
   let historial = null, histAt = 0, agentCache = {}, agentFetch = {};
+  let historyDetail = null, historyError = "", historyRequest = 0, sessionEpoch = 0;
   let workflowBusy = false, workflowRequest = null;
   const beacons = new Map();
   const notes = new Map();   // nota escrita por el operador, por acción: sobrevive a cada repintado
   const armed = new Set();   // acciones graves esperando el segundo clic de confirmación
+  const signatures = new Map(), deciding = new Set();
+  const graveAction = (a) => ["evacuate", "stop_show", "request_external", "set_zone"].includes(a.kind);
+
+  function resetSession() {
+    sessionEpoch += 1;
+    sel = { incident: null, zone: null, resource: null };
+    filter = "todos"; query = ""; showOldPlan = false;
+    $("search").value = "";
+    chats = []; chatAt = 0; webcalls = []; webcallAt = 0; whatif = null;
+    adaptacion = null; adaptAt = 0; lecciones = null; leccAt = 0;
+    historial = null; histAt = 0; historyDetail = null; historyError = ""; historyRequest += 1;
+    agentCache = {}; agentFetch = {}; workflowBusy = false; workflowRequest = null;
+    $("workflow-form").reset();
+    $("workflow-text").disabled = false; $("workflow-zone").disabled = false;
+    $("workflow-result").textContent = "";
+    $("workflow-zone").querySelectorAll("option:not(:first-child)").forEach((o) => o.remove());
+    delete $("workflow-zone").dataset.loaded;
+    notes.clear(); armed.clear(); signatures.clear(); deciding.clear(); tgSince.clear();
+    beacons.forEach((b) => b.remove());
+    beacons.clear();
+    closeAll();
+  }
+
+  function scoped(promise, callback) {
+    const epoch = sessionEpoch;
+    return promise.then((value) => { if (epoch === sessionEpoch) callback(value); });
+  }
 
   // ---------------------------------------------------------------- utilidades
   function toast(text, bad) {
@@ -209,7 +237,9 @@
     const mode = S.calls && S.calls.mode === "happyrobot";
     const label = (S.presentation && S.presentation.happyrobot) || (mode ? "conectado" : "simulado");
     const sim = !mode || /simulad/i.test(label);
-    return { mode: cerebroMode(), sim, label };
+    const session = S.session || {};
+    return { mode: session.cerebro_cadena || cerebroMode(), configured: cerebroMode(),
+      degraded: session.modo_degradado || "", sim, label };
   }
   function switchTab(id) {
     if (!TAB_IDS.includes(id)) return;
@@ -299,12 +329,23 @@
   }
 
   function connect() {
-    const poll = () => U.api("/api/state").then((s) => { online(true); S = normalize(s); schedule(); }).catch(() => online(false));
-    poll();
-    if (!window.EventSource) { setInterval(poll, 2000); return; }
-    const src = new EventSource("/api/stream");
-    src.addEventListener("state", (ev) => { online(true); S = normalize(JSON.parse(ev.data)); schedule(); });
-    src.onerror = () => online(false);
+    const gate = window.SALA_SYNC.snapshotGate({
+      revision: "version", session: (s) => s.session && s.session.id, onReset: resetSession,
+    });
+    window.SALA_SYNC.connect({
+      stateURL: "/api/state", streamURL: "/api/stream",
+      accept(s) {
+        if (!gate.accept(s)) return false;
+        S = normalize(s);
+        for (const id of armed) if (!S.approvals.some((a) => a.id === id)) armed.delete(id);
+        schedule();
+        return true;
+      },
+      onStatus(status) {
+        online(status === "live" || status === "poll");
+        if (status === "auth") toast("Sesión de operador caducada. Entra en /acceso y recarga.", true);
+      },
+    });
   }
   function online(ok) { connected = ok; $("reconnect").hidden = ok; $("sync-dot").style.background = ok ? "var(--ok)" : "var(--bad)"; }
   let queued = false;
@@ -391,18 +432,16 @@
 
     const cb = cerebroSimLabel();
     const chip = $("cerebro-chip"), lbl = $("cerebro-label");
-    chip.className = "cerebro-chip" + (cb.mode === "reglas" ? " degradado" : cb.mode === "agente" ? " agente" : "");
-    lbl.textContent = `Cerebro: ${cb.mode}${cb.sim ? " · simulado" : " · real"}`;
-    chip.title = cb.mode === "reglas"
-      ? "Modo degradado: deciden las reglas (plan B). El agente no manda todavía."
-      : `Modo ${cb.mode} · enlace ${cb.label}`;
+    chip.className = "cerebro-chip" + (cb.degraded ? " degradado" : "");
+    lbl.textContent = `Cerebro: ${cb.mode === "llm_local" ? "LLM local" : cb.mode}${cb.degraded ? " · DEGRADADO" : ""}`;
+    chip.title = `Configurado: ${cb.configured} · razonamiento: ${cb.mode}${cb.degraded ? " · " + cb.degraded : ""} · voz: ${cb.label}`;
   }
 
   function renderModo() {
     const now = Date.now();
     if (now - adaptAt > 5000) {
       adaptAt = now;
-      fetch("/api/adaptacion").then((r) => (r.ok ? r.json() : null)).then((d) => { adaptacion = d; schedule(); }).catch(() => {});
+      scoped(fetch("/api/adaptacion").then((r) => (r.ok ? r.json() : null)), (d) => { adaptacion = d; schedule(); }).catch(() => {});
     }
     const ej = S.enjambre && S.enjambre.modo;
     const m = (adaptacion && adaptacion.modo) || (ej && ej.nombre) || (ej && ej.id) || null;
@@ -446,7 +485,7 @@
         : /plan B|reglas/i.test(st) ? "rules" : "";
       return `<div class="equipo-pill ${cls}"><b>${E(r.label)}</b><span>${E(st)}</span></div>`;
     }).join("");
-    setHTML(strip, `<div class="equipo-pill ${cb.mode === "reglas" ? "rules" : ""}"><b>Modo</b><span>${E(cb.mode)}${cb.sim ? " · simulado" : " · real"}</span></div>${pills}`);
+    setHTML(strip, `<div class="equipo-pill ${cb.degraded ? "rules" : ""}"><b>Razonamiento</b><span>${E(cb.mode === "llm_local" ? "LLM local" : cb.mode)}${cb.degraded ? " · DEGRADADO" : ""}</span></div>${pills}`);
     strip.hidden = false;
   }
 
@@ -459,7 +498,7 @@
     if (badgeE) { badgeE.hidden = !agentInc; badgeE.textContent = agentInc ? `${agentInc} inc.` : ""; }
     if (Date.now() - leccAt > 8000) {
       leccAt = Date.now();
-      U.api("/api/memoria").then((d) => { lecciones = d.cerebro_lecciones || []; schedule(); }).catch(() => {});
+      scoped(U.api("/api/memoria"), (d) => { lecciones = d.cerebro_lecciones || []; schedule(); }).catch(() => {});
     }
     const nuevas = (lecciones || []).filter((l) => l.estado === "propuesta").length;
     const badgeL = $("badge-aprendizaje");
@@ -809,11 +848,12 @@
       return;
     }
     agentFetch[iid] = true;
-    U.api("/api/agentes/" + encodeURIComponent(iid)).then((d) => {
+    const epoch = sessionEpoch;
+    scoped(U.api("/api/agentes/" + encodeURIComponent(iid)), (d) => {
       agentCache[iid] = d;
       delete agentFetch[iid];
       schedule();
-    }).catch(() => { delete agentFetch[iid]; });
+    }).catch(() => { if (epoch === sessionEpoch) delete agentFetch[iid]; });
   }
 
   function renderWorkflow() {
@@ -849,12 +889,14 @@
     const text = $("workflow-text").value.trim();
     if (!text) { $("workflow-result").textContent = "Escribe un aviso."; return; }
     if (!workflowRequest) workflowRequest = `sala-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const epoch = sessionEpoch;
     workflowBusy = true;
     $("workflow-text").disabled = true; $("workflow-zone").disabled = true;
     renderWorkflow();
     const result = await post("/api/workflows/rapido", {
       text, zone: $("workflow-zone").value || null, request_id: workflowRequest,
     });
+    if (epoch !== sessionEpoch) return;
     workflowBusy = false;
     $("workflow-text").disabled = false; $("workflow-zone").disabled = false;
     if (result.ok) {
@@ -1036,39 +1078,55 @@
     el.onclick = async (ev) => {
       const b = ev.target.closest("[data-leccion]");
       if (!b) return;
+      const epoch = sessionEpoch;
       const r = await post("/api/memoria/lecciones", { id: b.dataset.id, accion: b.dataset.leccion, by: "operador-sala" });
+      if (epoch !== sessionEpoch) return;
       if (r.ok !== false) { leccAt = 0; lecciones = null; toast("Lección actualizada."); schedule(); }
     };
   }
 
   function panelHistorial() {
     const el = $("panel-historial");
-    const closed = (S.incidents || []).filter((i) => CLOSED[i.status]);
     if (Date.now() - histAt > 12000) {
       histAt = Date.now();
-      fetch("/api/historial/incidentes?tamano=20").then((r) => (r.ok ? r.json() : null)).then((d) => {
-        if (d) historial = d.items || d.incidentes || [];
+      scoped(U.api("/api/historial/incidentes?tamano=20").then((data) => ({ data }), (error) => ({ error })), (result) => {
+        historyError = result.error ? "Historial no disponible: " + result.error.message : "";
+        historial = result.data ? result.data.items || [] : null;
         schedule();
-      }).catch(() => { historial = null; });
+      });
     }
-    const items = (historial && historial.length) ? historial : closed.map((i) => ({
-      id: i.id, tipo: i.label || i.type, zona: i.zone_name || i.zone, estado: i.status, prioridad: i.priority,
-    }));
-    if (!items.length) {
-      setHTML(el, '<p class="tiny empty-tab">Sin incidentes cerrados todavía.</p>');
-      return;
-    }
-    setHTML(el, items.map((h) =>
-      `<div class="hist-row" data-hist="${E(h.id || h.incident_id)}"><b>${E(h.id || h.incident_id)}</b> · ${E(h.tipo || h.label || "")}
-      · ${E(h.zona || h.zone || "")} · ${E(h.estado || h.status || "cerrado")}</div>`).join(""));
+    const items = historial || [];
+    setHTML(el, `${historyError ? `<p role="alert">${E(historyError)}</p>` : ""}
+      ${items.length ? items.map((h) =>
+      `<button class="hist-row" data-hist="${E(h.id)}" data-scene="${E(h.escena_id)}"><b>${E(h.id)}</b> · ${E(h.etiqueta || h.tipo || "")}
+      · ${E(h.zona || "")} · ${E(h.estado || "")} · escena ${E(h.escena_id)}</button>`).join("")
+      : `<p class="tiny empty-tab">${historial ? "Sin incidentes guardados." : historyError ? "No se puede consultar la memoria persistente." : "Cargando historial…"}</p>`}
+      ${historyDetailHTML()}`);
     el.onclick = (ev) => {
       const row = ev.target.closest("[data-hist]");
       if (!row) return;
-      fetch("/api/historial/incidente/" + encodeURIComponent(row.dataset.hist))
-        .then((r) => (r.ok ? r.json() : Promise.reject(new Error("sin historial"))))
-        .then((d) => toast(`Cronología cargada: ${(d.eventos || d.log || []).length} eventos.`))
-        .catch((e) => toast(e.message, true));
+      const request = ++historyRequest;
+      historyDetail = null;
+      scoped(U.api("/api/historial/incidente/" + encodeURIComponent(row.dataset.hist)
+        + "?escena=" + encodeURIComponent(row.dataset.scene)).then((data) => ({ data }), (error) => ({ error })), (result) => {
+        if (request !== historyRequest) return;
+        historyDetail = result.data || null;
+        historyError = result.error ? result.error.message : "";
+        schedule();
+      });
     };
+  }
+
+  function historyDetailHTML() {
+    if (!historyDetail) return "";
+    const d = historyDetail, i = d.incident || {};
+    const linked = [["reports", "Avisos"], ["plans", "Planes"], ["calls", "Llamadas"], ["decisions", "Decisiones"]];
+    return `<section class="box"><h3>${E(i.id)} · escena ${E(i.escena_id)}</h3>
+      <p>${E(i.etiqueta || i.tipo || "")}</p><h4>Cronología</h4>
+      <ul class="timeline">${(d.timeline || []).map((e) => `<li><time>min ${E(e.minuto)} · ${E(e.tipo)}</time>${E(e.texto)}</li>`).join("")}</ul>
+      ${!(d.timeline || []).length ? '<p class="tiny">Sin eventos guardados para este incidente.</p>' : ""}
+      ${linked.map(([key, title]) => `<details><summary>${E(title)} (${E((d[key] || []).length)})</summary>
+        ${(d[key] || []).map((item) => `<pre class="parte">${E(JSON.stringify(item, null, 2))}</pre>`).join("")}</details>`).join("")}</section>`;
   }
 
   // ---------------------------------------------------------------- recursos (pestaña)
@@ -1141,7 +1199,7 @@
     const chs = new Set((S.reports || []).map((r) => r.via || r.channel).filter(Boolean));
     $("chat-channels").textContent = chs.size ? Array.from(chs).join(" · ") : "sin canales";
     if (!$("chat-panel").open) return;
-    if (Date.now() - chatAt > 3500) { chatAt = Date.now(); U.api("/api/chats").then((d) => { chats = d.chats || []; paintChats(); }).catch(() => {}); }
+    if (Date.now() - chatAt > 3500) { chatAt = Date.now(); scoped(U.api("/api/chats"), (d) => { chats = d.chats || []; paintChats(); }).catch(() => {}); }
     paintChats();
   }
   function paintChats() {
@@ -1249,7 +1307,9 @@
       const c = a.card || {};
       const branch = (b, cls, title) => b ? `<div class="future ${cls}"><h4>${E(title)}</h4>${b.text ? `<p>${E(b.text)}</p>` : ""}
         ${(b.figures || []).map((f) => `<div class="fig"><b>${E(typeof f.v === "number" ? num(f.v, Number.isInteger(f.v) ? 0 : 2) : f.v)}</b><span>${E(f.k)}</span></div>`).join("")}</div>` : "";
-      const grave = ["evacuate", "stop_show", "request_external", "set_zone"].includes(a.kind);
+      const grave = graveAction(a), signature = signatures.get(a.id);
+      const votes = signature ? signature.votes : a.votes || 0;
+      const required = signature ? signature.required : a.required || 1;
       return `<div class="box decision" data-card="${E(a.id)}"><h3>TARJETA DE DECISIÓN · ${E(KIND_ES[a.kind] || a.kind)}</h3>
         <p><b>${E(c.question || a.why || "")}</b></p>
         <p class="tiny">Decide: <b>${E(c.role || "Director del Plan de Actuación")}</b>${c.deputy ? " · suplente: " + E(c.deputy) : ""}
@@ -1262,7 +1322,8 @@
           <button class="btn-ok" data-decide="1" data-id="${E(a.id)}" data-grave="${grave ? 1 : 0}">${armed.has(a.id) ? "CONFIRMAR: ES UNA ACCIÓN GRAVE" : "APROBAR (A)"}</button>
           <button class="btn-no" data-decide="0" data-id="${E(a.id)}" data-grave="0">VETAR (V)</button></div>
         ${grave ? '<p class="tiny">Acción grave: se pedirá confirmación antes de ejecutarla.</p>' : ""}
-        <p class="status" id="st-${E(a.id)}"></p></div>`;
+        <p class="tiny">${E(votes)} de ${E(required)} firmas registradas.</p>
+        <p class="status" role="status" id="st-${E(a.id)}">${signature ? E(signature.text) : ""}</p></div>`;
     }).join("");
   }
   function tgBox(i) {
@@ -1306,7 +1367,7 @@
   function webcallLink(c) {
     if (Date.now() - webcallAt > 3000) {
       webcallAt = Date.now();
-      fetch("/api/webcalls").then((r) => (r.ok ? r.json() : [])).then((w) => { webcalls = w; schedule(); }).catch(() => {});
+      scoped(fetch("/api/webcalls").then((r) => (r.ok ? r.json() : [])), (w) => { webcalls = w; schedule(); }).catch(() => {});
     }
     const w = webcalls[0];
     return w ? `<p class="tiny">Llamada web esperando: <a href="/llamada/${encodeURIComponent(w.call_id)}" target="_blank" rel="noopener">abrir en este equipo</a></p>` : '<p class="tiny">Llamada web esperando a que descuelguen.</p>';
@@ -1344,7 +1405,7 @@
   // ---------------------------------------------------------------- acciones de la ficha
   $("ficha-body").addEventListener("click", async (ev) => {
     const d = ev.target.closest("[data-decide]");
-    if (d) return decide(d.dataset.id, d.dataset.decide === "1", d.dataset.grave === "1");
+    if (d) return decide(d.dataset.id, d.dataset.decide === "1");
     const take = ev.target.closest("[data-take]"), listen = ev.target.closest("[data-listen]");
     if (take || listen) {
       const id = (take || listen).dataset.take || listen.dataset.listen;
@@ -1355,7 +1416,9 @@
     if (ev.target.id === "wi-run") return runWhatif(ev.target.dataset.zone);
     if (ev.target.id === "wi-order") {
       if (!whatif) return;
+      const epoch = sessionEpoch;
       const r = await post("/api/whatif/order", { action: whatif.action, note: "Alternativa ensayada en la Sala de control" });
+      if (epoch !== sessionEpoch) return;
       if (r.ok !== false) { toast("Orden enviada como corrección del operador."); whatif = null; render(); }
     }
   });
@@ -1371,11 +1434,14 @@
     const n = ev.target.closest("[data-note]");
     if (n) notes.set(n.dataset.note, n.value);
   });
-  async function decide(id, ok, grave) {
+  async function decide(id, ok) {
+    const action = S && S.approvals.find((a) => a.id === id);
+    if (!action || deciding.has(id)) return;
+    const epoch = sessionEpoch;
     // Lo grave (evacuar, parar el concierto, cerrar zona, pedir ayuda externa) exige un segundo clic.
-    if (grave && !armed.has(id)) {
+    if (ok && graveAction(action) && !armed.has(id)) {
       armed.add(id);
-      setTimeout(() => { armed.delete(id); render(); }, 8000);
+      setTimeout(() => { if (epoch === sessionEpoch) { armed.delete(id); render(); } }, 8000);
       render();
       return;
     }
@@ -1383,20 +1449,33 @@
     const note = notes.get(id) || "";
     const st = $("st-" + id);
     if (st) st.textContent = "Enviando la decisión…";
-    const r = await post("/api/approve", { action_id: id, ok, note });
-    if (r.ok !== false) notes.delete(id);
-    if (st) { st.textContent = r.ok === false ? r.error : (ok ? "Aprobado" : "Vetado") + " y registrado con tu identidad de operador."; st.className = "status" + (r.ok === false ? " err" : ""); }
+    deciding.add(id);
+    const r = await post("/api/approve", { action_id: id, session_id: S.session.id, ok, note });
+    if (epoch !== sessionEpoch) return;
+    deciding.delete(id);
+    const text = r.ok === false ? r.error : r.pending
+      ? `Firma registrada; esperando segunda persona (${r.votes} de ${r.required}).`
+      : "Decisión registrada; esperando confirmación del estado.";
+    if (r.ok !== false) {
+      signatures.set(id, { votes: r.votes || 0, required: r.required || action.required || 1, text });
+      if (!r.pending) notes.delete(id);
+    }
+    render();
+    const status = $("st-" + id);
+    if (status) { status.textContent = text; status.className = "status" + (r.ok === false ? " err" : ""); }
   }
   async function runWhatif(zone) {
+    const epoch = sessionEpoch;
     const kind = ($("wi-kind") || {}).value || "reroute";
     const to = ($("wi-to") || {}).value;
     const body = { kind, zone, to, fraction: 0.5, state: "restricted", minutes: 15 };
     $("wi-status").textContent = "Ensayando los próximos 15 minutos en el gemelo…";
     try {
       const r = await U.api("/api/whatif", body);
+      if (epoch !== sessionEpoch) return;
       whatif = Object.assign({}, r, { action: body });
       render();
-    } catch (e) { $("wi-status").textContent = e.message; $("wi-status").className = "status err"; }
+    } catch (e) { if (epoch === sessionEpoch && $("wi-status")) { $("wi-status").textContent = e.message; $("wi-status").className = "status err"; } }
   }
 
   // ---------------------------------------------------------------- mesa de inyección
@@ -1454,7 +1533,7 @@
           <div class="row" style="margin-top:8px">
             <button class="btn-ok" data-decide="1" data-id="${E(a.id)}" data-grave="1">${armed.has(a.id) ? "CONFIRMAR: ES UNA ACCIÓN GRAVE" : "AUTORIZAR EL ENVÍO"}</button>
             <button class="btn-no" data-decide="0" data-id="${E(a.id)}" data-grave="0">VETAR</button></div>
-          <p class="status" id="st-${E(a.id)}"></p></div>`).join("")
+          <p class="status" role="status" id="st-${E(a.id)}">${E((signatures.get(a.id) || {}).text || `${a.votes || 0} de ${a.required || 1} firmas registradas.`)}</p></div>`).join("")
         : `<div class="box"><h3>NO HAY NINGUNA PETICIÓN PENDIENTE</h3>
           <p class="tiny">Mando propone «pedir ayuda externa» cuando el caso lo necesita (por ejemplo, una parada cardiaca
             que corresponde a una ambulancia del 112). Cuando lo haga, aparecerá aquí para que una persona lo autorice.
@@ -1462,7 +1541,7 @@
   }
   $("ext-body").addEventListener("click", (ev) => {
     const d = ev.target.closest("[data-decide]");
-    if (d) decide(d.dataset.id, d.dataset.decide === "1", d.dataset.grave === "1");
+    if (d) decide(d.dataset.id, d.dataset.decide === "1");
   });
 
   // ---------------------------------------------------------------- cajones
@@ -1525,7 +1604,7 @@
   } catch (e) { /* idem */ }
 
   document.addEventListener("keydown", (ev) => {
-    if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.repeat) return;
     if (ev.key === "Escape") { closeAll(); return; }
     if (/INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) return;
     if ((ev.key === " " || ev.key === "Enter") && /BUTTON|A|SUMMARY/.test(ev.target.tagName)) return;
@@ -1545,7 +1624,7 @@
       const a = (S.approvals || [])[0];
       if (!a) return toast("No hay ninguna decisión pendiente.");
       pick({ incident: a.incident, zone: a.zone });
-      decide(a.id, k === "a", false);
+      decide(a.id, k === "a");
     }     else if (k === "e") document.body.classList.toggle("escena");
     else if (/^[1-7]$/.test(k)) switchTab(TAB_IDS[Number(k) - 1]);
   });

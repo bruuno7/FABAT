@@ -23,6 +23,9 @@ def main() -> None:
     if sys.argv[1:2] == ["doctor"]:   # python -m motor.server doctor
         from .doctor import main as doctor
         raise SystemExit(doctor(sys.argv[2:]))
+    if sys.argv[1:2] == ["cerebro"]:
+        from .cerebro_llm import main as cerebro
+        raise SystemExit(cerebro(sys.argv[2:]))
     if sys.argv[1:2] == ['ensayo']:
         from .ensayo import main as ensayo
         raise SystemExit(ensayo(sys.argv[2:]))

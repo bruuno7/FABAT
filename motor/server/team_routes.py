@@ -1,16 +1,11 @@
 """Rutas nuevas de personal y coordinación. install no altera las rutas existentes."""
 import asyncio
 import io
-import json
-import os
-from pathlib import Path
 
 from fastapi import HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
 from . import multi
 from .personal import ROLES, external_notice
-
-STATIC = Path(__file__).parent / 'static'
 
 
 def install(app, get_session, base_url):
@@ -25,7 +20,10 @@ def install(app, get_session, base_url):
 
     @app.get('/personal', include_in_schema=False)
     def page():
-        return FileResponse(STATIC/'personal.html', headers={'Cache-Control':'no-store','Referrer-Policy':'no-referrer'})
+        return HTMLResponse(
+            '<!doctype html><meta charset="utf-8"><title>MANDO</title>'
+            '<p>Pantalla archivada. <a href="/">Sala de control</a>.</p>',
+            headers={'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer'})
 
     @app.get('/api/personal/catalog')
     def catalog():

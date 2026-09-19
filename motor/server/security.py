@@ -194,8 +194,7 @@ class SecurityGuard:
         # Webcall IDs are existing capability links; they retain their own access policy.
         public_call = path.startswith('/api/webcall/') and path.endswith(('/answer', '/mock_answer'))
         operator_action = mutation and path.startswith('/api/') and not (public_intake or public_call or login)
-        operator_page = _public() and path in ('/', '/static/index.html', '/centro', '/static/centro.html',
-                                               '/sala', '/static/sala.html')
+        operator_page = _public() and path in ('/', '/sala', '/static/sala.html')
         if operator_action or operator_page:
             status = _auth_status(scope)
             if status:

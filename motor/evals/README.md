@@ -7,7 +7,10 @@ y **Audits & Tests**: aquí las northstars cubren *decisión* y *diálogo*; el a
 ```
 python3 -m motor.evals           # escribe motor/evals/out/informe.md y out/resultados.json
 python3 -m motor.evals --rapido  # < 60 s
-python3 -m unittest motor.evals.test_evals -v
+python3 -m motor.evals equipo --n 40          # eval del equipo (LLM si MANDO_LLM=1; si no, falso rotulado)
+python3 -m motor.evals equipo --n 40 --fake   # cerebro falso, tests rápidos
+python3 -m motor.evals aprende --demo         # 1 min: día 1 → lección → día 2
+python3 -m unittest motor.evals.test_evals motor.evals.test_equipo motor.server.test_equipo_agentes -v
 ```
 
 No toca `db.py`, el historial, `puente/` ni los workflows `fa-*`. La reserva

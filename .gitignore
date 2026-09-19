@@ -9,9 +9,9 @@ __pycache__/
 
 # datos que no se versionan
 motor/server/contacts.local.json
-motor/server/data/
 motor/harness/runs/
 motor/harness/out/
+motor/evals/out/
 
 # casos regenerables con semilla (ver motor/cases/README.md):
 #   python3 -m motor.cases generate --n 3000 --seed 1 --split train   --out motor/cases/data/train.jsonl
@@ -28,5 +28,8 @@ dist/
 .turbo
 coverage/
 
-# base de datos local (se crea al arrancar)
+# base de datos local (se crea al arrancar; nunca versionar)
 motor/server/data/
+*.db
+*.sqlite
+*.sqlite3

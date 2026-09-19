@@ -1,8 +1,9 @@
 """Pruebas de la Sala de control (`/sala`). Desde la raíz del proyecto:
 
     uv run --project motor/server python -m unittest motor.server.test_sala -v
+    node --check motor/server/static/sala.js
 
-Cubren cuatro cosas:
+Cubren cinco cosas:
 
 1. Que la pantalla se sirve en `/` y en `/sala`, sin CDN y sin secretos.
 2. El CONTRATO: cada campo del estado que lee `static/sala.js` existe de verdad en `/api/state`,
@@ -10,14 +11,17 @@ Cubren cuatro cosas:
    Si alguien renombra un campo del motor, esta prueba se cae antes que la pantalla.
 3. Que aprobar y vetar desde la sala funciona y exige operador cuando hay tokens configurados.
 4. Que `/api/chats`, el panel «CHAT · AGENTE HR», no deja salir el contenido reservado.
+5. Con `MANDO_CEREBRO=agente` y el cerebro falso, `agentes` y `GET /api/agentes/{id}` existen.
 """
 from __future__ import annotations
 
 import json
 import os
 import re
+import subprocess
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -31,6 +35,7 @@ TOP_LEVEL = {
     "t": int, "clock": dict, "session": dict, "presentation": dict, "happyrobot": dict, "calls": dict,
     "incidents": list, "zones": list, "resources": list, "approvals": list, "actions": list, "plans": list,
     "forecasts": list, "fronts": list, "log": list, "reports": list, "strikes": list, "scoreboard": dict,
+    "agentes": dict,
 }
 CALLS_KEYS = ("mode", "calls", "fallbacks", "in_flight_real", "real_sent")
 PRESENTATION_KEYS = ("banner", "voice", "happyrobot")
@@ -86,15 +91,17 @@ class PagesTest(unittest.TestCase):
         self.assertEqual(self.c.get("/").text, html, "`/` y `/sala` son la misma pantalla")
         self.assertIn("Sala de control", html)
         for marca in ("MANDO", "112 EMERGENCIAS", "Mesa de inyección", "COLA ACTIVA DE INCIDENTES EN VIVO",
-                      "RECURSOS TERRESTRES", "ABIERTOS POR GRAVEDAD", "CHAT · AGENTE HR"):
+                      "RECURSOS TERRESTRES", "ABIERTOS POR GRAVEDAD", "CONVERSACIONES", "Enjambre"):
             self.assertIn(marca, html, marca)
 
     def test_las_otras_pantallas_siguen_en_su_sitio(self) -> None:
-        self.assertIn("Atención de incidentes", self.c.get("/centro").text)
-        self.assertIn("PLAN ACTUAL", self.c.get("/clasico").text)
-        # Enlaces discretos entre las tres.
+        # sala.html (no se toca) sigue enlazando; esas rutas redirigen a la Sala.
         for destino in ('href="/centro"', 'href="/clasico"', 'href="/informe"'):
             self.assertIn(destino, self.c.get("/sala").text, destino)
+        for path in ("/centro", "/clasico", "/informe"):
+            body = self.c.get(path).text
+            self.assertIn("archivada", body, path)
+            self.assertIn('href="/"', body, path)
 
     def test_sin_cdn_ni_secretos_en_la_pantalla(self) -> None:
         html = self.c.get("/sala").text
@@ -115,25 +122,29 @@ class PagesTest(unittest.TestCase):
         version = r.json()["version"]
         self.assertIn(version, (HERE / "pyproject.toml").read_text(encoding="utf-8"))
 
-    def test_layout_tres_columnas_sin_solape(self) -> None:
-        """De 1280×720 a 1920×1080 el panel derecho no puede montar sobre el plano: es una rejilla
-        de tres columnas con `min-width:0` en cada una, y el HUD va encima del mapa, no al lado."""
+    def test_layout_dos_columnas_pestanas_sin_solape(self) -> None:
+        """De 1280×720 a 1920×1080: nav + main en dos columnas; pestañas y HUD sin solapar el plano."""
         css = (HERE / "static" / "sala.css").read_text(encoding="utf-8")
         html = (HERE / "static" / "sala.html").read_text(encoding="utf-8")
         compact = re.sub(r"\s+", "", css)
-        self.assertIn("grid-template-columns:var(--nav-w)minmax(0,1fr)var(--aside-w)", compact)
-        self.assertRegex(css, r"\.nav,\s*\.main,\s*\.aside\{[^}]*min-width:\s*0")
+        self.assertIn("grid-template-columns:var(--nav-w)minmax(0,1fr)", compact)
+        self.assertNotIn("var(--aside-w)", compact)
+        self.assertRegex(css, r"\.nav,\s*\.main\{[^}]*min-width:\s*0")
         self.assertRegex(css, r"\.band\{[^}]*position:\s*absolute")
         self.assertRegex(css, r"\.map\{[^}]*position:\s*relative")
-        aside = css.split(".aside{", 1)[1].split("}", 1)[0]
-        self.assertNotIn("position:fixed", aside)
-        self.assertNotIn("position:absolute", aside)
+        self.assertIn('role="tablist"', html)
+        self.assertIn('id="tab-ahora"', html)
+        self.assertIn('id="tab-enjambre"', html)
         self.assertIn('class="workspace"', html)
         self.assertIn('class="map"', html)
-        # El HUD vive dentro del plano, como en el prototipo, no como una fila que empuja el SVG.
         mapa = html.split('class="map"', 1)[1].split("<!--", 1)[0]
         self.assertIn('class="band"', mapa)
         self.assertIn('id="plano"', mapa)
+
+    def test_sala_js_pasa_node_check(self) -> None:
+        r = subprocess.run(["node", "--check", str(HERE / "static" / "sala.js")],
+                           capture_output=True, text=True, check=False)
+        self.assertEqual(r.returncode, 0, r.stderr or r.stdout)
 
     def test_honestidad_del_prototipo(self) -> None:
         """Las afirmaciones del mockup que el motor no tiene no se copian como si existieran."""
@@ -345,6 +356,48 @@ class ChatPanelTest(unittest.TestCase):
                 os.environ.pop("MANDO_OPERATORS", None)
             else:
                 os.environ["MANDO_OPERATORS"] = previo
+
+
+class AgentesCerebroTest(unittest.TestCase):
+    """Con MANDO_CEREBRO=agente y cerebro falso, la Sala tiene agentes en el estado."""
+
+    def test_campos_agentes_tras_decidir(self) -> None:
+        env = {"HR_SECRET": SECRET, "TELEGRAM_MODE": "off", "MANDO_CEREBRO": "agente", "MANDO_CEREBRO_TIMEOUT_S": "30"}
+        with patch.dict(os.environ, env, clear=False):
+            app = create_app("demo-gates", threaded=False, secret=SECRET)
+            try:
+                c = TestClient(app)
+                h = {"X-Mando-Token": SECRET}
+                r = c.post("/hr/tools/decidir", json={
+                    "agente": "triaje", "incident_id": "nuevo", "zona": "front_pit",
+                    "tipo": "crowd", "texto": "Foso saturado", "porque": "Aviso nuevo.",
+                }, headers=h)
+                self.assertEqual(r.status_code, 200, r.text)
+                iid = r.json()["incident_id"]
+                c.post("/hr/tools/decidir", json={
+                    "agente": "prioridad", "incident_id": iid, "prioridad": 8,
+                    "porque": "Densidad alta.", "confianza": 0.7,
+                }, headers=h)
+                st = c.get("/api/state").json()
+                self.assertIn("agentes", st)
+                self.assertIn(iid, st["agentes"])
+                card = st["agentes"][iid]
+                for clave in ("agentes", "ejecutado", "bloqueado", "espera_persona"):
+                    self.assertIn(clave, card, clave)
+                ag = card["agentes"]["triaje"]
+                for clave in ("razonamiento", "confianza", "supuestos", "hora", "agente"):
+                    self.assertIn(clave, ag, clave)
+                self.assertIn("session", st)
+                self.assertEqual(st["session"].get("cerebro"), "agente")
+                det = c.get(f"/api/agentes/{iid}")
+                self.assertEqual(det.status_code, 200, det.text)
+                js = (HERE / "static" / "sala.js").read_text(encoding="utf-8")
+                for marca in ("S.agentes", "/api/agentes/", "Equipo de agentes", "CÓMO LO HA DECIDIDO EL EQUIPO",
+                              "switchTab", "panelEnjambre", "panelAprendizaje"):
+                    self.assertIn(marca, js, marca)
+            finally:
+                app.state.session.close()
+                app.state.chat.stop()
 
 
 class TelegramPintadoTest(unittest.TestCase):

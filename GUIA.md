@@ -1,5 +1,7 @@
 # MANDO — guía de uso
 
+> **Nota (diseño 19-sep).** Este texto describe sobre todo el **plan B de reglas** (`motor/mando`: prioridad, gemelo, supuestos) y pantallas que ya no son la demo (`/centro`, `/clasico`, `/duelo`, `/memoria`…). El diseño actual: un **equipo de agentes en HappyRobot** decide; este repo es mundo, herramientas, barandillas y **Sala** (`/`). Público: `/asistente`. Jurado: `/jurado`. Ver `README.md`, `docs/PLAN-GIRO.md` y `motor/happyrobot/cerebro/HERRAMIENTAS.md`.
+
 Guía para quien no conoce el producto: compañera nueva, mentor, o alguien con un portátil que quiere levantarlo y tocarlo. No hace falta saber programar más allá de pegar comandos.
 
 **Esto es una simulación de un festival ficticio** (Festival Abierto). No es un servicio de emergencias. Si hay una emergencia de verdad, llama al 112.

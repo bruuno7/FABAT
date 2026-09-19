@@ -4,6 +4,7 @@ import { createIncidentStore, type IncidentStore } from "./hr/store.js";
 import { demoRouter, hrRouter } from "./hr/router.js";
 import { stateRouter } from "./hr/state-router.js";
 import { telegramRouter } from "./telegram/router.js";
+import { operationalReadiness, operationalTelegramRouter } from "./telegram/operational.js";
 import {
   createStaffStore,
   type StaffStore,
@@ -24,11 +25,16 @@ export function createApp(
     next();
   });
 
+  if (env.mandoOperational) {
+    app.use("/telegram", operationalTelegramRouter(env));
+  }
+
   app.use(express.json({ limit: "1mb" }));
 
   app.get(["/", "/health"], (_req, res) => {
-    res.json({
-      ok: true,
+    const operational = env.mandoOperational ? operationalReadiness(env) : undefined;
+    res.status(operational && !operational.ready ? 503 : 200).json({
+      ok: operational?.ready ?? true,
       service: "mando-telegram-bridge",
       telegram_token: Boolean(env.telegramBotToken),
       hr_hook_tg: Boolean(env.hrHookTg),
@@ -36,13 +42,22 @@ export function createApp(
       staff_pin: Boolean(env.staffPin),
       mando_backend: Boolean(env.mandoBackendUrl),
       mode: env.telegramMode,
+      operational,
     });
   });
 
-  app.use("/telegram", telegramRouter(env, store, staff));
+  if (!env.mandoOperational) {
+    app.use("/telegram", telegramRouter(env, store, staff));
+  }
   app.use("/hr/state", stateRouter(env.stateApi));
-  app.use("/hr", hrRouter(env, store));
-  app.use("/demo", demoRouter(env, store));
+  if (env.mandoOperational) {
+    app.use(["/hr", "/demo"], (_req, res) => {
+      res.status(409).json({ ok: false, error: "legacy_route_disabled" });
+    });
+  } else {
+    app.use("/hr", hrRouter(env, store));
+    app.use("/demo", demoRouter(env, store));
+  }
 
   return app;
 }

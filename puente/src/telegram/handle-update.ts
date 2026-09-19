@@ -49,6 +49,9 @@ export async function handleTelegramUpdate(
   store?: IncidentStore,
   staff: StaffStore = createStaffStore(),
 ): Promise<HandleResult> {
+  if (env.mandoOperational) {
+    throw new Error("Operational Telegram updates require the authenticated webhook");
+  }
   if (update.callback_query) {
     return handleCallback(env, update, staff);
   }

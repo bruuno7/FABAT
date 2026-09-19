@@ -18,6 +18,8 @@ export type Env = {
   hrSecret: string | undefined;
   staffPin: string | undefined;
   mandoBackendUrl: string | undefined;
+  mandoOperational: boolean;
+  mandoBridgeSecret: string | undefined;
   mandoCallbackUrl: string;
   allowDemoInject: boolean;
   /** En despliegue público (Vercel / producción) los secretos son obligatorios: sin ellos se rechaza. */
@@ -39,6 +41,8 @@ export function loadEnv(env: NodeJS.ProcessEnv = process.env): Env {
     hrSecret: emptyToUndef(env.HR_SECRET),
     staffPin: emptyToUndef(env.STAFF_PIN),
     mandoBackendUrl: emptyToUndef(env.MANDO_BACKEND_URL),
+    mandoOperational: env.MANDO_OPERATIONAL === "1",
+    mandoBridgeSecret: emptyToUndef(env.MANDO_BRIDGE_SECRET),
     mandoCallbackUrl: env.MANDO_CALLBACK_URL ?? "http://127.0.0.1:8787",
     allowDemoInject: env.ALLOW_DEMO_INJECT === "1",
     requireSecrets:

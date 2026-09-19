@@ -14,6 +14,11 @@ import { createStaffStore } from "./staff-store.js";
 
 const env = loadEnv();
 
+if (env.mandoOperational) {
+  console.error("MANDO_OPERATIONAL=1 requires the Telegram webhook; polling is disabled");
+  process.exit(1);
+}
+
 if (!env.telegramBotToken) {
   console.error("TELEGRAM_BOT_TOKEN required for poll mode");
   process.exit(1);

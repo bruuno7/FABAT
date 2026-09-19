@@ -2,7 +2,94 @@
 
 Dueña: **Ana** (`AGENTS.md`). Bruno posee specs en `motor/happyrobot`.
 
+## Ingreso operativo duradero (opt-in)
+
+`MANDO_OPERATIONAL=1` sustituye el recorrido Telegram de este proceso por:
+
+```text
+Telegram → POST /telegram/webhook → POST <MANDO_BACKEND_URL>/api/operations/telegram
+                                  X-Mando-Bridge-Token: MANDO_BRIDGE_SECRET
+```
+
+El backend MANDO valida identidad/permisos y persiste el update antes de confirmar.
+El puente conserva el JSON original completo: `update_id`, `message_id`,
+`callback_query.from.id`, `message.from.id`, captions, fotos, ubicación y contexto
+de respuesta. No sustituye `from.id` por `chat.id`, no interpreta comandos ni
+botones, no guarda roles/incidentes y no descarta duplicados. Cada entrega, incluso
+un callback repetido, llega al backend para su deduplicación duradera.
+
+Configuración del **puente**:
+
+| Variable | Requisito operativo |
+|---|---|
+| `MANDO_OPERATIONAL` | Exactamente `1`; omitida, `0` o cualquier otro valor mantiene el modo anterior |
+| `TELEGRAM_MODE` | `webhook` (valor por defecto del código; cambiar el `poll` del ejemplo) |
+| `TELEGRAM_WEBHOOK_SECRET` | Obligatorio también en local; 1–256 caracteres `A-Z a-z 0-9 _ -`, igual al `secret_token` del webhook |
+| `MANDO_BACKEND_URL` | Base HTTPS, p. ej. `https://mando.example/festival`; conserva el prefijo y añade `/api/operations/telegram` |
+| `MANDO_BRIDGE_SECRET` | Obligatorio; 1–512 caracteres ASCII visibles sin espacios; mismo valor privado en backend |
+
+No usar URLs con usuario/contraseña, query, fragmento, `/hr/events` o el endpoint
+Telegram ya añadido. HTTP solo se permite para `localhost`, `127.0.0.1` y `[::1]`.
+No se siguen redirecciones, para no reenviar el token a otro destino.
+El token del bot y las credenciales HappyRobot no son necesarios para este ingreso.
+Usar secretos independientes para Telegram y el backend.
+
+`GET /health` y `/` incluyen `operational: {ready, missing, invalid}` sin valores
+privados; responden 503 si la configuración operativa falta o es inválida, y 200
+cuando es válida. **Es readiness de configuración**: no sondea la red ni acredita
+persistencia del backend, credenciales coincidentes o webhook registrado.
+
+Semántica de recepción:
+
+| Resultado | Respuesta del puente |
+|---|---|
+| Backend 200/201 con `{ok:true, duplicate:boolean, revision:int >= 0}` | 200 con esos tres campos, solo después de leer la confirmación completa |
+| Backend 400, 401, 403, 409 o 422 | 200 `{ok:false,rejected:true,status:<HTTP>}`; rechazo definitivo, sin ejecutar fallback |
+| Red, timeout, 5xx, 408/425/429, redirección, 202/204, otro estado o confirmación inválida | 503 `{ok:false,error:"backend_unavailable"}` y `Retry-After: 5` |
+| Configuración incompleta/inválida | 503 `bridge_not_configured`, sin salida |
+| Secreto Telegram ausente/incorrecto | 401 `invalid_secret`, antes de leer el cuerpo |
+| JSON inválido/update sin ID entero seguro no negativo, tamaño excesivo o tipo/encoding no soportado | 400, 413 o 415, sin salida |
+
+Los rechazos definitivos se registran solo con `update_id` numérico y estado HTTP:
+no se devuelve ni registra el cuerpo del backend, tokens, URLs ni texto del aviso.
+Un 401/403 del backend exige revisar el secreto/permisos: se trata como rechazo y
+no se reintenta automáticamente. Un 404 se trata como fallo de ruta/configuración
+reintentable, no como un rechazo del dominio. No existe una cola local de rechazos.
+El operador conserva/monitoriza esos logs; MANDO mantiene su propio registro.
+
+El cuerpo JSON de entrada tiene un límite de 1 MiB (sin compresión). La confirmación
+del backend tiene un límite de 8 KiB y un timeout total de 5 segundos, incluida su
+lectura. No se acusa al usuario con `sendMessage` ni `answerCallbackQuery`; las
+respuestas al bot corresponden al outbox del backend. Un timeout después del commit
+puede provocar repetición: MANDO debe devolver `duplicate:true` sin repetir efectos.
+
+En modo operativo se bloquean las rutas legadas `/hr/*` y `/demo/*` con 409, incluidos
+los envíos Telegram directos desde HappyRobot, roles y despacho. `/hr/state/*`
+conserva su implementación y flag independientes; **no activar Redis v2 para este
+recorrido**. `npm run poll` se niega a arrancar en modo operativo. No arrancar otro
+consumidor del mismo bot: el **backend Python** debe usar `TELEGRAM_MODE=send_only`
+u `off`, nunca `poll`. Mantener el webhook como único ingreso y desactivar los
+workflows legados de ese bot durante el cambio; este código no modifica workflows
+ni registra/elimina webhooks automáticamente.
+
+Pruebas locales sin proveedores:
+
+```bash
+npm ci
+npm test
+npm run typecheck
+npm run build
+```
+
+La suite operativa usa transporte simulado y sockets de loopback. Verifica ACK tras
+confirmación, reintentos, callbacks duplicados, payload íntegro, autenticación,
+límites, URLs y aislamiento del legado. No acredita el backend integrado ni entregas
+Telegram/HappyRobot reales. No hay script de lint separado; TypeScript `strict`
+es la comprobación estática configurada.
+
 ## Qué hace
+
+El resto de esta guía describe el modo anterior (`MANDO_OPERATIONAL` distinto de `1`).
 
 ```
 Público TG → Bot → POST /telegram/webhook → public_report → HR_HOOK_TG (fa-entrada-tg)

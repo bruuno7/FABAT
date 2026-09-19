@@ -7,7 +7,7 @@ Alcance: `motor/server` (FastAPI). No se tocó `motor/evals` ni `motor/happyrobo
 | Corrida | Comando | Resultado |
 |---|---|---|
 | 1 y 2 (fase 1) | `uv run --project motor/server python -m unittest discover -s motor/server -p 'test_*.py' -t .` | **557 tests, 0 fallos, 0 errores** (93 s y 90 s) |
-| Tras el test de humo | misma batería + `test_backend_humo.py` | ver fase 3 al pie |
+| Tras humo + ensayo aislado | misma batería + `test_backend_humo.py` + `test_local_cerebro_env_does_not_change_rehearsal` | **561 tests, 0 fallos, 0 errores** (97,9 s y 92,7 s) |
 
 ## Fallos de la batería que había y arreglo
 
@@ -23,6 +23,7 @@ Otros arreglos descubiertos por el humo:
 |---|---|---|---|
 | `TypeError` → 500 en `/hr/tools/*` con `limit` dict / tipos raros | `int(limit)` y similares no eran `ValueError` | `_invoke` convierte `TypeError`/`OverflowError` en **422** «entrada de tipo incorrecto» | `test_backend_humo.HumoTest.test_tools_cuerpos_malos_unicode_y_enormes` |
 | `POST /api/call/{id}/token` → **502** si el `action_id` no existe | `takeover_token` trataba la ficha vacía como «sesión desconocida» (RuntimeError → 502) | `KeyError` si no hay llamada → **404** | `test_backend_humo` (ruta con `A-no`) |
+| Tres `ensayo --case demo-1` no idénticos (`calls_total` 3 vs 9) | `python -m motor.server` carga `.env` (`MANDO_CEREBRO=agente`, `MANDO_LLM=1`): el cerebro espera el reloj real y llama al LLM; el unitario no carga `.env` | El ensayo fuerza reglas + `MANDO_LLM=0` y no carga `.env` | `test_ensayo.EnsayoTest.test_local_cerebro_env_does_not_change_rehearsal` |
 
 ## Humo vivo (servidor de verdad)
 
@@ -78,6 +79,12 @@ Estado público (`GET /api/state`): `agentes` incluye el incidente, `enjambre` t
 - No se certificó audio, SIP, Telegram real ni publicación de workflows. El doctor de `demo` lo dice.
 - `motor/evals` y los prompts `.md` del equipo son de otro agente.
 
-## Fase 3 (comandos al cierre)
+## Fase 3 (cierre, 19-sep-2026)
 
-Se ejecutan en este mismo trabajo: batería completa, `motor.world` + `motor.mando`, `node --check` de `motor/server/static/*.js`, tres `ensayo --case demo-1` idénticos, servidores apagados.
+| Comando | Resultado |
+|---|---|
+| `uv run --project motor/server python -m unittest discover -s motor/server -p 'test_*.py' -t .` | **561 tests, OK** (92,7 s) |
+| `python3 -m unittest motor.world.test_world motor.mando.test_mando` | **95 tests, OK** (1,0 s) |
+| `node --check` de `sala.js`, `ui.js`, `sala-plano.js`, `plano.js`, `llamada.js`, `jurado.js`, `chat-tab.js`, `asistente.js` | OK |
+| `uv run --project motor/server python -m motor.server ensayo --case demo-1` ×3 | `ok: true`, N=1, seed=1, `calls_total=19`, SHA-256 `9c566153…` las tres, stderr vacío. Antes del aislamiento: 3 vs 9 llamadas (`.env` cerebro/LLM) |
+| Servidores `:8861` y `:8862` | apagados (puertos libres) |

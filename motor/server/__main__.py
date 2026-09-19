@@ -7,12 +7,14 @@ from pathlib import Path
 
 # Cargar .env ANTES de importar .app: HappyRobotComms lee MANDO_VOICE_MODE / HR_* al construirse.
 # No pisa variables ya presentes en el entorno (override=False).
-try:
-    from dotenv import load_dotenv
-    _env_path = Path(__file__).resolve().parents[2] / ".env"
-    load_dotenv(_env_path, override=False)
-except ImportError:
-    pass
+# El ensayo es el guion semilla: no hereda cerebro/LLM/Telegram de la demo local.
+if sys.argv[1:2] != ["ensayo"]:
+    try:
+        from dotenv import load_dotenv
+        _env_path = Path(__file__).resolve().parents[2] / ".env"
+        load_dotenv(_env_path, override=False)
+    except ImportError:
+        pass
 
 import uvicorn
 

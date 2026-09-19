@@ -140,8 +140,10 @@ input::placeholder{color:var(--unclass)}
 .nav-more .help{width:auto;border-radius:5px;padding:0 6px;background:transparent;border-color:var(--nav-line);
   color:var(--nav-muted)}
 
+.nav, .main, .aside{min-width:0}
+
 /* ========================= columna central ========================= */
-.main{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto minmax(150px,var(--cola-h,32vh));
+.main{display:grid;grid-template-rows:auto minmax(0,1fr) auto minmax(150px,var(--cola-h,32vh));
   min-width:0;min-height:0;background:var(--bg)}
 .head{display:flex;align-items:center;gap:10px;padding:8px 16px;min-height:52px;
   background:var(--paper);border-bottom:1px solid var(--line)}
@@ -175,8 +177,11 @@ input::placeholder{color:var(--unclass)}
   background:var(--brand-deep);border-color:var(--brand-deep);color:#fff}
 .who:hover{background:var(--brand);border-color:var(--brand);color:#fff}
 
-/* --- banda de plan + controles del plano --- */
-.band{display:flex;gap:10px;align-items:stretch;padding:10px 16px 0;min-width:0}
+/* --- HUD sobre el plano (como el prototipo) + controles --- */
+.workspace{min-width:0;min-height:0;display:flex;flex-direction:column}
+.band{position:absolute;top:10px;left:10px;right:10px;z-index:6;pointer-events:none;
+  display:flex;gap:10px;align-items:flex-start;min-width:0}
+.band > *{pointer-events:auto}
 .plan-band{flex:1;min-width:0;display:flex;gap:10px;align-items:center;background:var(--paper);
   border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px;box-shadow:var(--shadow)}
 .plan-dot{width:10px;height:10px;border-radius:50%;background:var(--ok-live);flex:none}
@@ -210,7 +215,7 @@ input::placeholder{color:var(--unclass)}
 
 /* --- plano --- */
 .map{margin:10px 16px 0;background:var(--map-bg);border:1px solid var(--line);border-radius:var(--radius);
-  min-height:0;display:flex;overflow:hidden;position:relative;box-shadow:var(--shadow);
+  min-height:0;display:flex;overflow:hidden;position:relative;flex:1;box-shadow:var(--shadow);
   background-image:linear-gradient(to right, color-mix(in srgb, var(--map-grid) 55%, transparent) 1px, transparent 1px),
     linear-gradient(to bottom, color-mix(in srgb, var(--map-grid) 55%, transparent) 1px, transparent 1px);
   background-size:24px 24px}
@@ -247,6 +252,11 @@ input::placeholder{color:var(--unclass)}
 .sala-stage{fill:var(--vital);stroke:var(--emerg);stroke-width:2}
 .sala-stage-label{fill:#fff;font-size:15px;font-weight:800;letter-spacing:1px}
 .sala-stage-sub{fill:#9db0c8;font-size:8px;letter-spacing:.9px}
+.sala-decor-box{fill:var(--paper-2);stroke:var(--map-zone-line);stroke-width:1;opacity:.9}
+.sala-decor-label{fill:var(--muted);font-size:9px;font-weight:800;letter-spacing:.4px}
+.sala-decor-sub{fill:var(--unclass);font-size:7px;letter-spacing:.3px}
+.sala-decor-badge{fill:var(--brand-deep)}
+.sala-decor-badge-text{fill:#fff;font-size:8px;font-weight:800}
 .sala-routes{color:var(--route)}
 .route{stroke:var(--route);stroke-width:2.2;fill:none;stroke-dasharray:7 5;opacity:.9;
   animation:dash-flow 1.2s linear infinite}
@@ -452,7 +462,7 @@ body.escena .reconnect{left:0}
 @media(min-width:1800px){
   :root{--size:14.5px;--size-sm:12.5px;--title:22px;--nav-w:248px;--aside-w:340px;--figure:26px}
 }
-@media(max-height:820px){ .main{grid-template-rows:auto auto minmax(0,1fr) auto minmax(132px,28vh)} }
+@media(max-height:820px){ .main{grid-template-rows:auto minmax(0,1fr) auto minmax(132px,28vh)} }
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
   .nav-state::before,.live-dot{box-shadow:none}

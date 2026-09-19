@@ -327,8 +327,8 @@
     $("speed-label").textContent = (S.session.speed || 1) + "x";
     $("live-chip").className = "live-chip" + (S.session.running ? "" : " paused");
     $("live-sub").textContent = S.session.running
-      ? "posición por zona · sin GPS"
-      : "en pausa · posición por zona";
+      ? "posición simulada por zona"
+      : "en pausa · posición simulada";
 
     // Enlace con HappyRobot: rótulo real / simulado según el propio estado.
     const mode = S.calls.mode === "happyrobot";

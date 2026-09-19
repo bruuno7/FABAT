@@ -25,7 +25,7 @@ def scrub(value: Any) -> Any:
     secrets.extend(x.strip().split(':', 2)[-1] for x in re.split(r'[,;\n]', os.environ.get('MANDO_OPERATORS', '')) if x.count(':') >= 2)
     secrets = [x for x in secrets if len(x) >= 4]
     hidden_keys = {'phone','to_number','from_number','contact','callback_token','reply_to','token','unit_token',
-                   'api_key','secret','password','authorization'}
+                   'api_key','secret','password','authorization','chat_id','message_id'}
     def clean(v):
         if isinstance(v, str):
             for secret in secrets:

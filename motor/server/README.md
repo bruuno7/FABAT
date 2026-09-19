@@ -1,4 +1,10 @@
-# motor/server — pantalla de mando, página del jurado, consola de Caos y adaptador HappyRobot
+# motor/server — backend: herramientas del equipo, barandillas, Sala y APIs
+
+La interfaz de supervisión es `/` (Sala: `static/sala*`). Público `/asistente`, jurado `/jurado`. Pantallas viejas → `archivo/motor/server/static/` (las rutas redirigen a `/`).
+
+La pestaña **Equipo → Probar HappyRobot** permite lanzar `prueba-ana-rapido` y seguir
+su decisión y la revisión. Configuración de agentes, Telegram y teléfono:
+[Integración de Ana](../../docs/INTEGRACION-ANA.md).
 
 Carpeta privada. Nada de aquí se sube a ningún sitio. El servidor escucha en `127.0.0.1`; con `--lan`, en la red
 local (para los móviles del jurado). Nunca se abre a internet desde aquí.
@@ -46,6 +52,7 @@ por IP de conexión, 400 caracteres y 8192 bytes de cuerpo; no se confía en `cl
 | POST | `/api/session` | `{case_id | case:{...}, seed?, speed?, comms?: sim|happyrobot, playbook?, autoplay?}` |
 | POST | `/api/control` | `{cmd: play|pause|toggle|step|speed|reset|key_moment, value?, n?}` |
 | POST | `/api/report` | `{channel, text, zone?, preset?}` aviso del jurado → `world.inject`. Devuelve `report_id` |
+| POST | `/api/workflows/rapido` | Operador: `{request_id, text, zone?}` → aviso + dos ticks simulados → workflow rápido, si abre un incidente pendiente. Reintentos con el mismo `request_id` no repiten efectos. |
 | GET | `/api/report/{id}` | qué ha hecho Mando con ese aviso (lo ve el jurado en su móvil) |
 | POST | `/api/strike` | `{preset}` o `{effect:{...}}` validado y acotado, `client_id?`, `origin: jury|chaos` |
 | GET | `/api/chaos/suggest` | `Chaos.suggest(world, agent)` normalizado: label, why, damage, effect |
@@ -87,6 +94,7 @@ aviso y Mando tendrá que preguntar.
 | `MANDO_VOICE_MODE` (`web_call`) | `web_call` = la voz va por llamada web (sin números +34) · `phone` = teléfono por hook/runs |
 | `HR_DISCLAIMER_S` (4) | segundos del aviso legal UE al descolgar: se restan, no son latencia del agente |
 | `MANDO_OPERATOR_TOKEN` | permite operar (aprobar, reloj, tomar llamadas) desde otra máquina de la red |
+| `MANDO_DB` | una sola SQLite (historial + ledger + episodios de agentes). Por defecto `motor/server/data/mando.db`; `off` apaga el historial (el reloj sigue). `MANDO_LEDGER_PATH` es un alias si `MANDO_DB` no está |
 | `MANDO_DB` | ruta de SQLite del historial (por defecto `motor/server/data/mando.db`); `off` lo desactiva |
 | `MANDO_TG_ROSTER` | SQLite privado rol↔chat_id de Telegram (por defecto `motor/server/data/tg_roster.db`); `off` o `MANDO_DB=off` = memoria |
 | `MANDO_CALLBACK_URL` | URL a la que HappyRobot devuelve los webhooks (por defecto `http://127.0.0.1:<puerto>`). El túnel, si hace falta, lo abre una persona, no este código |

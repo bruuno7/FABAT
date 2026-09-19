@@ -44,10 +44,10 @@ class SecurityTests(unittest.TestCase):
         self.client = TestClient(self.app, client=('127.0.0.1', 1234), base_url='https://example.invalid')
 
     def test_public_loopback_has_no_operator_bypass(self):
-        for path in ('/', '/static/index.html', '/api/approve', '/api/control', '/api/whatif/order',
+        for path in ('/', '/static/sala.html', '/api/approve', '/api/control', '/api/whatif/order',
                      '/api/session', '/api/memoria/decide', '/api/regression/run', '/api/duel/control'):
             with self.subTest(path=path):
-                response = self.client.request('GET' if path in ('/', '/static/index.html') else 'POST', path)
+                response = self.client.request('GET' if path in ('/', '/static/sala.html') else 'POST', path)
                 self.assertEqual(response.status_code, 401)
         self.assertEqual(self.client.get('/?token=' + TOKEN).status_code, 401)
         self.assertEqual(self.client.get('/', headers={'X-Mando-Operator': 'wrong'}).status_code, 403)

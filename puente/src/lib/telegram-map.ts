@@ -258,22 +258,17 @@ export function guessSeverityEmoji(text: string): string {
   return '🟢';
 }
 
-/** Builds a production-ready ACK message for a public report. */
+/**
+ * ACK inmediato a cualquier texto. Neutro a propósito: el mismo chat puede estar dando un aviso nuevo,
+ * contestando a una pregunta o hablando con el equipo; quien lo sabe es HappyRobot, que responde 3-6 s después.
+ */
 export function buildAck(
   correlationId: string,
-  locationHint: string | undefined,
-  text: string,
+  _locationHint: string | undefined,
+  _text: string,
 ): string {
-  const emoji = guessSeverityEmoji(text);
   const ref = correlationId.slice(-6).toUpperCase();
-  const now = new Date();
-  const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-  const zone = locationHint ? ` · Zona: ${locationHint}` : '';
-  return [
-    `${emoji} Ref ${ref}${zone}`,
-    `Aviso recibido a las ${time}. Lo trasladamos a coordinación.`,
-    'Te confirmamos en cuanto haya respuesta.',
-  ].join('\n');
+  return `Recibido (ref ${ref}). Un momento…`;
 }
 
 export function staffOccupancyText(

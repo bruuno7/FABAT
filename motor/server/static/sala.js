@@ -194,7 +194,8 @@
 
   const ROL_TG = { medico: "médico", enfermero: "enfermero", sanitario: "sanitario", ambulancia: "ambulancia",
     seguridad: "seguridad", tecnico: "técnico", logistica: "logística", voluntario: "voluntario",
-    jefe_zona: "jefe de zona", organizador: "organizador" };
+    jefe_zona: "jefe de zona", organizador: "organizador",
+    staff_entradas: "staff entradas", bomberos: "bomberos", policia: "policía" };
   const tgSince = new Map();
   function telegramState() {
     const t = S && S.telegram;

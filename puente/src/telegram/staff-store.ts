@@ -8,7 +8,7 @@ export type StaffClaim = {
   claimed_at: string;
 };
 
-/** Puestos del personal en memoria (se pierde en un cold start de Vercel). */
+/** Puestos del personal: caché en memoria + directorio durable en MANDO (`/hr/tg/roster`). */
 export function createStaffStore() {
   const byChat = new Map<string, StaffClaim>();
   const byRole = new Map<StaffRole, string>();
@@ -25,6 +25,14 @@ export function createStaffStore() {
       return [...byChat.values()].sort((a, b) =>
         a.role.localeCompare(b.role),
       );
+    },
+    replaceAll(claims: StaffClaim[]) {
+      byChat.clear();
+      byRole.clear();
+      for (const next of claims) {
+        byChat.set(next.chat_id, next);
+        byRole.set(next.role, next.chat_id);
+      }
     },
     claim(
       next: StaffClaim,

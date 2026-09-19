@@ -2,6 +2,9 @@
 
 Usar si el usuario elige **(B) solo receta UI**. Si elige **(A)** con API key Editor, replicar estos nodos vía API/MCP.
 
+Tras el extract, **Call Workflow `fa-despacho-tg`**: elige un puesto reclamado y manda botones.
+Sin ese call, el aviso llega a la Sala pero nadie recibe el Telegram de despacho.
+
 ## 1. Crear workflow
 
 - Nombre: `fa-entrada-tg`
@@ -75,6 +78,29 @@ Body ejemplo:
 }
 ```
 
-## 5. Publish development
+## 5. Call Workflow → `fa-despacho-tg`
+
+Nodo **Call Workflow** (después del webhook a MANDO, o en paralelo).
+
+Payload:
+
+```json
+{
+  "incident_id": "{{trigger.correlation_id}}",
+  "texto": "{{trigger.text}}",
+  "tipo": "{{extract.response.incident_type}}",
+  "zona": "{{extract.response.location}}",
+  "gravedad": "{{extract.response.triage_color}}",
+  "prioridad": "{{extract.response.severity}}",
+  "alias_informante": "{{trigger.reporter.display_name}}",
+  "correlation_id": "{{trigger.correlation_id}}",
+  "summary": "{{extract.response.summary}}"
+}
+```
+
+`fa-despacho-tg` consulta el directorio durable en MANDO (vía el puente `/hr/tg/dispatch`, no Twin)
+y hace `telegram_send` al `chat_id` del puesto.
+
+## 6. Publish development
 
 Probar con curl al Incoming Hook usando el mismo JSON de ejemplo.

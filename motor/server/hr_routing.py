@@ -27,6 +27,9 @@ ROLE_SLOTS = {
     'logistics': 'logistica', 'logistica': 'logistica', 'logística': 'logistica',
     'volunteer': 'relevo', 'voluntario': 'relevo',
     'organizador': 'director', 'director': 'director',
+    'staff_entradas': 'logistica', 'entradas': 'logistica',
+    'bomberos': 'seguridad', 'bombero': 'seguridad',
+    'policia': 'seguridad', 'policía': 'seguridad',
 }
 
 

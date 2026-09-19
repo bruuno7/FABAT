@@ -1,8 +1,10 @@
 # Espejo del despacho por Telegram
 
-HappyRobot decide y despacha por Telegram (`fa-entrada-tg`, `fa-despacho-tg`, `fa-respuesta-tg`) con memoria en Twin.
-El backend MANDO **no está en el camino crítico**: solo recibe un espejo por `POST /hr/events` y lo publica en `S.telegram`
-para la Sala de control.
+HappyRobot decide y despacha por Telegram (`fa-entrada-tg`, `fa-despacho-tg`, `fa-respuesta-tg`).
+Twin no está provisionado: el directorio rol↔chat_id y el cerrojo primer-acc-gana viven en MANDO
+(`GET/POST /hr/tg/roster`, `POST /hr/tg/dispatch`, `POST /hr/tg/staff-response`). El espejo **no está
+en el camino crítico de Telegram**: recibe `tg_*` (desde esos endpoints o desde un webhook HR) y lo
+publica en `S.telegram` para la Sala de control.
 
 ## Autenticación
 
@@ -87,7 +89,7 @@ El aviso entra por el contrato normal de Mando (`Report` con canal Telegram y fu
 | Campo | Obligatorio | Notas |
 |---|---|---|
 | `incident_id` | sí | Debe existir un `tg_incident` previo en la partida |
-| `rol` | sí | `medico`, `seguridad`, `organizador`, … |
+| `rol` | sí | `medico`, `seguridad`, `organizador`, `staff_entradas`, `bomberos`, `policia`, … |
 | `estado` | sí | `pending`, `accepted`, `declined`, `timeout`, `covered` |
 | `alias` | no | Alias del staff, **nunca** `chat_id` ni teléfono |
 | `eta_min` | no | 0–240 |
@@ -263,3 +265,14 @@ La Sala pinta este nodo solo si existe la clave `asignaciones` (espejo activo). 
 el estado del bot (`{"status": "off"}`) para no romper `/centro` ni `/asistente`; el bot dedicado está en `telegram_bot`.
 
 Nunca aparecen `chat_id`, `message_id` ni teléfonos en el estado público.
+
+## Directorio durable (privado)
+
+Los cinco puestos del bot (`medico`, `staff_entradas`, `organizador`, `bomberos`, `policia`) se
+guardan en SQLite privado (`MANDO_TG_ROSTER`, por defecto `motor/server/data/tg_roster.db`).
+`/rol` y `/baja` del puente hacen `POST /hr/tg/roster`. HappyRobot lee `GET /hr/tg/roster` y
+despacha con `POST /hr/tg/dispatch`. **Esas rutas llevan `chat_id` y exigen `HR_SECRET`.** No
+reutilizar el token del widget.
+
+Si dos `tg_assignment` `accepted` llegan para el mismo aviso y rol, el espejo deja el primero
+`accepted` y marca el resto `covered`.

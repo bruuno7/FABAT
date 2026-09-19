@@ -281,6 +281,44 @@ describe("staff commands", () => {
     assert.equal(staff.getByChat("3"), undefined);
     mock.restoreAll();
   });
+
+  it("persists /rol to MANDO so HR can read chat_id after a cold start", async () => {
+    const calls = mockFetch();
+    const env = loadEnv({
+      TELEGRAM_BOT_TOKEN: "test-token",
+      MANDO_BACKEND_URL: "https://mando.invalid",
+      HR_SECRET: "s",
+    });
+    const staff = createStaffStore();
+    const result = await handleTelegramUpdate(
+      env,
+      {
+        update_id: 1,
+        message: {
+          message_id: 1,
+          text: "/rol medico",
+          chat: { id: 77, type: "private" },
+          from: { id: 77, first_name: "Marta" },
+        },
+      },
+      createIncidentStore(),
+      staff,
+    );
+    assert.match(result.replies[0] ?? "", /Puesto Médico tomado/);
+    const roster = calls.find((c) => c.url.includes("/hr/tg/roster") && c.body.includes("claim"));
+    assert.ok(roster);
+    const payload = JSON.parse(roster.body) as {
+      action: string;
+      role: string;
+      chat_id: string;
+      alias: string;
+    };
+    assert.equal(payload.action, "claim");
+    assert.equal(payload.role, "medico");
+    assert.equal(payload.chat_id, "77");
+    assert.equal(payload.alias, "Marta");
+    mock.restoreAll();
+  });
 });
 
 describe("callback_query routing", () => {
@@ -571,6 +609,130 @@ describe("HTTP puente", () => {
         calls.find((c) => c.url.includes("sendMessage"))?.url ?? "",
         /sendMessage/,
       );
+    } finally {
+      await close(server);
+      mock.restoreAll();
+    }
+  });
+
+  it("POST /hr/tg/dispatch proxies to MANDO and returns outbound", async () => {
+    const realFetch = globalThis.fetch;
+    const calls: { url: string; body: string }[] = [];
+    mock.method(
+      globalThis,
+      "fetch",
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("127.0.0.1") || url.includes("localhost")) {
+          return realFetch(input, init);
+        }
+        calls.push({ url, body: String(init?.body ?? "") });
+        if (url.includes("/hr/tg/dispatch")) {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              dispatched: true,
+              assignment_id: "asg-1",
+              chat_id: "77",
+              outbound: {
+                event: "telegram_send",
+                chat_id: "77",
+                text: "SIMULACIÓN · médico",
+              },
+            }),
+            { status: 200 },
+          );
+        }
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      },
+    );
+    const env = loadEnv({
+      HR_SECRET: "s3",
+      MANDO_BACKEND_URL: "https://mando.example",
+    });
+    const app = createApp(env);
+    const { server, port } = await listen(app);
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/hr/tg/dispatch`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-hr-secret": "s3",
+        },
+        body: JSON.stringify({
+          texto: "Persona caída",
+          tipo: "medica",
+          correlation_id: "tg-1",
+        }),
+      });
+      assert.equal(res.status, 200);
+      const json = (await res.json()) as {
+        dispatched: boolean;
+        chat_id: string;
+        outbound: { event: string };
+      };
+      assert.equal(json.dispatched, true);
+      assert.equal(json.chat_id, "77");
+      assert.equal(json.outbound.event, "telegram_send");
+      assert.equal(
+        calls.some((c) => c.url.includes("mando.example/hr/tg/dispatch")),
+        true,
+      );
+    } finally {
+      await close(server);
+      mock.restoreAll();
+    }
+  });
+
+  it("POST /hr/tg/staff-response proxies acc to MANDO", async () => {
+    const realFetch = globalThis.fetch;
+    const calls: { url: string; body: string }[] = [];
+    mock.method(
+      globalThis,
+      "fetch",
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("127.0.0.1") || url.includes("localhost")) {
+          return realFetch(input, init);
+        }
+        calls.push({ url, body: String(init?.body ?? "") });
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            estado: "accepted",
+            outbound: { event: "telegram_send", chat_id: "77", text: "ETA?" },
+          }),
+          { status: 200 },
+        );
+      },
+    );
+    const env = loadEnv({
+      HR_SECRET: "s3",
+      MANDO_BACKEND_URL: "https://mando.example",
+    });
+    const app = createApp(env);
+    const { server, port } = await listen(app);
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/hr/tg/staff-response`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-hr-secret": "s3",
+        },
+        body: JSON.stringify({
+          kind: "acc",
+          assignment_id: "asg-1",
+          chat_id: "77",
+        }),
+      });
+      assert.equal(res.status, 200);
+      const json = (await res.json()) as { estado: string };
+      assert.equal(json.estado, "accepted");
+      const forwarded = calls.find((c) =>
+        c.url.includes("mando.example/hr/tg/staff-response"),
+      );
+      assert.ok(forwarded);
+      assert.equal(JSON.parse(forwarded.body).kind, "acc");
     } finally {
       await close(server);
       mock.restoreAll();

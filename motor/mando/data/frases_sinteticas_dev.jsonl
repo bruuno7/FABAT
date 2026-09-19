@@ -1,0 +1,266 @@
+{"text": "no se puede ni respirar aq delante, nos estan aplastando contra la valla", "family": "crowd", "zone": "front_pit"}
+{"text": "cola de la puerta b infumable, llevamos 40 min y no avanza NADIE", "family": "crowd", "zone": "gate_b"}
+{"text": "hay un empujon gordo en pista, gente cayendo, esto va a petar", "family": "crowd", "zone": "general"}
+{"text": "pasillo norte atascadisimo, no se puede ir ni al baño ni pa atras", "family": "crowd", "zone": "corridor_n"}
+{"text": "en los baños hay una cola de 200m y se estan empujando", "family": "crowd", "zone": "toilets"}
+{"text": "a la salida del metro se ha liado, todo el mundo a la vez y no hay orden", "family": "crowd", "zone": "exit_transport"}
+{"text": "puerta a norte colapsada, la gente se esta metiendo por encima de otros", "family": "crowd", "zone": "gate_a"}
+{"text": "en la barra grande no cabe un alfiler, empujones y gritos", "family": "crowd", "zone": "food"}
+{"text": "OSTIA la gente se viene encima no se q pasa pero no puedo moverme", "family": "crowd", "zone": null}
+{"text": "vip tb petado, la rampa de acceso es un cuello de botella brutal", "family": "crowd", "zone": "vip"}
+{"text": "en la plataforma de sillas de ruedas hay gente de pie ocupando y no dejan pasar", "family": "crowd", "zone": "pmr"}
+{"text": "puerta c sur parece q va a haber avalancha, se oyen gritos", "family": "crowd", "zone": "gate_c"}
+{"text": "punto de agua norte imposible, se estan subiendo unos encima de otros x una botella", "family": "crowd", "zone": "water_n"}
+{"text": "pasillo sur cerrado de gente, van en contraflujo y se chocan", "family": "crowd", "zone": "corridor_s"}
+{"text": "me han dicho q en primera fila alguien se ha desmayado y siguen empujando", "family": "crowd", "zone": "front_pit"}
+{"text": "pit is crushing hard, people falling, CANNOT breathe", "family": "crowd", "zone": "front_pit"}
+{"text": "the queue at the main gate is insane, pushing from behind", "family": "crowd", "zone": "gate_b"}
+{"text": "crowd surge near the south entrance, ppl screaming", "family": "crowd", "zone": "gate_c"}
+{"text": "no hay quien salga, estamos todos pegados y hay gente en el suelo", "family": "crowd", "zone": null}
+{"text": "al lao de la barra grande se ha formado un tapón y no deja salir a nadie", "family": "crowd", "zone": "food"}
+{"text": "estan abriendo las vallas de pista y todo el mundo corre, esto es peligroso", "family": "crowd", "zone": "general"}
+{"text": "lanzaderas: cola kilométrica y empujones, alguien ha perdido un zapato y siguen", "family": "crowd", "zone": "exit_transport"}
+{"text": "tío desmayado en el foso, no responde, hace falta medico YA", "family": "medical", "zone": "front_pit"}
+{"text": "chica con ataque de panico junto al escenario, no puede respirar", "family": "medical", "zone": "medical_1"}
+{"text": "hay un pavo q se ha cortado y sangra bastante, al lao de los baños", "family": "medical", "zone": "toilets"}
+{"text": "en el puesto medico norte hay una cola de desmayados y no dan abasto", "family": "medical", "zone": "medical_2"}
+{"text": "alguien se ha caido de una silla o algo en pmr, se oye llorar", "family": "medical", "zone": "pmr"}
+{"text": "tío convulsionando en pista, la gente hace circulo pero nadie sabe q hacer", "family": "medical", "zone": "general"}
+{"text": "me duele el pecho no es broma, estoy por el pasillo norte, mareo fuerte", "family": "medical", "zone": "corridor_n"}
+{"text": "chaval drogado mal, ojos en blanco, al lao de la barra grande", "family": "medical", "zone": "food"}
+{"text": "hay una tia inconsciente en el suelo y la pisan, no se exactamente donde estoy", "family": "medical", "zone": null}
+{"text": "en vip un tío se ha atragantado o algo, tose muy raro", "family": "medical", "zone": "vip"}
+{"text": "punto de agua sur: una chica se ha deshidratado y se cae", "family": "medical", "zone": "water_s"}
+{"text": "me han dicho q hay un infarto o algo en puerta a, no lo he visto", "family": "medical", "zone": "gate_a"}
+{"text": "guy passed out at the south med tent, not waking up", "family": "medical", "zone": "medical_1"}
+{"text": "someone having a seizure near gate B, please send help", "family": "medical", "zone": "gate_b"}
+{"text": "need an inhaler, asthma attack, im near the north water", "family": "medical", "zone": "water_n"}
+{"text": "tío con la pierna rara, creo q se la ha torcido mal en el pasillo sur", "family": "medical", "zone": "corridor_s"}
+{"text": "hay sangre en el suelo cerca de puerta c, alguien se ha abierto la ceja", "family": "medical", "zone": "gate_c"}
+{"text": "una señora mayor muy mareada, dice q no ve, estamos en la salida del metro", "family": "medical", "zone": "exit_transport"}
+{"text": "backstage hay un tecnico q se ha dado un golpe en la cabeza, sangra", "family": "medical", "zone": "backstage"}
+{"text": "chica vomitando sin parar, no aguanta de pie, donde los baños", "family": "medical", "zone": "toilets"}
+{"text": "help, my friend is not breathing well, we are in the pit", "family": "medical", "zone": "front_pit"}
+{"text": "alguien se ha desmayao otra vez, calor + gente, no se ni en q zona", "family": "medical", "zone": null}
+{"text": "el viento esta tirando cosas, las lonas de los foodtrucks volando", "family": "weather", "zone": "food"}
+{"text": "se viene una tormenta gorda, relampagos y la gente no se cubre", "family": "weather", "zone": "general"}
+{"text": "en el foso llueve a mares y el suelo esta como hielo, resbalones", "family": "weather", "zone": "front_pit"}
+{"text": "viento brutal en puerta b, casi se lleva una valla", "family": "weather", "zone": "gate_b"}
+{"text": "hace un calor q no es normal, la gente se esta cayendo como moscas", "family": "weather", "zone": null}
+{"text": "granizo o algo duro pega en la plataforma pmr, no hay techo", "family": "weather", "zone": "pmr"}
+{"text": "the wind is ripping banners at the north gate, looks unsafe", "family": "weather", "zone": "gate_a"}
+{"text": "pasillo norte mojadisimo, se forma un rio y la gente resbala", "family": "weather", "zone": "corridor_n"}
+{"text": "me han dicho q van a cortar el concierto x tormenta pero nadie avisa", "family": "weather", "zone": null}
+{"text": "en vip las sombrillas se estan volando, casi le da a alguien", "family": "weather", "zone": "vip"}
+{"text": "lightning right over the stage, should we even stay??", "family": "weather", "zone": "front_pit"}
+{"text": "punto de agua norte encharcado, barro y gente cayendose", "family": "weather", "zone": "water_n"}
+{"text": "salida a lanzaderas con viento de lado, paraguas rotos y empujones", "family": "weather", "zone": "exit_transport"}
+{"text": "llueve tanto q el sonido suena raro y hay chispas? o es el relampago", "family": "weather", "zone": "general"}
+{"text": "puerta c sur, charcos profundos y la cola no se mueve bajo el agua", "family": "weather", "zone": "gate_c"}
+{"text": "hay una pelea gorda al lao de la barra grande, sillas volando", "family": "aggression", "zone": "food"}
+{"text": "un tío con navaja o algo brillante en pista, no es broma", "family": "aggression", "zone": "general"}
+{"text": "me han tocado mal en el foso, no me deja irme, AYUDA", "family": "aggression", "zone": "front_pit"}
+{"text": "roban a la fuerza en el pasillo sur, han tirado a un chaval", "family": "aggression", "zone": "corridor_s"}
+{"text": "pelea en puerta b, seguridad no llega y se estan liando mas", "family": "aggression", "zone": "gate_b"}
+{"text": "alguien ha pegado a una chica donde los baños, esta llorando", "family": "aggression", "zone": "toilets"}
+{"text": "fight at the north corridor, bottles flying", "family": "aggression", "zone": "corridor_n"}
+{"text": "un pavo agresivo en vip, insulta y empuja a todo el mundo", "family": "aggression", "zone": "vip"}
+{"text": "me han dicho q hay un tío enseñando un arma cerca de puerta a", "family": "aggression", "zone": "gate_a"}
+{"text": "me han robado el movil a empujones, me duele el hombro, no se donde estoy", "family": "aggression", "zone": null}
+{"text": "guy groping people in the pit, security PLEASE", "family": "aggression", "zone": "front_pit"}
+{"text": "en pmr un tío borracho pegando a alguien en silla, esto es grave", "family": "aggression", "zone": "pmr"}
+{"text": "pelea a puñetazos en la salida del metro, hay sangre", "family": "aggression", "zone": "exit_transport"}
+{"text": "alguien ha intentado entrar a backstage a empujones con el staff", "family": "aggression", "zone": "backstage"}
+{"text": "grupo de 5 pegandose junto al puesto medico sur, rompen cosas", "family": "aggression", "zone": "medical_1"}
+{"text": "me han dicho q en puerta c han apuñalado a alguien, no lo he visto yo", "family": "aggression", "zone": "gate_c"}
+{"text": "se ha acabado el agua en el punto norte y la gente se cabrea", "family": "supply", "zone": "water_n"}
+{"text": "en la barra grande ya no hay ni cubatas ni agua, solo hielo", "family": "supply", "zone": "food"}
+{"text": "los foodtrucks dicen q no les queda comida, colas de 1h pa nada", "family": "supply", "zone": "food"}
+{"text": "en los baños no hay papel ni jabon, es un asco y se desborda", "family": "supply", "zone": "toilets"}
+{"text": "punto de agua sur seco, el grifo no sale nada desde hace rato", "family": "supply", "zone": "water_s"}
+{"text": "no hay botellas en ningun lao y hace un calor, alguien vende a 8€", "family": "supply", "zone": null}
+{"text": "vip sin agua tampoco, los camareros dicen q no les reponen", "family": "supply", "zone": "vip"}
+{"text": "out of water at the north refill, people getting angry", "family": "supply", "zone": "water_n"}
+{"text": "me han dicho q el merch se ha quedao sin tallas y hay bronca, no se si es eso", "family": "supply", "zone": "gate_b"}
+{"text": "en pmr no hay kits ni nada, una chica necesita agua y no hay", "family": "supply", "zone": "pmr"}
+{"text": "los congeladores de los trucks no funcionan, la comida huele raro", "family": "supply", "zone": "food"}
+{"text": "no hay hielo en ninguna barra, las bebidas calientes y se quejan", "family": "supply", "zone": "food"}
+{"text": "puesto medico sur sin vendas segun un voluntario, no se si es rumor", "family": "supply", "zone": "medical_1"}
+{"text": "they ran out of cups at the south water point too", "family": "supply", "zone": "water_s"}
+{"text": "en puerta a venden agua y se ha acabado, la cola se pone agresiva", "family": "supply", "zone": "gate_a"}
+{"text": "se ha ido la luz en el pasillo norte, a oscuras total, gente gritando", "family": "infra", "zone": "corridor_n"}
+{"text": "huele a quemado al lao de la barra grande, como cable o grasa", "family": "infra", "zone": "food"}
+{"text": "una valla del foso esta suelta y se mueve con la gente", "family": "infra", "zone": "front_pit"}
+{"text": "los datáfonos no van, no se puede pagar y se esta liando", "family": "infra", "zone": "food"}
+{"text": "hay fuego pequeño en un foodtruck, se ve humo naranja", "family": "infra", "zone": "food"}
+{"text": "el sonido ha petado y hay un pitido q duele, alguien se tapa los oidos", "family": "infra", "zone": "general"}
+{"text": "luces del escenario echan chispas, no se si es el show o un fallo", "family": "infra", "zone": "front_pit"}
+{"text": "puerta b el torniquete esta roto y la gente pasa sin control", "family": "infra", "zone": "gate_b"}
+{"text": "structure shaking at the north gate, that scaffold looks wrong", "family": "infra", "zone": "gate_a"}
+{"text": "en los baños se ha reventado una tubería, agua por todos laos", "family": "infra", "zone": "toilets"}
+{"text": "valla de vip caida, cualquiera entra y se pelean x el espacio", "family": "infra", "zone": "vip"}
+{"text": "no hay luz en puerta c, se ve solo con el movil, peligro de caidas", "family": "infra", "zone": "gate_c"}
+{"text": "me han dicho q hay un conato detras del escenario, no lo confirmo", "family": "infra", "zone": "backstage"}
+{"text": "pasillo sur el suelo esta levantado, alguien se ha enganchao el pie", "family": "infra", "zone": "corridor_s"}
+{"text": "the screens went black and then a bang, people panicking", "family": "infra", "zone": "general"}
+{"text": "en pmr la rampa esta suelta, se mueve al pasar las sillas", "family": "infra", "zone": "pmr"}
+{"text": "no hay personal en puerta a, nadie controla y se cuela medio mundo", "family": "resource", "zone": "gate_a"}
+{"text": "llevamos 20 min esperando ambulancia en el puesto medico sur y no llega", "family": "resource", "zone": "medical_1"}
+{"text": "en el foso no hay ni un stewards, la gente pide ayuda y nadie", "family": "resource", "zone": "front_pit"}
+{"text": "seguridad de pista desaparecida, hace falta gente YA", "family": "resource", "zone": "general"}
+{"text": "el puesto medico norte cerrado o sin nadie, la puerta echada", "family": "resource", "zone": "medical_2"}
+{"text": "no hay voluntarios en pmr, una persona necesita asistencia y esta sola", "family": "resource", "zone": "pmr"}
+{"text": "ambulance still not here, we called ages ago, south side", "family": "resource", "zone": "medical_1"}
+{"text": "en la salida del metro cero staff, caos total", "family": "resource", "zone": "exit_transport"}
+{"text": "me han dicho q no quedan camillas, no se si es verdad", "family": "resource", "zone": null}
+{"text": "bares sin camareros, la cola se pone agresiva y no hay supervisor", "family": "resource", "zone": "food"}
+{"text": "falta deegs o como se llamen, no hay quien baje a la gente del foso", "family": "resource", "zone": "front_pit"}
+{"text": "no radios, the guards at gate B cant talk to anyone", "family": "resource", "zone": "gate_b"}
+{"text": "en baños no hay limpia ni nadie de mantenimiento y esta insoportable", "family": "resource", "zone": "toilets"}
+{"text": "backstage pidiendo mas tecnicos, hay un hueco sin cubrir", "family": "resource", "zone": "backstage"}
+{"text": "niño perdido, 7 años pelo corto camiseta roja, ultima vez en pista", "family": "info", "zone": "general"}
+{"text": "he perdido a mi hermana, iba de vaqueros y tote bag, por la entrada principal", "family": "info", "zone": "gate_b"}
+{"text": "punto de encuentro? alguien sabe donde es?? no pone nada", "family": "info", "zone": null}
+{"text": "he encontrado un movil en los baños, pantalla rota, de quien es", "family": "info", "zone": "toilets"}
+{"text": "lost kid near the north water, about 8, blue hoodie, crying", "family": "info", "zone": "water_n"}
+{"text": "se me ha perdido la cartera en vip, dni dentro, xfa si la veis", "family": "info", "zone": "vip"}
+{"text": "donde esta el puesto medico?? no hay carteles o yo no los veo", "family": "info", "zone": null}
+{"text": "chaval de 12 separado de sus padres, esta en el pasillo sur asustado", "family": "info", "zone": "corridor_s"}
+{"text": "el cantante ha dicho q hay un dragon detras del escenario jajaja", "family": "info", "zone": "backstage"}
+{"text": "si alguien ve a un labrador suelto no es mio pero mola 😂", "family": "info", "zone": "general"}
+{"text": "esto es un simulacro o q, xq hay tanta gente disfrazada de seguridad", "family": "info", "zone": null}
+{"text": "bro the bass is so loud my fillings are dancing, not an emergency lol", "family": "info", "zone": "front_pit"}
+{"text": "vendo sitio en primera fila q no existe, es broma no me pegueis", "family": "info", "zone": "front_pit"}
+{"text": "el wc de lujo de vip es un mito urbano, he ido y es el mismo watafac", "family": "info", "zone": "vip"}
+{"text": "me han dicho q sale un invitado secreto, por eso hay tanto jaleo? o es fake", "family": "info", "zone": null}
+{"text": "lost my jacket at the south toilets, black adidas, if u see it", "family": "info", "zone": "toilets"}
+{"text": "hay una mochila sola al lao de la barra grande, nadie la reclama", "family": "external", "zone": "food"}
+{"text": "paquete raro en la entrada principal, cinta y sin dueño", "family": "external", "zone": "gate_b"}
+{"text": "el metro esta cerrado o no va, cola enorme fuera y la gente se pone nerviosa", "family": "external", "zone": "exit_transport"}
+{"text": "me han dicho q han amenazado con algo en redes, no se si es verdad", "family": "external", "zone": null}
+{"text": "coche sin conductor cerca de puerta a norte, luces puestas, raro", "family": "external", "zone": "gate_a"}
+{"text": "un tío grabando los accesos de staff, se esconde cuando le miran", "family": "external", "zone": "backstage"}
+{"text": "unattended bag at gate C, black, no one around", "family": "external", "zone": "gate_c"}
+{"text": "lanzaderas no salen, los buses estan parados fuera y nadie informa", "family": "external", "zone": "exit_transport"}
+{"text": "hay un drone encima del publico, no parece de la organizacion", "family": "external", "zone": "general"}
+{"text": "someone left a suitcase by the north toilets, looks weird", "family": "external", "zone": "toilets"}
+{"text": "corte de calle fuera, no se puede ni llegar a puerta c", "family": "external", "zone": "gate_c"}
+{"text": "olor a gasolina fuerte en el parking de las lanzaderas", "family": "external", "zone": "exit_transport"}
+{"text": "me han dicho q hay un aviso de bomba pero no sale en ninguna parte", "family": "external", "zone": null}
+{"text": "grupo intentando saltar la valla exterior por el lado sur", "family": "external", "zone": "gate_c"}
+{"text": "help pls hay un tío down in the pit no se mueve, need medic NOW", "family": "medical", "zone": "front_pit"}
+{"text": "la cola at the main gate no avanza y nos empujan from behind", "family": "crowd", "zone": "gate_b"}
+{"text": "water over, no queda nada, people shouting en el punto norte", "family": "supply", "zone": "water_n"}
+{"text": "security where?? no hay nadie y a fight just started por los baños", "family": "aggression", "zone": "toilets"}
+{"text": "storm coming fuerte, el wind tira las lonas de los trucks", "family": "weather", "zone": "food"}
+{"text": "lost my kid, niño 9 años camiseta del barça, last seen en pista", "family": "info", "zone": "general"}
+{"text": "ambulance no llega, llevamos un rato at the south med post", "family": "resource", "zone": "medical_1"}
+{"text": "hay humo y un bang near the stage, no se si es pyro o fire de verdad", "family": "infra", "zone": "front_pit"}
+{"text": "tío en el suelo y siguen pasando por encima, esto es aplastamiento", "family": "crowd", "zone": "general"}
+{"text": "chica con alergia, se le hincha la cara, estamos junto al escenario", "family": "medical", "zone": "medical_1"}
+{"text": "el calor en pista es insoportable, gente sentada en el suelo sin fuerzas", "family": "weather", "zone": "general"}
+{"text": "me han arrancado el bolso y me han empujado al suelo, pasillo norte", "family": "aggression", "zone": "corridor_n"}
+{"text": "se acabo el agua tb en el sur, el cartel dice closed", "family": "supply", "zone": "water_s"}
+{"text": "una torre de luces se mueve con el viento, da miedo mirarla", "family": "infra", "zone": "general"}
+{"text": "no hay desfibrilador o no lo encuentran, estan buscando en el norte", "family": "resource", "zone": "medical_2"}
+{"text": "abuela perdida, pelo blanco chaqueta azul, se ha separado en puerta b", "family": "info", "zone": "gate_b"}
+{"text": "mochila abandonada detras de un contenedor en puerta a, nadie la toca", "family": "external", "zone": "gate_a"}
+{"text": "people stacking at the front, crush starting, GET US OUT", "family": "crowd", "zone": "front_pit"}
+{"text": "guy bleeding from the nose a lot, by the big bar", "family": "medical", "zone": "food"}
+{"text": "rain + wind at the shuttle exit, umbrellas hitting faces", "family": "weather", "zone": "exit_transport"}
+{"text": "two groups fighting with belts near the south corridor", "family": "aggression", "zone": "corridor_s"}
+{"text": "no more food anywhere, even the last truck closed", "family": "supply", "zone": "food"}
+{"text": "power cut at vip toilets, pitch black, people screaming", "family": "infra", "zone": "vip"}
+{"text": "no medics on the wheelchair platform, someone needs help", "family": "resource", "zone": "pmr"}
+{"text": "where do we pick up lost property?? no signs", "family": "info", "zone": null}
+{"text": "metro line down, huge crowd stuck outside the venue", "family": "external", "zone": "exit_transport"}
+{"text": "me han dicho q en el foso hay gente desmayada en cadena, no llego a verlo", "family": "crowd", "zone": "front_pit"}
+{"text": "un pavo se ha hecho pis encima y esta temblando, creo q es un ataque, foodtrucks", "family": "medical", "zone": "food"}
+{"text": "relampago ha caido cerca, se ha oido un boom, la gente sale corriendo", "family": "weather", "zone": null}
+{"text": "tío siguiendo a chicas al baño, se esconde detras de la cola, da mal rollo", "family": "aggression", "zone": "toilets"}
+{"text": "los bidones de agua del norte estan vacios y los dejan tirados, tropiezos", "family": "supply", "zone": "water_n"}
+{"text": "el suelo de la plataforma pmr cruje raro, como si se hundiera un poco", "family": "infra", "zone": "pmr"}
+{"text": "solo hay 1 seguridad pa todo el pasillo norte, imposible controlar", "family": "resource", "zone": "corridor_n"}
+{"text": "si esto es una emergencia yo soy el papa, solo hay mucho humo de maquina 💀", "family": "info", "zone": "front_pit"}
+{"text": "objeto cilindrico raro junto a la valla de puerta b, nadie lo recoge", "family": "external", "zone": "gate_b"}
+{"text": "estamos tan juntos q no puedo ni alzar el brazo, me falta el aire", "family": "crowd", "zone": null}
+{"text": "need water badly, dizzy, somewhere near the south bathrooms i think", "family": "medical", "zone": "toilets"}
+{"text": "hail started over the main entrance, ppl covering heads with bags", "family": "weather", "zone": "gate_b"}
+{"text": "alguien ha dicho q hay un tío con pistola pero suena a rumor de cola", "family": "aggression", "zone": null}
+{"text": "se han quedao sin vasos y tiran el agua a chorro, se desperdicia y hay bronca", "family": "supply", "zone": "water_s"}
+{"text": "cables pelados en el suelo del pasillo sur, se ven, con el agua da yuyu", "family": "infra", "zone": "corridor_s"}
+{"text": "called 112, they said wait, still no crew at the north med", "family": "resource", "zone": "medical_2"}
+{"text": "found a passport at the shuttle queue, name inside, who do i give it to", "family": "info", "zone": "exit_transport"}
+{"text": "suspicious van idling by the south gate, engine on, no plates visible?", "family": "external", "zone": "gate_c"}
+{"text": "avalancha chica en gate a, la gente se ha venido pa atras de golpe", "family": "crowd", "zone": "gate_a"}
+{"text": "chaval con el pie hinchao, no puede andar, estamos en el punto de agua sur", "family": "medical", "zone": "water_s"}
+{"text": "el viento en backstage mueve las estructuras de carga, se oye metal", "family": "weather", "zone": "backstage"}
+{"text": "me han dicho q han violado a una tia cerca de los baños, no se si es cierto", "family": "aggression", "zone": "toilets"}
+{"text": "ya no hay ni snacks sin gluten ni nada especial en restauracion, una chica mal", "family": "supply", "zone": "food"}
+{"text": "los turnstiles de puerta c pitan sin parar y se han quedao abiertos", "family": "infra", "zone": "gate_c"}
+{"text": "no hay ambulancia en el recinto segun un tío de seguridad, ojala mienta", "family": "resource", "zone": null}
+{"text": "perdido a mi colega, va de gorra negra y riñonera, ultima vez en vip", "family": "info", "zone": "vip"}
+{"text": "corte de luz en la calle de las lanzaderas, todo a oscuras fuera", "family": "external", "zone": "exit_transport"}
+{"text": "we cant get out of the pit, barriers locked or stuck, panic starting", "family": "crowd", "zone": "front_pit"}
+{"text": "woman in labour?? or pain, screaming at the north med post", "family": "medical", "zone": "medical_2"}
+{"text": "too hot in the wheelchair area, no shade left, people wilting", "family": "weather", "zone": "pmr"}
+{"text": "security hitting a fan too hard at gate B, looks like assault not control", "family": "aggression", "zone": "gate_b"}
+{"text": "sold out of electrolytes, only beer left, thats not helping", "family": "supply", "zone": "food"}
+{"text": "fence down between general and vip, crowd pouring through", "family": "infra", "zone": "vip"}
+{"text": "no first aid kits in the north corridor boxes, we checked", "family": "resource", "zone": "corridor_n"}
+{"text": "whats the wifi password lmao we need maps, this place is a maze", "family": "info", "zone": null}
+{"text": "threat written on a toilet stall, ugly stuff, south bathrooms", "family": "external", "zone": "toilets"}
+{"text": "cola de puerta a se ha partido en 2 y se pisan, gritos de para para", "family": "crowd", "zone": "gate_a"}
+{"text": "tío diabetico sin insulina, esta sudando mucho, al lao de la barra grande", "family": "medical", "zone": "food"}
+{"text": "me han dicho q va a granizar peor, la gente ya se agolpa en los pasillos", "family": "weather", "zone": "corridor_n"}
+{"text": "un grupo ha rodeado a un pavo y le pegan, nadie se mete, pista general", "family": "aggression", "zone": "general"}
+{"text": "las maquinas de agua del norte echan aire, no liquido, estafa o rota", "family": "supply", "zone": "water_n"}
+{"text": "pantalla gigante inclinada, se ve el soporte doblao, da miedo", "family": "infra", "zone": "front_pit"}
+{"text": "el medico q habia se ha ido y no ha venido el relevo, puesto sur vacio", "family": "resource", "zone": "medical_1"}
+{"text": "he visto a una niña llorando sola en el pasillo norte, unos 6 años", "family": "info", "zone": "corridor_n"}
+{"text": "hay un tío dejando bolsas y yendose, ha hecho 2 veces ya cerca de gate b", "family": "external", "zone": "gate_b"}
+{"text": "cant move, chest tight, too many people, somewhere in the middle", "family": "crowd", "zone": null}
+{"text": "overdose maybe, friend blue lips, we are by the north water", "family": "medical", "zone": "water_n"}
+{"text": "flooding at south toilets, water coming into the corridor", "family": "weather", "zone": "toilets"}
+{"text": "someone flashing a knife in the shuttle line, people backing away", "family": "aggression", "zone": "exit_transport"}
+{"text": "bar ran out of ice AND water, only spirits, crowd getting nasty", "family": "supply", "zone": "food"}
+{"text": "sparks from a generator behind the food trucks, smell of ozone", "family": "infra", "zone": "food"}
+{"text": "we need more stewards at the main gate NOW, only two left", "family": "resource", "zone": "gate_b"}
+{"text": "has anyone seen a grey backpack with a keychain duck, lost it idk where", "family": "info", "zone": null}
+{"text": "police outside saying theres a suspicious package on the approach road", "family": "external", "zone": "exit_transport"}
+{"text": "se cae gente en cadena en el foso, no paran el tema, PARA EL CONCIERTO", "family": "crowd", "zone": "front_pit"}
+{"text": "me sangra la nariz y me mareo, calor, estoy cerca del punto de agua norte", "family": "medical", "zone": "water_n"}
+{"text": "viento + lluvia horizontal en puerta c, la gente se agacha", "family": "weather", "zone": "gate_c"}
+{"text": "un tío ha intentado entrar a empujones al pmr y ha empujado una silla", "family": "aggression", "zone": "pmr"}
+{"text": "no queda ni una botella en vip, los de la barra encogen los hombros", "family": "supply", "zone": "vip"}
+{"text": "el escenario hace un ruido como de hierro, como si algo se hubiera soltado", "family": "infra", "zone": "front_pit"}
+{"text": "la radio de seguridad no funciona, los oigo pedir refuerzos y no contestan", "family": "resource", "zone": "general"}
+{"text": "punto de encuentro es al lao de... no pone, hay un cartel en blanco", "family": "info", "zone": null}
+{"text": "un furgon abierto detras, herramientas y un bidon, nadie de staff cerca", "family": "external", "zone": "backstage"}
+{"text": "hay tanta gente en los baños q no se puede ni entrar ni salir, empujon constante", "family": "crowd", "zone": "toilets"}
+{"text": "una chica se ha cortado con una lata, sangra bastante, pista general", "family": "medical", "zone": "general"}
+{"text": "el barro en el pasillo sur es una trampa, ya van 3 caidas", "family": "weather", "zone": "corridor_s"}
+{"text": "me han dicho q hay una paliza detras de los foodtrucks, no me acerco", "family": "aggression", "zone": "food"}
+{"text": "se han acabado las pulseras de agua gratis o eso dice un tío, cola cabreada", "family": "supply", "zone": "water_n"}
+{"text": "los aseos portatiles se tambalean, uno casi se cae con gente dentro", "family": "infra", "zone": "toilets"}
+{"text": "no hay ningun medico de guardia en pista, solo uno lejos en el sur", "family": "resource", "zone": "general"}
+{"text": "si ves a un pavo disfrazado de perrito q pide selfies no es una emergencia 🐕", "family": "info", "zone": "general"}
+{"text": "amenaza por megafonia? o ha sido un pavo con un altavoz en la cola de metro", "family": "external", "zone": "exit_transport"}
+{"text": "estamos pegados a la valla del norte y nos aplastan desde atras, abrid algo", "family": "crowd", "zone": "gate_a"}
+{"text": "tío con el cuello raro despues de un empujon, no mueve bien la cabeza, foso", "family": "medical", "zone": "front_pit"}
+{"text": "demasiado frio de golpe despues de la lluvia, gente tiritando sin ropa de abrigo", "family": "weather", "zone": null}
+{"text": "un tío ha soltado un spray o algo en pista, arde la garganta, tos de todos", "family": "aggression", "zone": "general"}
+{"text": "las barricas de hidratacion del sur vacias y las dejan como obstaculo", "family": "supply", "zone": "water_s"}
+{"text": "el pago contactless peta y hay gente saltando la barra pa coger botellas", "family": "infra", "zone": "food"}
+{"text": "necesitan mas gente en la plataforma pmr, hay una sola persona pa todo", "family": "resource", "zone": "pmr"}
+{"text": "he perdido las gafas, no veo un pijo, si las veis por el pasillo norte avisar", "family": "info", "zone": "corridor_n"}
+{"text": "hay gente saltando la valla exterior por un hueco al lao de puerta a", "family": "external", "zone": "gate_a"}
+{"text": "the floor is moving with the crowd, feels like a wave, scary af", "family": "crowd", "zone": "general"}
+{"text": "kid with a high fever, limp, we are at the main entrance", "family": "medical", "zone": "gate_b"}
+{"text": "gusts knocking over bins at the north water, lids flying", "family": "weather", "zone": "water_n"}
+{"text": "someone just snatched a chain and punched the guy, near gate C", "family": "aggression", "zone": "gate_c"}
+{"text": "last water truck left, staff said thats it for the night", "family": "supply", "zone": "food"}
+{"text": "stage left speaker stack leaning, cables hanging loose", "family": "infra", "zone": "front_pit"}
+{"text": "stretcher team went the wrong way, still waiting in the south corridor", "family": "resource", "zone": "corridor_s"}
+{"text": "anyone know if the north gate is even open?? mixed messages", "family": "info", "zone": "gate_a"}
+{"text": "smoke from outside the fence, not from the show, near the shuttles", "family": "external", "zone": "exit_transport"}

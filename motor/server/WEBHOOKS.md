@@ -86,3 +86,17 @@ envía `public_report`, `channel:"telegram"`, `reply_to:<chat_id>` (también `tg
 Comprobación de todo lo anterior sin lanzar ninguna llamada: `uv run --project motor/server python -m motor.server doctor`.
 
 Antes de consumir `event_id` o cerrar una llamada se validan estructuras, booleanos y datos de aclaración. Un cuerpo inválido devuelve 422 y admite reintento corregido con el mismo id. La confirmación y el vencimiento se finalizan bajo el mismo cerrojo. Cada webhook válido reconstruye estado y aumenta la versión SSE, incluso en pausa. Los avisos de prueba se registran sin su texto.
+
+
+## Personal autenticado y servicios externos
+
+`POST /hr/events`, cabecera `X-Mando-Token: $HR_SECRET` (HR_CHAT_TOKEN se rechaza):
+- `type:"staff_status"`: `unit_id, unit_token, status, zone?, needs_support?` (booleano JSON),
+  `free_text?, event_id?, hr_run_id?, channel?:"radio"|"voice"`. Ruta bloqueada exige zona válida.
+  Firma de unidad ligada a escena; no basta declarar la unidad. JSON roto/extraños: 422, token de unidad: 403.
+- `type:"external_notice"`: `source, text, zone?, event_id?, hr_run_id?`. Se etiqueta servicios externos;
+  nunca constituye aprobación para solicitar ayuda. El centro también dispone de `/api/external-notice`.
+
+Los event_id de estos tipos se consumen después de validar, bajo el cerrojo de la escena.
+Cuerpo exacto, workflow propuesto, prompt y seis pruebas: [PERSONAL-CAMPO.md](../happyrobot/PERSONAL-CAMPO.md).
+Mock local: `/mock/staff-status` y `/mock/external-notice`, envoltorio `{callback_url,callback_token,event}`.

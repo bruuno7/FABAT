@@ -3,9 +3,12 @@ import os
 import threading
 from datetime import datetime, timezone
 from urllib.parse import urlsplit, urlunsplit
+from .hr_routing import WORKFLOW_NAMES
 
 SLUGS = {'dispatch': 'slug-despacho-telefono', 'webcall': 'slug-despacho-webcall', 'voice': 'slug-ingesta-voz',
          'intake': 'slug-ingesta-texto', 'chat': 'slug-asistente-chat'}
+# Los borradores nuevos son opt-in: nunca se activan por conocer su slug.
+SLUGS.update({name: '' for name in WORKFLOW_NAMES})
 
 
 def environment(env=None):
@@ -32,11 +35,12 @@ def workflow_urls(env=None):
     ids = workflow_ids(e)
     explicit = {'dispatch': 'HR_HOOK_DISPATCH', 'webcall': 'HR_DISPATCH_WEBCALL_URL',
                 'voice': 'HR_WEBCALL_PUBLIC_URL', 'intake': 'HR_HOOK_INTAKE', 'chat': 'HR_CHAT_PUBLIC_URL'}
+    explicit.update({k: 'HR_HOOK_' + k.upper() for k in WORKFLOW_NAMES})
     # Patrón hooks de la documentación: confirmar copiando la URL del trigger en el editor.
     # El chat no tiene URL de despliegue documentada: copiar el enlace/widget real tras publicarlo.
     return {k: e.get(explicit[k] + '_' + stage.upper()) or e.get(explicit[k]) or
-            (platform_base(e) + ('/hooks/' if k in ('dispatch', 'intake') else '/deployments/') + prefix + ids[k]
-             if k != 'chat' else '') for k in ids}
+            (platform_base(e) + ('/deployments/' if k in ('webcall', 'voice') else '/hooks/') + prefix + ids[k]
+             if k != 'chat' and ids[k] else '') for k in ids}
 
 
 def safe_url(url):

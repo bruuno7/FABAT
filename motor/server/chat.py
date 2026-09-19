@@ -133,7 +133,7 @@ class ChatHub:
                     out[key] = {"value": value, "confidence": 0.7}
             return out
         offered = {"channel": channel, "lang": lang, "zone_hint": zone_hint, "profile": profile, "understand": understand,
-                   "session_id": session_id, "t": self.get_session().world.t, "zones": self.get_session().world.observe().zones}
+                   "session_id": "intake-" + secrets.token_hex(8), "t": self.get_session().world.t, "zones": self.get_session().world.observe().zones}
         try:
             accepted = inspect.signature(cls).parameters
             if not any(p.kind == p.VAR_KEYWORD for p in accepted.values()):
@@ -146,7 +146,7 @@ class ChatHub:
         with self._lock:
             c = self.chats.get(sid or "")
             if c is None:
-                sid = sid if sid and sid.startswith("tg-") else "c-" + secrets.token_urlsafe(6)
+                sid = sid if sid and sid.startswith("tg-") else "c-" + secrets.token_urlsafe(24)
                 c = self.chats[sid] = {"id": sid, "n": len(self.chats) + 1, "channel": channel, "lang": lang, "zone": zone_hint,
                                        "pulsera": pulsera, "intake": self._new_intake(channel, lang, zone_hint, self.wristband(pulsera), sid),
                                        "reports": [], "ask": None, "events": deque(maxlen=50), "seq": 0, "told": None,
@@ -278,11 +278,12 @@ class ChatHub:
         s = self.get_session()
         if c['mando_session'] != s.session_id:
             return
-        for n, rid in enumerate(c["reports"]):
-            meta = s._report_meta.setdefault(rid, {})
-            meta["chat"] = {"session": c["n"], "state": c["state"], "instruction": c["instruction"], "done": c["done"],
-                            "update_of": c["reports"][0] if n else None}
-        s._rebuild()
+        with s.lock:
+            for n, rid in enumerate(c["reports"]):
+                meta = s._report_meta.setdefault(rid, {})
+                meta["chat"] = {"session": c["n"], "state": c["state"], "instruction": c["instruction"], "done": c["done"],
+                                "update_of": c["reports"][0] if n else None}
+            s.refresh.request()
 
     # ---------------------------------------------------------------- preguntas de Mando
     def route_ask(self, session: Any, action: Any) -> str:

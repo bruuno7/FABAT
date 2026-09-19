@@ -84,6 +84,7 @@ aviso y Mando tendrá que preguntar.
 | `MANDO_VOICE_MODE` (`web_call`) | `web_call` = la voz va por llamada web (sin números +34) · `phone` = teléfono por hook/runs |
 | `HR_DISCLAIMER_S` (4) | segundos del aviso legal UE al descolgar: se restan, no son latencia del agente |
 | `MANDO_OPERATOR_TOKEN` | permite operar (aprobar, reloj, tomar llamadas) desde otra máquina de la red |
+| `MANDO_DB` | ruta de SQLite del historial (por defecto `motor/server/data/mando.db`); `off` lo desactiva |
 | `MANDO_CALLBACK_URL` | URL a la que HappyRobot devuelve los webhooks (por defecto `http://127.0.0.1:<puerto>`). El túnel, si hace falta, lo abre una persona, no este código |
 | `MANDO_ALLOWED_NUMBERS` | lista blanca OBLIGATORIA de teléfonos (E.164, comas) |
 | `MANDO_CONTACTS` | ruta alternativa a `contacts.local.json` |
@@ -204,8 +205,8 @@ llevan `strike.id`; `broken[]` y `new_plans[]` son consecuencias posteriores en 
 golpe siguiente: `attribution: "temporal"`, no una demostración causal. `locked_test` vincula el test guardado.
 El `client_id` lo facilita el navegador: sirve para repartir el presupuesto de demo, no acredita identidad.
 
-`/duelo?baseline=reroute` usa `BaselineReroute` por defecto; `?baseline=fixed` conserva la lista fija sin desvío.
-`/api/duel/state?baseline=…` y `/api/duel/session {baseline: …}` seleccionan la variante. Cada lado expone `kind`, `agent`,
+`/duelo` usa `BaselineReroute` por defecto. Los GET ignoran `baseline` y nunca cambian la comparación.
+Solo `POST /api/duel/session {baseline: "reroute"|"fixed"}` (operador) selecciona la variante. Cada lado expone `kind`, `agent`,
 `peak_zone`, `peak_zone_name`, `reroutes`, `score` y `n: 1`: los rótulos deben usar esas cifras de simulación, sin presuponer
 qué puerta se satura ni quién gana. En el duelo, lo grave se autoaprueba tras 2 minutos simulados; no es decisión humana.
 
@@ -224,3 +225,80 @@ un fallo de agente queda registrado y el mundo continúa. Un reinicio de sesión
 
 Pendiente de integración manual: frontend en edición por otro proceso, móvil real, audio/Telegram/HappyRobot reales y
 rótulos basados en los nuevos campos. No se han abierto túneles ni publicado ficheros. Ver [PENDIENTE.md](PENDIENTE.md).
+
+## Demo pública: límites y seguimiento
+
+Sin operador, `/api/strike` acepta únicamente presets y su presupuesto de tres golpes; `close_gate`
+permite elegir `gate_a`, `gate_b` o `gate_c`. Otros efectos o modificaciones exigen operador, igual que
+`GET /api/chaos/suggest`. `/caos` conserva su uso con la cookie de `/acceso` o en local.
+El modo local simulado mantiene sus permisos y controles habituales.
+
+Los avisos públicos de `/api/report` y `/api/chat` devuelven referencias aleatorias en `report_id` y
+`reports`. Solo esas referencias permiten consultar o contestar en `/api/report/{ref}`; caducan al
+reiniciar la sesión. `report_refs` relaciona las referencias de esa respuesta con los ids internos
+para seguir el mismo incidente en la pantalla; conocer un id interno no concede acceso. El operador
+y las integraciones conservan los ids internos. Las sesiones `tg-` no se leen ni continúan desde la web.
+
+La cuota usa `CF-Connecting-IP` (preferente) o la primera IP de `X-Forwarded-For` solo si está configurada
+`MANDO_PUBLIC_URL` o el peer es loopback; en otro caso, o con una cabecera inválida, usa la IP directa.
+Estas cabeceras nunca conceden acceso de operador. Las llamadas web esperan 75 s al descuelgue y
+45 s al resultado; el descuelgue concurrente se rechaza. Telegram procesa hasta ocho actualizaciones
+en paralelo y mantiene como máximo 32 trabajos entre activos y pendientes.
+
+
+## Personal de campo y varios operadores
+
+Tres perspectivas: público en `/asistente`, equipos en `/personal` y coordinación compartida en `/centro`.
+El modo inicial y las teclas de `/` se conservan. Desde **Enlaces del personal** en el centro se eligen
+unidad del recinto y cargo; se generan enlace firmado y QR. El HMAC usa `MANDO_STAFF_SECRET` si está
+configurado o un secreto aleatorio del servidor por escena. Caduca al finalizar/reiniciar la escena.
+El token está en el fragmento del enlace, después en sessionStorage y cabecera `X-Mando-Unit`;
+no concede permisos de operador y nunca lleva teléfonos.
+
+`/personal` enseña solo las órdenes vigentes de la unidad, aceptar/rechazar con motivo y botones de estado,
+texto libre o nuevo aviso. `GET /api/personal/me`, `POST /api/personal/status`,
+`POST /api/personal/order/{id}` exigen ese token. `POST /api/personal/links` y `/api/personal/qr`
+exigen operador. `GET /api/personal/catalog` contiene únicamente nombres/ids y cargos.
+Los partes usan `Report` RADIO/VOICE, `source=unit_id`, y metadatos del servidor `staff_unit`,
+`staff_status`, `source_label`: no se cambia `motor/contracts.py` ni `INTERFACES.md`.
+Partes operativos no abren incidentes artificiales: se enlazan al asignado y sus efectos entran en
+Observation y el tratamiento sitrep existente. `new_notice` usa la ingesta/fusión normal.
+La ruta bloqueada marca zona y recurso: al siguiente tick Mando rompe el supuesto y replantea si
+existía un plan dependiente. Cada parte conserva su Report y su línea explicada en el log.
+
+Operadores: `MANDO_OPERATORS="Marta:sanitario:<token-1>,Luis:seguridad:<token-2>"` (también admite punto
+ y coma o saltos de línea). Nombres/papeles no vacíos y tokens distintos; configuración inválida impide
+arrancar. `MANDO_OPERATOR_TOKEN` continúa como `operador-1`. `/acceso` emite la cookie HttpOnly existente;
+`X-Mando-Operator` sirve para API. Sin tokens en localhost, el centro permite seleccionar nombre/papel.
+La identidad de una decisión viene de la credencial; el campo `by` del cliente no la suplanta.
+
+El centro muestra presencia (heartbeat 10 s, caducidad 35 s), incidente abierto, **Lo llevo yo**, soltar,
+filtro **Los míos**, papel sugerido y fuentes fusionadas. Las notas admiten `@sanitario`, `@seguridad`, etc.
+Presencia, propietarios, notas y acciones llegan por el SSE existente. Asumir no impide actuar a otros.
+Aprobar/vetar/corregir/tomar una llamada se reservan bajo el cerrojo de la escena: un segundo intento
+recibe 409 con persona, papel y tiempo transcurrido. Una toma fallida libera la reserva para reintentar.
+`MANDO_TWO_PERSON=1` exige dos identidades distintas para evacuar, parar y solicitar ayuda externa;
+el primer voto muestra **1 de 2** y no ejecuta nada. El veto sigue siendo inmediato. Las firmas no se
+mezclan entre propuesta original y corrección. Una propuesta retirada ya no se puede refrendar.
+`/informe` incluye identidad, hora, acciones y latencia por operador (segundos hasta su voto; N visible).
+
+HappyRobot: `staff_status` requiere `HR_SECRET` **y** `unit_token`; `external_notice` requiere `HR_SECRET`.
+Ambos rechazan el token público del widget. Contrato exacto y seis casos en
+[PERSONAL-CAMPO.md](../happyrobot/PERSONAL-CAMPO.md). El mock incorpora `/mock/staff-status` y
+`/mock/external-notice`. Entrada manual externa: centro → Aviso de 112 / servicios externos.
+No se ha montado ni probado este workflow en la plataforma real.
+
+Conversaciones web: identificadores aleatorios de 192 bits emitidos por servidor, almacenamiento por
+pestaña (sessionStorage), **Otro aviso** crea conversación nueva y SSE específico de esa conversación.
+Duplicar pestaña descarta la conversación heredada (Web Locks); una recarga conserva la propia.
+En HTTP LAN sin Web Locks, toda navegación nueva inicia una conversación nueva. El identificador interno
+de IntakeSession es distinto del acceso secreto web: nunca se publica este último en el estado compartido.
+Los cambios de pantalla del chat se agrupan hasta 100 ms; no se retrasa la entrada del Report en el mundo.
+La clasificación de privacidad se reutiliza mientras no cambia el aviso y la limpieza recorre el JSON
+una sola vez. Cuota predeterminada: 300 mutaciones/minuto/IP para soportar usuarios tras la wifi compartida;
+`MANDO_PUBLIC_RATE_MAX` sigue permitiendo reducirla y conserva 429, límite de cuerpo y cuota de páginas.
+Prueba local N=50 sesiones × 4 turnos: tick máximo 0,0801 s en la primera medición integrada (antes 9,3730 s).
+Es una medición local de esta ejecución, no garantía de producción; la suite imprime el máximo en cada pasada.
+
+Pruebas: `test_personal.py`, `test_multi.py`, `test_team_services.py`, `test_chat_tabs.py`; incluyen carrera 200/409,
+doble firma, presencia/SSE, credenciales, bloqueo de ruta y carga de chat. Todo se verifica sin plataforma.

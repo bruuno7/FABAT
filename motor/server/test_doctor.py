@@ -275,6 +275,16 @@ class TestConfiguracionYRed(BaseDoctor):
             self.assertEqual(c.estado, "falta" if key else "aviso")
             self.assertIn("comprueba clúster" if key else "no demuestra", c.consecuencia)
 
+    def test_avisa_poll_con_tunel_y_cors_vacio(self):
+        self.con_entorno(MANDO_PUBLIC_URL="https://tunnel.example", TELEGRAM_MODE="poll", MANDO_VOICE_MODE="web_call")
+        d = self.diagnosticar()
+        self.assertEqual(self.estado(d, "TELEGRAM_MODE espejo"), "aviso")
+        self.assertEqual(self.estado(d, "MANDO_CORS_ORIGINS"), "aviso")
+
+    def test_rechaza_voice_mode_desconocido(self):
+        self.con_entorno(MANDO_VOICE_MODE="phone_call")
+        self.assertEqual(self.estado(self.diagnosticar(), "MANDO_VOICE_MODE"), "falta")
+
     def test_configuracion_completa_sin_red_sale_cero_sin_afirmar_llamada_real(self):
         self.con_entorno(**ENTORNO_COMPLETO)
         raiz = self.raiz_completa()

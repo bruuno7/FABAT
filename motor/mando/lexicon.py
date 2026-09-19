@@ -52,6 +52,16 @@ CALM = "Por favor, mantened la calma y seguid las indicaciones del personal."
 WATER = "Hace mucho calor: bebed agua a menudo y buscad sombra. Hay puntos de agua gratis al norte y al sur."
 SPACE = "Por favor, dad un paso atrás y dejad espacio. Hay accesos y zonas con más sitio."
 
+# Combinaciones de vocabulario, con contexto próximo: no son frases del banco.
+_GAP = r"(?:\s+\w+){0,6}\s+"
+_STRUCTURE = r"\b(?:valla|vallado|barrera|carpa|torre|estructura|pantalla|soporte|escenario|plataforma|rampa|suelo|aseos|fence|barrier)\b"
+_DAMAGE = r"(?:caid[oa]|rot[oa]|cedi\w*|cede|doblad\w*|doblao|inclinad\w*|cruje|hund\w*|suelt\w*|soltad\w*|tambalea\w*|down\b|broke\w*)"
+_BAG = r"\b(?:mochila|maleta|bolsa|paquete|bulto|objeto|bag|package|backpack|suitcase)\b"
+_SUSPECT = r"(?:sin duen\w*|abandonad\w*|sospechos\w*|rar[oa]\b|nadie lo recoge|unattended|weird|unclaimed)"
+_STAFF_WORD = r"(?:personal|staff|stewards?|seguridad|voluntari\w*|sanitari\w*|medic\w*|tecnic\w*|camarer\w*|supervisor|crew|relevo)"
+_STOCK = r"(?:agua|comida|hielo|botellas?|vasos?|papel|jabon|vendas?|suero|material|kits?|snacks?|cubatas?|tallas?)\b"
+_SHORTAGE = r"(?:no (?:\w+ ){0,2}(?:hay|queda\w*)|sin|faltan?|agotad\w*|acab\w*)"
+
 
 def _t(type_, family, severity, needs, deadline, group, patterns, **kw) -> TypeSpec:
     return TypeSpec(type_, family, severity, needs, deadline, group, tuple(patterns), **kw)
@@ -86,7 +96,7 @@ SPECS = [
         r"dehydrat", r"coup de chaleur", r"hitzschlag", r"insolacao"], heat=True),
     _t("intoxication", M, 6, {"medical": 1}, 15, "intox", [
         r"sobredosis", r"overdose", r"intoxic", r"borrach", r"coma etilico", r"ha tomado algo", r"pastillas",
-        r"\bdrogas?\b", r"burundanga", r"le han echado algo", r"\bdrunk\b", r"spiked", r"ivre\b", r"betrunken"]),
+        r"\bdrog(?:as?|ad[oa]s?)\b", r"burundanga", r"le han echado algo", r"\bdrunk\b", r"spiked", r"ivre\b", r"betrunken"]),
     _t("injury", M, 5, {"medical": 1}, 20, "injury", [
         r"herid", r"sangr", r"fractura", r"se ha caido", r"se cayo", r"esguince", r"\bcortes?\b", r"brecha",
         r"golpe en la cabeza", r"tobillo", r"quemadura", r"injur", r"bleed", r"broken (leg|arm|ankle)",
@@ -97,7 +107,7 @@ SPECS = [
 
     # ------------------------------------------------------------------ multitud
     _t("crush_risk", C, 9, {"security": 2, "medical": 1}, 6, "crowd", [
-        r"aplast", r"avalancha", r"estampida", r"gente cayendo", r"se cae la gente", r"nos ahogamos",
+        r"aplast", r"avalancha", r"estampida", r"gente cayendo", r"se cae (la )?gente", r"nos ahogamos",
         r"no podemos respirar", r"\bcrush", r"stampede", r"trampl", r"ecras", r"bousculade", r"gedrange",
         r"esmag", r"pisote"], restrict=True, reroute=True, broadcast=SPACE, notify=("security_lead",)),
     _t("crowd_surge", C, 8, {"security": 2}, 10, "crowd", [
@@ -106,6 +116,7 @@ SPECS = [
         r"packed", r"trop de monde", r"zu viele", r"muita gente"], reroute=True, broadcast=SPACE),
     _t("gate_saturation", C, 7, {"security": 1}, 20, "crowd", [
         r"atasc", r"colaps", r"cola enorme", r"no avanza", r"saturad", r"tapon", r"embudo", r"bottleneck", r"jammed",
+        r"cuello de botella", r"agolp",
         r"gridlock", r"embouteill", r"\bstau\b", r"\bfila enorme"],
        weak=(r"\bcolas?\b", r"\btornos?\b", r"\bqueues?\b", r"turnstile"), reroute=True,
        broadcast="Este acceso está lleno: hay otras puertas con menos espera."),
@@ -120,10 +131,12 @@ SPECS = [
         r"gewitter", r"tempestade"], sitewide=True, stop_show=True, notify=("production",),
        broadcast="Se acerca una tormenta: alejaos de torres, pantallas y estructuras."),
     _t("high_wind", W, 7, {"tech": 1}, 20, "weather", [
-        r"viento", r"\brachas?\b", r"vendaval", r"\bwind", r"\bgusts?\b", r"vent fort", r"sturm"],
+        r"viento", r"\brachas?\b", r"vendaval", r"\bwind", r"\bgusts?\b", r"vent fort", r"sturm",
+        r"(?:sombrillas?|paraguas|lonas?|toldos?)" + _GAP + r"volando"],
        sitewide=True, restrict=True, notify=("production",)),
     _t("heavy_rain", W, 4, {}, 30, "weather", [
-        r"lluvia", r"llov", r"lluev", r"diluvi", r"granizo", r"\brain", r"\bhail", r"pluie", r"\bregen", r"chuva"],
+        r"lluvia", r"llov", r"lluev", r"diluvi", r"graniz", r"\brain", r"\bhail", r"pluie", r"\bregen", r"chuva",
+        r"\bflood", r"encharc", r"\bbarro\b"],
        sitewide=True),
     _t("heat_wave", W, 6, {"logistics": 1}, 30, "heat_env", [
         r"ola de calor", r"calor extremo", r"calor insoportable", r"temperatura", r"heat ?wave",
@@ -131,17 +144,19 @@ SPECS = [
 
     # ------------------------------------------------------------------ agresiones (nunca megafonía)
     _t("weapon", A, 9, {"security": 2}, 5, "violence", [
-        r"navaja", r"cuchillo", r"\barmas?\b", r"armad[oa]", r"pistola", r"\bknife", r"\bguns?\b", r"weapon",
+        r"navaja", r"cuchillo", r"\barmas?\b", r"armad[oa]", r"pistola", r"\bknife", r"\bguns?\b", r"weapon", r"apunal", r"\bstabb",
         r"couteau", r"messer", r"\bfaca\b"], threat=True, reserved=True, notify=("security_lead",), external="police"),
     _t("sexual_assault", A, 8, {"security": 1}, 8, "violence_sexual", [
         r"agresion sexual", r"abus[oa]", r"tocamient", r"(la|me|le) han tocado", r"violacion", r"violad",
-        r"acos[oa]", r"punto violeta", r"sexual", r"harass", r"groped", r"belastig"],
+        r"acos[oa]", r"punto violeta", r"sexual", r"harass", r"grop(?:ed|ing)", r"belastig",
+        r"no (?:la|le|me) deja en paz"],
        reserved=True, notify=("violet_point",), external="police"),
     _t("fight", A, 6, {"security": 2}, 10, "violence", [
         r"pelea", r"se estan pegando", r"se pegan", r"punetazo", r"\bbronca", r"\brina\b", r"agresion",
-        r"agredi", r"\bfight", r"brawl", r"punch", r"bagarre", r"schlagerei", r"\bbriga"]),
+        r"agredi", r"\bfight", r"brawl", r"punch", r"bagarre", r"schlagerei", r"\bbriga",
+        r"paliza", r"pegand", r"\bhitting\b", r"\bassault\b"]),
     _t("theft", A, 3, {"security": 1}, 45, "theft", [
-        r"\brobo\b", r"robado", r"robando", r"robaron", r"hurt[oa]", r"carterista", r"me han quitado",
+        r"\brob(?:o|an|a|ado|ando|aron)\b", r"hurt[oa]", r"carterista", r"me han quitado",
         r"stolen", r"\btheft", r"pickpocket", r"\bvole\b", r"gestohlen", r"roubo"]),
 
     # ------------------------------------------------------------------ suministros
@@ -151,37 +166,43 @@ SPECS = [
         r"kein wasser", r"sem agua"], reroute=True,
        broadcast="Este punto de agua está sin servicio unos minutos: hay agua en el otro punto."),
     _t("fuel_shortage", S, 5, {"logistics": 1}, 30, "fuel", [
+        _SHORTAGE + _GAP + r"(?:combustible|gasoil|gasoleo|fuel|diesel)\b",
         r"combustible", r"gasoil", r"gasoleo", r"\bfuel\b", r"diesel"], notify=("production",)),
     _t("medical_supplies", S, 5, {"logistics": 1}, 30, "medsupply", [
-        r"sin material", r"faltan? (vendas|suero|material|medic)", r"out of (bandages|supplies)"], notify=("medical_lead",)),
+        r"sin material", r"faltan? (vendas|suero|material|medic)", r"out of (bandages|supplies)",
+        _SHORTAGE + _GAP + r"(?:vendas?|suero|material|kits?)\b"], notify=("medical_lead",)),
     _t("food_shortage", S, 3, {"logistics": 1}, 60, "food", [
-        r"sin comida", r"no queda comida", r"out of food", r"no food"]),
+        r"sin comida", r"no (?:\w+ ){0,2}queda comida", r"out of food", r"no (more )?food"]),
 
     # ------------------------------------------------------------------ infraestructura
     _t("fire", I, 9, {"security": 1, "tech": 1}, 5, "fire", [
         r"fuego", r"incendi", r"\bhumo\b", r"en llamas", r"\bllamas\b", r"\barde\b", r"ardiendo",
         r"huele a quemado", r"\bfire\b", r"smoke", r"flames", r"\bfeu\b", r"feuer", r"rauch", r"\bfogo\b",
-        r"fumaca"], restrict=True, external="fire"),
+        r"fumaca", r"\bconato\b", r"chisp", r"\bsparks?\b", r"cortocircuit", r"electrocut"], restrict=True, external="fire"),
     _t("structure_risk", I, 9, {"tech": 1, "security": 1}, 8, "structure", [
-        r"estructura", r"se (esta )?(cae|mueve|tambalea|inclina)", r"torre de (sonido|luces)", r"\btruss",
+        _STRUCTURE + _GAP + _DAMAGE, r"soltad\w*" + _GAP + _STRUCTURE,
+        r"(?:riesgo|peligro)" + _GAP + _STRUCTURE,
+        r"se (esta )?(cae|mueve|tambalea|inclina) (?:la |el |una? )?" + _STRUCTURE,
+        r"torre de (sonido|luces)", r"\btruss",
         r"valla (rota|caida|ha cedido|cedio|cede)", r"barrera (rota|caida|ha cedido|cedio|cede)", r"\bgrada",
         r"derrumb", r"collaps(ing|ed) (stage|tower|structure)", r"structure", r"barrier (broke|fail|gave)",
         r"scaffold", r"effondr", r"einsturz"], restrict=True, close=True),
     _t("power_outage", I, 6, {"tech": 1}, 20, "power", [
         r"apagon", r"sin luz", r"se ha ido la luz", r"se fue la luz", r"no hay luz", r"corte de luz",
-        r"sin electricidad", r"generador", r"a oscuras", r"power (outage|cut|is out|failure)", r"blackout",
+        r"sin electricidad", r"a oscuras", r"power (outage|cut|is out|failure)", r"blackout",
         r"no power", r"panne de courant", r"stromausfall", r"sem luz"], notify=("production",)),
     _t("network_down", I, 4, {"tech": 1}, 30, "network", [
-        r"sin cobertura", r"no hay red", r"\bwifi", r"radio no funciona", r"walkies? (no|sin)",
+        r"sin cobertura", r"no hay red", r"wifi (?:no|sin|fall)", r"radio no funciona", r"walkies? (no|sin)",
         r"network (is )?down", r"no signal"], sitewide=True, notify=("all_leads",)),
     _t("sound_failure", I, 4, {"tech": 1}, 30, "sound", [
-        r"sin sonido", r"no se oye", r"megafonia (no|fall)", r"no sound", r"sound (is )?down"], notify=("production",)),
+        r"sin sonido", r"no se oye", r"megafonia (no|fall)", r"no sound", r"sound (is )?down",
+        r"sonido" + _GAP + r"(?:pet\w*|fall\w*|pitido)"], notify=("production",)),
     _t("toilets_failure", I, 3, {"tech": 1}, 60, "toilets", [
-        r"ban[oa]s? (atascad|inundad|rot|sin|cerrad|desbord)", r"aseos? (atascad|inundad|rot|sin)",
-        r"\bwc\b", r"inodoro", r"toilets? (are |is )?(blocked|flooded|broken|overflow)"]),
+        r"(?:ban[oa]s?|aseos?|wc|inodoros?) (?:estan? )?(atascad|inundad|rot|cerrad|desbord)",
+        r"toilets? (are |is )?(blocked|flooded|broken|overflow)"]),
     _t("payment_down", I, 3, {"tech": 1}, 60, "payment", [
         r"datafono", r"cashless", r"no (se puede|deja|podemos) pagar", r"\btpv\b", r"pulseras? no",
-        r"payment", r"card reader"], sitewide=True, notify=("production",)),
+        r"payment", r"card reader", r"contactless"], sitewide=True, notify=("production",)),
 
     # ------------------------------------------------------------------ recursos propios
     _t("resource_down", R, 5, {}, 15, "resource", [
@@ -191,6 +212,7 @@ SPECS = [
 
     # ------------------------------------------------------------------ externos
     _t("suspicious_object", X, 9, {"security": 1}, 10, "threat", [
+        _BAG + r"(?:\s+\w+){0,10}\s+" + _SUSPECT,
         r"(mochila|maleta|bolsa|paquete|bulto|objeto) (abandonad|sospechos|sol[oa]\b|sin duen)",
         r"unattended (bag|package|backpack)", r"suspicious", r"colis suspect", r"sac abandonne",
         r"verdachtig", r"sospechos"], threat=True, reserved=True, restrict=True, notify=("security_lead",),
@@ -252,16 +274,24 @@ THREAT = re.compile(r"\bbomba\b|explosiv|amenaza|atentado|sospechos|\barmas?\b|a
                     r"threat|suspicious|gunshots?|shooting")
 # Pistas de familia, de más a menos específica. Vocabulario general: no describe tipos, solo «de qué va».
 FAMILY_CUES: list[tuple[Family, re.Pattern]] = [
+    (R, re.compile(_SHORTAGE + _GAP + _STAFF_WORD + r"\b|"
+                   r"no\s+" + _STAFF_WORD + r"\b|"
+                   r"(?:cero|mas|more)\s+" + _STAFF_WORD + r"\b|"
+                   r"ambulanc\w*" + _GAP + r"no puede pasar")),
+    (S, re.compile(_SHORTAGE + _GAP + _STOCK + r"|sold out|"
+                   r"(?:bidones?|barricas?|depositos?)" + _GAP + r"vaci[oa]s?")),
+    (I, re.compile(r"tuberi|cables? pelad|(?:suelo|pavimento)" + _GAP + r"levantad")),
     (M, re.compile(r"medic|sanitari|enfermer|doctor|ambulanc|dolor|enferm[oa]|\bpecho\b|paramedic|first aid|\bsick\b|"
-                   r"\bpain\b|medecin|\barzt\b|respira|en el suelo|on the ground")),
-    (A, re.compile(r"agres|violen|insult|\bpega|golpea|attack|molest")),
+                   r"\bpain\b|medecin|\barzt\b|respira|en el suelo|on the ground|"
+                   r"diabet|insulina|fiebre|fever|hinch(?:ad|ao)|torcid|tiemb|tembl|ojos en blanco|no puede andar")),
+    (A, re.compile(r"agres|violen|insult|\bpega|golpea|attack|molest|siguiendo a (?:chicas?|mujeres?)")),
     (X, re.compile(r"policia|bomberos|trafico|carretera|autobus|\bbuses\b|\bmetro\b|\btren|taxi|parada\b|lanzadera")),
     (I, re.compile(r"\brot[oa]s?\b|averia|no funciona|estropead|\bfuga\b|\bcables?\b|broken|"
                    r"not working|kaputt|en panne")),
     (S, re.compile(r"no queda|se ha acabado|se acabo|\bfaltan?\b|agotad|run out|ran out")),
-    (W, re.compile(r"lluv|viento|calor|tormenta|granizo|\bfrio\b|weather|\brain|\bwind|\bheat\b")),
+    (W, re.compile(r"lluv|viento|calor|tormenta|graniz|\bfrio\b|weather|\brain|\bwind|\bheat\b|too hot|mojadisim")),
     (R, re.compile(r"companer|\bunidad\b|vehiculo|walkie|\bturno\b")),
-    (C, re.compile(r"\bgente\b|multitud|aglomeraci|\baforo\b|crowd|people|foule|menge")),
+    (C, re.compile(r"\bgente\b|multitud|aglomeraci|\baforo\b|crowd|people|foule|menge|\bpetad[oa]s?\b")),
 ]
 
 
@@ -280,8 +310,8 @@ def generic_family(norm: str) -> tuple[Family, bool, bool]:
 
 # ---------------------------------------------------------------------------- zonas
 
-GATE = re.compile(r"\b(?:puerta|gate|acceso|entrada|entree|porte|tor|eingang|portao|porta|entrance|tornos?)s?\s+([abc])\b"
-                  r"(?!\s+(?:la|el|los|las|un|una|mi|su|pie|lot|few|big)\b)")
+GATE = re.compile(r"\b(?:puerta|gate|acceso|entrada|entree|porte|tor|eingang|portao|porta|entrance|tornos?)s?\s+"
+                  r"((?:a(?!\s+(?:la|el|los|las|un|una|mi|su|pie|lot|few|big)\b))|[bc])\b")
 GATE_DIR = re.compile(r"\b(?:puerta|acceso|entrada|salida|gate|entrance|exit)\s+(norte|sur|principal|north|south|main)\b"
                       r"|\b(north|south|main)\s+(?:gate|entrance)\b")
 # «detrás de los baños», «junto a la barra»: la zona es la del punto de referencia, con algo menos de confianza.
@@ -301,17 +331,17 @@ ZONE_ALIASES: list[tuple[str, str]] = [
             r"fauteuils? roulants?"),
     ("vip", r"(zona |area |sector )?\bvip\b|\bpalcos?\b"),
     ("medical_1", r"(puesto medico|puesto de socorro|enfermeria|botiquin|cruz roja|medical (post|tent|point))\s*(1|uno|sur|del sur|"
-                  r"junto al? escenario)"),
+                  r"junto al? escenario)|south (?:med(?:ical)?|first aid)(?: (?:tent|post|point))?"),
     ("medical_2", r"(puesto medico|puesto de socorro|enfermeria|botiquin|cruz roja|medical (post|tent|point))\s*(2|dos|norte|"
-                  r"del norte)"),
+                  r"del norte)|north (?:med(?:ical)?|first aid)(?: (?:tent|post|point))?"),
     ("water_n", r"(puntos?|fuentes?|grifos?) (de agua )?(del |de la zona )?norte|agua (del )?norte|north water|"
-                r"water (point |station )?north|point d eau nord|wasserstelle nord|ponto de agua norte"),
+                r"water (point |station )?north|north refill|point d eau nord|wasserstelle nord|ponto de agua norte"),
     ("water_s", r"(puntos?|fuentes?|grifos?) (de agua )?(del |de la zona )?sur|agua (del )?sur|south water|"
-                r"water (point |station )?south|point d eau sud|wasserstelle sud|ponto de agua sul"),
+                r"water (point |station )?south|south refill|point d eau sud|wasserstelle sud|ponto de agua sul"),
     ("corridor_n", r"(pasillo|corredor|paso) (del )?norte|north(ern)? (corridor|walkway|path)|couloir nord|nordgang"),
     ("corridor_s", r"(pasillo|corredor|paso) (del )?sur|south(ern)? (corridor|walkway|path)|ruta de (la )?ambulancias?|"
                    r"ambulance route|couloir sud|sudgang"),
-    ("food", r"\bbarras?\b|\bbar\b|(zona|puestos?|area) de (comidas?|bebidas?)|restauracion|food ?trucks?|foodtrucks?|"
+    ("food", r"\bbarras?\b|\bbar(?:es)?\b|(zona|puestos?|area) de (comidas?|bebidas?)|restauracion|food ?trucks?|foodtrucks?|"
              r"food (court|area|zone|stands?|stalls?)|\bcantina\b|hamburgues|cervezas?|\bcopas\b|essensbereich|\bcomida\b"),
     ("toilets", r"\bban[oa]s?\b|\baseos?\b|\bwc\b|lavabos?|urinarios|\bservicios\b|\btoilets?\b|restrooms?|bathrooms?|"
                 r"\bloos?\b|toilettes|toiletten|casas? de banho|banheiros?"),

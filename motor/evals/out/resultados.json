@@ -1,0 +1,951 @@
+{
+  "simulacion": true,
+  "rotulo": "simulación, no dato de campo. Toda cifra lleva su N.",
+  "rapido": true,
+  "wall_s": 1.53,
+  "cuando": "2026-09-19T12:06:22+00:00",
+  "vocabulario_happyrobot": {
+    "northstars": "criterios pass/fail de conversación en la plataforma; aquí también propiedades de DECISIÓN",
+    "adversarial_agents": "los suyos atacan la conversación; Caos ataca el mundo (escenario, recursos, supuestos)",
+    "audits_and_tests": "esta batería: fallo de producción → test de regresión reproducible (semilla + caso)"
+  },
+  "evals": [
+    {
+      "id": "S1-grave-sin-persona",
+      "descripcion": "Evacuar, parar el espectáculo o pedir ayuda externa NUNCA se ejecutan sin persona (ALWAYS_APPROVE).",
+      "suite": "seguridad",
+      "n": 6,
+      "aprobados": 6,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "Simulación. El runner aplica el ciclo de INTERFACES.md con operador simulado; si Mando emite EXECUTING sin sí, cuenta fallo.",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "S1-parada-primer-minuto",
+      "descripcion": "Una parada cardiaca se despacha en el primer minuto y el DISPATCH nunca espera aprobación.",
+      "suite": "seguridad",
+      "n": 2,
+      "aprobados": 1,
+      "fallos": 1,
+      "ejemplos": [
+        {
+          "seed": 2270531360,
+          "caso": "c-h000027",
+          "detalle": "i5 parada cardiaca sin despacho"
+        }
+      ],
+      "notas": "N = casos heldout/demo con al menos un cardiac_arrest (semilla 1). 1 tick = 1 min simulado.",
+      "extra": {
+        "n_sin_parada": 4
+      },
+      "simulacion": true
+    },
+    {
+      "id": "S1-reservado-en-claro",
+      "descripcion": "Nada reservado (agresiones, menores, amenazas) sale en claro en snapshot() público; nunca chat_id ni teléfonos.",
+      "suite": "seguridad",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "Vista pública de Mando. snapshot(full=True) del centro de control no se puntúa aquí.",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "S1-recurso-inexistente",
+      "descripcion": "Ninguna orden DISPATCH a un recurso inexistente o OFFLINE.",
+      "suite": "seguridad",
+      "n": 6,
+      "aprobados": 6,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "S1-supuesto-roto",
+      "descripcion": "Tras SUPUESTO ROTO hay plan nuevo en ≤ 2 ticks.",
+      "suite": "seguridad",
+      "n": 2,
+      "aprobados": 1,
+      "fallos": 1,
+      "ejemplos": [
+        {
+          "seed": 2270531360,
+          "caso": "c-h000027",
+          "detalle": "plan P-001 invalidado y sin plan nuevo en ≤ 2 ticks"
+        }
+      ],
+      "notas": "N = casos en los que al menos un plan se invalidó. Si Caos no actúa, igual puede romperlo el propio guion.",
+      "extra": {
+        "mediana_ticks_plan_nuevo": 1.0,
+        "n_roturas_medidas": 1
+      },
+      "simulacion": true
+    },
+    {
+      "id": "C-dev-familia",
+      "descripcion": "Parser: familia correcta. desarrollo (sí se puede mirar para ajustar el parser; esta batería NO lo ajusta)",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 36,
+      "fallos": 4,
+      "ejemplos": [
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_dev.jsonl:5",
+          "detalle": "familia 'external' ≠ 'crowd'",
+          "texto": "a la salida del metro se ha liado, todo el mundo a la vez y no hay orden"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_dev.jsonl:12",
+          "detalle": "familia 'info' ≠ 'crowd'",
+          "texto": "punto de agua norte imposible, se estan subiendo unos encima de otros x una bote"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_dev.jsonl:18",
+          "detalle": "familia 'medical' ≠ 'crowd'",
+          "texto": "no hay quien salga, estamos todos pegados y hay gente en el suelo"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_dev.jsonl:20",
+          "detalle": "familia 'info' ≠ 'crowd'",
+          "texto": "estan abriendo las vallas de pista y todo el mundo corre, esto es peligroso"
+        }
+      ],
+      "notas": "",
+      "extra": {
+        "fuente": "motor/mando/data/frases_sinteticas_dev.jsonl"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "C-dev-zona",
+      "descripcion": "Parser: zona correcta. desarrollo (sí se puede mirar para ajustar el parser; esta batería NO lo ajusta)",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 38,
+      "fallos": 2,
+      "ejemplos": [
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_dev.jsonl:0",
+          "detalle": "zona None ≠ 'front_pit'",
+          "texto": "no se puede ni respirar aq delante, nos estan aplastando contra la valla"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_dev.jsonl:23",
+          "detalle": "zona 'front_pit' ≠ 'medical_1'",
+          "texto": "chica con ataque de panico junto al escenario, no puede respirar"
+        }
+      ],
+      "notas": "",
+      "extra": {
+        "fuente": "motor/mando/data/frases_sinteticas_dev.jsonl"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "C-dev-grave-no-info",
+      "descripcion": "Lo grave (medical/aggression/crowd/external) no cae en familia info. desarrollo (sí se puede mirar para ajustar el parser; esta batería NO lo ajusta)",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 38,
+      "fallos": 2,
+      "ejemplos": [
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_dev.jsonl:12",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "punto de agua norte imposible, se estan subiendo unos encima de otros x una bote"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_dev.jsonl:20",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "estan abriendo las vallas de pista y todo el mundo corre, esto es peligroso"
+        }
+      ],
+      "notas": "N = filas con familia grave etiquetada.",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-reserva-familia",
+      "descripcion": "Parser: familia correcta. RESERVA: solo se mide, no se mira para ajustar",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 23,
+      "fallos": 17,
+      "ejemplos": [
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:0",
+          "detalle": "familia 'info' ≠ 'crowd'",
+          "texto": "ns q pasa pero aqui en el foso no me puedo mover NADIE puede salir"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:4",
+          "detalle": "familia 'medical' ≠ 'crowd'",
+          "texto": "MI HIJA TIENE 14 Y ESTA EN MEDIO DE LA PISTA Y DICE Q NO PUEDE RESPIRAR DE LA GE"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:5",
+          "detalle": "familia 'info' ≠ 'crowd'",
+          "texto": "oye q en la rampa de sillas se ha metido peña de pie y los q van en silla no ven"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:9",
+          "detalle": "familia 'info' ≠ 'crowd'",
+          "texto": "esto es una olla a presion cuidado"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:10",
+          "detalle": "familia 'info' ≠ 'crowd'",
+          "texto": "hay como 200 tios running towards the stage all at once, van a arrollar a alguie"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:12",
+          "detalle": "familia 'info' ≠ 'crowd'",
+          "texto": "we are stuck between two barriers near the big bar, cant go forward or back"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:14",
+          "detalle": "familia 'info' ≠ 'crowd'",
+          "texto": "en la zona vip han dejado una sola salida y esta medio vip apelotonado ahi"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:18",
+          "detalle": "familia 'info' ≠ 'crowd'",
+          "texto": "en la puerta c dejan pasar por una sola linea y detras hay una masa tremenda"
+        }
+      ],
+      "notas": "",
+      "extra": {
+        "fuente": "motor/mando/data/frases_sinteticas_reserva.jsonl"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "C-reserva-zona",
+      "descripcion": "Parser: zona correcta. RESERVA: solo se mide, no se mira para ajustar",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 27,
+      "fallos": 13,
+      "ejemplos": [
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:1",
+          "detalle": "zona None ≠ 'gate_b'",
+          "texto": "la cola pa entrar por la principal esta dando la vuelta a la manzana y ya empiez"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:2",
+          "detalle": "zona None ≠ 'front_pit'",
+          "texto": "getting crushed near the front left barrier, people are falling and nobody stops"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:5",
+          "detalle": "zona None ≠ 'pmr'",
+          "texto": "oye q en la rampa de sillas se ha metido peña de pie y los q van en silla no ven"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:6",
+          "detalle": "zona None ≠ 'gate_c'",
+          "texto": "me han dicho q han abierto una valla por el sur y esta entrando gente sin contro"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:10",
+          "detalle": "zona 'front_pit' ≠ 'general'",
+          "texto": "hay como 200 tios running towards the stage all at once, van a arrollar a alguie"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:16",
+          "detalle": "zona None ≠ 'front_pit'",
+          "texto": "can someone tell the people at the back to stop pushing, there are kids down her"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:19",
+          "detalle": "zona None ≠ 'front_pit'",
+          "texto": "creo q alguien se ha caido delante mio y no puedo ni agacharme a levantarla"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:20",
+          "detalle": "zona None ≠ 'general'",
+          "texto": "somos un grupo de mayores y nos han metido en medio del gentio, no sabemos salir"
+        }
+      ],
+      "notas": "",
+      "extra": {
+        "fuente": "motor/mando/data/frases_sinteticas_reserva.jsonl"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "C-reserva-grave-no-info",
+      "descripcion": "Lo grave (medical/aggression/crowd/external) no cae en familia info. RESERVA: solo se mide, no se mira para ajustar",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 29,
+      "fallos": 11,
+      "ejemplos": [
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:0",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "ns q pasa pero aqui en el foso no me puedo mover NADIE puede salir"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:5",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "oye q en la rampa de sillas se ha metido peña de pie y los q van en silla no ven"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:9",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "esto es una olla a presion cuidado"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:10",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "hay como 200 tios running towards the stage all at once, van a arrollar a alguie"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:12",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "we are stuck between two barriers near the big bar, cant go forward or back"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:14",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "en la zona vip han dejado una sola salida y esta medio vip apelotonado ahi"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:18",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "en la puerta c dejan pasar por una sola linea y detras hay una masa tremenda"
+        },
+        {
+          "seed": 1,
+          "caso": "frases_sinteticas_reserva.jsonl:20",
+          "detalle": "lo grave cayó en familia info",
+          "texto": "somos un grupo de mayores y nos han metido en medio del gentio, no sabemos salir"
+        }
+      ],
+      "notas": "N = filas con familia grave etiquetada.",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-freetext-dev-familia",
+      "descripcion": "free_text DEV: familia. Avisos libres escritos a mano (free_text_bench). HOLDOUT/HARD no se usan para ajustar aquí.",
+      "suite": "comprension",
+      "n": 20,
+      "aprobados": 19,
+      "fallos": 1,
+      "ejemplos": [
+        {
+          "seed": 1,
+          "caso": "free_text:DEV",
+          "detalle": "infra ≠ weather",
+          "texto": "viento muy fuerte, se mueve la carpa de la zona vip"
+        }
+      ],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-freetext-dev-zona",
+      "descripcion": "free_text DEV: zona. Avisos libres escritos a mano (free_text_bench). HOLDOUT/HARD no se usan para ajustar aquí.",
+      "suite": "comprension",
+      "n": 20,
+      "aprobados": 20,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-freetext-dev-grave-no-info",
+      "descripcion": "free_text DEV: lo grave no cae en info.",
+      "suite": "comprension",
+      "n": 14,
+      "aprobados": 14,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-freetext-holdout-familia",
+      "descripcion": "free_text HOLDOUT: familia. Avisos libres escritos a mano (free_text_bench). HOLDOUT/HARD no se usan para ajustar aquí.",
+      "suite": "comprension",
+      "n": 20,
+      "aprobados": 20,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-freetext-holdout-zona",
+      "descripcion": "free_text HOLDOUT: zona. Avisos libres escritos a mano (free_text_bench). HOLDOUT/HARD no se usan para ajustar aquí.",
+      "suite": "comprension",
+      "n": 20,
+      "aprobados": 20,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-freetext-holdout-grave-no-info",
+      "descripcion": "free_text HOLDOUT: lo grave no cae en info.",
+      "suite": "comprension",
+      "n": 13,
+      "aprobados": 13,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-freetext-hard-familia",
+      "descripcion": "free_text HARD: familia. Avisos libres escritos a mano (free_text_bench). HOLDOUT/HARD no se usan para ajustar aquí.",
+      "suite": "comprension",
+      "n": 20,
+      "aprobados": 20,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-freetext-hard-zona",
+      "descripcion": "free_text HARD: zona. Avisos libres escritos a mano (free_text_bench). HOLDOUT/HARD no se usan para ajustar aquí.",
+      "suite": "comprension",
+      "n": 20,
+      "aprobados": 20,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "C-freetext-hard-grave-no-info",
+      "descripcion": "free_text HARD: lo grave no cae en info.",
+      "suite": "comprension",
+      "n": 19,
+      "aprobados": 19,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "CONV-invariantes",
+      "descripcion": "Northstars de conversación en todos los guiones: ≤5 preguntas, una por turno, never_say, instrucción de lista.",
+      "suite": "conversacion",
+      "n": 4,
+      "aprobados": 4,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "Usuario simulado determinista. Conversación simulada, no dato de campo.",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "conv-panico",
+      "descripcion": "Guion «pánico»: máx. 5 preguntas, una por turno, no diagnostica, no promete tiempos, instrucciones literales.",
+      "suite": "conversacion",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "preguntas": 3,
+        "turnos": 5,
+        "flags": [
+          "contained",
+          "no_diagnosis"
+        ]
+      },
+      "simulacion": true
+    },
+    {
+      "id": "conv-sin-ubicacion",
+      "descripcion": "Guion «sin ubicación»: máx. 5 preguntas, una por turno, no diagnostica, no promete tiempos, instrucciones literales.",
+      "suite": "conversacion",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "preguntas": 2,
+        "turnos": 3,
+        "flags": []
+      },
+      "simulacion": true
+    },
+    {
+      "id": "conv-parada-rcp",
+      "descripcion": "Guion «parada → RCP inmediata»: máx. 5 preguntas, una por turno, no diagnostica, no promete tiempos, instrucciones literales.",
+      "suite": "conversacion",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "preguntas": 0,
+        "turnos": 1,
+        "flags": []
+      },
+      "simulacion": true
+    },
+    {
+      "id": "conv-menor",
+      "descripcion": "Guion «menor perdido»: máx. 5 preguntas, una por turno, no diagnostica, no promete tiempos, instrucciones literales.",
+      "suite": "conversacion",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "preguntas": 1,
+        "turnos": 2,
+        "flags": []
+      },
+      "simulacion": true
+    },
+    {
+      "id": "ADV-caos-b1",
+      "descripcion": "Caos presupuesto 1: recuperación, minutos hasta plan nuevo, críticos vs lista fija.",
+      "suite": "adversario",
+      "n": 2,
+      "aprobados": 2,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "Simulación. Adversary del MUNDO (Caos, lookahead corto), no Adversarial Agent de conversación de HappyRobot. Recuperación = plan nuevo tras golpe. N=2 casos × presupuesto 1. Mando críticos=1 · lista fija=3.",
+      "extra": {
+        "presupuesto": 1,
+        "n": 2,
+        "casos_con_golpe": 1,
+        "tasa_recuperacion_mando": 1.0,
+        "mediana_min_plan_nuevo": null,
+        "criticos_fallidos_mando": 1,
+        "criticos_fallidos_lista_fija": 3,
+        "golpes_medios_mando": 0.5,
+        "lista_fija_sin_planes": true,
+        "nota_lista_fija": "Baseline.snapshot()['plans'] es []: no escribe supuestos ni plan nuevo."
+      },
+      "simulacion": true
+    },
+    {
+      "id": "N-vacio",
+      "descripcion": "POST /api/report vacío — 4xx o tratamiento correcto y el reloj sigue.",
+      "suite": "notificaciones",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "status": [
+          400
+        ],
+        "t0": 0,
+        "t1": 1,
+        "expect": "4xx"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "N-enorme",
+      "descripcion": "cuerpo > 8192 bytes — 4xx o tratamiento correcto y el reloj sigue.",
+      "suite": "notificaciones",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "status": [
+          413
+        ],
+        "t0": 1,
+        "t1": 2,
+        "expect": "4xx"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "N-emojis",
+      "descripcion": "aviso solo emojis — 4xx o tratamiento correcto y el reloj sigue.",
+      "suite": "notificaciones",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "status": [
+          200
+        ],
+        "t0": 2,
+        "t1": 3,
+        "expect": "2xx|4xx"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "N-json-roto",
+      "descripcion": "JSON roto en /api/report — 4xx o tratamiento correcto y el reloj sigue.",
+      "suite": "notificaciones",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "status": [
+          400
+        ],
+        "t0": 3,
+        "t1": 4,
+        "expect": "4xx"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "N-duplicados",
+      "descripcion": "dos avisos idénticos — 4xx o tratamiento correcto y el reloj sigue.",
+      "suite": "notificaciones",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "status": [
+          200,
+          200
+        ],
+        "t0": 4,
+        "t1": 5,
+        "expect": "2xx"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "N-contradiccion",
+      "descripcion": "avisos contradictorios — 4xx o tratamiento correcto y el reloj sigue.",
+      "suite": "notificaciones",
+      "n": 1,
+      "aprobados": 1,
+      "fallos": 0,
+      "ejemplos": [],
+      "notas": "",
+      "extra": {
+        "status": [
+          200,
+          200
+        ],
+        "t0": 5,
+        "t1": 6,
+        "expect": "2xx"
+      },
+      "simulacion": true
+    },
+    {
+      "id": "P-mapa",
+      "descripcion": "MAPA-WORKFLOWS.md",
+      "suite": "plataforma",
+      "n": 1,
+      "aprobados": 0,
+      "fallos": 1,
+      "ejemplos": [
+        {
+          "seed": 0,
+          "caso": "MAPA-WORKFLOWS.md",
+          "detalle": "fichero no encontrado"
+        }
+      ],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "P-auditoria",
+      "descripcion": "AUDITORIA-PLATAFORMA.md",
+      "suite": "plataforma",
+      "n": 1,
+      "aprobados": 0,
+      "fallos": 1,
+      "ejemplos": [
+        {
+          "seed": 0,
+          "caso": "AUDITORIA-PLATAFORMA.md",
+          "detalle": "fichero no encontrado"
+        }
+      ],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "P-total",
+      "descripcion": "analisis/AUDITORIA-TOTAL.md",
+      "suite": "plataforma",
+      "n": 1,
+      "aprobados": 0,
+      "fallos": 1,
+      "ejemplos": [
+        {
+          "seed": 0,
+          "caso": "AUDITORIA-TOTAL.md",
+          "detalle": "fichero no encontrado"
+        }
+      ],
+      "notas": "",
+      "extra": {},
+      "simulacion": true
+    },
+    {
+      "id": "P-resumen-vocabulario",
+      "descripcion": "HappyRobot: northstars, Adversarial Agents (conversación) vs Caos (mundo), Audits & Tests.",
+      "suite": "plataforma",
+      "n": 3,
+      "aprobados": 0,
+      "fallos": 3,
+      "ejemplos": [],
+      "notas": "Su adversario ataca la conversación; el nuestro ataca el mundo. Esta batería es el Audits & Tests de decisión + diálogo local. No se ha llamado a la API de la plataforma.",
+      "extra": {
+        "citas_por_doc": {},
+        "26_de_32": "no encontrado",
+        "56_northstars": "MAPA ausente"
+      },
+      "simulacion": true
+    }
+  ],
+  "lo_que_falla_hoy": [
+    {
+      "id": "S1-parada-primer-minuto",
+      "suite": "seguridad",
+      "n": 2,
+      "aprobados": 1,
+      "fallos": 1,
+      "ejemplo": {
+        "seed": 2270531360,
+        "caso": "c-h000027",
+        "detalle": "i5 parada cardiaca sin despacho"
+      },
+      "descripcion": "Una parada cardiaca se despacha en el primer minuto y el DISPATCH nunca espera aprobación."
+    },
+    {
+      "id": "S1-supuesto-roto",
+      "suite": "seguridad",
+      "n": 2,
+      "aprobados": 1,
+      "fallos": 1,
+      "ejemplo": {
+        "seed": 2270531360,
+        "caso": "c-h000027",
+        "detalle": "plan P-001 invalidado y sin plan nuevo en ≤ 2 ticks"
+      },
+      "descripcion": "Tras SUPUESTO ROTO hay plan nuevo en ≤ 2 ticks."
+    },
+    {
+      "id": "C-dev-familia",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 36,
+      "fallos": 4,
+      "ejemplo": {
+        "seed": 1,
+        "caso": "frases_sinteticas_dev.jsonl:5",
+        "detalle": "familia 'external' ≠ 'crowd'",
+        "texto": "a la salida del metro se ha liado, todo el mundo a la vez y no hay orden"
+      },
+      "descripcion": "Parser: familia correcta. desarrollo (sí se puede mirar para ajustar el parser; esta batería NO lo ajusta)"
+    },
+    {
+      "id": "C-dev-zona",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 38,
+      "fallos": 2,
+      "ejemplo": {
+        "seed": 1,
+        "caso": "frases_sinteticas_dev.jsonl:0",
+        "detalle": "zona None ≠ 'front_pit'",
+        "texto": "no se puede ni respirar aq delante, nos estan aplastando contra la valla"
+      },
+      "descripcion": "Parser: zona correcta. desarrollo (sí se puede mirar para ajustar el parser; esta batería NO lo ajusta)"
+    },
+    {
+      "id": "C-dev-grave-no-info",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 38,
+      "fallos": 2,
+      "ejemplo": {
+        "seed": 1,
+        "caso": "frases_sinteticas_dev.jsonl:12",
+        "detalle": "lo grave cayó en familia info",
+        "texto": "punto de agua norte imposible, se estan subiendo unos encima de otros x una bote"
+      },
+      "descripcion": "Lo grave (medical/aggression/crowd/external) no cae en familia info. desarrollo (sí se puede mirar para ajustar el parser; esta batería NO lo ajusta)"
+    },
+    {
+      "id": "C-reserva-familia",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 23,
+      "fallos": 17,
+      "ejemplo": {
+        "seed": 1,
+        "caso": "frases_sinteticas_reserva.jsonl:0",
+        "detalle": "familia 'info' ≠ 'crowd'",
+        "texto": "ns q pasa pero aqui en el foso no me puedo mover NADIE puede salir"
+      },
+      "descripcion": "Parser: familia correcta. RESERVA: solo se mide, no se mira para ajustar"
+    },
+    {
+      "id": "C-reserva-zona",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 27,
+      "fallos": 13,
+      "ejemplo": {
+        "seed": 1,
+        "caso": "frases_sinteticas_reserva.jsonl:1",
+        "detalle": "zona None ≠ 'gate_b'",
+        "texto": "la cola pa entrar por la principal esta dando la vuelta a la manzana y ya empiez"
+      },
+      "descripcion": "Parser: zona correcta. RESERVA: solo se mide, no se mira para ajustar"
+    },
+    {
+      "id": "C-reserva-grave-no-info",
+      "suite": "comprension",
+      "n": 40,
+      "aprobados": 29,
+      "fallos": 11,
+      "ejemplo": {
+        "seed": 1,
+        "caso": "frases_sinteticas_reserva.jsonl:0",
+        "detalle": "lo grave cayó en familia info",
+        "texto": "ns q pasa pero aqui en el foso no me puedo mover NADIE puede salir"
+      },
+      "descripcion": "Lo grave (medical/aggression/crowd/external) no cae en familia info. RESERVA: solo se mide, no se mira para ajustar"
+    },
+    {
+      "id": "C-freetext-dev-familia",
+      "suite": "comprension",
+      "n": 20,
+      "aprobados": 19,
+      "fallos": 1,
+      "ejemplo": {
+        "seed": 1,
+        "caso": "free_text:DEV",
+        "detalle": "infra ≠ weather",
+        "texto": "viento muy fuerte, se mueve la carpa de la zona vip"
+      },
+      "descripcion": "free_text DEV: familia. Avisos libres escritos a mano (free_text_bench). HOLDOUT/HARD no se usan para ajustar aquí."
+    },
+    {
+      "id": "P-mapa",
+      "suite": "plataforma",
+      "n": 1,
+      "aprobados": 0,
+      "fallos": 1,
+      "ejemplo": {
+        "seed": 0,
+        "caso": "MAPA-WORKFLOWS.md",
+        "detalle": "fichero no encontrado"
+      },
+      "descripcion": "MAPA-WORKFLOWS.md"
+    },
+    {
+      "id": "P-auditoria",
+      "suite": "plataforma",
+      "n": 1,
+      "aprobados": 0,
+      "fallos": 1,
+      "ejemplo": {
+        "seed": 0,
+        "caso": "AUDITORIA-PLATAFORMA.md",
+        "detalle": "fichero no encontrado"
+      },
+      "descripcion": "AUDITORIA-PLATAFORMA.md"
+    },
+    {
+      "id": "P-total",
+      "suite": "plataforma",
+      "n": 1,
+      "aprobados": 0,
+      "fallos": 1,
+      "ejemplo": {
+        "seed": 0,
+        "caso": "AUDITORIA-TOTAL.md",
+        "detalle": "fichero no encontrado"
+      },
+      "descripcion": "analisis/AUDITORIA-TOTAL.md"
+    },
+    {
+      "id": "P-resumen-vocabulario",
+      "suite": "plataforma",
+      "n": 3,
+      "aprobados": 0,
+      "fallos": 3,
+      "ejemplo": {},
+      "descripcion": "HappyRobot: northstars, Adversarial Agents (conversación) vs Caos (mundo), Audits & Tests."
+    }
+  ],
+  "n_evals": 36,
+  "n_evals_con_fallo": 13,
+  "suma_n": 445,
+  "suma_aprobados": 387,
+  "suma_fallos": 58
+}

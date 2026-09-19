@@ -797,6 +797,9 @@ def _freeze_and_rerun(argv: list[str], code_from: str | None) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["forecast"]:
+        from .forecast_bench import main as forecast_main
+        return forecast_main(argv[1:])
     ap = argparse.ArgumentParser(prog="python3 -m motor.harness", description="Banco de pruebas de Mando")
     ap.add_argument("--freeze", action="store_true", help="medir sobre una copia congelada del código (recomendado)")
     ap.add_argument("--code-from", default=None, help="con --freeze: carpeta con mando/ y world/ de una instantánea")

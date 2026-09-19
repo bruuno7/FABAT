@@ -23,6 +23,7 @@ import threading
 import time
 import unicodedata
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable
 
 import httpx
@@ -137,6 +138,8 @@ class TelegramBot:
         self._lock = threading.RLock()
         self._outbox: "queue.Queue[tuple[int, str, dict[str, Any] | None]]" = queue.Queue()
         self._stop = threading.Event()
+        self._updates = ThreadPoolExecutor(max_workers=8, thread_name_prefix="telegram-update")
+        self._update_slots = threading.BoundedSemaphore(32)
         self._offset = 0
         self._session_id = ""
         self._client = httpx.Client(timeout=self.poll_timeout + 10)
@@ -151,6 +154,7 @@ class TelegramBot:
 
     def stop(self) -> None:
         self._stop.set()
+        self._updates.shutdown(wait=False, cancel_futures=True)
         try:
             self._client.close()
         except Exception:
@@ -216,13 +220,21 @@ class TelegramBot:
                                      timeout=self.poll_timeout + 8)
                 failures, backoff = 0, 1.0
                 for u in updates or []:
+                    while not self._stop.is_set():
+                        if self._update_slots.acquire(timeout=0.1):
+                            break
+                    else:
+                        return
+                    try:
+                        future = self._updates.submit(self._handle_and_flush, u)
+                    except RuntimeError:
+                        self._update_slots.release()
+                        if self._stop.is_set():
+                            return
+                        raise
+                    future.add_done_callback(lambda _: self._update_slots.release())
                     self._offset = max(self._offset, int(u["update_id"]) + 1)
                     self.stats["updates"] += 1
-                    try:
-                        self._handle(u)
-                    except Exception as e:
-                        self.error = f"update: {type(e).__name__}: {e}"[:160]
-                    self._flush()
             except Exception as e:
                 if self._stop.is_set():
                     return
@@ -233,6 +245,15 @@ class TelegramBot:
                     return
                 self._stop.wait(backoff)
                 backoff = min(30.0, backoff * 2)
+
+    def _handle_and_flush(self, update: dict[str, Any]) -> None:
+        if self._stop.is_set():
+            return
+        try:
+            self._handle(update)
+        except Exception as e:
+            self.error = f"update: {type(e).__name__}: {e}"[:160]
+        self._flush()
 
     # ---------------------------------------------------------------- mensajes
     def _chat(self, chat_id: int) -> dict[str, Any]:

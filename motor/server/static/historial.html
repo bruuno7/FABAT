@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MANDO · Historial</title>
+  <link rel="stylesheet" href="/static/centro.css">
+  <link rel="stylesheet" href="/static/historial.css">
+</head>
+<body>
+<a class="skip" href="#history-content">Ir al historial</a>
+<header class="topbar history-topbar">
+  <a class="brand" href="/centro" aria-label="MANDO, centro de control"><span class="brand-symbol" aria-hidden="true">M</span>MANDO</a>
+  <div class="event"><strong>Historial operativo</strong><span>Registro persistente de escenas, decisiones y servicios</span></div>
+  <a class="operator" href="/acceso">Operador · acceso</a>
+  <nav aria-label="Navegación principal"><a href="/centro">Centro en vivo</a><a href="/historial" aria-current="page">Historial</a><a href="/informe">Informe actual</a></nav>
+</header>
+
+<section class="history-controls" aria-label="Filtros del historial">
+  <label>Escena<select id="scene"></select></label>
+  <label class="search">Buscar<input id="query" type="search" placeholder="Incidente, tipo o referencia"></label>
+  <label>Estado<select id="status"><option value="">Todos</option><option value="open">Abierto</option><option value="assigned">Asignado</option><option value="in_progress">En curso</option><option value="resolved">Resuelto</option><option value="failed">Fallido</option></select></label>
+  <label>Familia<input id="family" autocomplete="off" placeholder="medical"></label>
+  <label>Zona<input id="zone" autocomplete="off" placeholder="general"></label>
+  <label>Desde<input id="since" type="number" min="0" inputmode="numeric"></label>
+  <label>Hasta<input id="until" type="number" min="0" inputmode="numeric"></label>
+  <button id="apply" class="primary">Aplicar filtros</button>
+  <a id="export-json" class="export" href="#">Exportar JSON</a>
+  <a id="export-csv" class="export" href="#">Exportar CSV</a>
+</section>
+
+<nav class="history-tabs" aria-label="Secciones del historial">
+  <button data-tab="incidents" aria-pressed="true">Incidentes</button>
+  <button data-tab="decisions" aria-pressed="false">Decisiones</button>
+  <button data-tab="resources" aria-pressed="false">Equipos y recursos</button>
+  <button data-tab="services" aria-pressed="false">Servicios</button>
+  <button data-tab="summary" aria-pressed="false">Informes</button>
+</nav>
+
+<p id="history-status" class="connection-banner" role="status" aria-live="polite">Cargando historial…</p>
+<main id="history-content" class="history-workspace" tabindex="-1">
+  <section class="ledger" aria-labelledby="list-title">
+    <div class="section-title"><h1 id="list-title">Incidentes registrados</h1><span id="result-count"></span></div>
+    <div id="history-list" class="history-list"></div>
+    <div class="pager"><button id="previous">Anterior</button><span id="page"></span><button id="next">Siguiente</button></div>
+  </section>
+  <aside class="record" aria-labelledby="record-title">
+    <div class="section-title"><h2 id="record-title">Ficha y cronología</h2></div>
+    <div id="history-detail" class="history-detail"><p class="empty">Selecciona una fila para abrir su ficha completa.</p></div>
+  </aside>
+</main>
+
+<footer><span>SQLite local · datos ya enmascarados por el estado público</span><span id="database-note">Cada cifra de Informes muestra su N.</span></footer>
+<script src="/static/historial.js"></script>
+</body>
+</html>

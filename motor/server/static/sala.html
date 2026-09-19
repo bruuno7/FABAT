@@ -65,6 +65,13 @@
       <span class="crit">Críticos <b id="c-criticos">0</b></span>
       <span class="free">Libres <b id="c-libres">0/0</b></span>
     </div>
+    <div class="modo-chip" id="modo-chip" hidden title="Modo adaptativo del sistema">
+      <span class="modo-label" id="modo-label">—</span>
+      <span class="modo-why tiny" id="modo-why"></span>
+    </div>
+    <div class="cerebro-chip" id="cerebro-chip" title="Quién decide ahora">
+      <span id="cerebro-label">Cerebro: —</span>
+    </div>
     <div class="alarm" id="alarm" hidden><span aria-hidden="true">⚠</span><span id="alarm-text"></span></div>
     <button class="btn-inject" id="btn-inject" aria-haspopup="dialog" aria-controls="inyeccion">Mesa de inyección</button>
     <button class="btn-theme" id="theme" aria-pressed="false" title="Cambiar a modo oscuro">Oscuro</button>
@@ -73,66 +80,106 @@
     </button>
   </header>
 
-  <div class="workspace">
-    <div class="map">
-      <div class="band">
-        <section class="plan-band" id="plan-band" aria-live="polite">
-          <span class="plan-dot" aria-hidden="true"></span>
-          <div class="grow"><h2 id="plan-title">El plan sigue en pie</h2><p id="plan-cause"></p></div>
-          <button id="plan-toggle" hidden>Alternar</button>
-        </section>
-        <div class="map-tools" role="group" aria-label="Controles del plano">
-          <span class="live-chip" id="live-chip" role="status">
-            <span class="live-dot" aria-hidden="true"></span>
-            <span class="live-copy"><b>SIMULACIÓN</b><span id="live-sub">posición simulada por zona</span></span>
-          </span>
-          <button id="t-routes" aria-pressed="true"><span>Trayectos</span><small>recursos activos</small></button>
-          <button id="t-speed" title="Velocidad de reproducción de la simulación">▶ <span id="speed-label">1x</span></button>
-          <button id="t-heat" aria-pressed="true"><span>Densidad</span><small>estimación</small></button>
-          <span class="note">ESTIMACIÓN DEL SIMULADOR, DERIVADA DE AVISOS</span>
+  <div class="equipo-strip" id="equipo-strip" aria-label="Estado del equipo de agentes" hidden></div>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Secciones de la sala">
+    <button type="button" role="tab" id="tab-btn-ahora" data-tab="ahora" aria-selected="true" aria-controls="tab-ahora"><span class="tab-n">1</span> Ahora <span class="tab-badge" id="badge-ahora" hidden></span></button>
+    <button type="button" role="tab" id="tab-btn-equipo" data-tab="equipo" aria-selected="false" aria-controls="tab-equipo"><span class="tab-n">2</span> Equipo <span class="tab-badge" id="badge-equipo" hidden></span></button>
+    <button type="button" role="tab" id="tab-btn-enjambre" data-tab="enjambre" aria-selected="false" aria-controls="tab-enjambre"><span class="tab-n">3</span> Enjambre</button>
+    <button type="button" role="tab" id="tab-btn-recursos" data-tab="recursos" aria-selected="false" aria-controls="tab-recursos"><span class="tab-n">4</span> Recursos</button>
+    <button type="button" role="tab" id="tab-btn-comms" data-tab="comunicaciones" aria-selected="false" aria-controls="tab-comunicaciones"><span class="tab-n">5</span> Comunicaciones</button>
+    <button type="button" role="tab" id="tab-btn-aprendizaje" data-tab="aprendizaje" aria-selected="false" aria-controls="tab-aprendizaje"><span class="tab-n">6</span> Aprendizaje <span class="tab-badge" id="badge-aprendizaje" hidden></span></button>
+    <button type="button" role="tab" id="tab-btn-historial" data-tab="historial" aria-selected="false" aria-controls="tab-historial"><span class="tab-n">7</span> Historial</button>
+  </nav>
+
+  <div class="tab-panels" id="tab-panels">
+    <section class="tab-panel on" id="tab-ahora" role="tabpanel" aria-labelledby="tab-btn-ahora" data-tab="ahora">
+      <div class="recom-main" id="recom-main" hidden></div>
+      <div class="ahora-pend" id="ahora-pend" hidden></div>
+      <div class="workspace">
+        <div class="map">
+          <div class="band">
+            <section class="plan-band" id="plan-band" aria-live="polite">
+              <span class="plan-dot" aria-hidden="true"></span>
+              <div class="grow"><h2 id="plan-title">El plan sigue en pie</h2><p id="plan-cause"></p></div>
+              <button id="plan-toggle" hidden>Alternar</button>
+            </section>
+            <div class="map-tools" role="group" aria-label="Controles del plano">
+              <span class="live-chip" id="live-chip" role="status">
+                <span class="live-dot" aria-hidden="true"></span>
+                <span class="live-copy"><b>SIMULACIÓN</b><span id="live-sub">posición simulada por zona</span></span>
+              </span>
+              <button id="t-routes" aria-pressed="true"><span>Trayectos</span><small>recursos activos</small></button>
+              <button id="t-speed" title="Velocidad de reproducción de la simulación">▶ <span id="speed-label">1x</span></button>
+              <button id="t-heat" aria-pressed="true"><span>Densidad</span><small>estimación</small></button>
+              <span class="note">ESTIMACIÓN DEL SIMULADOR, DERIVADA DE AVISOS</span>
+            </div>
+          </div>
+          <svg id="plano" role="group" tabindex="-1" aria-label="Plano del recinto: zonas, densidad, incidentes y recursos"></svg>
         </div>
       </div>
-      <svg id="plano" role="group" tabindex="-1" aria-label="Plano del recinto: zonas, densidad, incidentes y recursos"></svg>
-    </div>
+      <section class="legend" aria-label="Leyenda del plano">
+        <div class="legend-row"><b>GRAVEDAD:</b>
+          <span><i class="k g-vital"></i>Vital</span><span><i class="k g-emergencia"></i>Emergencia</span>
+          <span><i class="k g-urgente"></i>Urgente</span><span><i class="k g-leve"></i>Leve</span>
+          <span><i class="k g-sin"></i>Sin clasificar</span>
+          <button class="help" id="help-gravedad" aria-label="Cómo se calcula la gravedad">?</button></div>
+        <div class="legend-row"><b>TIPO:</b>
+          <span>✚ Médica</span><span>⚠ Agresión</span><span>▦ Aglomeración</span><span>☂ Clima</span>
+          <span>⚙ Infraestructura</span><span>• Otro</span></div>
+        <div class="legend-row"><b>TRAYECTOS DEL SIMULADOR:</b><span><i class="dash"></i>Balizas con ETA del recinto simulado</span>
+          <span class="warnnote" id="legend-note"></span></div>
+      </section>
+      <section class="queue" id="cola" tabindex="-1" aria-label="Cola activa de incidentes">
+        <div class="queue-head">COLA ACTIVA DE INCIDENTES EN VIVO
+          <span class="total" id="q-total">0 TOTALES</span>
+          <span class="sync">Enlace con Agente HR <i id="sync-dot" aria-hidden="true"></i></span></div>
+        <div class="queue-body">
+          <table>
+            <thead><tr><th>GRAVEDAD</th><th>ID / TIPO</th><th>SECTOR</th><th>HORA</th><th>ESTADO</th>
+              <th>RECURSOS MANDO</th><th>AGENTE HR</th></tr></thead>
+            <tbody id="q-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="tab-panel" id="tab-equipo" role="tabpanel" aria-labelledby="tab-btn-equipo" data-tab="equipo" hidden>
+      <div class="panel-scroll" id="panel-equipo"><p class="tiny empty-tab">Sin votos del equipo de agentes todavía.</p></div>
+    </section>
+
+    <section class="tab-panel" id="tab-enjambre" role="tabpanel" aria-labelledby="tab-btn-enjambre" data-tab="enjambre" hidden>
+      <div class="panel-scroll" id="panel-enjambre"><p class="tiny empty-tab">Sin datos de enjambre todavía.</p></div>
+    </section>
+
+    <section class="tab-panel" id="tab-recursos" role="tabpanel" aria-labelledby="tab-btn-recursos" data-tab="recursos" hidden>
+      <div class="panel-scroll panel-recursos" id="panel-recursos">
+        <div class="aside-head"><span aria-hidden="true">▣</span>RECURSOS TERRESTRES</div>
+        <div class="res-groups scroll" id="res-groups"></div>
+        <div class="bars"><h3>ABIERTOS POR GRAVEDAD</h3><div id="sev-bars"></div></div>
+        <div class="calls-block" id="calls-block"></div>
+      </div>
+    </section>
+
+    <section class="tab-panel" id="tab-comunicaciones" role="tabpanel" aria-labelledby="tab-btn-comms" data-tab="comunicaciones" hidden>
+      <div class="panel-scroll" id="panel-comms">
+        <details class="chat" id="chat-panel" open>
+          <summary><span aria-hidden="true">●</span>CONVERSACIONES <span class="tag" id="chat-channels">—</span><span class="arrow" aria-hidden="true">⌄</span></summary>
+          <div class="chat-body" id="chat-body"><p class="tiny">Sin conversaciones abiertas todavía.</p></div>
+        </details>
+        <div id="comms-calls"></div>
+      </div>
+    </section>
+
+    <section class="tab-panel" id="tab-aprendizaje" role="tabpanel" aria-labelledby="tab-btn-aprendizaje" data-tab="aprendizaje" hidden>
+      <div class="panel-scroll" id="panel-aprendizaje"><p class="tiny empty-tab">Sin lecciones todavía.</p></div>
+    </section>
+
+    <section class="tab-panel" id="tab-historial" role="tabpanel" aria-labelledby="tab-btn-historial" data-tab="historial" hidden>
+      <div class="panel-scroll" id="panel-historial"><p class="tiny empty-tab">Sin historial persistente todavía.</p></div>
+    </section>
   </div>
-
-  <section class="legend" aria-label="Leyenda del plano">
-    <div class="legend-row"><b>GRAVEDAD:</b>
-      <span><i class="k g-vital"></i>Vital</span><span><i class="k g-emergencia"></i>Emergencia</span>
-      <span><i class="k g-urgente"></i>Urgente</span><span><i class="k g-leve"></i>Leve</span>
-      <span><i class="k g-sin"></i>Sin clasificar</span>
-      <button class="help" id="help-gravedad" aria-label="Cómo se calcula la gravedad">?</button></div>
-    <div class="legend-row"><b>TIPO:</b>
-      <span>✚ Médica</span><span>⚠ Agresión</span><span>▦ Aglomeración</span><span>☂ Clima</span>
-      <span>⚙ Infraestructura</span><span>• Otro</span></div>
-    <div class="legend-row"><b>TRAYECTOS DEL SIMULADOR:</b><span><i class="dash"></i>Balizas con ETA del recinto simulado</span>
-      <span class="warnnote" id="legend-note"></span></div>
-  </section>
-
-  <section class="queue" id="cola" tabindex="-1" aria-label="Cola activa de incidentes">
-    <div class="queue-head">COLA ACTIVA DE INCIDENTES EN VIVO
-      <span class="total" id="q-total">0 TOTALES</span>
-      <span class="sync">Enlace con Agente HR <i id="sync-dot" aria-hidden="true"></i></span></div>
-    <div class="queue-body">
-      <table>
-        <thead><tr><th>GRAVEDAD</th><th>ID / TIPO</th><th>SECTOR</th><th>HORA</th><th>ESTADO</th>
-          <th>RECURSOS MANDO</th><th>AGENTE HR</th></tr></thead>
-        <tbody id="q-rows"></tbody>
-      </table>
-    </div>
-  </section>
 </div>
-
-<!-- ============================ COLUMNA DERECHA ============================ -->
-<aside class="aside" aria-label="Recursos y canales">
-  <div class="aside-head"><span aria-hidden="true">▣</span>RECURSOS TERRESTRES</div>
-  <div class="res-groups scroll" id="res-groups"></div>
-  <div class="bars"><h3>ABIERTOS POR GRAVEDAD</h3><div id="sev-bars"></div></div>
-  <details class="chat" id="chat-panel">
-    <summary><span aria-hidden="true">●</span>CHAT · AGENTE HR <span class="tag" id="chat-channels">—</span><span class="arrow" aria-hidden="true">⌄</span></summary>
-    <div class="chat-body" id="chat-body"><p class="tiny">Sin conversaciones abiertas todavía.</p></div>
-  </details>
-</aside>
 
 <!-- ============================ CAPAS ============================ -->
 <p class="reconnect" id="reconnect" role="status" hidden>↻ Reconectando… se conservan la selección y los últimos datos recibidos.</p>

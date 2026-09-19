@@ -23,14 +23,17 @@ USD_POR_MTOK = 0.20  # aproximación; no es factura
 
 
 def isolate_eval_db() -> str | None:
-    """No pisa la SQLite de la demo. Los tests que ya fijan MANDO_DB se respetan."""
+    """No pisa la SQLite de la demo. Un proceso, una DB: el ledger no se reabre."""
     import sys
+    if os.environ.get("MANDO_EVAL_LOCKED"):
+        return None
     current = (os.environ.get("MANDO_DB") or "").strip()
     if current and "unittest" in sys.modules:
         return None
     tmp = tempfile.mkdtemp(prefix="mando-eval-")
     os.environ["MANDO_DB"] = str(Path(tmp) / "eval.db")
     os.environ.setdefault("TELEGRAM_MODE", "off")
+    os.environ["MANDO_EVAL_LOCKED"] = "1"
     return tmp
 
 
@@ -495,6 +498,13 @@ def run(*, n: int = 40, reps: int = 1, fake: bool = False, juez: bool = True,
     summary = evaluar(runs, fake=use_fake, client=client, juez=bool(juez and client and not use_fake))
     isolate_eval_db()
     banco = aprender_banco(bank, fake=True, by="eval")
+    s = session_eval()
+    try:
+        from motor.server import cerebro_tools
+        for lid in banco.get("aprobadas") or []:
+            cerebro_tools.memoria_lecciones(s, {"accion": "revocar", "id": lid}, by="eval")
+    finally:
+        s.close()
     import io
     from contextlib import redirect_stdout
     buf = io.StringIO()

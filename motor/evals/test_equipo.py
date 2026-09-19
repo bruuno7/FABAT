@@ -166,9 +166,9 @@ class TestCliDispatch(unittest.TestCase):
             try:
                 code = main(["aprende", "--demo"])
                 self.assertEqual(code, 0)
-                code = main(["equipo", "--n", "3", "--fake"])
+                code = main(["equipo", "--n", "3", "--fake", "--out", tmp])
                 self.assertEqual(code, 0)
-                informe = Path(__file__).resolve().parent / "out" / "equipo-agentes.md"
+                informe = Path(tmp) / "equipo-agentes.md"
                 self.assertTrue(informe.is_file(), informe)
             finally:
                 env.stop()

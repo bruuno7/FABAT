@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm --prefix motor/server test",
-    "dev:bridge": "npm --prefix motor/server run dev",
-    "poll": "npm --prefix motor/server run poll",
-    "build": "npm --prefix motor/server run build",
-    "vercel-build": "npm --prefix motor/server run build && mkdir -p public"
+    "test": "npm --prefix puente test",
+    "dev:bridge": "npm --prefix puente run dev",
+    "poll": "npm --prefix puente run poll",
+    "build": "npm --prefix puente run build",
+    "vercel-build": "npm --prefix puente run build && mkdir -p public"
   },
   "dependencies": {
     "express": "^4.21.2"

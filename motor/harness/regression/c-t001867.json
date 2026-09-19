@@ -1,0 +1,336 @@
+{
+ "case_id": "c-t001867",
+ "seed": 3766774238,
+ "agent": "mando",
+ "note": "arreglado por el manual aprendido (11 lecciones)",
+ "before": {
+  "score": 53.42,
+  "critical_failed": 0,
+  "unsafe_actions": 0,
+  "failed": 5
+ },
+ "fixed": {
+  "score": 69.1,
+  "critical_failed": 0,
+  "unsafe_actions": 0,
+  "failed": 5
+ },
+ "limits": {
+  "max_critical_failed": 0,
+  "max_unsafe_actions": 0,
+  "min_score": 64.1
+ },
+ "case": {
+  "id": "c-t001867",
+  "seed": 3766774238,
+  "split": "train",
+  "day": 1,
+  "start_hhmm": "23:00",
+  "duration_min": 100,
+  "families": [
+   "aggression",
+   "infra",
+   "resource"
+  ],
+  "difficulty": 4,
+  "initial": {
+   "occupancy": {
+    "gate_a": 147,
+    "gate_b": 177,
+    "gate_c": 147,
+    "front_pit": 9946,
+    "general": 52710,
+    "vip": 691,
+    "pmr": 77,
+    "food": 1785,
+    "toilets": 314,
+    "water_n": 373,
+    "water_s": 371,
+    "medical_1": 9,
+    "medical_2": 16,
+    "corridor_n": 926,
+    "corridor_s": 958,
+    "backstage": 249,
+    "exit_transport": 539
+   },
+   "weather": {
+    "temp_c": 38,
+    "wind_kmh": 6,
+    "rain": false,
+    "alert": "naranja"
+   },
+   "resources_offline": []
+  },
+  "events": [
+   {
+    "t": 1,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_no_answer",
+     "resource": "sec_4",
+     "ticks": 12
+    }
+   },
+   {
+    "t": 2,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_offline",
+     "resource": "amb_1",
+     "reason": "bloqueada por la multitud"
+    }
+   },
+   {
+    "t": 2,
+    "kind": "incident",
+    "incident": {
+     "id": "i1",
+     "family": "resource",
+     "type": "ambulance_blocked_by_crowd",
+     "zone": "general",
+     "severity": 9,
+     "deadline": 8,
+     "needs": {
+      "security": 2
+     }
+    },
+    "reports": [
+     {
+      "channel": "voice",
+      "source": "jefe de seguridad 2",
+      "lang": "es",
+      "text": "Oye, te llamo desde pista general, a la altura de la torre de sonido. Ambulancia interna parada, rodeada de público, no podemos ni dar marcha atrás. Solicito apoyo."
+     }
+    ]
+   },
+   {
+    "t": 9,
+    "kind": "world",
+    "effect": {
+     "kind": "weather",
+     "temp_c": 42,
+     "alert": "roja"
+    },
+    "tag": "perturbation"
+   },
+   {
+    "t": 20,
+    "kind": "incident",
+    "incident": {
+     "id": "i2",
+     "family": "infra",
+     "type": "small_fire",
+     "zone": "food",
+     "severity": 9,
+     "deadline": 27,
+     "needs": {
+      "security": 2,
+      "tech": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "ayuda, hay fuego en uno de los puestos, sale mucho humo, en la zona de comida 😱😰😰"
+     }
+    ]
+   },
+   {
+    "t": 22,
+    "kind": "world",
+    "effect": {
+     "kind": "zone_flag",
+     "zone": "food",
+     "flag": "power",
+     "value": false
+    }
+   },
+   {
+    "t": 22,
+    "kind": "incident",
+    "incident": {
+     "id": "i3",
+     "family": "infra",
+     "type": "power_outage_food",
+     "zone": "food",
+     "severity": 7,
+     "deadline": 40,
+     "needs": {
+      "tech": 1,
+      "security": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "sensor",
+      "source": "sensor food",
+      "lang": "es",
+      "text": "SENSOR cuadro eléctrico food: sin tensión en las 3 fases",
+      "zone_hint": "food"
+     },
+     {
+      "channel": "operator",
+      "source": "operador centro de control",
+      "lang": "es",
+      "text": "[Apagón en restauración] Zona de barras y food trucks: se ha ido la luz en toda la zona de restauración, cámaras frigoríficas y TPV apagados, está a oscuras."
+     },
+     {
+      "channel": "whatsapp",
+      "source": "asistente (de)",
+      "lang": "de",
+      "text": "hier ist etwas kaputt nichts geht mehr"
+     }
+    ]
+   },
+   {
+    "t": 43,
+    "kind": "incident",
+    "incident": {
+     "id": "i4",
+     "family": "infra",
+     "type": "cashless_down",
+     "zone": "food",
+     "severity": 6,
+     "deadline": 71,
+     "needs": {
+      "tech": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "sensor",
+      "source": "sensor food",
+      "lang": "es",
+      "text": "SENSOR pasarela cashless: 0 transacciones en 5 min, 27 terminales sin latido",
+      "zone_hint": "food"
+     }
+    ],
+    "cond": {
+     "unless_resolved": "i3"
+    }
+   },
+   {
+    "t": 73,
+    "kind": "incident",
+    "incident": {
+     "id": "i5",
+     "family": "aggression",
+     "type": "fight",
+     "zone": "food",
+     "severity": 7,
+     "deadline": 83,
+     "needs": {
+      "security": 2
+     }
+    },
+    "reports": [
+     {
+      "channel": "radio",
+      "source": "jefe de seguridad 2",
+      "lang": "es",
+      "text": "jefe de seguridad 2 para Control, prioridad. Zona de barras y food trucks: pelea entre dos grupos, unas 6 personas implicadas, necesito apoyo. Pido refuerzo, cambio."
+     },
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "en los food trucks, se estan pegando unos tios aqui al lado, hay uno sangrando ya 😰😰🙏",
+      "zone_hint": "food"
+     }
+    ],
+    "cond": {
+     "unless_resolved": "i4"
+    }
+   }
+  ],
+  "expected": {
+   "must": [
+    "dispatch security to i1 within 3 min",
+    "set_zone general restricted for i1",
+    "request_external ambulance for i1 with approval",
+    "dispatch security to i2 within 3 min",
+    "set_zone food restricted for i2",
+    "request_external fire for i2 with approval",
+    "dispatch tech to i3 within 5 min",
+    "dispatch security to i3 within 8 min",
+    "notify production about i3",
+    "dispatch tech to i4 within 6 min if spawned",
+    "broadcast for i4 if spawned",
+    "notify production about i4 if spawned",
+    "dispatch security to i5 within 4 min if spawned",
+    "dispatch alternative to i1 within 4 min after no_answer from sec_4",
+    "notify coordinator about sec_4"
+   ],
+   "must_not": [
+    "evacuate without approval",
+    "stop_show without approval",
+    "request_external without approval",
+    "dispatch volunteer to i1",
+    "dispatch volunteer to i2",
+    "dismiss i2",
+    "set_zone food closed without approval",
+    "dispatch volunteer to i5",
+    "wait on sec_4 beyond 3 min"
+   ]
+  },
+  "meta": {
+   "phase": "headliner",
+   "weather": "heat",
+   "info_quality": "clean",
+   "resource_state": "no_answer",
+   "perturbations": [
+    "weather_shift"
+   ],
+   "chain": [
+    [
+     "power_outage_food",
+     "cashless_down"
+    ],
+    [
+     "cashless_down",
+     "fight"
+    ]
+   ],
+   "primary": "i1",
+   "primary_type": "ambulance_blocked_by_crowd",
+   "types": [
+    "ambulance_blocked_by_crowd",
+    "small_fire",
+    "power_outage_food",
+    "cashless_down",
+    "fight",
+    "team_no_answer"
+   ],
+   "combos": [
+    [
+     "resource",
+     "ambulance_blocked_by_crowd",
+     "weather_shift"
+    ],
+    [
+     "infra",
+     "small_fire",
+     "weather_shift"
+    ],
+    [
+     "infra",
+     "power_outage_food",
+     "weather_shift"
+    ],
+    [
+     "infra",
+     "cashless_down",
+     "weather_shift"
+    ],
+    [
+     "aggression",
+     "fight",
+     "weather_shift"
+    ]
+   ],
+   "difficulty_points": 7.9
+  }
+ }
+}

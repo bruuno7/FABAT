@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista fija contra Mando · mismo caso, misma semilla</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  body.duelo { height: 100vh; overflow: hidden; display: grid; grid-template-rows: 3.6rem minmax(0, 1fr); gap: .45rem; padding: .45rem; }
+  .sides { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; min-height: 0; }
+  .side { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-height: 0; }
+  .side h1 { margin: 0; padding: .45rem .9rem; font-size: 1.7rem; letter-spacing: .14em; display: flex; align-items: baseline; gap: .8rem; border-bottom: 1px solid var(--line); }
+  .side h1 small { font-size: .8rem; letter-spacing: .04em; color: var(--dim); font-weight: 400; }
+  .side.left h1 { color: var(--dim); } .side.right h1 { color: var(--amber); }
+  .side .plano { min-height: 0; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border-top: 1px solid var(--line); }
+  .nums .tile .v { font-size: 3rem; } .nums .tile .l { font-size: .78rem; }
+  .last { padding: .4rem .9rem; font-size: .95rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--line); min-height: 2.1rem; }
+  .last b { color: var(--red); font-family: var(--sans); } .same { color: var(--dim); font-size: .85rem; letter-spacing: .06em; flex: 1; text-align: center; }
+body.duelo { grid-template-rows:auto minmax(0,1fr) auto; }
+  .duelo .top { flex-wrap:wrap; min-height:3.6rem; padding:.4rem; }.side h1 { flex-wrap:wrap; letter-spacing:.04em; }
+  .side { grid-template-rows:auto minmax(0,1fr) auto auto; }.baseline-picker { font-size:.8rem; }.duel-footer { display:flex; gap:1rem; flex-wrap:wrap; padding:.5rem; color:var(--dim); }.duel-footer a { color:var(--cyan); }
+  .duel-strike { position:absolute; z-index:3; top:5rem; left:.7rem; right:.7rem; background:var(--violet); color:#160f26; border:2px solid var(--violet); padding:.7rem; font-weight:800; animation:duel-drop .45s ease-out; }
+  @keyframes duel-drop { from { transform:translateY(-20px); opacity:0; } to { transform:none; opacity:1; } }
+  @media(max-width:800px) {body.duelo {height:auto; overflow:auto; display:block;}.sides {grid-template-columns:1fr;}.side {min-height:32rem;}.side .plano {min-height:22rem;}.nums .tile .v {font-size:2rem;} }
+</style></head>
+<body class="duelo">
+<header class="top">
+  <div class="brand"><span class="brand-mark"></span><b>MANDO</b></div>
+  <div class="same" id="same">MISMO CASO · MISMA SEMILLA · MISMOS IMPREVISTOS</div>
+  <div class="clock"><span id="clock-day">DÍA –</span><b id="clock-hhmm">--:--</b><span id="clock-t"></span></div>
+  <div class="controls">
+    <button id="btn-play" class="btn">PAUSA</button>
+    <div class="speed" id="speed"><button data-speed="1">×1</button><button data-speed="4">×4</button><button data-speed="16">×16</button></div>
+    <select id="case-select" aria-label="Caso de la comparación"></select><label class="baseline-picker">Lista fija<select id="baseline-select" aria-describedby="baseline-note"><option value="baseline">Lista fija original</option></select></label><button id="btn-reset" class="btn ghost">REINICIAR</button>
+  </div>
+</header>
+<main class="sides">
+  <section class="panel side left"><h1><span id="baseline-title">LISTA FIJA</span> <small id="label-left">Esperando cifras del servidor</small></h1>
+    <div id="strike-left" class="duel-strike" role="status" hidden></div><svg class="plano" id="plano-left" role="img" aria-label="Recinto con lista fija"></svg><div class="last" id="last-left"></div><div class="nums" id="nums-left"></div></section>
+  <section class="panel side right"><h1>MANDO <small id="label-right">Esperando cifras del servidor</small></h1>
+    <div id="strike-right" class="duel-strike" role="status" hidden></div><svg class="plano" id="plano-right" role="img" aria-label="Recinto con Mando"></svg><div class="last" id="last-right"></div><div class="nums" id="nums-right"></div></section>
+</main><footer class="duel-footer"><span id="baseline-note">El servidor ofrece una lista fija.</span><span id="duel-note">Simulación · N = 1 caso por lado</span><a href="/asistente">Provocar un imprevisto</a><a href="/">Volver al mando</a><span id="duel-error" role="status"></span></footer>
+<script src="/static/plano.js"></script>
+<script src="/static/ui.js"></script>
+<script src="/static/duelo.js"></script>
+</body></html>

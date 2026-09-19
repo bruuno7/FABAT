@@ -1,5 +1,6 @@
-node_modules/
-dist/
+.venv/
+__pycache__/
+contacts.local.json
 .env
-*.log
-.DS_Store
+*.local.json
+static/vendor/

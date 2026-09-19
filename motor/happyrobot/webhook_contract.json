@@ -1,79 +1,683 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://fabat.local/motor/happyrobot/webhook_contract.json",
-  "title": "MANDO ↔ HappyRobot webhook contract",
-  "description": "Contrato mínimo Festival Abierto. HR habla; MANDO decide.",
-  "definitions": {
-    "perfil_color": {
-      "type": "string",
-      "enum": ["menor", "pmr", "adulto", "personal", "vip"],
-      "description": "Capa estable (QR/pulsera). Modifica protocolo, no la cola médica."
+  "$id": "mando.hr.v1",
+  "title": "Contrato de mensajes entre el backend (motor/server, adaptador HappyRobotComms) y los workflows de HappyRobot",
+  "version": "1.0.0",
+  "date": "2026-09-18",
+  "notes": [
+    "Coherente con motor/contracts.py: Action (id, kind, t, incident, resource, zone, params, autonomy, channel), Report (id, t, channel, text, source, lang, zone_hint) y CommsAPI (send / poll con result accept|reject|no_answer|answer).",
+    "HappyRobot NO conoce el reloj de la simulacion. El backend envia 't' en cada peticion; HappyRobot lo devuelve tal cual como 't_sent'. El campo 't' de lo que devuelve CommsAPI.poll() lo pone el ADAPTADOR al recibir el mensaje (world.t en ese momento). Nunca se usa reloj real dentro del nucleo.",
+    "Todas las cargas backend -> HappyRobot son PLANAS (sin objetos anidados) porque no esta confirmado que el selector de variables '@' de la plataforma resuelva rutas anidadas. POR CONFIRMAR EN LA PLATAFORMA. Las cargas HappyRobot -> backend admiten un unico objeto anidado ('report', 'extracted', 'data') porque la plantilla JSON la escribimos nosotros en el nodo de webhook.",
+    "El backend compone el texto exacto que se dice o se escribe (order_text, sms_text, question_text, parte_text). El agente de HappyRobot no inventa contenido operativo: lo lee, confirma y recoge la respuesta.",
+    "Idempotencia: cada mensaje HappyRobot -> backend lleva 'event_id' unico. El backend descarta event_id repetidos. Dentro de un mismo action_id gana el mensaje con 'seq' mayor; el mensaje con final=true cierra la accion y los posteriores se ignoran (se registran en el log).",
+    "Campo 'mode': 'live' afecta al mundo; 'test' es para Tests, Adversarial Agents y pruebas manuales: el backend lo registra pero no lo entrega a Mando.",
+    "Campo 'session_id': identificador de la ejecucion de nuestro backend. El backend descarta respuestas de una sesion anterior (una llamada que termina despues de reiniciar la demo).",
+    "Tildes: las descripciones de este fichero van sin tildes, pero todo texto que se DICE o se ESCRIBE a una persona (catalogs.*.spoken, resources_spoken, order_text, sms_text, question_text, parte_text...) debe llevarlas: la sintesis de voz las necesita para acentuar bien. Los alias de zona se comparan en minusculas y sin tildes.",
+    "Ningun mensaje transporta 'truth_incident' ni ningun dato de WorldAPI.truth()."
+  ],
+  "transport": {
+    "backend_to_happyrobot": {
+      "how": "HTTP POST con cuerpo JSON a la URL del trigger 'Incoming hook' de cada workflow (una URL por workflow y por entorno: Development, Staging, Production).",
+      "env_vars_backend": {
+        "HR_HOOK_DISPATCH": "URL del Incoming hook del workflow A (despacho por voz; tambien recall)",
+        "HR_HOOK_CLARIFY": "URL del Incoming hook del workflow B (aclaracion)",
+        "HR_HOOK_NOTIFY": "URL del Incoming hook del workflow G (notificacion sin respuesta)",
+        "HR_HOOK_EXTERNAL": "URL del Incoming hook del workflow D (escalado externo con aprobacion)",
+        "HR_HOOK_FOLLOWUP": "URL del Incoming hook del workflow E (seguimiento)",
+        "HR_API_KEY": "Credencial del hook si se activa 'Enhanced Security' en el trigger. Nombre de cabecera y formato: POR CONFIRMAR EN LA PLATAFORMA",
+        "MANDO_CALLBACK_URL": "URL publica (tunel) de nuestro backend, se envia en cada peticion como 'callback_url'",
+        "MANDO_HR_TOKEN": "Secreto compartido que HappyRobot manda en la cabecera X-Mando-Token",
+        "MANDO_ALLOWED_NUMBERS": "Lista blanca de telefonos a los que se puede llamar o escribir (E.164, separados por comas)"
+      },
+      "expected_response": "Se espera 2xx. Si la plataforma devuelve un identificador de ejecucion, guardarlo en Action.params['hr_run_id']; no depender de el. Formato de la respuesta: POR CONFIRMAR EN LA PLATAFORMA.",
+      "on_error": "Si el POST falla o tarda mas de 5 s: el adaptador genera el mismo un resultado {result:'no_answer', detail:'channel_error'} para que Mando reasigne o cambie de canal. No reintentar mas de 1 vez."
     },
-    "triage_color": {
-      "type": "string",
-      "enum": ["rojo", "amarillo", "verde", "negro", "desconocido"],
-      "description": "Capa dinámica en incidente. Manda cola médica."
+    "happyrobot_to_backend": {
+      "how": "Nodo de accion Webhook (POST, JSON) al final de cada rama, y Tool nodes dentro de la conversacion para los avisos en tiempo real.",
+      "base_url": "El valor de 'callback_url' recibido en la peticion. Si el campo URL del nodo no admite variables (POR CONFIRMAR EN LA PLATAFORMA), se fija a mano la URL del tunel en cada nodo y se actualiza al reiniciar el tunel.",
+      "auth_header": {"X-Mando-Token": "<secreto compartido>"},
+      "endpoints": {
+        "POST /hr/events": "Todos los mensajes asincronos: progress, dispatch_result, clarify_result, public_report, notify_result, external_result, followup_result.",
+        "POST /hr/identify": "Consulta sincrona: quien es este numero y a que rama va un mensaje entrante.",
+        "POST /hr/approval_check": "Consulta sincrona: comprueba que una accion ALWAYS_APPROVE tiene el si de la persona del centro de control.",
+        "POST /hr/webcall/next": "Consulta sincrona del plan B 'Web call': devuelve la orden pendiente para quien acaba de abrir la llamada en el navegador."
+      },
+      "latency_budget": "Los endpoints sincronos y cualquier endpoint llamado desde un Tool node durante una conversacion de voz deben contestar en menos de 500 ms (objetivo 200 ms). Responder primero, procesar despues. Un endpoint lento es silencio en la llamada.",
+      "response_body": {
+        "description": "Respuesta del backend a POST /hr/events",
+        "schema": {
+          "type": "object",
+          "required": ["ok"],
+          "properties": {
+            "ok": {"type": "boolean"},
+            "duplicate": {"type": "boolean", "description": "true si el event_id ya se habia recibido"},
+            "report_id": {"type": ["string", "null"], "description": "Solo para public_report: id del Report creado"},
+            "ref_spoken": {"type": ["string", "null"], "description": "Referencia corta que el agente puede decir: 'treinta y uno'"},
+            "say_text": {"type": ["string", "null"], "description": "Frase APROBADA que el agente puede decir tal cual (p. ej. 'Ya tenemos ese aviso. Hay personal avisado.'). Si es null, el agente no dice nada sobre el estado."}
+          }
+        },
+        "example": {"ok": true, "duplicate": false, "report_id": "r-0031", "ref_spoken": "treinta y uno", "say_text": null}
+      }
+    }
+  },
+  "catalogs": {
+    "result": {
+      "values": ["accept", "reject", "no_answer", "answer"],
+      "meaning_by_message": {
+        "dispatch_result": {"accept": "el jefe de equipo acepta la orden", "reject": "la rechaza (con motivo)", "no_answer": "no contesto por ningun canal, buzon, colgo sin responder o canal caido", "answer": "no se usa"},
+        "clarify_result": {"answer": "dio el dato que faltaba", "reject": "se niega o no lo sabe", "no_answer": "no contesto", "accept": "no se usa"},
+        "notify_result": {"accept": "mensaje entregado o locucion escuchada", "no_answer": "no entregado o no contesto", "reject": "el destinatario pide no recibir mas mensajes", "answer": "no se usa"},
+        "external_result": {"accept": "el servicio externo recibio el parte y lo confirmo", "reject": "no aprobado, o el servicio externo no lo admite, o pidio hablar con una persona y se transfirio", "no_answer": "no contesto", "answer": "no se usa"},
+        "followup_result": {"answer": "el equipo dio su estado", "no_answer": "no contesto", "reject": "no se usa", "accept": "no se usa"}
+      }
+    },
+    "dispatch_detail": ["accepted", "rejected", "changed_mind", "cannot_hear_sms_sent", "accepted_by_sms", "rejected_by_sms", "no_answer", "voicemail", "hung_up", "wrong_person", "channel_error", "number_not_allowed"],
+    "reason_code": {
+      "values": ["busy_other_incident", "injured", "end_of_shift", "route_blocked", "lacks_equipment", "too_far", "unsafe", "other"],
+      "backend_hint": {
+        "busy_other_incident": "el recurso sigue BUSY; reasignar",
+        "injured": "recurso OFFLINE; posible incidente nuevo (medical) en su zona",
+        "end_of_shift": "recurso OFFLINE",
+        "route_blocked": "convertir new_info_text en un Report (channel voice, source = nombre del recurso): puede romper un supuesto del plan",
+        "lacks_equipment": "reasignar a otro recurso del mismo tipo o anadir RESUPPLY",
+        "too_far": "reasignar; corregir la zona del recurso si la dice",
+        "unsafe": "anadir seguridad a needs del incidente",
+        "other": "leer reason_text"
+      }
+    },
+    "priority_label": {
+      "rule": "severity >= 8 -> 'roja'; 5..7 -> 'amarilla'; <= 4 -> 'verde'. Lo calcula el backend; el agente solo lo lee.",
+      "values": ["roja", "amarilla", "verde"]
+    },
+    "severity_level": {
+      "description": "Gravedad OBSERVADA que extrae el agente de entrada a partir de hechos dichos por quien avisa. No es un diagnostico. Mando decide la severity 1..10.",
+      "values": {
+        "life_threat": "no responde, no respira con normalidad, sangra mucho, convulsiona, gente aplastada o en el suelo bajo la multitud, fuego, arma, estructura caída. Sugerencia de mapeo: 9",
+        "urgent": "consciente pero mal, mareo, golpe, agresion sin arma, empujones fuertes, puerta atascada, menor perdido. Sugerencia: 6",
+        "minor": "molestia, queja, falta de agua, bano roto, objeto perdido. Sugerencia: 3",
+        "unknown": "no se pudo saber. Sugerencia: 5 y accion ASK"
+      }
+    },
+    "family_hint": ["crowd", "medical", "weather", "aggression", "supply", "infra", "resource", "info", "external"],
+    "zones": {
+      "description": "Ids fijos de INTERFACES.md con el nombre que se DICE por telefono y sus alias. Las puertas se dicen siempre con su palabra clave para que B, C y D no se confundan con ruido.",
+      "gate_a": {"spoken": "puerta A de Alicante", "aliases": ["puerta a", "acceso a", "gate a", "entrada a", "alicante"]},
+      "gate_b": {"spoken": "puerta B de Barcelona", "aliases": ["puerta b", "acceso b", "gate b", "entrada b", "barcelona"]},
+      "gate_c": {"spoken": "puerta C de Cádiz", "aliases": ["puerta c", "acceso c", "gate c", "entrada c", "cádiz"]},
+      "front_pit": {"spoken": "frente de escenario", "aliases": ["primera fila", "foso", "delante del escenario", "valla", "pit", "front"]},
+      "general": {"spoken": "pista general", "aliases": ["pista", "general", "en medio", "zona general", "la explanada"]},
+      "vip": {"spoken": "zona VIP", "aliases": ["vip", "golden", "zona premium"]},
+      "pmr": {"spoken": "plataforma PMR", "aliases": ["plataforma", "zona de sillas de ruedas", "movilidad reducida", "pmr"]},
+      "food": {"spoken": "restauración", "aliases": ["food trucks", "comida", "barras", "zona de comida", "bares"]},
+      "toilets": {"spoken": "aseos", "aliases": ["baños", "lavabos", "wc", "toilets"]},
+      "water_n": {"spoken": "punto de agua norte", "aliases": ["fuente norte", "agua norte"]},
+      "water_s": {"spoken": "punto de agua sur", "aliases": ["fuente sur", "agua sur"]},
+      "medical_1": {"spoken": "puesto médico uno", "aliases": ["enfermería uno", "cruz roja uno", "médico uno"]},
+      "medical_2": {"spoken": "puesto médico dos", "aliases": ["enfermería dos", "cruz roja dos", "médico dos"]},
+      "corridor_n": {"spoken": "pasillo norte", "aliases": ["pasillo norte", "corredor norte"]},
+      "corridor_s": {"spoken": "pasillo sur", "aliases": ["pasillo sur", "corredor sur", "ruta de ambulancia"]},
+      "backstage": {"spoken": "backstage", "aliases": ["camerinos", "detras del escenario"]},
+      "exit_transport": {"spoken": "salida a lanzaderas y metro", "aliases": ["lanzaderas", "metro", "autobuses", "salida", "parada"]}
+    },
+    "resources_spoken": {
+      "sec_1": "Seguridad uno", "sec_2": "Seguridad dos", "sec_3": "Seguridad tres", "sec_4": "Seguridad cuatro", "sec_5": "Seguridad cinco",
+      "med_1": "Médico uno", "med_2": "Médico dos", "med_3": "Médico tres",
+      "amb_1": "Ambulancia uno", "tech_1": "Técnico uno", "tech_2": "Técnico dos", "log_1": "Logística uno",
+      "vol_1": "Voluntarios uno", "vol_2": "Voluntarios dos", "vol_3": "Voluntarios tres"
+    },
+    "forbidden_numbers": {
+      "rule": "Ni el backend ni ningun workflow marcan jamas un numero de emergencias real durante el hackathon. El 'servicio externo' de la demo es un movil del equipo o de un juez que ha dado su consentimiento.",
+      "never_dial": ["112", "061", "062", "080", "085", "088", "091", "092", "+34112", "911", "999"]
+    }
+  },
+  "$defs": {
+    "e164": {"type": "string", "pattern": "^\\+[1-9][0-9]{7,14}$"},
+    "lang": {"type": "string", "enum": ["es", "en", "fr", "de", "it", "pt", "other"]},
+    "mode": {"type": "string", "enum": ["live", "test"]},
+    "zone_id": {"type": ["string", "null"], "enum": ["gate_a", "gate_b", "gate_c", "front_pit", "general", "vip", "pmr", "food", "toilets", "water_n", "water_s", "medical_1", "medical_2", "corridor_n", "corridor_s", "backstage", "exit_transport", null]},
+    "yes_no_unknown": {"type": "string", "enum": ["yes", "no", "unknown"]},
+    "request_envelope": {
+      "type": "object",
+      "required": ["schema", "message", "session_id", "action_id", "kind", "t", "callback_url", "mode", "lang"],
+      "properties": {
+        "schema": {"const": "mando.hr.v1"},
+        "message": {"type": "string"},
+        "session_id": {"type": "string", "description": "Ejecucion de nuestro backend"},
+        "action_id": {"type": "string", "description": "Action.id"},
+        "kind": {"type": "string", "description": "Action.kind (valor de ActionKind)"},
+        "t": {"type": "integer", "minimum": 0, "description": "Action.t o world.t al enviar: minutos desde el inicio"},
+        "autonomy": {"type": "string", "enum": ["auto", "approve"]},
+        "callback_url": {"type": "string", "format": "uri"},
+        "mode": {"$ref": "#/$defs/mode"},
+        "lang": {"$ref": "#/$defs/lang"}
+      }
+    },
+    "event_envelope": {
+      "type": "object",
+      "required": ["schema", "message", "event_id", "mode"],
+      "properties": {
+        "schema": {"const": "mando.hr.v1"},
+        "message": {"type": "string"},
+        "event_id": {"type": "string", "description": "Unico por mensaje. Recomendado: <id de ejecucion de HappyRobot>-<nombre del nodo>. Nombre de la variable del id de ejecucion: POR CONFIRMAR EN LA PLATAFORMA. Si no existe, usar action_id + '-' + seq."},
+        "session_id": {"type": ["string", "null"]},
+        "action_id": {"type": ["string", "null"]},
+        "t_sent": {"type": ["integer", "null"], "description": "Eco del 't' de la peticion"},
+        "seq": {"type": "integer", "minimum": 0, "description": "Orden dentro de la misma accion: 0 progress, 1 aviso en llamada, 9 final"},
+        "final": {"type": "boolean"},
+        "mode": {"$ref": "#/$defs/mode"},
+        "hr_run_id": {"type": ["string", "null"]}
+      }
+    }
+  },
+  "messages": {
+    "dispatch_request": {
+      "direction": "backend -> happyrobot",
+      "endpoint": "POST $HR_HOOK_DISPATCH",
+      "workflow": "A. Despacho por voz (tambien RECALL)",
+      "maps_from": "Action con kind dispatch|recall, channel voice, autonomy auto + Resource (contact, name, zone) + Incident (zone, severity, priority)",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/request_envelope"}],
+        "type": "object",
+        "required": ["to_number", "resource_id", "resource_spoken", "incident_id", "zone_id", "zone_spoken", "severity", "priority_label", "order_text", "sms_text", "max_attempts", "ring_timeout_s", "fallback_channel"],
+        "properties": {
+          "message": {"const": "dispatch_request"},
+          "kind": {"enum": ["dispatch", "recall"]},
+          "to_number": {"$ref": "#/$defs/e164", "description": "Resource.contact. El adaptador lo valida contra MANDO_ALLOWED_NUMBERS antes de enviar."},
+          "resource_id": {"type": "string"},
+          "resource_kind": {"type": "string", "enum": ["security", "medical", "ambulance", "tech", "logistics", "volunteer"]},
+          "resource_spoken": {"type": "string", "description": "catalogs.resources_spoken"},
+          "leader_name": {"type": ["string", "null"], "description": "Nombre de pila del jefe de equipo, si se conoce"},
+          "resource_zone_spoken": {"type": ["string", "null"]},
+          "incident_id": {"type": "string"},
+          "incident_type": {"type": "string"},
+          "incident_type_spoken": {"type": "string", "description": "'persona inconsciente', 'puerta atascada'. Descripcion de hechos, nunca un diagnostico."},
+          "zone_id": {"$ref": "#/$defs/zone_id"},
+          "zone_spoken": {"type": "string"},
+          "zone_detail": {"type": ["string", "null"], "description": "'lado izquierdo, junto a la torre de sonido'"},
+          "severity": {"type": "integer", "minimum": 1, "maximum": 10},
+          "priority": {"type": "number", "description": "Incident.priority, solo informativo"},
+          "priority_label": {"enum": ["roja", "amarilla", "verde"]},
+          "order_text": {"type": "string", "maxLength": 220, "description": "La orden tal y como se DICE. Maximo 30 palabras (unos 12 s). Que, donde, prioridad."},
+          "access_hint": {"type": ["string", "null"], "maxLength": 80, "description": "'Entra por pasillo sur.' Solo se dice si el jefe acepta."},
+          "sms_text": {"type": "string", "maxLength": 160, "description": "La misma orden para el SMS de respaldo. Termina en 'Responde 1 VOY o 2 NO PUEDO.'"},
+          "recall_from_spoken": {"type": ["string", "null"], "description": "Solo kind=recall: tarea que deja"},
+          "max_attempts": {"type": "integer", "minimum": 1, "maximum": 2, "description": "1 si severity >= 8 (no se espera a un segundo intento: se pasa a SMS y el backend reasigna). 2 en el resto."},
+          "ring_timeout_s": {"type": "integer", "minimum": 10, "maximum": 45},
+          "fallback_channel": {"enum": ["sms", "whatsapp", "none"]},
+          "sms_reply_timeout_s": {"type": "integer", "minimum": 30, "maximum": 300}
+        }
+      },
+      "example": {
+        "schema": "mando.hr.v1", "message": "dispatch_request", "session_id": "demo-0919-01", "action_id": "a-0042", "kind": "dispatch", "t": 14,
+        "autonomy": "auto", "callback_url": "https://ejemplo-tunel.trycloudflare.com", "mode": "live", "lang": "es",
+        "to_number": "+34600000002", "resource_id": "med_2", "resource_kind": "medical", "resource_spoken": "Médico dos", "leader_name": "Lucía", "resource_zone_spoken": "puesto médico uno",
+        "incident_id": "i-007", "incident_type": "unconscious_person", "incident_type_spoken": "persona inconsciente",
+        "zone_id": "front_pit", "zone_spoken": "frente de escenario", "zone_detail": "lado izquierdo, junto a la valla",
+        "severity": 9, "priority": 8.7, "priority_label": "roja",
+        "order_text": "Persona inconsciente en frente de escenario, lado izquierdo. Prioridad roja. Acude ya con el desfibrilador.",
+        "access_hint": "Entra por pasillo sur.",
+        "sms_text": "MANDO a-0042: persona inconsciente en FRENTE DE ESCENARIO, lado izq. Prioridad ROJA. Responde 1 VOY o 2 NO PUEDO.",
+        "recall_from_spoken": null, "max_attempts": 1, "ring_timeout_s": 25, "fallback_channel": "sms", "sms_reply_timeout_s": 90
+      }
+    },
+    "progress": {
+      "direction": "happyrobot -> backend",
+      "endpoint": "POST /hr/events",
+      "workflow": "A, B, D, E, G",
+      "maps_to": "LogEntry(kind='action') para la pantalla. NO entra en CommsAPI.poll() como resultado. La Action sigue en EXECUTING.",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/event_envelope"}],
+        "type": "object",
+        "required": ["action_id", "stage"],
+        "properties": {
+          "message": {"const": "progress"},
+          "stage": {"enum": ["call_started", "call_answered", "fallback_sent", "approval_verified", "transferred_to_human"]},
+          "channel_used": {"enum": ["voice", "sms", "whatsapp", "web_call"]},
+          "text": {"type": ["string", "null"]}
+        }
+      },
+      "example": {"schema": "mando.hr.v1", "message": "progress", "event_id": "hr-7f3a-fallback", "session_id": "demo-0919-01", "action_id": "a-0042", "t_sent": 14, "seq": 0, "final": false, "mode": "live", "hr_run_id": "hr-7f3a", "stage": "fallback_sent", "channel_used": "sms", "text": "No se entendía por el ruido. Orden enviada por SMS."}
+    },
+    "dispatch_result": {
+      "direction": "happyrobot -> backend",
+      "endpoint": "POST /hr/events",
+      "workflow": "A, F",
+      "maps_to": "CommsAPI.poll() -> {action_id, result, text, t, eta_min, detail, reason_code, channel, data}. accept: Action DONE, Resource EN_ROUTE con eta=eta_min (si es null, el backend la estima por distancia entre zonas). reject: Action REJECTED. no_answer: Action FAILED.",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/event_envelope"}],
+        "type": "object",
+        "required": ["action_id", "result", "detail", "text", "channel_used", "attempts", "final", "seq"],
+        "properties": {
+          "message": {"const": "dispatch_result"},
+          "result": {"enum": ["accept", "reject", "no_answer"]},
+          "detail": {"enum": ["accepted", "rejected", "changed_mind", "cannot_hear_sms_sent", "accepted_by_sms", "rejected_by_sms", "no_answer", "voicemail", "hung_up", "wrong_person", "channel_error", "number_not_allowed"]},
+          "text": {"type": "string", "description": "Lo que dijo la persona, literal y corto. Vacio si no contesto."},
+          "eta_min": {"type": ["integer", "null"], "minimum": 0, "maximum": 120, "description": "Solo si la persona dio un numero y el agente lo confirmo por repeticion. Nunca inventado."},
+          "reason_code": {"enum": ["busy_other_incident", "injured", "end_of_shift", "route_blocked", "lacks_equipment", "too_far", "unsafe", "other", null]},
+          "reason_text": {"type": ["string", "null"]},
+          "new_info_text": {"type": ["string", "null"], "description": "Informacion NUEVA sobre el mundo que dio la persona ('el pasillo norte está cortado por una valla caída'). El backend la convierte en Report(channel=voice, source=resource_spoken)."},
+          "channel_used": {"enum": ["voice", "sms", "whatsapp", "web_call"]},
+          "attempts": {"type": "integer", "minimum": 0},
+          "lang": {"$ref": "#/$defs/lang"},
+          "confirmed_by_repetition": {"type": "boolean"},
+          "call_duration_s": {"type": ["integer", "null"]},
+          "data": {"type": "object", "description": "Libre: latencias, url de la transcripcion, etc."}
+        }
+      },
+      "examples": [
+        {"schema": "mando.hr.v1", "message": "dispatch_result", "event_id": "hr-7f3a-final", "session_id": "demo-0919-01", "action_id": "a-0042", "t_sent": 14, "seq": 9, "final": true, "mode": "live", "hr_run_id": "hr-7f3a", "result": "accept", "detail": "accepted", "text": "Afirmativo, vamos. Cuatro minutos.", "eta_min": 4, "reason_code": null, "reason_text": null, "new_info_text": null, "channel_used": "voice", "attempts": 1, "lang": "es", "confirmed_by_repetition": true, "call_duration_s": 23, "data": {}},
+        {"schema": "mando.hr.v1", "message": "dispatch_result", "event_id": "hr-81bc-final", "session_id": "demo-0919-01", "action_id": "a-0043", "t_sent": 15, "seq": 9, "final": true, "mode": "live", "hr_run_id": "hr-81bc", "result": "reject", "detail": "rejected", "text": "Negativo, el pasillo norte está cortado, no paso con la camilla.", "eta_min": null, "reason_code": "route_blocked", "reason_text": "pasillo norte cortado", "new_info_text": "El pasillo norte está cortado por una valla caída; no pasa una camilla.", "channel_used": "voice", "attempts": 1, "lang": "es", "confirmed_by_repetition": true, "call_duration_s": 31, "data": {}},
+        {"schema": "mando.hr.v1", "message": "dispatch_result", "event_id": "hr-90aa-final", "session_id": "demo-0919-01", "action_id": "a-0044", "t_sent": 16, "seq": 9, "final": true, "mode": "live", "hr_run_id": "hr-90aa", "result": "no_answer", "detail": "no_answer", "text": "", "eta_min": null, "reason_code": null, "reason_text": null, "new_info_text": null, "channel_used": "sms", "attempts": 1, "lang": "es", "confirmed_by_repetition": false, "call_duration_s": 0, "data": {"sms_sent": true}}
+      ]
+    },
+    "clarify_request": {
+      "direction": "backend -> happyrobot",
+      "endpoint": "POST $HR_HOOK_CLARIFY",
+      "workflow": "B. Aclaracion",
+      "maps_from": "Action con kind ask. channel voice para personal, sms|whatsapp para publico.",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/request_envelope"}],
+        "type": "object",
+        "required": ["to_number", "channel", "contact_role", "question_key", "question_text", "answer_type", "max_attempts", "reply_timeout_s"],
+        "properties": {
+          "message": {"const": "clarify_request"},
+          "kind": {"const": "ask"},
+          "to_number": {"$ref": "#/$defs/e164"},
+          "channel": {"enum": ["voice", "sms", "whatsapp"]},
+          "contact_role": {"enum": ["public", "staff"]},
+          "contact_name": {"type": ["string", "null"]},
+          "report_id": {"type": ["string", "null"], "description": "Report.id que origino la duda"},
+          "incident_id": {"type": ["string", "null"]},
+          "context_text": {"type": "string", "maxLength": 160, "description": "'Hace dos minutos avisaste de una persona en el suelo.'"},
+          "question_key": {"enum": ["zone", "gate", "people_count", "breathing", "conscious", "still_happening", "description", "other"]},
+          "question_text": {"type": "string", "maxLength": 140, "description": "UNA sola pregunta, compuesta por el backend"},
+          "answer_type": {"enum": ["zone", "integer", "yes_no_unknown", "free_text"]},
+          "options_spoken": {"type": ["string", "null"], "description": "'puerta A de Alicante, B de Barcelona o C de Cádiz'"},
+          "max_attempts": {"type": "integer", "minimum": 1, "maximum": 2},
+          "reply_timeout_s": {"type": "integer", "minimum": 30, "maximum": 300}
+        }
+      },
+      "example": {
+        "schema": "mando.hr.v1", "message": "clarify_request", "session_id": "demo-0919-01", "action_id": "a-0051", "kind": "ask", "t": 17, "autonomy": "auto",
+        "callback_url": "https://ejemplo-tunel.trycloudflare.com", "mode": "live", "lang": "es",
+        "to_number": "+34600000099", "channel": "whatsapp", "contact_role": "public", "contact_name": null, "report_id": "r-0029", "incident_id": "i-009",
+        "context_text": "Hace dos minutos avisaste de mucha gente atascada en una puerta.",
+        "question_key": "gate", "question_text": "¿En qué puerta estás?", "answer_type": "zone",
+        "options_spoken": "A de Alicante, B de Barcelona o C de Cádiz", "max_attempts": 1, "reply_timeout_s": 120
+      }
+    },
+    "clarify_result": {
+      "direction": "happyrobot -> backend",
+      "endpoint": "POST /hr/events",
+      "workflow": "B",
+      "maps_to": "CommsAPI.poll() -> result answer|reject|no_answer. El backend guarda la respuesta en Action.params['answer'] y ademas crea un Report (mismo canal, source igual al del aviso original) para que Mando lo vea en new_reports.",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/event_envelope"}],
+        "type": "object",
+        "required": ["action_id", "result", "text", "channel_used", "final", "seq"],
+        "properties": {
+          "message": {"const": "clarify_result"},
+          "result": {"enum": ["answer", "reject", "no_answer"]},
+          "detail": {"enum": ["answered", "does_not_know", "refused", "no_answer", "hung_up", "channel_error", "off_topic"]},
+          "text": {"type": "string", "description": "Respuesta literal"},
+          "question_key": {"type": "string"},
+          "answer_value": {"type": ["string", "integer", "null"], "description": "Normalizado segun answer_type: id de zona, entero, 'yes'|'no'|'unknown', o texto"},
+          "zone_id": {"$ref": "#/$defs/zone_id"},
+          "confirmed_by_repetition": {"type": "boolean"},
+          "extra_info_text": {"type": ["string", "null"], "description": "Otros datos utiles que dio sin preguntarle"},
+          "channel_used": {"enum": ["voice", "sms", "whatsapp", "web_call"]},
+          "lang": {"$ref": "#/$defs/lang"}
+        }
+      },
+      "example": {"schema": "mando.hr.v1", "message": "clarify_result", "event_id": "hr-a112-final", "session_id": "demo-0919-01", "action_id": "a-0051", "t_sent": 17, "seq": 9, "final": true, "mode": "live", "hr_run_id": "hr-a112", "result": "answer", "detail": "answered", "text": "La B, la de Barcelona. Hay un torno roto.", "question_key": "gate", "answer_value": "gate_b", "zone_id": "gate_b", "confirmed_by_repetition": true, "extra_info_text": "Dice que hay un torno roto.", "channel_used": "whatsapp", "lang": "es"}
+    },
+    "identify_request": {
+      "direction": "happyrobot -> backend (sincrono)",
+      "endpoint": "POST /hr/identify",
+      "workflow": "C (primer nodo de cada entrada), y enrutado de respuestas por SMS a A, B y E",
+      "schema": {
+        "type": "object",
+        "required": ["schema", "from_number", "channel"],
+        "properties": {
+          "schema": {"const": "mando.hr.v1"},
+          "from_number": {"$ref": "#/$defs/e164"},
+          "channel": {"enum": ["voice", "sms", "whatsapp", "web_call"]},
+          "first_text": {"type": ["string", "null"], "description": "Primer mensaje si es texto"},
+          "zone_qr": {"type": ["string", "null"], "description": "Si el enlace o QR de la pulsera traia zona (p. ej. texto inicial 'ZONA gate_b')"}
+        }
+      },
+      "response_schema": {
+        "type": "object",
+        "required": ["ok", "route", "role"],
+        "properties": {
+          "ok": {"type": "boolean"},
+          "route": {"enum": ["public_report", "staff_report", "staff_reply", "clarification_reply", "blocked"], "description": "staff_reply y clarification_reply: hay una Action pendiente para ese numero; el workflow interpreta el texto como respuesta a esa accion."},
+          "role": {"enum": ["public", "staff", "jury", "control", "unknown"]},
+          "resource_id": {"type": ["string", "null"]},
+          "display_name": {"type": ["string", "null"], "description": "'Seguridad dos'. Nunca el nombre de otro asistente."},
+          "pending_action_id": {"type": ["string", "null"]},
+          "pending_message": {"enum": ["dispatch_request", "clarify_request", "followup_request", null]},
+          "session_id": {"type": ["string", "null"]},
+          "lang_hint": {"type": ["string", "null"]},
+          "recent_reports": {"type": "integer", "description": "Avisos de ese numero en los ultimos 10 min (para detectar al bromista o al que repite)"}
+        }
+      },
+      "example_request": {"schema": "mando.hr.v1", "from_number": "+34600000002", "channel": "sms", "first_text": "1", "zone_qr": null},
+      "example_response": {"ok": true, "route": "staff_reply", "role": "staff", "resource_id": "med_2", "display_name": "Médico dos", "pending_action_id": "a-0042", "pending_message": "dispatch_request", "session_id": "demo-0919-01", "lang_hint": "es", "recent_reports": 0}
     },
     "public_report": {
-      "type": "object",
-      "required": ["event", "channel", "reported_at", "text"],
-      "properties": {
-        "event": { "const": "public_report" },
-        "channel": {
-          "type": "string",
-          "enum": ["telegram", "webcall", "sms", "voice", "whatsapp", "other"]
-        },
-        "reported_at": { "type": "string", "format": "date-time" },
-        "text": { "type": "string", "minLength": 1 },
-        "reporter": {
-          "type": "object",
-          "properties": {
-            "external_id": { "type": "string" },
-            "display_name": { "type": "string" },
-            "perfil_color": { "$ref": "#/definitions/perfil_color" },
-            "chat_id": { "type": "string", "description": "Telegram chat_id para reply" }
-          }
-        },
-        "location_hint": { "type": "string" },
-        "correlation_id": { "type": "string" }
+      "direction": "happyrobot -> backend",
+      "endpoint": "POST /hr/events (desde el Tool node 'enviar_aviso' durante la conversacion, y otra vez al final con final=true)",
+      "workflow": "C. Entrada de avisos",
+      "maps_to": "Report(id y t los pone el backend; channel, text, source, lang, zone_hint vienen en 'report'). 'extracted' NO cabe en Report: el servidor lo guarda en una tabla aparte por report_id y en LogEntry.data; Mando puede leerlo como pista, nunca como verdad. truth_incident queda siempre a null.",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/event_envelope"}],
+        "type": "object",
+        "required": ["report", "extracted", "complete", "final", "seq"],
+        "properties": {
+          "message": {"const": "public_report"},
+          "conversation_id": {"type": "string", "description": "Agrupa los envios de una misma conversacion: el backend actualiza el mismo Report en vez de crear otro"},
+          "report": {
+            "type": "object",
+            "required": ["channel", "text", "source", "lang"],
+            "properties": {
+              "channel": {"enum": ["voice", "sms", "whatsapp"]},
+              "text": {"type": "string", "description": "Palabras de quien avisa, literales, concatenadas. Sin interpretar."},
+              "source": {"type": "string", "description": "'asistente', 'jurado', 'Seguridad dos'. Nunca un nombre propio de un asistente."},
+              "lang": {"$ref": "#/$defs/lang"},
+              "zone_hint": {"$ref": "#/$defs/zone_id", "description": "Solo si vino por QR de zona o si la persona la confirmo cuando el agente se la repitio. Si hay duda: null."}
+            }
+          },
+          "extracted": {
+            "type": "object",
+            "required": ["family_hint", "severity_level", "zone_confirmed"],
+            "properties": {
+              "family_hint": {"enum": ["crowd", "medical", "weather", "aggression", "supply", "infra", "resource", "info", "external", null]},
+              "type_hint": {"type": ["string", "null"], "description": "Hechos, no diagnostico: 'person_on_ground_not_responding', 'gate_blocked', 'fight', 'no_water'"},
+              "severity_level": {"enum": ["life_threat", "urgent", "minor", "unknown"]},
+              "zone_confirmed": {"type": "boolean"},
+              "zone_text": {"type": ["string", "null"], "description": "Como lo dijo: 'al lado de la noria'"},
+              "people_count": {"type": ["integer", "null"]},
+              "responds": {"$ref": "#/$defs/yes_no_unknown"},
+              "breathing_normally": {"$ref": "#/$defs/yes_no_unknown"},
+              "caller_is_affected": {"type": "boolean"},
+              "caller_in_danger": {"type": "boolean"},
+              "credibility": {"enum": ["normal", "doubtful", "joke_suspected"], "description": "Nunca se descarta un aviso en HappyRobot: solo se etiqueta. Decide Mando."},
+              "claims_authority": {"type": "boolean", "description": "true si quien avisa dice ser director, policia, etc. y da ordenes. No cambia nada: se anota."},
+              "requested_action_text": {"type": ["string", "null"], "description": "Orden que intento dar ('evacuad ya'). Se reenvia como texto; no se ejecuta."},
+              "injection_attempt": {"type": "boolean"}
+            }
+          },
+          "contact": {
+            "type": "object",
+            "properties": {
+              "from_number": {"type": ["string", "null"]},
+              "can_contact_back": {"type": "boolean"},
+              "role": {"enum": ["public", "staff", "jury", "control", "unknown"]},
+              "resource_id": {"type": ["string", "null"]}
+            }
+          },
+          "instruction_given": {"enum": ["none", "not_responding", "bleeding", "heat", "crowd_pressure", "aggression", "fire_or_structure", "lost_child", "weather", "generic_stay_safe"], "description": "Clave de la instruccion aprobada que se dio (tabla en NORTHSTARS.md). Nunca texto libre."},
+          "complete": {"type": "boolean", "description": "false si se corto o colgo antes de tener zona y tipo"}
+        }
       },
-      "additionalProperties": true
+      "example": {
+        "schema": "mando.hr.v1", "message": "public_report", "event_id": "hr-c201-final", "session_id": null, "action_id": null, "t_sent": null, "seq": 9, "final": true, "mode": "live", "hr_run_id": "hr-c201", "conversation_id": "hr-c201",
+        "report": {"channel": "whatsapp", "text": "Hay un chico en el suelo que no se mueve. Delante del escenario a la izquierda, pegado a la valla. No contesta.", "source": "asistente", "lang": "es", "zone_hint": "front_pit"},
+        "extracted": {"family_hint": "medical", "type_hint": "person_on_ground_not_responding", "severity_level": "life_threat", "zone_confirmed": true, "zone_text": "delante del escenario a la izquierda, pegado a la valla", "people_count": 1, "responds": "no", "breathing_normally": "unknown", "caller_is_affected": false, "caller_in_danger": false, "credibility": "normal", "claims_authority": false, "requested_action_text": null, "injection_attempt": false},
+        "contact": {"from_number": "+34600000123", "can_contact_back": true, "role": "public", "resource_id": null},
+        "instruction_given": "not_responding", "complete": true
+      }
     },
-    "hr_to_mando": {
-      "type": "object",
-      "required": ["event", "correlation_id"],
-      "properties": {
-        "event": {
-          "type": "string",
-          "enum": [
-            "extract_ready",
-            "agent_reply",
-            "needs_human",
-            "session_ended"
-          ]
-        },
-        "correlation_id": { "type": "string" },
-        "channel": { "type": "string" },
-        "chat_id": { "type": "string" },
-        "reply_text": { "type": "string" },
-        "extract": {
-          "type": "object",
-          "properties": {
-            "incident_type": { "type": "string" },
-            "sector": { "type": "string" },
-            "severity": { "type": "integer", "minimum": 1, "maximum": 5 },
-            "triage_color": { "$ref": "#/definitions/triage_color" },
-            "perfil_color": { "$ref": "#/definitions/perfil_color" },
-            "summary": { "type": "string" }
-          }
-        },
-        "hr_run_id": { "type": "string" }
+    "notify_request": {
+      "direction": "backend -> happyrobot",
+      "endpoint": "POST $HR_HOOK_NOTIFY",
+      "workflow": "G. Notificacion sin respuesta (SMS, WhatsApp o locucion de voz)",
+      "maps_from": "Action con kind notify (y broadcast cuando el canal es SMS/WhatsApp a una lista). Un POST por destinatario.",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/request_envelope"}],
+        "type": "object",
+        "required": ["to_number", "channel", "message_text"],
+        "properties": {
+          "message": {"const": "notify_request"},
+          "kind": {"enum": ["notify", "broadcast"]},
+          "to_number": {"$ref": "#/$defs/e164"},
+          "channel": {"enum": ["voice", "sms", "whatsapp"]},
+          "recipient_role": {"enum": ["public", "staff", "jury", "control", "external"]},
+          "message_text": {"type": "string", "maxLength": 300, "description": "Texto exacto. Sin tiempos prometidos que el backend no tenga."},
+          "requires_ack": {"type": "boolean", "description": "Si true, en voz pide 'afirmativo' y en texto pide 'OK'"}
+        }
       },
-      "additionalProperties": true
+      "example": {"schema": "mando.hr.v1", "message": "notify_request", "session_id": "demo-0919-01", "action_id": "a-0060", "kind": "notify", "t": 20, "autonomy": "auto", "callback_url": "https://ejemplo-tunel.trycloudflare.com", "mode": "live", "lang": "es", "to_number": "+34600000123", "channel": "whatsapp", "recipient_role": "public", "message_text": "Festival Abierto: tu aviso 31 está atendido por personal del recinto. Gracias por avisar.", "requires_ack": false}
     },
-    "mando_to_hr_hook": {
-      "description": "Body POSTed al Incoming Hook de fa-entrada-tg / fa-webcall",
-      "allOf": [{ "$ref": "#/definitions/public_report" }]
+    "notify_result": {
+      "direction": "happyrobot -> backend",
+      "endpoint": "POST /hr/events",
+      "workflow": "G",
+      "maps_to": "CommsAPI.poll(): accept = entregado (Action DONE); no_answer = no entregado (Action FAILED).",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/event_envelope"}],
+        "type": "object",
+        "required": ["action_id", "result", "channel_used", "final", "seq"],
+        "properties": {
+          "message": {"const": "notify_result"},
+          "result": {"enum": ["accept", "no_answer", "reject"]},
+          "detail": {"enum": ["delivered", "acknowledged", "undelivered", "opt_out", "channel_error"]},
+          "text": {"type": "string"},
+          "channel_used": {"enum": ["voice", "sms", "whatsapp"]}
+        }
+      },
+      "example": {"schema": "mando.hr.v1", "message": "notify_result", "event_id": "hr-d310-final", "session_id": "demo-0919-01", "action_id": "a-0060", "t_sent": 20, "seq": 9, "final": true, "mode": "live", "hr_run_id": "hr-d310", "result": "accept", "detail": "delivered", "text": "", "channel_used": "whatsapp"}
+    },
+    "external_request": {
+      "direction": "backend -> happyrobot",
+      "endpoint": "POST $HR_HOOK_EXTERNAL",
+      "workflow": "D. Escalado externo con aprobacion",
+      "maps_from": "Action con kind request_external, autonomy approve, y SOLO despues de AgentAPI.approve(action_id, ok=True). El adaptador se niega a enviarlo si la accion no paso por AWAITING_APPROVAL -> aprobada.",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/request_envelope"}],
+        "type": "object",
+        "required": ["to_number", "service_label", "approval_id", "approved_by", "approved_t", "m_major_declared", "e_exact_location", "t_type", "h_hazards", "a_access", "n_casualties", "e_resources", "parte_text", "callback_number", "control_center_number"],
+        "properties": {
+          "message": {"const": "external_request"},
+          "kind": {"const": "request_external"},
+          "autonomy": {"const": "approve"},
+          "to_number": {"$ref": "#/$defs/e164", "description": "En el hackathon: un movil del equipo que hace de coordinacion externa. NUNCA un numero de catalogs.forbidden_numbers."},
+          "service_label": {"enum": ["coordinacion_112", "policia", "bomberos", "sanitario_externo"]},
+          "approval_id": {"type": "string"},
+          "approved_by": {"type": "string", "description": "Identificador de la persona del centro de control, p. ej. 'operador-1'"},
+          "approved_t": {"type": "integer"},
+          "incident_id": {"type": ["string", "null"]},
+          "m_major_declared": {"type": "boolean", "description": "M: lo decide la persona, no el agente"},
+          "e_exact_location": {"type": "string", "description": "E: recinto, direccion, zona y punto de encuentro"},
+          "t_type": {"type": "string", "description": "T: tipo de incidente, en hechos"},
+          "h_hazards": {"type": "string", "description": "H: peligros presentes o previsibles. 'Ninguno conocido' si no hay."},
+          "a_access": {"type": "string", "description": "A: por donde entrar y por donde NO"},
+          "n_casualties": {"type": "string", "description": "N: numero de afectados y gravedad observada. 'Sin confirmar' si no se sabe."},
+          "e_resources": {"type": "string", "description": "E: que hay ya en el lugar y que se pide"},
+          "parte_text": {"type": "string", "maxLength": 700, "description": "El parte completo tal y como se dice, compuesto por el backend a partir de los siete campos"},
+          "callback_number": {"type": "string", "description": "Telefono del centro de control para que el servicio externo devuelva la llamada"},
+          "control_center_number": {"$ref": "#/$defs/e164", "description": "A donde se transfiere la llamada si piden hablar con una persona"}
+        }
+      },
+      "example": {
+        "schema": "mando.hr.v1", "message": "external_request", "session_id": "demo-0919-01", "action_id": "a-0077", "kind": "request_external", "t": 31, "autonomy": "approve",
+        "callback_url": "https://ejemplo-tunel.trycloudflare.com", "mode": "live", "lang": "es",
+        "to_number": "+34600000900", "service_label": "coordinacion_112", "approval_id": "ap-0012", "approved_by": "operador-1", "approved_t": 30, "incident_id": "i-011",
+        "m_major_declared": false,
+        "e_exact_location": "Festival Abierto, recinto ferial, Madrid. Frente de escenario. Punto de encuentro: puerta C de Cádiz.",
+        "t_type": "Aglomeración con varias personas caídas frente al escenario.",
+        "h_hazards": "Densidad alta, más de cinco personas por metro cuadrado. Temperatura treinta y ocho grados.",
+        "a_access": "Entrada de vehículos por pasillo sur desde puerta C. Pasillo norte cortado.",
+        "n_casualties": "Tres personas atendidas, una inconsciente. Cifra sin cerrar.",
+        "e_resources": "En el lugar: dos equipos médicos y una ambulancia interna. Se piden dos ambulancias de soporte vital.",
+        "parte_text": "Parte de Festival Abierto, centro de control. Incidente mayor: no declarado. Lugar: Festival Abierto, recinto ferial, Madrid, frente de escenario; punto de encuentro, puerta C de Cádiz. Tipo: aglomeración con varias personas caídas. Peligros: densidad alta y treinta y ocho grados. Acceso: por pasillo sur desde puerta C; pasillo norte cortado. Afectados: tres atendidos, uno inconsciente, cifra sin cerrar. Recursos: dos equipos médicos y una ambulancia interna en el lugar; pedimos dos ambulancias de soporte vital.",
+        "callback_number": "+34600000001", "control_center_number": "+34600000001"
+      }
+    },
+    "approval_check_request": {
+      "direction": "happyrobot -> backend (sincrono)",
+      "endpoint": "POST /hr/approval_check",
+      "workflow": "D (segundo cerrojo, antes de marcar)",
+      "schema": {
+        "type": "object",
+        "required": ["schema", "action_id", "approval_id"],
+        "properties": {"schema": {"const": "mando.hr.v1"}, "action_id": {"type": "string"}, "approval_id": {"type": "string"}, "session_id": {"type": ["string", "null"]}}
+      },
+      "response_schema": {
+        "type": "object",
+        "required": ["ok", "approved"],
+        "properties": {
+          "ok": {"type": "boolean"},
+          "approved": {"type": "boolean", "description": "true solo si la Action existe en esta sesion, su kind esta en ALWAYS_APPROVE, fue aprobada por una persona, la aprobacion tiene menos de 10 min de simulacion y no se ha usado ya"},
+          "kind": {"type": ["string", "null"]},
+          "approved_by": {"type": ["string", "null"]},
+          "approved_t": {"type": ["integer", "null"]},
+          "reason": {"type": ["string", "null"]}
+        }
+      },
+      "example_request": {"schema": "mando.hr.v1", "action_id": "a-0077", "approval_id": "ap-0012", "session_id": "demo-0919-01"},
+      "example_response": {"ok": true, "approved": true, "kind": "request_external", "approved_by": "operador-1", "approved_t": 30, "reason": null}
+    },
+    "external_result": {
+      "direction": "happyrobot -> backend",
+      "endpoint": "POST /hr/events",
+      "workflow": "D",
+      "maps_to": "CommsAPI.poll(): accept -> Action DONE; reject -> REJECTED (si detail=not_approved ademas LogEntry de seguridad: intento bloqueado, NO cuenta como unsafe_action porque no se ejecuto); no_answer -> FAILED y aviso en pantalla a la persona del centro de control.",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/event_envelope"}],
+        "type": "object",
+        "required": ["action_id", "result", "detail", "text", "final", "seq"],
+        "properties": {
+          "message": {"const": "external_result"},
+          "result": {"enum": ["accept", "reject", "no_answer"]},
+          "detail": {"enum": ["received_and_confirmed", "not_approved", "transferred_to_human", "declined", "no_answer", "voicemail", "hung_up", "number_not_allowed", "channel_error"]},
+          "text": {"type": "string"},
+          "external_ref": {"type": ["string", "null"], "description": "Numero de incidente que de el servicio externo"},
+          "eta_min": {"type": ["integer", "null"], "description": "Solo si el servicio externo la dio"},
+          "resources_committed_text": {"type": ["string", "null"]},
+          "questions_unanswered": {"type": "array", "items": {"type": "string"}, "description": "Lo que preguntaron y el agente no tenia en el parte. La persona del centro de control lo ve y devuelve la llamada."},
+          "channel_used": {"enum": ["voice", "web_call"]}
+        }
+      },
+      "example": {"schema": "mando.hr.v1", "message": "external_result", "event_id": "hr-e400-final", "session_id": "demo-0919-01", "action_id": "a-0077", "t_sent": 31, "seq": 9, "final": true, "mode": "live", "hr_run_id": "hr-e400", "result": "accept", "detail": "received_and_confirmed", "text": "Recibido. Enviamos dos unidades de soporte vital a puerta C. Incidente 2291.", "external_ref": "2291", "eta_min": 12, "resources_committed_text": "dos unidades de soporte vital", "questions_unanswered": ["edad aproximada de la persona inconsciente"], "channel_used": "voice"}
+    },
+    "followup_request": {
+      "direction": "backend -> happyrobot",
+      "endpoint": "POST $HR_HOOK_FOLLOWUP",
+      "workflow": "E. Seguimiento",
+      "maps_from": "Action con kind ask, params.followup=true, que el BACKEND programa en t_accept + eta_min + margen (el temporizador vive en el backend, no en HappyRobot, porque el reloj de la simulacion es suyo).",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/request_envelope"}],
+        "type": "object",
+        "required": ["to_number", "channel", "resource_id", "resource_spoken", "incident_id", "zone_spoken", "followup_kind", "question_text", "max_attempts"],
+        "properties": {
+          "message": {"const": "followup_request"},
+          "kind": {"const": "ask"},
+          "to_number": {"$ref": "#/$defs/e164"},
+          "channel": {"enum": ["voice", "sms", "whatsapp"]},
+          "resource_id": {"type": "string"},
+          "resource_spoken": {"type": "string"},
+          "leader_name": {"type": ["string", "null"]},
+          "incident_id": {"type": "string"},
+          "incident_type_spoken": {"type": "string"},
+          "zone_id": {"$ref": "#/$defs/zone_id"},
+          "zone_spoken": {"type": "string"},
+          "dispatch_action_id": {"type": "string", "description": "La orden original a la que se da seguimiento"},
+          "followup_kind": {"enum": ["arrival", "status", "closure"]},
+          "promised_eta_min": {"type": ["integer", "null"]},
+          "minutes_since_dispatch": {"type": "integer"},
+          "question_text": {"type": "string", "maxLength": 140},
+          "sms_text": {"type": "string", "maxLength": 160},
+          "max_attempts": {"type": "integer", "minimum": 1, "maximum": 2},
+          "ring_timeout_s": {"type": "integer"}
+        }
+      },
+      "example": {
+        "schema": "mando.hr.v1", "message": "followup_request", "session_id": "demo-0919-01", "action_id": "a-0048", "kind": "ask", "t": 19, "autonomy": "auto",
+        "callback_url": "https://ejemplo-tunel.trycloudflare.com", "mode": "live", "lang": "es",
+        "to_number": "+34600000002", "channel": "voice", "resource_id": "med_2", "resource_spoken": "Médico dos", "leader_name": "Lucía",
+        "incident_id": "i-007", "incident_type_spoken": "persona inconsciente", "zone_id": "front_pit", "zone_spoken": "frente de escenario",
+        "dispatch_action_id": "a-0042", "followup_kind": "arrival", "promised_eta_min": 4, "minutes_since_dispatch": 5,
+        "question_text": "¿Has llegado a frente de escenario?", "sms_text": "MANDO a-0048: ¿llegaste a FRENTE DE ESCENARIO? Responde 1 EN EL SITIO, 2 EN CAMINO, 3 RESUELTO, 4 NECESITO APOYO.", "max_attempts": 1, "ring_timeout_s": 25
+      }
+    },
+    "followup_result": {
+      "direction": "happyrobot -> backend",
+      "endpoint": "POST /hr/events",
+      "workflow": "E",
+      "maps_to": "CommsAPI.poll(): answer|no_answer. status_code -> on_scene: Incident IN_PROGRESS, Resource BUSY; resolved: Incident RESOLVED, Resource AVAILABLE; false_alarm: FALSE_ALARM; needs_more|needs_ambulance: Mando propone otro DISPATCH con 'needs'; cannot_locate: Action ASK a quien aviso; en_route_delayed: actualiza eta. no_answer dos veces seguidas: el backend marca el recurso como 'resource_no_answer' y Mando decide.",
+      "schema": {
+        "allOf": [{"$ref": "#/$defs/event_envelope"}],
+        "type": "object",
+        "required": ["action_id", "result", "text", "final", "seq"],
+        "properties": {
+          "message": {"const": "followup_result"},
+          "result": {"enum": ["answer", "no_answer"]},
+          "status_code": {"enum": ["on_scene", "en_route_delayed", "resolved", "needs_more", "needs_ambulance", "false_alarm", "cannot_locate", "aborted", null]},
+          "text": {"type": "string"},
+          "new_eta_min": {"type": ["integer", "null"]},
+          "needs": {"type": "object", "additionalProperties": {"type": "integer"}, "description": "Mismo formato que Incident.needs: {\"medical\": 1}"},
+          "delay_reason_text": {"type": ["string", "null"]},
+          "new_info_text": {"type": ["string", "null"]},
+          "patient_handover_text": {"type": ["string", "null"], "description": "Hechos operativos que diga el equipo ('lo llevamos a puesto médico uno'). Sin datos personales del paciente."},
+          "channel_used": {"enum": ["voice", "sms", "whatsapp", "web_call"]},
+          "confirmed_by_repetition": {"type": "boolean"}
+        }
+      },
+      "example": {"schema": "mando.hr.v1", "message": "followup_result", "event_id": "hr-f512-final", "session_id": "demo-0919-01", "action_id": "a-0048", "t_sent": 19, "seq": 9, "final": true, "mode": "live", "hr_run_id": "hr-f512", "result": "answer", "status_code": "needs_ambulance", "text": "En el sitio. Necesito la ambulancia, no lo podemos mover a pie.", "new_eta_min": null, "needs": {"ambulance": 1}, "delay_reason_text": null, "new_info_text": null, "patient_handover_text": null, "channel_used": "voice", "confirmed_by_repetition": true}
+    },
+    "webcall_next_request": {
+      "direction": "happyrobot -> backend (sincrono)",
+      "endpoint": "POST /hr/webcall/next",
+      "workflow": "F. Plan B 'Web call'",
+      "notes": "Se usa si el SDK web no permite pasar variables al iniciar la llamada (POR CONFIRMAR EN LA PLATAFORMA). Si lo permite, la pagina pasa directamente el mismo cuerpo de dispatch_request y este endpoint sobra.",
+      "schema": {
+        "type": "object",
+        "required": ["schema", "role"],
+        "properties": {"schema": {"const": "mando.hr.v1"}, "role": {"enum": ["staff", "public", "external"]}, "web_session": {"type": ["string", "null"], "description": "Identificador que la pagina pone al abrir la llamada, si el SDK lo permite"}}
+      },
+      "response_schema": {
+        "type": "object",
+        "required": ["ok", "has_order"],
+        "properties": {
+          "ok": {"type": "boolean"},
+          "has_order": {"type": "boolean"},
+          "order": {"type": ["object", "null"], "description": "Mismo cuerpo que dispatch_request, followup_request o external_request, con to_number = null permitido"}
+        }
+      },
+      "example_request": {"schema": "mando.hr.v1", "role": "staff", "web_session": "ws-19"},
+      "example_response": {"ok": true, "has_order": true, "order": {"message": "dispatch_request", "action_id": "a-0042", "session_id": "demo-0919-01", "t": 14, "resource_spoken": "Médico dos", "order_text": "Persona inconsciente en frente de escenario, lado izquierdo. Prioridad roja. Acude ya con el desfibrilador.", "access_hint": "Entra por pasillo sur."}}
     }
+  },
+  "poll_item": {
+    "description": "Forma normalizada de cada elemento que devuelve HappyRobotComms.poll(t). La construye el adaptador a partir de los mensajes *_result con final=true (y de dispatch_result con seq=1 si se quiere reaccionar antes de que acabe la llamada).",
+    "schema": {
+      "type": "object",
+      "required": ["action_id", "result", "text", "t"],
+      "properties": {
+        "action_id": {"type": "string"},
+        "result": {"enum": ["accept", "reject", "no_answer", "answer"]},
+        "text": {"type": "string"},
+        "t": {"type": "integer", "description": "world.t cuando el adaptador recibio el mensaje"},
+        "eta_min": {"type": ["integer", "null"]},
+        "detail": {"type": ["string", "null"]},
+        "reason_code": {"type": ["string", "null"]},
+        "channel": {"type": ["string", "null"], "description": "Valor de Channel: voice|sms|whatsapp. web_call se normaliza a voice con data.web_call=true"},
+        "data": {"type": "object"}
+      }
+    },
+    "example": {"action_id": "a-0042", "result": "accept", "text": "Afirmativo, vamos. Cuatro minutos.", "t": 15, "eta_min": 4, "detail": "accepted", "reason_code": null, "channel": "voice", "data": {"hr_run_id": "hr-7f3a", "call_duration_s": 23, "confirmed_by_repetition": true}}
+  },
+  "action_kind_routing": {
+    "description": "Que hace el adaptador con cada ActionKind en CommsAPI.send(). Lo que no aparece aqui no pasa por HappyRobot (lo aplica WorldAPI.apply).",
+    "dispatch": "dispatch_request -> workflow A",
+    "recall": "dispatch_request con kind=recall -> workflow A",
+    "ask": "clarify_request -> workflow B; si params.followup=true: followup_request -> workflow E",
+    "notify": "notify_request -> workflow G",
+    "broadcast": "megafonia y pantallas: NO pasa por HappyRobot. Solo si channel es sms|whatsapp: un notify_request por destinatario",
+    "request_external": "external_request -> workflow D, solo tras aprobacion",
+    "evacuate": "No hay workflow que evacue. Tras la aprobacion humana, el backend emite las Actions hijas (notify a jefes de zona, dispatch de seguridad) y cada una sigue su camino normal.",
+    "stop_show": "Igual que evacuate: tras la aprobacion, notify por voz al regidor de escenario con requires_ack=true"
   }
 }

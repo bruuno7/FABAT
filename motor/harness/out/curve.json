@@ -1,0 +1,1593 @@
+{
+ "code": "3b6e1c0ecdf4",
+ "case_signature": {
+  "train": "619d711e2dea256d",
+  "heldout": "63970392c7f75beb"
+ },
+ "n_train": 3000,
+ "n_heldout": 1000,
+ "reference": {
+  "baseline": {
+   "train": {
+    "score": {
+     "n": 3000,
+     "mean": 70.704,
+     "median": 76.325,
+     "p90": 93.13,
+     "ci95": [
+      69.936,
+      71.431
+     ]
+    },
+    "world_score": {
+     "n": 3000,
+     "mean": 76.737,
+     "median": 82.15,
+     "p90": 98.22,
+     "ci95": [
+      76.003,
+      77.44
+     ]
+    },
+    "errors": 0,
+    "n": 3000
+   },
+   "heldout": {
+    "score": {
+     "n": 1000,
+     "mean": 69.82,
+     "median": 75.46,
+     "p90": 92.81,
+     "ci95": [
+      68.488,
+      71.162
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 76.022,
+     "median": 81.865,
+     "p90": 98.5,
+     "ci95": [
+      74.744,
+      77.329
+     ]
+    },
+    "errors": 0,
+    "n": 1000
+   }
+  },
+  "baseline_plus": {
+   "train": {
+    "score": {
+     "n": 3000,
+     "mean": 71.761,
+     "median": 77.895,
+     "p90": 93.19,
+     "ci95": [
+      71.036,
+      72.462
+     ]
+    },
+    "world_score": {
+     "n": 3000,
+     "mean": 77.57,
+     "median": 83.93,
+     "p90": 98.22,
+     "ci95": [
+      76.876,
+      78.235
+     ]
+    },
+    "errors": 0,
+    "n": 3000
+   },
+   "heldout": {
+    "score": {
+     "n": 1000,
+     "mean": 70.61,
+     "median": 76.235,
+     "p90": 92.88,
+     "ci95": [
+      69.332,
+      71.877
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 76.62,
+     "median": 82.65,
+     "p90": 98.44,
+     "ci95": [
+      75.392,
+      77.853
+     ]
+    },
+    "errors": 0,
+    "n": 1000
+   }
+  }
+ },
+ "note": "score = fórmula completa; world_score = solo resultados del mundo (sin expected.must/must_not). Pista «mundo»: sin lecciones de ajuste al corrector. vs_round0 = diferencia pareada con IC95.",
+ "tracks": {
+  "mundo": {
+   "metric": "world_score",
+   "bases": [
+    "world",
+    "operator"
+   ],
+   "verdict": {
+    "train": {
+     "score": "hay evidencia de mejora",
+     "world_score": "hay evidencia de mejora"
+    },
+    "heldout": {
+     "score": "hay evidencia de mejora",
+     "world_score": "hay evidencia de mejora"
+    }
+   },
+   "rounds": [
+    {
+     "round": 0,
+     "n_lessons": 0,
+     "train": {
+      "score": {
+       "n": 3000,
+       "mean": 80.539,
+       "median": 86.385,
+       "p90": 97.5,
+       "ci95": [
+        79.895,
+        81.238
+       ]
+      },
+      "world_score": {
+       "n": 3000,
+       "mean": 83.775,
+       "median": 89.135,
+       "p90": 98.72,
+       "ci95": [
+        83.176,
+        84.427
+       ]
+      },
+      "time_to_first_attention": {
+       "n": 2938,
+       "mean": 2.266,
+       "median": 2.0,
+       "p90": 4.0,
+       "ci95": [
+        2.215,
+        2.318
+       ]
+      },
+      "minutes_over_5": {
+       "n": 3000,
+       "mean": 10.678,
+       "median": 0.0,
+       "p90": 48.0,
+       "ci95": [
+        9.924,
+        11.429
+       ]
+      },
+      "wasted_dispatches": {
+       "n": 3000,
+       "mean": 0.91,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.851,
+        0.966
+       ]
+      },
+      "n": 3000,
+      "errors": 0,
+      "critical_failed": 760,
+      "critical_total": 6521,
+      "critical_failed_rate": 0.1165,
+      "unsafe_actions": 0
+     },
+     "heldout": {
+      "score": {
+       "n": 1000,
+       "mean": 78.71,
+       "median": 85.97,
+       "p90": 96.55,
+       "ci95": [
+        77.429,
+        79.996
+       ]
+      },
+      "world_score": {
+       "n": 1000,
+       "mean": 82.929,
+       "median": 89.05,
+       "p90": 98.64,
+       "ci95": [
+        81.734,
+        84.103
+       ]
+      },
+      "time_to_first_attention": {
+       "n": 989,
+       "mean": 2.36,
+       "median": 2.2,
+       "p90": 4.0,
+       "ci95": [
+        2.266,
+        2.447
+       ]
+      },
+      "minutes_over_5": {
+       "n": 1000,
+       "mean": 10.257,
+       "median": 0.0,
+       "p90": 48.0,
+       "ci95": [
+        8.904,
+        11.543
+       ]
+      },
+      "wasted_dispatches": {
+       "n": 1000,
+       "mean": 0.831,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.754,
+        0.912
+       ]
+      },
+      "n": 1000,
+      "errors": 0,
+      "critical_failed": 309,
+      "critical_total": 2332,
+      "critical_failed_rate": 0.1325,
+      "unsafe_actions": 0
+     },
+     "vs_round0": {
+      "train": {
+       "score": {
+        "n": 3000,
+        "mean": 0.0,
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "level": 0.95,
+        "better": 0,
+        "worse": 0,
+        "evidence": false
+       },
+       "world_score": {
+        "n": 3000,
+        "mean": 0.0,
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "level": 0.95,
+        "better": 0,
+        "worse": 0,
+        "evidence": false
+       }
+      },
+      "heldout": {
+       "score": {
+        "n": 1000,
+        "mean": 0.0,
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "level": 0.95,
+        "better": 0,
+        "worse": 0,
+        "evidence": false
+       },
+       "world_score": {
+        "n": 1000,
+        "mean": 0.0,
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "level": 0.95,
+        "better": 0,
+        "worse": 0,
+        "evidence": false
+       }
+      }
+     },
+     "by_family": {
+      "train": {
+       "aggression": {
+        "n": 940,
+        "mean": 80.081,
+        "median": 86.96,
+        "p90": 97.34,
+        "ci95": [
+         78.679,
+         81.444
+        ]
+       },
+       "crowd": {
+        "n": 1121,
+        "mean": 77.626,
+        "median": 84.3,
+        "p90": 96.55,
+        "ci95": [
+         76.406,
+         78.777
+        ]
+       },
+       "external": {
+        "n": 490,
+        "mean": 80.603,
+        "median": 89.05,
+        "p90": 97.88,
+        "ci95": [
+         78.895,
+         82.422
+        ]
+       },
+       "info": {
+        "n": 2224,
+        "mean": 80.514,
+        "median": 86.5,
+        "p90": 97.24,
+        "ci95": [
+         79.807,
+         81.235
+        ]
+       },
+       "infra": {
+        "n": 1154,
+        "mean": 78.396,
+        "median": 83.745,
+        "p90": 97.13,
+        "ci95": [
+         77.312,
+         79.477
+        ]
+       },
+       "medical": {
+        "n": 1078,
+        "mean": 81.586,
+        "median": 86.87,
+        "p90": 97.38,
+        "ci95": [
+         80.57,
+         82.654
+        ]
+       },
+       "resource": {
+        "n": 2220,
+        "mean": 79.355,
+        "median": 85.41,
+        "p90": 97.02,
+        "ci95": [
+         78.645,
+         80.106
+        ]
+       },
+       "supply": {
+        "n": 635,
+        "mean": 80.639,
+        "median": 84.73,
+        "p90": 96.97,
+        "ci95": [
+         79.44,
+         81.803
+        ]
+       },
+       "weather": {
+        "n": 315,
+        "mean": 74.769,
+        "median": 81.3,
+        "p90": 96.31,
+        "ci95": [
+         72.285,
+         76.654
+        ]
+       }
+      },
+      "heldout": {
+       "aggression": {
+        "n": 296,
+        "mean": 77.934,
+        "median": 86.22,
+        "p90": 96.61,
+        "ci95": [
+         75.473,
+         80.328
+        ]
+       },
+       "crowd": {
+        "n": 338,
+        "mean": 74.383,
+        "median": 81.56,
+        "p90": 95.49,
+        "ci95": [
+         72.11,
+         76.429
+        ]
+       },
+       "external": {
+        "n": 230,
+        "mean": 75.51,
+        "median": 85.645,
+        "p90": 95.92,
+        "ci95": [
+         72.338,
+         78.832
+        ]
+       },
+       "info": {
+        "n": 782,
+        "mean": 78.38,
+        "median": 85.28,
+        "p90": 96.05,
+        "ci95": [
+         76.926,
+         79.844
+        ]
+       },
+       "infra": {
+        "n": 310,
+        "mean": 76.441,
+        "median": 83.99,
+        "p90": 96.5,
+        "ci95": [
+         74.218,
+         78.733
+        ]
+       },
+       "medical": {
+        "n": 385,
+        "mean": 76.007,
+        "median": 83.69,
+        "p90": 95.6,
+        "ci95": [
+         74.067,
+         78.064
+        ]
+       },
+       "resource": {
+        "n": 737,
+        "mean": 77.325,
+        "median": 84.42,
+        "p90": 96.39,
+        "ci95": [
+         75.644,
+         78.788
+        ]
+       },
+       "supply": {
+        "n": 185,
+        "mean": 77.943,
+        "median": 82.13,
+        "p90": 95.24,
+        "ci95": [
+         75.522,
+         80.614
+        ]
+       },
+       "weather": {
+        "n": 109,
+        "mean": 76.574,
+        "median": 82.66,
+        "p90": 96.39,
+        "ci95": [
+         71.919,
+         80.15
+        ]
+       }
+      }
+     }
+    },
+    {
+     "round": 1,
+     "n_lessons": 3,
+     "train": {
+      "score": {
+       "n": 3000,
+       "mean": 80.832,
+       "median": 86.715,
+       "p90": 97.44,
+       "ci95": [
+        80.189,
+        81.506
+       ]
+      },
+      "world_score": {
+       "n": 3000,
+       "mean": 84.078,
+       "median": 89.265,
+       "p90": 98.75,
+       "ci95": [
+        83.462,
+        84.707
+       ]
+      },
+      "time_to_first_attention": {
+       "n": 2938,
+       "mean": 2.27,
+       "median": 2.0,
+       "p90": 4.0,
+       "ci95": [
+        2.216,
+        2.322
+       ]
+      },
+      "minutes_over_5": {
+       "n": 3000,
+       "mean": 10.663,
+       "median": 0.0,
+       "p90": 48.0,
+       "ci95": [
+        9.968,
+        11.385
+       ]
+      },
+      "wasted_dispatches": {
+       "n": 3000,
+       "mean": 0.687,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.647,
+        0.725
+       ]
+      },
+      "n": 3000,
+      "errors": 0,
+      "critical_failed": 759,
+      "critical_total": 6519,
+      "critical_failed_rate": 0.1164,
+      "unsafe_actions": 0
+     },
+     "heldout": {
+      "score": {
+       "n": 1000,
+       "mean": 79.0,
+       "median": 86.045,
+       "p90": 96.64,
+       "ci95": [
+        77.723,
+        80.269
+       ]
+      },
+      "world_score": {
+       "n": 1000,
+       "mean": 83.217,
+       "median": 89.3,
+       "p90": 98.68,
+       "ci95": [
+        82.05,
+        84.378
+       ]
+      },
+      "time_to_first_attention": {
+       "n": 989,
+       "mean": 2.353,
+       "median": 2.2,
+       "p90": 4.17,
+       "ci95": [
+        2.261,
+        2.438
+       ]
+      },
+      "minutes_over_5": {
+       "n": 1000,
+       "mean": 10.202,
+       "median": 0.0,
+       "p90": 47.0,
+       "ci95": [
+        8.898,
+        11.509
+       ]
+      },
+      "wasted_dispatches": {
+       "n": 1000,
+       "mean": 0.69,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.628,
+        0.753
+       ]
+      },
+      "n": 1000,
+      "errors": 0,
+      "critical_failed": 306,
+      "critical_total": 2328,
+      "critical_failed_rate": 0.1314,
+      "unsafe_actions": 0
+     },
+     "vs_round0": {
+      "train": {
+       "score": {
+        "n": 3000,
+        "mean": 0.292,
+        "ci": [
+         0.21,
+         0.375
+        ],
+        "level": 0.95,
+        "better": 238,
+        "worse": 125,
+        "evidence": true
+       },
+       "world_score": {
+        "n": 3000,
+        "mean": 0.303,
+        "ci": [
+         0.222,
+         0.388
+        ],
+        "level": 0.95,
+        "better": 224,
+        "worse": 70,
+        "evidence": true
+       }
+      },
+      "heldout": {
+       "score": {
+        "n": 1000,
+        "mean": 0.29,
+        "ci": [
+         0.165,
+         0.439
+        ],
+        "level": 0.95,
+        "better": 70,
+        "worse": 27,
+        "evidence": true
+       },
+       "world_score": {
+        "n": 1000,
+        "mean": 0.288,
+        "ci": [
+         0.167,
+         0.431
+        ],
+        "level": 0.95,
+        "better": 65,
+        "worse": 17,
+        "evidence": true
+       }
+      }
+     },
+     "by_family": {
+      "train": {
+       "aggression": {
+        "n": 940,
+        "mean": 80.39,
+        "median": 87.425,
+        "p90": 97.33,
+        "ci95": [
+         78.99,
+         81.736
+        ]
+       },
+       "crowd": {
+        "n": 1121,
+        "mean": 78.244,
+        "median": 85.05,
+        "p90": 96.61,
+        "ci95": [
+         76.961,
+         79.34
+        ]
+       },
+       "external": {
+        "n": 490,
+        "mean": 81.195,
+        "median": 89.755,
+        "p90": 97.88,
+        "ci95": [
+         79.466,
+         82.922
+        ]
+       },
+       "info": {
+        "n": 2224,
+        "mean": 80.772,
+        "median": 86.785,
+        "p90": 97.2,
+        "ci95": [
+         80.08,
+         81.476
+        ]
+       },
+       "infra": {
+        "n": 1154,
+        "mean": 78.538,
+        "median": 83.81,
+        "p90": 97.09,
+        "ci95": [
+         77.454,
+         79.621
+        ]
+       },
+       "medical": {
+        "n": 1078,
+        "mean": 81.752,
+        "median": 87.07,
+        "p90": 97.36,
+        "ci95": [
+         80.691,
+         82.837
+        ]
+       },
+       "resource": {
+        "n": 2220,
+        "mean": 79.643,
+        "median": 85.685,
+        "p90": 97.02,
+        "ci95": [
+         78.913,
+         80.358
+        ]
+       },
+       "supply": {
+        "n": 635,
+        "mean": 80.805,
+        "median": 84.8,
+        "p90": 96.94,
+        "ci95": [
+         79.599,
+         82.018
+        ]
+       },
+       "weather": {
+        "n": 315,
+        "mean": 75.183,
+        "median": 82.5,
+        "p90": 96.38,
+        "ci95": [
+         72.634,
+         77.305
+        ]
+       }
+      },
+      "heldout": {
+       "aggression": {
+        "n": 296,
+        "mean": 78.185,
+        "median": 86.29,
+        "p90": 96.61,
+        "ci95": [
+         75.868,
+         80.586
+        ]
+       },
+       "crowd": {
+        "n": 338,
+        "mean": 75.029,
+        "median": 82.24,
+        "p90": 95.55,
+        "ci95": [
+         72.737,
+         76.945
+        ]
+       },
+       "external": {
+        "n": 230,
+        "mean": 75.802,
+        "median": 85.645,
+        "p90": 96.39,
+        "ci95": [
+         72.733,
+         79.109
+        ]
+       },
+       "info": {
+        "n": 782,
+        "mean": 78.677,
+        "median": 85.67,
+        "p90": 96.25,
+        "ci95": [
+         77.227,
+         80.152
+        ]
+       },
+       "infra": {
+        "n": 310,
+        "mean": 76.602,
+        "median": 83.915,
+        "p90": 96.58,
+        "ci95": [
+         74.359,
+         78.884
+        ]
+       },
+       "medical": {
+        "n": 385,
+        "mean": 76.25,
+        "median": 83.85,
+        "p90": 95.7,
+        "ci95": [
+         74.365,
+         78.321
+        ]
+       },
+       "resource": {
+        "n": 737,
+        "mean": 77.632,
+        "median": 84.83,
+        "p90": 96.39,
+        "ci95": [
+         75.964,
+         79.158
+        ]
+       },
+       "supply": {
+        "n": 185,
+        "mean": 78.176,
+        "median": 82.29,
+        "p90": 95.88,
+        "ci95": [
+         75.628,
+         80.836
+        ]
+       },
+       "weather": {
+        "n": 109,
+        "mean": 77.211,
+        "median": 83.7,
+        "p90": 96.64,
+        "ci95": [
+         72.442,
+         80.75
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  "todo": {
+   "metric": "score",
+   "bases": [
+    "world",
+    "operator",
+    "grader"
+   ],
+   "verdict": {
+    "train": {
+     "score": "hay evidencia de mejora",
+     "world_score": "hay evidencia de mejora"
+    },
+    "heldout": {
+     "score": "hay evidencia de mejora",
+     "world_score": "NO HAY EVIDENCIA DE APRENDIZAJE (el IC incluye el 0)"
+    }
+   },
+   "rounds": [
+    {
+     "round": 0,
+     "n_lessons": 0,
+     "train": {
+      "score": {
+       "n": 3000,
+       "mean": 80.539,
+       "median": 86.385,
+       "p90": 97.5,
+       "ci95": [
+        79.895,
+        81.238
+       ]
+      },
+      "world_score": {
+       "n": 3000,
+       "mean": 83.775,
+       "median": 89.135,
+       "p90": 98.72,
+       "ci95": [
+        83.176,
+        84.427
+       ]
+      },
+      "time_to_first_attention": {
+       "n": 2938,
+       "mean": 2.266,
+       "median": 2.0,
+       "p90": 4.0,
+       "ci95": [
+        2.215,
+        2.318
+       ]
+      },
+      "minutes_over_5": {
+       "n": 3000,
+       "mean": 10.678,
+       "median": 0.0,
+       "p90": 48.0,
+       "ci95": [
+        9.924,
+        11.429
+       ]
+      },
+      "wasted_dispatches": {
+       "n": 3000,
+       "mean": 0.91,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.851,
+        0.966
+       ]
+      },
+      "n": 3000,
+      "errors": 0,
+      "critical_failed": 760,
+      "critical_total": 6521,
+      "critical_failed_rate": 0.1165,
+      "unsafe_actions": 0
+     },
+     "heldout": {
+      "score": {
+       "n": 1000,
+       "mean": 78.71,
+       "median": 85.97,
+       "p90": 96.55,
+       "ci95": [
+        77.429,
+        79.996
+       ]
+      },
+      "world_score": {
+       "n": 1000,
+       "mean": 82.929,
+       "median": 89.05,
+       "p90": 98.64,
+       "ci95": [
+        81.734,
+        84.103
+       ]
+      },
+      "time_to_first_attention": {
+       "n": 989,
+       "mean": 2.36,
+       "median": 2.2,
+       "p90": 4.0,
+       "ci95": [
+        2.266,
+        2.447
+       ]
+      },
+      "minutes_over_5": {
+       "n": 1000,
+       "mean": 10.257,
+       "median": 0.0,
+       "p90": 48.0,
+       "ci95": [
+        8.904,
+        11.543
+       ]
+      },
+      "wasted_dispatches": {
+       "n": 1000,
+       "mean": 0.831,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.754,
+        0.912
+       ]
+      },
+      "n": 1000,
+      "errors": 0,
+      "critical_failed": 309,
+      "critical_total": 2332,
+      "critical_failed_rate": 0.1325,
+      "unsafe_actions": 0
+     },
+     "vs_round0": {
+      "train": {
+       "score": {
+        "n": 3000,
+        "mean": 0.0,
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "level": 0.95,
+        "better": 0,
+        "worse": 0,
+        "evidence": false
+       },
+       "world_score": {
+        "n": 3000,
+        "mean": 0.0,
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "level": 0.95,
+        "better": 0,
+        "worse": 0,
+        "evidence": false
+       }
+      },
+      "heldout": {
+       "score": {
+        "n": 1000,
+        "mean": 0.0,
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "level": 0.95,
+        "better": 0,
+        "worse": 0,
+        "evidence": false
+       },
+       "world_score": {
+        "n": 1000,
+        "mean": 0.0,
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "level": 0.95,
+        "better": 0,
+        "worse": 0,
+        "evidence": false
+       }
+      }
+     },
+     "by_family": {
+      "train": {
+       "aggression": {
+        "n": 940,
+        "mean": 80.081,
+        "median": 86.96,
+        "p90": 97.34,
+        "ci95": [
+         78.679,
+         81.444
+        ]
+       },
+       "crowd": {
+        "n": 1121,
+        "mean": 77.626,
+        "median": 84.3,
+        "p90": 96.55,
+        "ci95": [
+         76.406,
+         78.777
+        ]
+       },
+       "external": {
+        "n": 490,
+        "mean": 80.603,
+        "median": 89.05,
+        "p90": 97.88,
+        "ci95": [
+         78.895,
+         82.422
+        ]
+       },
+       "info": {
+        "n": 2224,
+        "mean": 80.514,
+        "median": 86.5,
+        "p90": 97.24,
+        "ci95": [
+         79.807,
+         81.235
+        ]
+       },
+       "infra": {
+        "n": 1154,
+        "mean": 78.396,
+        "median": 83.745,
+        "p90": 97.13,
+        "ci95": [
+         77.312,
+         79.477
+        ]
+       },
+       "medical": {
+        "n": 1078,
+        "mean": 81.586,
+        "median": 86.87,
+        "p90": 97.38,
+        "ci95": [
+         80.57,
+         82.654
+        ]
+       },
+       "resource": {
+        "n": 2220,
+        "mean": 79.355,
+        "median": 85.41,
+        "p90": 97.02,
+        "ci95": [
+         78.645,
+         80.106
+        ]
+       },
+       "supply": {
+        "n": 635,
+        "mean": 80.639,
+        "median": 84.73,
+        "p90": 96.97,
+        "ci95": [
+         79.44,
+         81.803
+        ]
+       },
+       "weather": {
+        "n": 315,
+        "mean": 74.769,
+        "median": 81.3,
+        "p90": 96.31,
+        "ci95": [
+         72.285,
+         76.654
+        ]
+       }
+      },
+      "heldout": {
+       "aggression": {
+        "n": 296,
+        "mean": 77.934,
+        "median": 86.22,
+        "p90": 96.61,
+        "ci95": [
+         75.473,
+         80.328
+        ]
+       },
+       "crowd": {
+        "n": 338,
+        "mean": 74.383,
+        "median": 81.56,
+        "p90": 95.49,
+        "ci95": [
+         72.11,
+         76.429
+        ]
+       },
+       "external": {
+        "n": 230,
+        "mean": 75.51,
+        "median": 85.645,
+        "p90": 95.92,
+        "ci95": [
+         72.338,
+         78.832
+        ]
+       },
+       "info": {
+        "n": 782,
+        "mean": 78.38,
+        "median": 85.28,
+        "p90": 96.05,
+        "ci95": [
+         76.926,
+         79.844
+        ]
+       },
+       "infra": {
+        "n": 310,
+        "mean": 76.441,
+        "median": 83.99,
+        "p90": 96.5,
+        "ci95": [
+         74.218,
+         78.733
+        ]
+       },
+       "medical": {
+        "n": 385,
+        "mean": 76.007,
+        "median": 83.69,
+        "p90": 95.6,
+        "ci95": [
+         74.067,
+         78.064
+        ]
+       },
+       "resource": {
+        "n": 737,
+        "mean": 77.325,
+        "median": 84.42,
+        "p90": 96.39,
+        "ci95": [
+         75.644,
+         78.788
+        ]
+       },
+       "supply": {
+        "n": 185,
+        "mean": 77.943,
+        "median": 82.13,
+        "p90": 95.24,
+        "ci95": [
+         75.522,
+         80.614
+        ]
+       },
+       "weather": {
+        "n": 109,
+        "mean": 76.574,
+        "median": 82.66,
+        "p90": 96.39,
+        "ci95": [
+         71.919,
+         80.15
+        ]
+       }
+      }
+     }
+    },
+    {
+     "round": 1,
+     "n_lessons": 8,
+     "train": {
+      "score": {
+       "n": 3000,
+       "mean": 81.031,
+       "median": 87.015,
+       "p90": 97.74,
+       "ci95": [
+        80.394,
+        81.729
+       ]
+      },
+      "world_score": {
+       "n": 3000,
+       "mean": 84.046,
+       "median": 89.255,
+       "p90": 98.74,
+       "ci95": [
+        83.443,
+        84.686
+       ]
+      },
+      "time_to_first_attention": {
+       "n": 2938,
+       "mean": 2.268,
+       "median": 2.0,
+       "p90": 4.0,
+       "ci95": [
+        2.215,
+        2.323
+       ]
+      },
+      "minutes_over_5": {
+       "n": 3000,
+       "mean": 10.642,
+       "median": 0.0,
+       "p90": 48.0,
+       "ci95": [
+        9.942,
+        11.372
+       ]
+      },
+      "wasted_dispatches": {
+       "n": 3000,
+       "mean": 0.73,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.684,
+        0.773
+       ]
+      },
+      "n": 3000,
+      "errors": 0,
+      "critical_failed": 757,
+      "critical_total": 6521,
+      "critical_failed_rate": 0.1161,
+      "unsafe_actions": 0
+     },
+     "heldout": {
+      "score": {
+       "n": 1000,
+       "mean": 78.956,
+       "median": 86.09,
+       "p90": 96.81,
+       "ci95": [
+        77.688,
+        80.271
+       ]
+      },
+      "world_score": {
+       "n": 1000,
+       "mean": 83.022,
+       "median": 89.09,
+       "p90": 98.67,
+       "ci95": [
+        81.824,
+        84.223
+       ]
+      },
+      "time_to_first_attention": {
+       "n": 989,
+       "mean": 2.363,
+       "median": 2.2,
+       "p90": 4.0,
+       "ci95": [
+        2.272,
+        2.448
+       ]
+      },
+      "minutes_over_5": {
+       "n": 1000,
+       "mean": 10.203,
+       "median": 0.0,
+       "p90": 47.0,
+       "ci95": [
+        8.895,
+        11.5
+       ]
+      },
+      "wasted_dispatches": {
+       "n": 1000,
+       "mean": 0.736,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.666,
+        0.811
+       ]
+      },
+      "n": 1000,
+      "errors": 0,
+      "critical_failed": 310,
+      "critical_total": 2334,
+      "critical_failed_rate": 0.1328,
+      "unsafe_actions": 0
+     },
+     "vs_round0": {
+      "train": {
+       "score": {
+        "n": 3000,
+        "mean": 0.491,
+        "ci": [
+         0.415,
+         0.582
+        ],
+        "level": 0.95,
+        "better": 695,
+        "worse": 81,
+        "evidence": true
+       },
+       "world_score": {
+        "n": 3000,
+        "mean": 0.271,
+        "ci": [
+         0.197,
+         0.36
+        ],
+        "level": 0.95,
+        "better": 190,
+        "worse": 101,
+        "evidence": true
+       }
+      },
+      "heldout": {
+       "score": {
+        "n": 1000,
+        "mean": 0.245,
+        "ci": [
+         0.096,
+         0.389
+        ],
+        "level": 0.95,
+        "better": 186,
+        "worse": 38,
+        "evidence": true
+       },
+       "world_score": {
+        "n": 1000,
+        "mean": 0.093,
+        "ci": [
+         -0.044,
+         0.231
+        ],
+        "level": 0.95,
+        "better": 49,
+        "worse": 42,
+        "evidence": false
+       }
+      }
+     },
+     "by_family": {
+      "train": {
+       "aggression": {
+        "n": 940,
+        "mean": 80.629,
+        "median": 87.82,
+        "p90": 97.58,
+        "ci95": [
+         79.166,
+         81.941
+        ]
+       },
+       "crowd": {
+        "n": 1121,
+        "mean": 78.411,
+        "median": 85.01,
+        "p90": 96.77,
+        "ci95": [
+         77.133,
+         79.559
+        ]
+       },
+       "external": {
+        "n": 490,
+        "mean": 81.79,
+        "median": 89.99,
+        "p90": 98.21,
+        "ci95": [
+         80.03,
+         83.476
+        ]
+       },
+       "info": {
+        "n": 2224,
+        "mean": 80.975,
+        "median": 86.985,
+        "p90": 97.5,
+        "ci95": [
+         80.301,
+         81.716
+        ]
+       },
+       "infra": {
+        "n": 1154,
+        "mean": 78.814,
+        "median": 83.985,
+        "p90": 97.37,
+        "ci95": [
+         77.72,
+         79.846
+        ]
+       },
+       "medical": {
+        "n": 1078,
+        "mean": 81.924,
+        "median": 87.285,
+        "p90": 97.54,
+        "ci95": [
+         80.876,
+         82.987
+        ]
+       },
+       "resource": {
+        "n": 2220,
+        "mean": 79.853,
+        "median": 85.885,
+        "p90": 97.31,
+        "ci95": [
+         79.114,
+         80.581
+        ]
+       },
+       "supply": {
+        "n": 635,
+        "mean": 80.925,
+        "median": 85.07,
+        "p90": 96.97,
+        "ci95": [
+         79.714,
+         82.076
+        ]
+       },
+       "weather": {
+        "n": 315,
+        "mean": 75.12,
+        "median": 81.62,
+        "p90": 96.71,
+        "ci95": [
+         72.583,
+         77.022
+        ]
+       }
+      },
+      "heldout": {
+       "aggression": {
+        "n": 296,
+        "mean": 78.199,
+        "median": 86.66,
+        "p90": 96.99,
+        "ci95": [
+         75.781,
+         80.605
+        ]
+       },
+       "crowd": {
+        "n": 338,
+        "mean": 74.703,
+        "median": 81.67,
+        "p90": 95.7,
+        "ci95": [
+         72.401,
+         76.698
+        ]
+       },
+       "external": {
+        "n": 230,
+        "mean": 75.846,
+        "median": 85.395,
+        "p90": 96.07,
+        "ci95": [
+         72.743,
+         79.189
+        ]
+       },
+       "info": {
+        "n": 782,
+        "mean": 78.67,
+        "median": 85.83,
+        "p90": 96.36,
+        "ci95": [
+         77.215,
+         80.076
+        ]
+       },
+       "infra": {
+        "n": 310,
+        "mean": 76.721,
+        "median": 83.99,
+        "p90": 97.05,
+        "ci95": [
+         74.472,
+         79.066
+        ]
+       },
+       "medical": {
+        "n": 385,
+        "mean": 76.027,
+        "median": 83.96,
+        "p90": 95.7,
+        "ci95": [
+         73.947,
+         78.109
+        ]
+       },
+       "resource": {
+        "n": 737,
+        "mean": 77.589,
+        "median": 84.83,
+        "p90": 96.53,
+        "ci95": [
+         75.937,
+         79.042
+        ]
+       },
+       "supply": {
+        "n": 185,
+        "mean": 78.018,
+        "median": 82.29,
+        "p90": 95.88,
+        "ci95": [
+         75.6,
+         80.654
+        ]
+       },
+       "weather": {
+        "n": 109,
+        "mean": 76.548,
+        "median": 82.66,
+        "p90": 96.54,
+        "ci95": [
+         72.104,
+         80.134
+        ]
+       }
+      }
+     }
+    }
+   ]
+  }
+ }
+}

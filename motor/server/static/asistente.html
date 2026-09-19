@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Festival Abierto</title>
+<meta name="description" content="App del asistente del Festival Abierto: avisa de lo que ves y sigue en directo qué hace Mando con tu aviso.">
+<meta name="theme-color" content="#06090d">
+<meta name="color-scheme" content="dark light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Festival">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2306090d'/%3E%3Cpath d='M22 12l20 6v28l-20 6z' fill='%23ffb02e'/%3E%3C/svg%3E">
+<script>
+/* Tema antes de pintar: sin destello. */
+(function () {
+  try {
+    var t = localStorage.getItem("asistente.theme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+})();
+</script>
+<link rel="stylesheet" href="/static/asistente.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- incidentes -->
+    <symbol id="i-collapse" viewBox="0 0 24 24"><circle cx="5" cy="14.5" r="2"/><path d="M8.5 16H20M13 16l3.5-4M3 20h18"/><path d="M12 4v4M12 10.5v.01"/></symbol>
+    <symbol id="i-surge" viewBox="0 0 24 24"><circle cx="12" cy="6.5" r="2.3"/><circle cx="5.5" cy="9" r="1.9"/><circle cx="18.5" cy="9" r="1.9"/><path d="M7.5 20v-4.5a4.5 4.5 0 0 1 9 0V20M2 19v-3a3.5 3.5 0 0 1 3.5-3.5M22 19v-3a3.5 3.5 0 0 0-3.5-3.5"/></symbol>
+    <symbol id="i-water" viewBox="0 0 24 24"><path d="M12 3.5s6 6.3 6 10.7a6 6 0 0 1-12 0c0-4.4 6-10.7 6-10.7z"/><path d="M4 4l16 16"/></symbol>
+    <symbol id="i-fight" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/><circle cx="12" cy="12" r="1.6"/></symbol>
+    <symbol id="i-smoke" viewBox="0 0 24 24"><path d="M12 3c.6 3.2 5 5.2 5 10.2a5 5 0 0 1-10 0c0-2 .9-3.2 2-4.2 0 2 .8 3 2 3 .3-3-1-5.400 1-9z"/></symbol>
+    <symbol id="i-child" viewBox="0 0 24 24"><circle cx="8.500" cy="6.5" r="2.3"/><path d="M8.500 9.500v6M8.500 15.500l-3 5M8.500 15.500l3 5M4.500 12.500h8"/><path d="M15.500 7.200a2.300 2.300 0 1 1 3.500 2c-.8.500-1.200 1-1.200 2M17.800 14.500v.01"/></symbol>
+    <symbol id="i-power" viewBox="0 0 24 24"><path d="M9 17h6M10 20.500h4M8.200 13.600a6 6 0 1 1 7.600 0c-.5.5-.8 1-.8 1.700V17H9v-1.700c0-.7-.3-1.200-.8-1.700z"/><path d="M4 4l16 16"/></symbol>
+    <symbol id="i-other" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8.500 10.500v.01M12 10.500v.01M15.500 10.500v.01"/></symbol>
+    <!-- imprevistos -->
+    <symbol id="i-amb" viewBox="0 0 24 24"><path d="M2 7h12v10H2zM14 10h4l4 4v3h-8z"/><circle cx="6.500" cy="18" r="1.800"/><circle cx="17.500" cy="18" r="1.800"/><path d="M8 9.500v5M5.500 12h5"/></symbol>
+    <symbol id="i-gate" viewBox="0 0 24 24"><path d="M4 21V5l8-2v18M12 5h8v16M2 21h20"/><path d="M9 12.500v.01"/></symbol>
+    <symbol id="i-noanswer" viewBox="0 0 24 24"><path d="M6.600 3h3l1.500 4.500-2 1.400a12 12 0 0 0 6 6l1.400-2 4.500 1.500v3A2.600 2.600 0 0 1 18.400 20 15.400 15.400 0 0 1 4 5.600 2.600 2.600 0 0 1 6.600 3z"/><path d="M15.500 3.500l5 5M20.500 3.500l-5 5"/></symbol>
+    <symbol id="i-storm" viewBox="0 0 24 24"><path d="M7 14a5 5 0 1 1 1.500-9.800A6 6 0 0 1 20 7a3.600 3.600 0 0 1-1 7z"/><path d="M13 13l-3 5h3l-2 4"/></symbol>
+    <symbol id="i-voice" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/><path d="M3 3l18 18"/></symbol>
+    <!-- navegación y varios -->
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-thread" viewBox="0 0 24 24"><path d="M3 4h13v9H8l-5 4z"/><path d="M19 9h2v11l-4-3h-7v-1"/></symbol>
+    <symbol id="i-live" viewBox="0 0 24 24"><path d="M2 12h4.500l2.500-7 4 14 2.500-7H22"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2.500L4.500 14H11l-1 7.500L18.500 10H12z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.600 3h3l1.500 4.500-2 1.400a12 12 0 0 0 6 6l1.400-2 4.500 1.500v3A2.600 2.600 0 0 1 18.400 20 15.400 15.400 0 0 1 4 5.600 2.600 2.600 0 0 1 6.600 3z"/></symbol>
+    <symbol id="i-plane" viewBox="0 0 24 24"><path d="M21 3.500L2.500 10.800l6 2.300 2.300 6.400L21 3.500zM8.500 13.100L21 3.500"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 20V5M5.500 11.500L12 5l6.500 6.500"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.500-6.200-6.500-11a6.500 6.500 0 0 1 13 0c0 4.800-6.500 11-6.500 11z"/><circle cx="12" cy="10" r="2.300"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.500 12.500l5 5 10-11"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.500v2.500M12 19v2.500M2.500 12H5M19 12h2.500M5.300 5.300L7 7M17 17l1.700 1.700M18.700 5.300L17 7M7 17l-1.700 1.700"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.500A8.500 8.500 0 0 1 9.500 4 8.500 8.500 0 1 0 20 14.500z"/></symbol>
+    <symbol id="i-mega" viewBox="0 0 24 24"><path d="M3 10v4h3l8 4.500v-13L6 10zM17.500 9a4 4 0 0 1 0 6M8 14.500l1.500 5h2.500"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.500-3.300 8-8 9.500C7.300 20 4 16.500 4 12V6z"/><path d="M12 8v5M12 16v.01"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.500 11.500a6.500 6.500 0 0 0 13 0M12 18v3M8.500 21h7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.500-4.600-7.500-10A4.300 4.300 0 0 1 12 7.500 4.300 4.300 0 0 1 19.500 10c0 5.400-7.500 10-7.500 10z"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5.200a3 3 0 0 1 0 5.600M18 14.300a6 6 0 0 1 3 3.700v2"/></symbol>
+  </defs>
+</svg>
+
+<div id="net" class="net" role="status" aria-live="polite" hidden></div>
+
+<!-- ENTRADA ------------------------------------------------------------ -->
+<section id="welcome" class="welcome" hidden aria-labelledby="w-title">
+  <div class="w-top">
+    <div class="brandline"><i class="mark" aria-hidden="true"></i><span data-i18n="brand">Festival Abierto</span></div>
+    <div class="tools">
+      <button type="button" class="tool" data-act="lang" aria-label="English"><span class="lang-code">EN</span></button>
+      <button type="button" class="tool" data-act="theme" aria-label="Cambiar entre claro y oscuro"><svg class="ic"><use href="#i-sun"/></svg></button>
+    </div>
+  </div>
+
+  <div class="band" aria-hidden="true">
+    <i class="band-mark"></i>
+    <div class="band-text"><span data-i18n="band.you">Tu pulsera</span><b id="band-num">nº 00.000</b></div>
+    <div class="band-holes"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <h1 id="w-title" data-i18n="w.title">Estás dentro del Festival Abierto. Eres una de 40.000 personas.</h1>
+  <p class="w-lead" data-i18n="w.lead">Mando es el sistema que coordina la seguridad esta noche. Si ves algo, cuéntaselo aquí a su agente y mira en directo qué hace con tu aviso.</p>
+
+  <h2 class="w-q" data-i18n="w.where">¿Dónde estás? Toca el plano.</h2>
+  <div class="plan-wrap">
+    <svg id="plan-welcome" class="plano pick" role="group" aria-label="Plano del recinto"></svg>
+  </div>
+  <p id="w-picked" class="picked" aria-live="polite"></p>
+  <button type="button" id="w-unknown" class="btn quiet wide" data-i18n="w.unknown">No sé dónde estoy</button>
+
+  <label class="field">
+    <span data-i18n="w.name">Tu nombre (opcional, sale en el marcador)</span>
+    <input id="w-name" type="text" maxlength="24" autocomplete="given-name" autocapitalize="words" enterkeyhint="done">
+  </label>
+
+  <div class="w-cta">
+    <button type="button" id="w-enter" class="btn primary wide" data-i18n="w.enter">Entrar al festival</button>
+  </div>
+</section>
+
+<!-- APP ---------------------------------------------------------------- -->
+<div id="app" class="app" hidden>
+  <header class="top">
+    <div class="band mini">
+      <i class="band-mark" aria-hidden="true"></i>
+      <button type="button" class="band-text asbtn" id="hdr-where" aria-label="Cambiar dónde estás">
+        <span id="hdr-name">Festival Abierto</span>
+        <b id="hdr-zone">—</b>
+      </button>
+      <div class="hdr-clock" aria-label="Hora en el festival"><b id="hdr-time" class="num">--:--</b><span id="hdr-day"></span></div>
+      <div class="tools">
+        <button type="button" class="tool" data-act="lang" aria-label="English"><span class="lang-code">EN</span></button>
+        <button type="button" class="tool" data-act="theme" aria-label="Cambiar entre claro y oscuro"><svg class="ic"><use href="#i-sun"/></svg></button>
+      </div>
+    </div>
+    <div id="sim-note" class="sim-note" hidden></div>
+  </header>
+
+  <!-- 1 · HABLAR CON EL AGENTE: la conversación ES la pantalla principal -->
+  <main id="view-chat" class="view chatview" tabindex="-1">
+    <div id="th-tabs" class="th-tabs" role="tablist" aria-label="Tus avisos" hidden></div>
+
+    <div class="pinned">
+      <section id="th-hero" class="hero" aria-live="polite" hidden></section>
+      <section id="th-instr" class="instr" aria-live="polite" hidden></section>
+    </div>
+
+    <figure id="mini-fig" class="mini" hidden>
+      <svg id="plan-mini" class="plano" role="img" aria-label="Plano con tu zona y el equipo que va hacia ti"></svg>
+      <figcaption id="mini-cap"></figcaption>
+    </figure>
+
+    <div id="th-chat" class="chat" role="log" aria-live="polite"></div>
+
+    <div id="talk" class="talk">
+      <button type="button" id="btn-voice" class="btn call wide"><svg class="ic"><use href="#i-phone"/></svg><span><b data-i18n="c.voice">Prefiero hablar</b><small id="voice-sub"></small></span></button>
+      <button type="button" id="btn-telegram" class="btn quiet wide"><svg class="ic"><use href="#i-plane"/></svg><span><b data-i18n="c.telegram">Escribir por Telegram</b><small id="telegram-sub"></small></span></button>
+      <a id="btn-email" class="btn quiet wide" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3ZM3 5l9 8 9-8" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Escribir por email</span></a>
+      <a id="btn-sms" class="btn quiet wide" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H9l-6 4ZM7 8h10M7 12h7" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>Enviar un SMS</span></a>
+    </div>
+
+    <form id="composer" class="composer" autocomplete="off">
+      <div id="quick" class="quick" role="group" aria-label="Respuestas rápidas"></div>
+      <div id="slots" class="slots" aria-label="Lo que ya sé"></div>
+      <div class="reply-row">
+        <button type="button" id="btn-mic" class="tool line" aria-label="Dictar" hidden><svg class="ic"><use href="#i-mic"/></svg></button>
+        <input id="c-text" type="text" maxlength="400" enterkeyhint="send" aria-label="Escribe aquí">
+        <button type="submit" id="c-send" class="tool solid" aria-label="Enviar"><svg class="ic"><use href="#i-send"/></svg></button>
+      </div>
+    </form>
+  </main>
+
+  <!-- 3 · EL FESTIVAL AHORA -->
+  <main id="view-live" class="view" tabindex="-1" hidden>
+    <section class="count" aria-live="polite">
+      <b id="lv-n" class="num">–</b>
+      <p><span id="lv-n-text"></span><small id="lv-n-sub"></small></p>
+    </section>
+    <h2 data-i18n="l.map">Dónde hay mucha gente</h2>
+    <figure class="mini">
+      <svg id="plan-live" class="plano dens" role="img" aria-label="Plano del recinto con la cantidad de gente por zona"></svg>
+      <figcaption class="legend"><i class="sw g"></i><span data-i18n="l.lg.ok">se anda bien</span><i class="sw a"></i><span data-i18n="l.lg.mid">lleno</span><i class="sw r"></i><span data-i18n="l.lg.bad">evítala</span></figcaption>
+    </figure>
+    <div id="lv-avoid"></div>
+    <h2 data-i18n="l.pa">Avisos por megafonía</h2>
+    <div id="lv-pa"></div>
+    <h2 data-i18n="l.fronts">Qué está atendiendo Mando</h2>
+    <div id="lv-fronts"></div>
+  </main>
+
+  <!-- 4 · PON A PRUEBA A MANDO -->
+  <main id="view-test" class="view" tabindex="-1" hidden>
+    <h1 data-i18n="x.title">Pon a prueba a Mando</h1>
+    <p class="lead strong" data-i18n="x.lead">Mando está coordinando el festival ahora mismo. Provoca un imprevisto y mira en directo cómo cambia su plan. Tienes 3.</p>
+    <div class="budget">
+      <div id="x-dots" class="dots" aria-hidden="true"></div>
+      <span id="x-left"></span>
+    </div>
+    <div id="x-results"></div>
+    <div id="x-cards" class="cards"></div>
+    <section class="score" aria-live="polite">
+      <div class="score-row"><span data-i18n="x.jury">Jurado</span><b id="sc-j" class="num">0</b><i>—</i><b id="sc-m" class="num">0</b><span>Mando</span></div>
+      <p data-i18n="x.score.how">Punto para Mando si aguanta un imprevisto sin que falle nada grave. Punto para el jurado si algo grave se queda sin atender a tiempo.</p>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="Secciones">
+    <button type="button" data-tab="chat" aria-current="page"><svg class="ic"><use href="#i-thread"/></svg><span data-i18n="tab.chat">Avisar</span><i id="badge" class="badge" hidden></i></button>
+    <button type="button" data-tab="live"><svg class="ic"><use href="#i-live"/></svg><span data-i18n="tab.live">El festival ahora</span></button>
+    <button type="button" data-tab="test" class="t-test"><svg class="ic"><use href="#i-bolt"/></svg><span data-i18n="tab.test">Poner a prueba</span></button>
+  </nav>
+</div>
+
+<!-- HOJA INFERIOR (recorrido, elegir zona, confirmar imprevisto) -->
+<div id="scrim" class="scrim" hidden></div>
+<section id="sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+  <div class="sheet-head">
+    <h2 id="sheet-title"></h2>
+    <button type="button" id="sheet-x" class="tool" aria-label="Cerrar"><svg class="ic"><use href="#i-x"/></svg></button>
+  </div>
+  <div id="sheet-body"></div>
+</section>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/static/plano.js"></script>
+<script src="/static/asistente.js"></script>
+</body>
+</html>

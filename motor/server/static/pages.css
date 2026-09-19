@@ -1,0 +1,24 @@
+/* Páginas secundarias: consola del adversario, informe y curva. */
+body.page { min-height: 100vh; overflow: auto; display: block; padding: 1.2rem 1.6rem 3rem; }
+html:has(body.page) { font-size: clamp(14px, 1.05vw, 22px); }
+.page header { display: flex; align-items: baseline; gap: 1rem; border-bottom: 1px solid var(--line); padding-bottom: .7rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.page header h1 { margin: 0; font-size: 1.7rem; letter-spacing: .12em; } .page header p { margin: 0; color: var(--dim); flex: 1; }
+.page header a, .page a { color: var(--cyan); }
+.page h2 { font-size: .8rem; letter-spacing: .2em; color: var(--dim); margin: 1.6rem 0 .6rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: .7rem; }
+.card { background: var(--panel); border: 1px solid var(--line-2); border-left: .3rem solid var(--violet); border-radius: 4px; padding: .8rem 1rem; display: grid; gap: .45rem; }
+.card h3 { margin: 0; font-size: 1.15rem; } .card p { margin: 0; color: var(--dim); font-size: .92rem; line-height: 1.35; }
+.card .dmg { font-family: var(--mono); font-size: 1.7rem; font-weight: 700; color: var(--red); } .card .dmg small { font-size: .75rem; color: var(--dim); font-weight: 400; margin-left: .4rem; }
+.card .dmg.na { color: var(--faint); font-size: 1rem; }
+.card code { font-family: var(--mono); font-size: .72rem; color: var(--faint); word-break: break-all; }
+.card button { background: var(--violet); color: #12091f; border: 0; border-radius: 3px; padding: .6rem; font-weight: 900; letter-spacing: .12em; cursor: pointer; }
+.card button:disabled { opacity: .4; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; } th { text-align: left; color: var(--dim); font-size: .7rem; letter-spacing: .12em; font-weight: 700; text-transform: uppercase; }
+th, td { padding: .4rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; } td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.chain { border-left: 2px solid var(--line-2); margin: 0 0 1rem .4rem; padding-left: 1rem; }
+.chain .p { margin-bottom: .7rem; } .chain .p.dead .obj { text-decoration: line-through; text-decoration-color: var(--red); color: var(--dim); }
+.chain .obj { font-weight: 700; } .chain .why { color: #ffe2ad; font-size: .9rem; } .chain .brk { color: var(--red); font-weight: 700; font-size: .9rem; }
+.chain .as { color: var(--dim); font-size: .85rem; }
+.note { color: var(--faint); font-size: .8rem; }
+@media print { :root { --bg: #fff; --panel: #fff; --text: #111; --dim: #444; --faint: #666; --line: #ccc; --line-2: #bbb; } .chain .why { color: #7a4a00; } }

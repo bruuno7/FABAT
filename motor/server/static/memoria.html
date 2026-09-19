@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memoria día 1 → día 2 · Mando</title>
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/pages.css">
+<style>
+  h1.take { font-size: 1.7rem; margin: .2rem 0 1rem; line-height: 1.25; } h1.take b { color: var(--amber); }
+  .card.ok { border-left-color: var(--green); } .card.no { border-left-color: var(--red); opacity: .75; }
+  .card .row { display: flex; gap: .5rem; } .card .row button { flex: 1; } .card button.veto { background: transparent; color: var(--text); border: 1px solid var(--line-2); }
+  .card .ev { font-family: var(--mono); font-size: .8rem; color: var(--dim); } .stamp { font-weight: 900; letter-spacing: .12em; }
+  .stamp.ok { color: var(--green); } .stamp.no { color: var(--red); }
+  ul.obs { margin: 0; padding-left: 1.1rem; line-height: 1.5; } ul.obs small { color: var(--faint); font-family: var(--mono); margin-left: .5rem; }
+.interval { width:16rem; max-width:100%; height:auto; }.interval text {fill:var(--dim);font:12px var(--mono);}.ci-line {stroke:var(--cyan);stroke-width:3;}.comparison-scroll {overflow-x:auto;}.page .cards {grid-template-columns:repeat(auto-fit,minmax(min(24rem,100%),1fr));}.page .card {border-left-color:var(--amber);}.page .card button {background:var(--amber);color:#111;min-height:44px;letter-spacing:0;}.card .ev {font-family:var(--sans);overflow-wrap:anywhere;}.card p {overflow-wrap:anywhere;}#memory-status {color:var(--amber);}.page h2,.page header h1 {letter-spacing:.02em;}
+</style></head>
+<body class="page">
+<header><h1>MEMORIA · DÍA 1 → DÍA 2</h1><p>Lo que se observó ayer, los cambios que se proponen con su evidencia, y quién los aprueba. Mando no cambia sus parámetros solo.</p><a href="/">pantalla de mando</a></header>
+<p id="memory-status" role="status"></p>
+<h1 class="take" id="take">Cargando…</h1>
+<h2>OBSERVACIONES DEL DÍA 1</h2><ul class="obs" id="obs"></ul>
+<h2>PROPUESTAS DE CAMBIO <span class="note" id="src"></span></h2><div class="cards" id="props"></div>
+<h2>ANTES / DESPUÉS · MISMA SECUENCIA, MISMAS SEMILLAS</h2>
+<div class="comparison-scroll" tabindex="0" role="region" aria-label="Comparación antes y después"><table><thead><tr><th>métrica</th><th>configuración inicial</th><th>configuración revisada</th><th>diferencia</th><th>intervalo de la diferencia</th><th>N</th><th></th></tr></thead><tbody id="cmp"></tbody></table></div>
+<p class="note" id="cmp-note"></p>
+<h2>CORRECCIONES DEL OPERADOR EN ESTA PARTIDA <span class="note">lecciones candidatas: las ordenó una persona tras ensayar su alternativa en el gemelo</span></h2><ul class="obs" id="ops"></ul>
+<script src="/static/ui.js"></script>
+<script src="/static/memoria.js"></script>
+</body></html>

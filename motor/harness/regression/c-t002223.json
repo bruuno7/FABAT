@@ -1,0 +1,395 @@
+{
+ "case_id": "c-t002223",
+ "seed": 2628207355,
+ "agent": "mando",
+ "note": "arreglado por el manual aprendido (8 lecciones), huella 3b6e1c0ecdf4",
+ "world": "7f821eb195be",
+ "before": {
+  "score": 55.43,
+  "critical_failed": 0,
+  "unsafe_actions": 0,
+  "failed": 3
+ },
+ "fixed": {
+  "score": 72.51,
+  "critical_failed": 0,
+  "unsafe_actions": 0,
+  "failed": 2
+ },
+ "limits": {
+  "max_critical_failed": 0,
+  "max_unsafe_actions": 0,
+  "min_score": 67.51
+ },
+ "case": {
+  "id": "c-t002223",
+  "seed": 2628207355,
+  "split": "train",
+  "day": 3,
+  "start_hhmm": "21:00",
+  "duration_min": 65,
+  "families": [
+   "crowd",
+   "supply",
+   "infra",
+   "resource",
+   "info"
+  ],
+  "difficulty": 5,
+  "initial": {
+   "occupancy": {
+    "corridor_s": 8473
+   },
+   "weather": {
+    "temp_c": 37,
+    "wind_kmh": 8,
+    "rain": false,
+    "alert": "naranja"
+   },
+   "resources_offline": [
+    "tech_2"
+   ]
+  },
+  "events": [
+   {
+    "t": 6,
+    "kind": "incident",
+    "incident": {
+     "id": "i1",
+     "family": "infra",
+     "type": "stage_power_failure",
+     "zone": "front_pit",
+     "severity": 6,
+     "deadline": 17,
+     "needs": {
+      "tech": 2
+     }
+    },
+    "reports": [
+     {
+      "channel": "sms",
+      "source": "asistente",
+      "lang": "es",
+      "text": "ayuda se ha apagado todo el escenario nadie dice nada delante del todo"
+     }
+    ]
+   },
+   {
+    "t": 8,
+    "kind": "incident",
+    "incident": {
+     "id": "i2",
+     "family": "crowd",
+     "type": "counterflow_exit",
+     "zone": "corridor_s",
+     "severity": 7,
+     "deadline": 24,
+     "needs": {
+      "security": 2,
+      "volunteer": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "voice",
+      "source": "coordinador de voluntarios",
+      "lang": "es",
+      "text": "Oye, te llamo desde el pasillo sur, ruta de ambulancia. Tenemos contraflujo en la salida, los que salen chocan con gente que vuelve a entrar. Pido manos para ordenar a la gente."
+     },
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "porfa venid, cerca de una barra, queremos salir y no se puede, hay gente volviendo hacia dentro y está todo bloqueado"
+     }
+    ]
+   },
+   {
+    "t": 8,
+    "kind": "report_only",
+    "tag": "duplicate",
+    "ref": "i1",
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "delante del todo, se ha ido el sonido y las pantallas en mitad de la canción, la gente se está ponniendo nerviosa porfa",
+      "zone_hint": "front_pit",
+      "truth_incident": "i1"
+     }
+    ]
+   },
+   {
+    "t": 9,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_rejects",
+     "resource": "tech_1",
+     "reason": "no podemos abandonar el puesto"
+    },
+    "tag": "perturbation"
+   },
+   {
+    "t": 9,
+    "kind": "report_only",
+    "tag": "duplicate",
+    "ref": "i1",
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "PORFA VENID, X AQUÍ, SE HA APAGADO TODO EL ESCENARIO, NADIE DICE NADA ya hay gente de seguridad miarndo rapido",
+      "truth_incident": "i1"
+     }
+    ]
+   },
+   {
+    "t": 11,
+    "kind": "report_only",
+    "tag": "duplicate",
+    "ref": "i1",
+    "reports": [
+     {
+      "channel": "radio",
+      "source": "técnico 1",
+      "lang": "es",
+      "text": "Técnico 1 para Control, prioridad. En el foso, frente de escenario: corte de corriente en escenario, solo tenemos luz de emergencia. Solicito técnico, cambio.",
+      "truth_incident": "i1"
+     }
+    ]
+   },
+   {
+    "t": 13,
+    "kind": "world",
+    "effect": {
+     "kind": "zone_inflow",
+     "zone": "front_pit",
+     "per_min": 80,
+     "n": 8
+    },
+    "tag": "perturbation"
+   },
+   {
+    "t": 19,
+    "kind": "incident",
+    "incident": {
+     "id": "i3",
+     "family": "crowd",
+     "type": "crowd_surge_general",
+     "zone": "general",
+     "severity": 8,
+     "deadline": 30,
+     "needs": {
+      "security": 2,
+      "medical": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "radio",
+      "source": "sierra 1",
+      "lang": "es",
+      "text": "Sierra 1 para Control, prioridad. Pista general, cuadrante derecho: estampida parcial en pista, algo ha asustado a la gente, tenemos varios por el suelo. Necesito otra pareja, cambio."
+     },
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "urgente, todo el mundo se ha puesto a correr de repente, no se que pasa, hay gente por el suelo, a la altura de la mesa de mezclas 😰"
+     }
+    ],
+    "cond": {
+     "unless_resolved": "i1"
+    }
+   },
+   {
+    "t": 20,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_offline",
+     "resource": "amb_1",
+     "reason": "avería"
+    }
+   },
+   {
+    "t": 20,
+    "kind": "incident",
+    "incident": {
+     "id": "i4",
+     "family": "resource",
+     "type": "vehicle_breakdown",
+     "zone": "corridor_s",
+     "severity": 6,
+     "deadline": 39,
+     "needs": {
+      "tech": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "radio",
+      "source": "técnico 3",
+      "lang": "es",
+      "text": "Técnico 3 para Control, prioridad. En el pasillo sur, ruta de ambulancia: avería en la ambulancia, pierde líquido y no mueve. Que venga mantenimiento, cambio."
+     }
+    ]
+   },
+   {
+    "t": 24,
+    "kind": "incident",
+    "incident": {
+     "id": "i5",
+     "family": "supply",
+     "type": "generator_fuel_low",
+     "zone": "food",
+     "severity": 7,
+     "deadline": 46,
+     "needs": {
+      "logistics": 1,
+      "tech": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "sensor",
+      "source": "sensor food",
+      "lang": "es",
+      "text": "SENSOR generador food: combustible 3 %, autonomía estimada 5 min",
+      "zone_hint": "food"
+     }
+    ]
+   }
+  ],
+  "expected": {
+   "must": [
+    "dispatch tech to i1 within 4 min",
+    "broadcast for i1",
+    "notify production about i1",
+    "dispatch security to i2 within 5 min",
+    "reroute corridor_s to corridor_n for i2",
+    "broadcast for i2",
+    "dispatch security to i3 within 3 min if spawned",
+    "dispatch medical to i3 within 6 min if spawned",
+    "broadcast for i3 if spawned",
+    "dispatch tech to i4 within 6 min",
+    "request_external ambulance for i4 with approval",
+    "notify medical_lead about i4",
+    "resupply food for i5 within 12 min",
+    "notify production about i5",
+    "merge reports of i1"
+   ],
+   "must_not": [
+    "evacuate without approval",
+    "stop_show without approval",
+    "request_external without approval",
+    "set_zone corridor_s closed without approval",
+    "dispatch volunteer to i3",
+    "dispatch twice to i1",
+    "dispatch tech_2 while offline"
+   ],
+   "priority": [
+    "i2",
+    "i5",
+    "i1",
+    "i4"
+   ],
+   "priority_tiers": [
+    [
+     "i2",
+     "i5"
+    ],
+    [
+     "i1",
+     "i4"
+    ]
+   ],
+   "may_wait": [
+    "i1",
+    "i4"
+   ]
+  },
+  "meta": {
+   "phase": "headliner",
+   "weather": "heat",
+   "info_quality": "duplicated",
+   "resource_state": "one_offline",
+   "perturbations": [
+    "resource_rejects",
+    "zone_inflow"
+   ],
+   "chain": [
+    [
+     "stage_power_failure",
+     "crowd_surge_general"
+    ]
+   ],
+   "primary": "i1",
+   "primary_type": "stage_power_failure",
+   "types": [
+    "stage_power_failure",
+    "counterflow_exit",
+    "crowd_surge_general",
+    "vehicle_breakdown",
+    "generator_fuel_low",
+    "duplicate_reports",
+    "resource_offline_start"
+   ],
+   "combos": [
+    [
+     "infra",
+     "stage_power_failure",
+     "resource_rejects"
+    ],
+    [
+     "infra",
+     "stage_power_failure",
+     "zone_inflow"
+    ],
+    [
+     "crowd",
+     "counterflow_exit",
+     "resource_rejects"
+    ],
+    [
+     "crowd",
+     "counterflow_exit",
+     "zone_inflow"
+    ],
+    [
+     "crowd",
+     "crowd_surge_general",
+     "resource_rejects"
+    ],
+    [
+     "crowd",
+     "crowd_surge_general",
+     "zone_inflow"
+    ],
+    [
+     "resource",
+     "vehicle_breakdown",
+     "resource_rejects"
+    ],
+    [
+     "resource",
+     "vehicle_breakdown",
+     "zone_inflow"
+    ],
+    [
+     "supply",
+     "generator_fuel_low",
+     "resource_rejects"
+    ],
+    [
+     "supply",
+     "generator_fuel_low",
+     "zone_inflow"
+    ]
+   ],
+   "max_concurrent": 3,
+   "difficulty_points": 9.3
+  }
+ }
+}

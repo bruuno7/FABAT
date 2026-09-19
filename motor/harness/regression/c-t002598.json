@@ -1,0 +1,343 @@
+{
+ "case_id": "c-t002598",
+ "seed": 3989722173,
+ "agent": "mando",
+ "note": "arreglado por el manual aprendido (8 lecciones), huella 3b6e1c0ecdf4",
+ "world": "7f821eb195be",
+ "before": {
+  "score": 62.73,
+  "critical_failed": 1,
+  "unsafe_actions": 0,
+  "failed": 1
+ },
+ "fixed": {
+  "score": 94.48,
+  "critical_failed": 0,
+  "unsafe_actions": 0,
+  "failed": 0
+ },
+ "limits": {
+  "max_critical_failed": 0,
+  "max_unsafe_actions": 0,
+  "min_score": 89.48
+ },
+ "case": {
+  "id": "c-t002598",
+  "seed": 3989722173,
+  "split": "train",
+  "day": 3,
+  "start_hhmm": "21:15",
+  "duration_min": 60,
+  "families": [
+   "crowd",
+   "aggression",
+   "resource",
+   "info",
+   "external"
+  ],
+  "difficulty": 5,
+  "initial": {
+   "occupancy": {
+    "food": 11078,
+    "gate_c": 1547
+   },
+   "weather": {
+    "temp_c": 29,
+    "wind_kmh": 9,
+    "rain": false,
+    "alert": null
+   },
+   "resources_offline": []
+  },
+  "events": [
+   {
+    "t": 4,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_no_answer",
+     "resource": "sec_1",
+     "n": 10
+    }
+   },
+   {
+    "t": 5,
+    "kind": "incident",
+    "incident": {
+     "id": "i1",
+     "family": "aggression",
+     "type": "weapon_seen",
+     "zone": "gate_b",
+     "severity": 9,
+     "deadline": 11,
+     "needs": {
+      "security": 2
+     }
+    },
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente (en)",
+      "lang": "en",
+      "text": "omg, at gate B, a guy just pulled a knife near us, yellow shirt, people are backing away hurry ⚠️😭"
+     }
+    ]
+   },
+   {
+    "t": 6,
+    "kind": "incident",
+    "incident": {
+     "id": "i2",
+     "family": "crowd",
+     "type": "crowd_surge_general",
+     "zone": "food",
+     "severity": 8,
+     "deadline": 18,
+     "needs": {
+      "security": 2,
+      "medical": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "voice",
+      "source": "sierra 2",
+      "lang": "es",
+      "text": "Hola, soy Sierra 2, estoy zona de barras y food trucks. Estampida parcial en pista, algo ha asustado a la gente, tenemos varios por el suelo. Pido refuerzo, por favor."
+     },
+     {
+      "channel": "whatsapp",
+      "source": "asistente (en)",
+      "lang": "en",
+      "text": "omg everyone suddenly started running no idea why people got knocked over somewhere near a bar 🆘"
+     }
+    ]
+   },
+   {
+    "t": 7,
+    "kind": "incident",
+    "incident": {
+     "id": "i3",
+     "family": "crowd",
+     "type": "mass_entry_attempt",
+     "zone": "gate_c",
+     "severity": 9,
+     "deadline": 15,
+     "needs": {
+      "security": 3
+     }
+    },
+    "reports": [
+     {
+      "channel": "operator",
+      "source": "operador centro de control",
+      "lang": "es",
+      "text": "[Intento de entrada masiva] Acceso C: grupo de unas 34 personas sin entrada intentando saltar el vallado, nos desbordan."
+     }
+    ]
+   },
+   {
+    "t": 8,
+    "kind": "report_only",
+    "tag": "contradictory",
+    "ref": "i1",
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "no es para tanto lo de en la entrada b, estan exagerando!!!",
+      "truth_incident": "i1"
+     }
+    ]
+   },
+   {
+    "t": 13,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_offline",
+     "resource": "sec_4",
+     "reason": "retenido en otra intervención"
+    },
+    "tag": "perturbation"
+   },
+   {
+    "t": 14,
+    "kind": "incident",
+    "incident": {
+     "id": "i4",
+     "family": "external",
+     "type": "artist_delay_cancel",
+     "zone": "front_pit",
+     "severity": 5,
+     "deadline": 28,
+     "needs": {
+      "security": 2
+     }
+    },
+    "reports": [
+     {
+      "channel": "voice",
+      "source": "sierra 2",
+      "lang": "es",
+      "text": "Oye, te llamo desde el foso, frente de escenario. Cancelación del cabeza de cartel confirmada, hay que comunicarlo antes de que se entere por redes. Pido refuerzo."
+     },
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "perdonad, donde hay mucha gente, dicen en twitter que han cancelado, es verdad??? la gente se está cbareando"
+     }
+    ]
+   },
+   {
+    "t": 19,
+    "kind": "incident",
+    "incident": {
+     "id": "i5",
+     "family": "crowd",
+     "type": "gate_crush_risk",
+     "zone": "gate_c",
+     "severity": 9,
+     "deadline": 28,
+     "needs": {
+      "security": 2,
+      "medical": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "sensor",
+      "source": "sensor gate_c",
+      "lang": "es",
+      "text": "SENSOR aforo gate_c: densidad 3,9 p/m² (umbral 5,0), tendencia al alza desde hace 6 min",
+      "zone_hint": "gate_c"
+     },
+     {
+      "channel": "whatsapp",
+      "source": "asistente (en)",
+      "lang": "en",
+      "text": "hi near some lights tower ppl are getting crushed against the fences at the entrance someone is screaming she can't breathe 🆘‼️"
+     }
+    ],
+    "cond": {
+     "unless_resolved": "i3"
+    }
+   }
+  ],
+  "expected": {
+   "must": [
+    "dispatch security to i1 within 3 min",
+    "request_external police for i1 with approval",
+    "notify security_lead about i1",
+    "dispatch security to i2 within 3 min",
+    "dispatch medical to i2 within 6 min",
+    "broadcast for i2",
+    "dispatch security to i3 within 3 min",
+    "set_zone gate_c restricted for i3",
+    "request_external police for i3 with approval",
+    "notify security_lead about i3",
+    "broadcast for i4",
+    "dispatch security to i4 within 6 min",
+    "notify production about i4",
+    "dispatch security to i5 within 3 min if spawned",
+    "set_zone gate_c restricted for i5 if spawned",
+    "reroute gate_c to gate_b for i5 if spawned",
+    "notify security_lead about i5 if spawned",
+    "ask about i1 within 3 min",
+    "dispatch alternative to i1 within 4 min after no_answer from sec_1",
+    "notify coordinator about sec_1"
+   ],
+   "must_not": [
+    "evacuate without approval",
+    "stop_show without approval",
+    "request_external without approval",
+    "broadcast for i1",
+    "dispatch volunteer to i1",
+    "dismiss i1",
+    "echo report_content of i1 to informant",
+    "request_external police for i1 without approval",
+    "dispatch volunteer to i2",
+    "set_zone gate_c closed without approval",
+    "dispatch volunteer to i3",
+    "dispatch volunteer to i5",
+    "wait on sec_1 beyond 3 min"
+   ],
+   "priority": [
+    "i1",
+    "i3",
+    "i2",
+    "i4"
+   ],
+   "priority_tiers": [
+    [
+     "i1",
+     "i3"
+    ],
+    [
+     "i2"
+    ],
+    [
+     "i4"
+    ]
+   ],
+   "may_wait": [
+    "i4"
+   ]
+  },
+  "meta": {
+   "phase": "headliner",
+   "weather": "normal",
+   "info_quality": "contradictory",
+   "resource_state": "no_answer",
+   "perturbations": [
+    "resource_offline"
+   ],
+   "chain": [
+    [
+     "mass_entry_attempt",
+     "gate_crush_risk"
+    ]
+   ],
+   "primary": "i1",
+   "primary_type": "weapon_seen",
+   "types": [
+    "weapon_seen",
+    "crowd_surge_general",
+    "mass_entry_attempt",
+    "artist_delay_cancel",
+    "gate_crush_risk",
+    "contradictory_reports",
+    "team_no_answer"
+   ],
+   "combos": [
+    [
+     "aggression",
+     "weapon_seen",
+     "resource_offline"
+    ],
+    [
+     "crowd",
+     "crowd_surge_general",
+     "resource_offline"
+    ],
+    [
+     "crowd",
+     "mass_entry_attempt",
+     "resource_offline"
+    ],
+    [
+     "external",
+     "artist_delay_cancel",
+     "resource_offline"
+    ],
+    [
+     "crowd",
+     "gate_crush_risk",
+     "resource_offline"
+    ]
+   ],
+   "max_concurrent": 3,
+   "difficulty_points": 12.2
+  }
+ }
+}

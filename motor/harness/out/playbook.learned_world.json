@@ -1,0 +1,178 @@
+{
+ "code": "3b6e1c0ecdf4",
+ "lessons": [
+  {
+   "when": {
+    "type": "structure_risk"
+   },
+   "then": {
+    "forbid_action": {
+     "kind": "set_zone",
+     "state": "closed"
+    }
+   },
+   "text": "el operador vetó «set_zone» en «structure_risk» 79 veces: no se vuelve a proponer",
+   "source": "veto del operador",
+   "basis": "operator",
+   "evidence_n": 79,
+   "evidence_cases": [
+    "c-t000002",
+    "c-t000008",
+    "c-t000029",
+    "c-t000064",
+    "c-t000113",
+    "c-t000225",
+    "c-t000241",
+    "c-t000262",
+    "c-t000329",
+    "c-t000343",
+    "c-t000345",
+    "c-t000352",
+    "c-t000358",
+    "c-t000492",
+    "c-t000525",
+    "c-t000558",
+    "c-t000602",
+    "c-t000625",
+    "c-t000632",
+    "c-t000783",
+    "c-t000785",
+    "c-t000801",
+    "c-t000869",
+    "c-t000918",
+    "c-t000920"
+   ],
+   "id": "R1-006",
+   "validation": {
+    "n": 400,
+    "metric": "world_score",
+    "before": 84.582,
+    "after": 84.702,
+    "paired": {
+     "n": 400,
+     "mean": 0.12,
+     "ci": [
+      0.001,
+      0.329
+     ],
+     "level": 0.99,
+     "better": 11,
+     "worse": 7,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  },
+  {
+   "when": {
+    "type": "bottleneck"
+   },
+   "then": {
+    "forbid_action": {
+     "kind": "stop_show"
+    }
+   },
+   "text": "el operador vetó «stop_show» en «bottleneck» 75 veces: no se vuelve a proponer",
+   "source": "veto del operador",
+   "basis": "operator",
+   "evidence_n": 75,
+   "evidence_cases": [
+    "c-t000032",
+    "c-t000187",
+    "c-t000219",
+    "c-t000275",
+    "c-t000387",
+    "c-t000504",
+    "c-t000513",
+    "c-t000577",
+    "c-t000679",
+    "c-t000704",
+    "c-t000750",
+    "c-t000752",
+    "c-t000754",
+    "c-t000803",
+    "c-t000835",
+    "c-t000844",
+    "c-t000909",
+    "c-t000965",
+    "c-t001003",
+    "c-t001009",
+    "c-t001028",
+    "c-t001114",
+    "c-t001124",
+    "c-t001176",
+    "c-t001201"
+   ],
+   "id": "R1-007",
+   "validation": {
+    "n": 400,
+    "metric": "world_score",
+    "before": 83.092,
+    "after": 83.306,
+    "paired": {
+     "n": 400,
+     "mean": 0.215,
+     "ci": [
+      0.062,
+      0.384
+     ],
+     "level": 0.99,
+     "better": 16,
+     "worse": 3,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  },
+  {
+   "when": {
+    "type": "heavy_rain_flooding"
+   },
+   "then": {
+    "forbid_action": {
+     "kind": "stop_show"
+    }
+   },
+   "text": "el operador vetó «stop_show» en «heavy_rain_flooding» 14 veces: no se vuelve a proponer",
+   "source": "veto del operador",
+   "basis": "operator",
+   "evidence_n": 14,
+   "evidence_cases": [
+    "c-t000211",
+    "c-t000323",
+    "c-t000379",
+    "c-t000547",
+    "c-t000995",
+    "c-t001107",
+    "c-t001109",
+    "c-t001667",
+    "c-t002059",
+    "c-t002074",
+    "c-t002339",
+    "c-t002451",
+    "c-t002507",
+    "c-t002563"
+   ],
+   "id": "R1-040",
+   "validation": {
+    "n": 33,
+    "metric": "world_score",
+    "before": 78.349,
+    "after": 80.358,
+    "paired": {
+     "n": 33,
+     "mean": 2.009,
+     "ci": [
+      0.91,
+      3.397
+     ],
+     "level": 0.99,
+     "better": 18,
+     "worse": 1,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  }
+ ]
+}

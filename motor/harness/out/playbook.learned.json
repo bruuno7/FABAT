@@ -1,0 +1,520 @@
+{
+ "code": "3b6e1c0ecdf4",
+ "lessons": [
+  {
+   "when": {
+    "type": "payment_down"
+   },
+   "then": {
+    "pre_action": {
+     "kind": "broadcast",
+     "params": {
+      "message": "Atención: seguid las indicaciones del personal."
+     }
+    }
+   },
+   "text": "en «payment_down» faltó el aviso por megafonía en 78 casos: se avisa antes de planificar",
+   "source": "must incumplido",
+   "basis": "grader",
+   "evidence_n": 78,
+   "evidence_cases": [
+    "c-t000015",
+    "c-t000089",
+    "c-t000145",
+    "c-t000229",
+    "c-t000273",
+    "c-t000313",
+    "c-t000356",
+    "c-t000427",
+    "c-t000481",
+    "c-t000517",
+    "c-t000530",
+    "c-t000541",
+    "c-t000543",
+    "c-t000571",
+    "c-t000664",
+    "c-t000736",
+    "c-t000741",
+    "c-t000773",
+    "c-t000775",
+    "c-t000840",
+    "c-t000907",
+    "c-t000924",
+    "c-t000931",
+    "c-t001053",
+    "c-t001080"
+   ],
+   "id": "R1-007",
+   "validation": {
+    "n": 97,
+    "metric": "score",
+    "before": 80.97,
+    "after": 81.904,
+    "paired": {
+     "n": 97,
+     "mean": 0.934,
+     "ci": [
+      0.808,
+      1.064
+     ],
+     "level": 0.99,
+     "better": 86,
+     "worse": 0,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  },
+  {
+   "when": {
+    "type": "bottleneck"
+   },
+   "then": {
+    "forbid_action": {
+     "kind": "stop_show"
+    }
+   },
+   "text": "el operador vetó «stop_show» en «bottleneck» 75 veces: no se vuelve a proponer",
+   "source": "veto del operador",
+   "basis": "operator",
+   "evidence_n": 75,
+   "evidence_cases": [
+    "c-t000032",
+    "c-t000187",
+    "c-t000219",
+    "c-t000275",
+    "c-t000387",
+    "c-t000504",
+    "c-t000513",
+    "c-t000577",
+    "c-t000679",
+    "c-t000704",
+    "c-t000750",
+    "c-t000752",
+    "c-t000754",
+    "c-t000803",
+    "c-t000835",
+    "c-t000844",
+    "c-t000909",
+    "c-t000965",
+    "c-t001003",
+    "c-t001009",
+    "c-t001028",
+    "c-t001114",
+    "c-t001124",
+    "c-t001176",
+    "c-t001201"
+   ],
+   "id": "R1-008",
+   "validation": {
+    "n": 400,
+    "metric": "score",
+    "before": 79.508,
+    "after": 79.73,
+    "paired": {
+     "n": 400,
+     "mean": 0.221,
+     "ci": [
+      0.065,
+      0.395
+     ],
+     "level": 0.99,
+     "better": 16,
+     "worse": 3,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  },
+  {
+   "when": {
+    "type": "structure_risk"
+   },
+   "then": {
+    "pre_action": {
+     "kind": "broadcast",
+     "params": {
+      "message": "Atención: seguid las indicaciones del personal."
+     }
+    }
+   },
+   "text": "en «structure_risk» faltó el aviso por megafonía en 58 casos: se avisa antes de planificar",
+   "source": "must incumplido",
+   "basis": "grader",
+   "evidence_n": 58,
+   "evidence_cases": [
+    "c-t000002",
+    "c-t000045",
+    "c-t000056",
+    "c-t000062",
+    "c-t000213",
+    "c-t000217",
+    "c-t000294",
+    "c-t000296",
+    "c-t000417",
+    "c-t000449",
+    "c-t000454",
+    "c-t000492",
+    "c-t000711",
+    "c-t000717",
+    "c-t000734",
+    "c-t000833",
+    "c-t000846",
+    "c-t000853",
+    "c-t000897",
+    "c-t000901",
+    "c-t000903",
+    "c-t000957",
+    "c-t000995",
+    "c-t000997",
+    "c-t001010"
+   ],
+   "id": "R1-013",
+   "validation": {
+    "n": 400,
+    "metric": "score",
+    "before": 81.725,
+    "after": 81.889,
+    "paired": {
+     "n": 400,
+     "mean": 0.164,
+     "ci": [
+      0.027,
+      0.439
+     ],
+     "level": 0.99,
+     "better": 25,
+     "worse": 6,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  },
+  {
+   "when": {
+    "type": "road_access_blocked"
+   },
+   "then": {
+    "pre_action": {
+     "kind": "notify",
+     "params": {
+      "to": "medical_lead",
+      "message": "Aviso de road_access_blocked"
+     }
+    }
+   },
+   "text": "en «road_access_blocked» no se avisó a medical_lead en 46 casos: se le avisa siempre",
+   "source": "must incumplido",
+   "basis": "grader",
+   "evidence_n": 46,
+   "evidence_cases": [
+    "c-t000032",
+    "c-t000200",
+    "c-t000256",
+    "c-t000262",
+    "c-t000368",
+    "c-t000456",
+    "c-t000532",
+    "c-t000536",
+    "c-t000592",
+    "c-t000608",
+    "c-t000694",
+    "c-t000704",
+    "c-t000760",
+    "c-t000816",
+    "c-t000872",
+    "c-t000884",
+    "c-t000928",
+    "c-t000974",
+    "c-t000984",
+    "c-t001040",
+    "c-t001135",
+    "c-t001276",
+    "c-t001284",
+    "c-t001305",
+    "c-t001320"
+   ],
+   "id": "R1-018",
+   "validation": {
+    "n": 143,
+    "metric": "score",
+    "before": 79.578,
+    "after": 80.27,
+    "paired": {
+     "n": 143,
+     "mean": 0.692,
+     "ci": [
+      0.332,
+      1.496
+     ],
+     "level": 0.99,
+     "better": 46,
+     "worse": 0,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  },
+  {
+   "when": {
+    "type": "harassment_group"
+   },
+   "then": {
+    "pre_action": {
+     "kind": "notify",
+     "params": {
+      "to": "violet_point",
+      "message": "Aviso de harassment_group"
+     }
+    }
+   },
+   "text": "en «harassment_group» no se avisó a violet_point en 44 casos: se le avisa siempre",
+   "source": "must incumplido",
+   "basis": "grader",
+   "evidence_n": 44,
+   "evidence_cases": [
+    "c-t000021",
+    "c-t000050",
+    "c-t000245",
+    "c-t000249",
+    "c-t000413",
+    "c-t000443",
+    "c-t000525",
+    "c-t000534",
+    "c-t000749",
+    "c-t000805",
+    "c-t000810",
+    "c-t000861",
+    "c-t000918",
+    "c-t000928",
+    "c-t001031",
+    "c-t001197",
+    "c-t001318",
+    "c-t001391",
+    "c-t001420",
+    "c-t001533",
+    "c-t001565",
+    "c-t001593",
+    "c-t001981",
+    "c-t002010",
+    "c-t002093"
+   ],
+   "id": "R1-021",
+   "validation": {
+    "n": 80,
+    "metric": "score",
+    "before": 81.511,
+    "after": 82.286,
+    "paired": {
+     "n": 80,
+     "mean": 0.775,
+     "ci": [
+      0.035,
+      1.91
+     ],
+     "level": 0.99,
+     "better": 28,
+     "worse": 4,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  },
+  {
+   "when": {
+    "type": "transport_cut",
+    "zone": "exit_transport"
+   },
+   "then": {
+    "pre_action": {
+     "kind": "reroute",
+     "zone": "exit_transport",
+     "params": {
+      "to": "gate_a"
+     }
+    }
+   },
+   "text": "en «transport_cut» faltó desviar exit_transport → gate_a en 33 casos",
+   "source": "must incumplido",
+   "basis": "grader",
+   "evidence_n": 33,
+   "evidence_cases": [
+    "c-t000102",
+    "c-t000250",
+    "c-t000306",
+    "c-t000308",
+    "c-t000375",
+    "c-t000394",
+    "c-t000530",
+    "c-t000696",
+    "c-t000698",
+    "c-t000704",
+    "c-t000752",
+    "c-t000754",
+    "c-t000810",
+    "c-t000909",
+    "c-t000922",
+    "c-t000978",
+    "c-t001146",
+    "c-t001201",
+    "c-t001314",
+    "c-t001348",
+    "c-t001426",
+    "c-t001442",
+    "c-t001932",
+    "c-t002033",
+    "c-t002042"
+   ],
+   "id": "R1-030",
+   "validation": {
+    "n": 135,
+    "metric": "score",
+    "before": 80.089,
+    "after": 80.259,
+    "paired": {
+     "n": 135,
+     "mean": 0.169,
+     "ci": [
+      0.081,
+      0.268
+     ],
+     "level": 0.99,
+     "better": 23,
+     "worse": 0,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  },
+  {
+   "when": {
+    "type": "medical_post_saturated",
+    "zone": "medical_2"
+   },
+   "then": {
+    "pre_action": {
+     "kind": "reroute",
+     "zone": "medical_2",
+     "params": {
+      "to": "medical_1"
+     }
+    }
+   },
+   "text": "en «medical_post_saturated» faltó desviar medical_2 → medical_1 en 28 casos",
+   "source": "must incumplido",
+   "basis": "grader",
+   "evidence_n": 28,
+   "evidence_cases": [
+    "c-t000238",
+    "c-t000245",
+    "c-t000662",
+    "c-t000741",
+    "c-t000745",
+    "c-t000771",
+    "c-t001114",
+    "c-t001186",
+    "c-t001203",
+    "c-t001397",
+    "c-t001446",
+    "c-t001544",
+    "c-t001609",
+    "c-t001614",
+    "c-t001724",
+    "c-t001733",
+    "c-t001753",
+    "c-t001782",
+    "c-t001881",
+    "c-t001950",
+    "c-t001994",
+    "c-t002180",
+    "c-t002237",
+    "c-t002288",
+    "c-t002365"
+   ],
+   "id": "R1-037",
+   "validation": {
+    "n": 153,
+    "metric": "score",
+    "before": 73.709,
+    "after": 73.845,
+    "paired": {
+     "n": 153,
+     "mean": 0.136,
+     "ci": [
+      0.073,
+      0.214
+     ],
+     "level": 0.99,
+     "better": 23,
+     "worse": 0,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  },
+  {
+   "when": {
+    "type": "stage_power_failure"
+   },
+   "then": {
+    "pre_action": {
+     "kind": "broadcast",
+     "params": {
+      "message": "Atención: seguid las indicaciones del personal."
+     }
+    }
+   },
+   "text": "en «stage_power_failure» faltó el aviso por megafonía en 27 casos: se avisa antes de planificar",
+   "source": "must incumplido",
+   "basis": "grader",
+   "evidence_n": 27,
+   "evidence_cases": [
+    "c-t000038",
+    "c-t000145",
+    "c-t000479",
+    "c-t000487",
+    "c-t000521",
+    "c-t000543",
+    "c-t000658",
+    "c-t001159",
+    "c-t001205",
+    "c-t001509",
+    "c-t001551",
+    "c-t001567",
+    "c-t001607",
+    "c-t001663",
+    "c-t001684",
+    "c-t001693",
+    "c-t001856",
+    "c-t001943",
+    "c-t002151",
+    "c-t002159",
+    "c-t002167",
+    "c-t002391",
+    "c-t002503",
+    "c-t002559",
+    "c-t002563"
+   ],
+   "id": "R1-040",
+   "validation": {
+    "n": 178,
+    "metric": "score",
+    "before": 80.732,
+    "after": 80.945,
+    "paired": {
+     "n": 178,
+     "mean": 0.213,
+     "ci": [
+      0.125,
+      0.32
+     ],
+     "level": 0.99,
+     "better": 31,
+     "worse": 0,
+     "evidence": true
+    },
+    "unpaired_no_overlap": false
+   }
+  }
+ ]
+}

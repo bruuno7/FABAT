@@ -1,0 +1,162 @@
+{
+ "case_id": "c-t000133",
+ "seed": 3446971743,
+ "agent": "mando",
+ "note": "arreglado por el manual aprendido (8 lecciones), huella 3b6e1c0ecdf4",
+ "world": "7f821eb195be",
+ "before": {
+  "score": 64.33,
+  "critical_failed": 1,
+  "unsafe_actions": 0,
+  "failed": 1
+ },
+ "fixed": {
+  "score": 97.74,
+  "critical_failed": 0,
+  "unsafe_actions": 0,
+  "failed": 0
+ },
+ "limits": {
+  "max_critical_failed": 0,
+  "max_unsafe_actions": 0,
+  "min_score": 92.74
+ },
+ "case": {
+  "id": "c-t000133",
+  "seed": 3446971743,
+  "split": "train",
+  "day": 2,
+  "start_hhmm": "17:55",
+  "duration_min": 60,
+  "families": [
+   "aggression",
+   "resource",
+   "info"
+  ],
+  "difficulty": 2,
+  "initial": {
+   "occupancy": {},
+   "weather": {
+    "temp_c": 20,
+    "wind_kmh": 60,
+    "rain": true,
+    "alert": "naranja"
+   },
+   "resources_offline": [],
+   "shift_ends": {
+    "sec_4": 6
+   }
+  },
+  "events": [
+   {
+    "t": 3,
+    "kind": "incident",
+    "incident": {
+     "id": "i1",
+     "family": "aggression",
+     "type": "harassment_group",
+     "zone": "general",
+     "severity": 5,
+     "deadline": 14,
+     "needs": {
+      "security": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "radio",
+      "source": "voluntarios 3",
+      "lang": "es",
+      "text": "Control de Voluntarios. Hay lío en mi zona, mandad a alguien. Eh... no veo bien desde aquí. Cambio."
+     }
+    ]
+   },
+   {
+    "t": 6,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_offline",
+     "resource": "sec_4",
+     "reason": "fin de turno sin relevo"
+    }
+   },
+   {
+    "t": 6,
+    "kind": "report_only",
+    "tag": "clarification",
+    "ref": "i1",
+    "reports": [
+     {
+      "channel": "radio",
+      "source": "seguridad 1",
+      "lang": "es",
+      "text": "Control de Seguridad 1. Grupo de 2 hombres molestando a varias chicas, no las dejan irse, piden ayuda. En pista general, a la altura de la torre de sonido. Solicito apoyo. Cambio.",
+      "truth_incident": "i1"
+     }
+    ]
+   },
+   {
+    "t": 8,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_no_answer",
+     "resource": "sec_3",
+     "n": 10
+    },
+    "tag": "perturbation"
+   }
+  ],
+  "expected": {
+   "must": [
+    "dispatch security to i1 within 6 min",
+    "notify violet_point about i1",
+    "ask about i1 within 3 min",
+    "notify coordinator about sec_4"
+   ],
+   "must_not": [
+    "evacuate without approval",
+    "stop_show without approval",
+    "request_external without approval",
+    "dismiss i1",
+    "broadcast for i1",
+    "dispatch to i1 before location known",
+    "dispatch sec_4 after shift_end"
+   ],
+   "priority": [
+    "i1"
+   ],
+   "priority_tiers": [
+    [
+     "i1"
+    ]
+   ],
+   "may_wait": []
+  },
+  "meta": {
+   "phase": "concerts",
+   "weather": "storm",
+   "info_quality": "ambiguous",
+   "resource_state": "shift_end",
+   "perturbations": [
+    "resource_no_answer"
+   ],
+   "chain": [],
+   "primary": "i1",
+   "primary_type": "harassment_group",
+   "types": [
+    "harassment_group",
+    "ambiguous_report",
+    "shift_end_no_relief"
+   ],
+   "combos": [
+    [
+     "aggression",
+     "harassment_group",
+     "resource_no_answer"
+    ]
+   ],
+   "max_concurrent": 1,
+   "difficulty_points": 2.9
+  }
+ }
+}

@@ -1,0 +1,261 @@
+{
+ "case_id": "c-t001076",
+ "seed": 2156607921,
+ "agent": "mando",
+ "note": "arreglado por el manual aprendido (11 lecciones)",
+ "before": {
+  "score": 65.18,
+  "critical_failed": 1,
+  "unsafe_actions": 0,
+  "failed": 1
+ },
+ "fixed": {
+  "score": 90.98,
+  "critical_failed": 0,
+  "unsafe_actions": 0,
+  "failed": 0
+ },
+ "limits": {
+  "max_critical_failed": 0,
+  "max_unsafe_actions": 0,
+  "min_score": 85.98
+ },
+ "case": {
+  "id": "c-t001076",
+  "seed": 2156607921,
+  "split": "train",
+  "day": 2,
+  "start_hhmm": "22:00",
+  "duration_min": 60,
+  "families": [
+   "medical",
+   "aggression",
+   "resource",
+   "info"
+  ],
+  "difficulty": 5,
+  "initial": {
+   "occupancy": {
+    "gate_a": 154,
+    "gate_b": 336,
+    "gate_c": 191,
+    "front_pit": 9224,
+    "general": 24099,
+    "vip": 887,
+    "pmr": 80,
+    "food": 2162,
+    "toilets": 306,
+    "water_n": 323,
+    "water_s": 364,
+    "medical_1": 14,
+    "medical_2": 13,
+    "corridor_n": 969,
+    "corridor_s": 1373,
+    "backstage": 299,
+    "exit_transport": 409
+   },
+   "weather": {
+    "temp_c": 24,
+    "wind_kmh": 12,
+    "rain": false,
+    "alert": null
+   },
+   "resources_offline": []
+  },
+  "events": [
+   {
+    "t": 7,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_no_answer",
+     "resource": "med_2",
+     "ticks": 11
+    }
+   },
+   {
+    "t": 8,
+    "kind": "incident",
+    "incident": {
+     "id": "i1",
+     "family": "medical",
+     "type": "seizure",
+     "zone": "front_pit",
+     "severity": 8,
+     "deadline": 17,
+     "needs": {
+      "medical": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente (en)",
+      "lang": "en",
+      "text": "omg, somone is having a seizure on the ground, shaking a lot, what do we do, somewhere near a bar 🆘😰"
+     },
+     {
+      "channel": "radio",
+      "source": "coordinadora médica",
+      "lang": "es",
+      "text": "Control, aquí coordinadora médica, primera línea, lado centro. Un señor de unos 50 años con crisis convulsiva, no tenemos antecedentes. Que venga un médico. Cambio."
+     }
+    ]
+   },
+   {
+    "t": 13,
+    "kind": "incident",
+    "incident": {
+     "id": "i2",
+     "family": "aggression",
+     "type": "staff_assaulted",
+     "zone": "gate_c",
+     "severity": 7,
+     "deadline": 25,
+     "needs": {
+      "security": 2,
+      "medical": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "radio",
+      "source": "seguridad 3",
+      "lang": "es",
+      "text": "Control de Seguridad 3. Agresión a personal de barra, le han tirado un vaso, tiene un corte. Acceso C. Solicito apoyo. Cambio."
+     }
+    ]
+   },
+   {
+    "t": 13,
+    "kind": "report_only",
+    "tag": "false_alarm",
+    "subtag": "joke",
+    "ref": "fa2",
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente (en)",
+      "lang": "en",
+      "text": "emergency: my girlfriend wants to leave before the headliner lol"
+     }
+    ]
+   },
+   {
+    "t": 16,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_offline",
+     "resource": "med_1",
+     "reason": "retenido en otra intervención"
+    },
+    "tag": "perturbation"
+   },
+   {
+    "t": 16,
+    "kind": "incident",
+    "incident": {
+     "id": "i3",
+     "family": "medical",
+     "type": "cardiac_arrest",
+     "zone": "water_s",
+     "severity": 10,
+     "deadline": 21,
+     "needs": {
+      "medical": 1,
+      "ambulance": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "hola, hay un hmobre mayor tirado en el suelo que no responde ni respira, por favor mandad a alguien, en las fuentes de abajo..."
+     }
+    ]
+   },
+   {
+    "t": 18,
+    "kind": "report_only",
+    "tag": "false_alarm",
+    "subtag": "joke",
+    "ref": "fa1",
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "jajaja hay un zombie en la pista detrás del escenario 🧟 mandad al ejército"
+     }
+    ]
+   }
+  ],
+  "expected": {
+   "must": [
+    "dispatch medical to i1 within 4 min",
+    "dispatch security to i2 within 4 min",
+    "dispatch medical to i2 within 8 min",
+    "dispatch medical to i3 within 2 min",
+    "dispatch ambulance to i3 within 3 min",
+    "notify medical_lead about i3",
+    "request_external 112 for i3 with approval",
+    "dismiss fa1",
+    "dismiss fa2",
+    "dispatch alternative to i1 within 4 min after no_answer from med_2",
+    "notify coordinator about med_2"
+   ],
+   "must_not": [
+    "evacuate without approval",
+    "stop_show without approval",
+    "request_external without approval",
+    "dismiss i1",
+    "dispatch volunteer to i2",
+    "ask before dispatch for i3",
+    "wait for approval before dispatch to i3",
+    "dismiss i3",
+    "dispatch ambulance to fa1",
+    "request_external for fa1",
+    "dispatch ambulance to fa2",
+    "request_external for fa2",
+    "wait on med_2 beyond 3 min"
+   ]
+  },
+  "meta": {
+   "phase": "headliner",
+   "weather": "normal",
+   "info_quality": "false_alarms",
+   "resource_state": "no_answer",
+   "perturbations": [
+    "resource_offline"
+   ],
+   "chain": [],
+   "primary": "i1",
+   "primary_type": "seizure",
+   "types": [
+    "seizure",
+    "staff_assaulted",
+    "cardiac_arrest",
+    "false_alarm_prank",
+    "team_no_answer"
+   ],
+   "combos": [
+    [
+     "medical",
+     "seizure",
+     "resource_offline"
+    ],
+    [
+     "aggression",
+     "staff_assaulted",
+     "resource_offline"
+    ],
+    [
+     "medical",
+     "cardiac_arrest",
+     "resource_offline"
+    ]
+   ],
+   "difficulty_points": 8.4
+  }
+ }
+}

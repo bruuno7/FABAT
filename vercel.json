@@ -1,12 +1,12 @@
 {
   "framework": null,
-  "installCommand": "npm install && npm --prefix motor/server install",
-  "buildCommand": "npm --prefix motor/server run build",
+  "installCommand": "npm install && npm --prefix puente install",
+  "buildCommand": "npm --prefix puente run build",
   "outputDirectory": "public",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
   "functions": {
     "api/index.ts": {
-      "includeFiles": "motor/server/dist/**",
+      "includeFiles": "puente/dist/**",
       "maxDuration": 30
     }
   }

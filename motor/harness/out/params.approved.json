@@ -1,0 +1,66 @@
+{
+ "values": {
+  "resupply_lead_min": {
+   "water_n": 32,
+   "water_s": 15
+  },
+  "contact_order": {
+   "medical": {
+    "order": [
+     "med_1",
+     "med_2",
+     "med_3"
+    ],
+    "rate": {
+     "med_1": 0.914,
+     "med_2": 0.891,
+     "med_3": 0.743
+    },
+    "n": {
+     "med_1": 248,
+     "med_2": 212,
+     "med_3": 239
+    },
+    "fail_cost_min": 1.5
+   },
+   "security": {
+    "order": [
+     "sec_5",
+     "sec_2",
+     "sec_3",
+     "sec_1",
+     "sec_4"
+    ],
+    "rate": {
+     "sec_1": 0.722,
+     "sec_2": 0.938,
+     "sec_3": 0.911,
+     "sec_4": 0.649,
+     "sec_5": 0.943
+    },
+    "n": {
+     "sec_1": 566,
+     "sec_2": 445,
+     "sec_3": 468,
+     "sec_4": 590,
+     "sec_5": 326
+    },
+    "fail_cost_min": 1.7
+   }
+  },
+  "require_precise_location": {
+   "general": true
+  },
+  "weather_followup_min": 3,
+  "weather_standdown_min": 10
+ },
+ "evidence": {
+  "resupply_lead_min[water_n]": "N=50",
+  "resupply_lead_min[water_s]": "N=70",
+  "contact_order[medical]": "N=699",
+  "contact_order[security]": "N=2395",
+  "require_precise_location[general]": "N=115",
+  "weather_standdown_min": "N=48",
+  "weather_followup_min": "N=159"
+ }
+}

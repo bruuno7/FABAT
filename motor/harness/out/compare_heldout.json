@@ -1,0 +1,1446 @@
+{
+ "code": "3b6e1c0ecdf4",
+ "n": 1000,
+ "chaos": "none",
+ "budget": 3,
+ "lookahead": 15,
+ "agents": {
+  "baseline": {
+   "aggregate": {
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 69.82,
+     "median": 75.46,
+     "p90": 92.81,
+     "ci95": [
+      68.488,
+      71.162
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 76.022,
+     "median": 81.865,
+     "p90": 98.5,
+     "ci95": [
+      74.744,
+      77.329
+     ]
+    },
+    "time_to_first_attention": {
+     "n": 971,
+     "mean": 1.944,
+     "median": 1.67,
+     "p90": 3.75,
+     "ci95": [
+      1.848,
+      2.061
+     ]
+    },
+    "critical_failed": {
+     "n": 1000,
+     "mean": 0.438,
+     "median": 0.0,
+     "p90": 1.0,
+     "ci95": [
+      0.392,
+      0.48
+     ]
+    },
+    "failed": {
+     "n": 1000,
+     "mean": 1.034,
+     "median": 1.0,
+     "p90": 2.0,
+     "ci95": [
+      0.976,
+      1.094
+     ]
+    },
+    "unsafe_actions": {
+     "n": 1000,
+     "mean": 0.0,
+     "median": 0.0,
+     "p90": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "time_to_first_action": {
+     "n": 974,
+     "mean": 0.541,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.461,
+      0.626
+     ]
+    },
+    "time_to_resolve": {
+     "n": 938,
+     "mean": 23.592,
+     "median": 23.79,
+     "p90": 35.67,
+     "ci95": [
+      22.982,
+      24.25
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 3.015,
+     "median": 1.0,
+     "p90": 6.0,
+     "ci95": [
+      2.69,
+      3.373
+     ]
+    },
+    "replans": {
+     "n": 1000,
+     "mean": 0.0,
+     "median": 0.0,
+     "p90": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "approvals_requested": {
+     "n": 1000,
+     "mean": 0.243,
+     "median": 0.0,
+     "p90": 1.0,
+     "ci95": [
+      0.214,
+      0.274
+     ]
+    },
+    "vetoes": {
+     "n": 1000,
+     "mean": 0.021,
+     "median": 0.0,
+     "p90": 0.0,
+     "ci95": [
+      0.012,
+      0.03
+     ]
+    },
+    "peak_density": {
+     "n": 1000,
+     "mean": 5.042,
+     "median": 4.038,
+     "p90": 12.952,
+     "ci95": [
+      4.742,
+      5.322
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 11.077,
+     "median": 0.0,
+     "p90": 51.0,
+     "ci95": [
+      9.574,
+      12.442
+     ]
+    },
+    "must_rate": {
+     "n": 1000,
+     "mean": 0.261,
+     "median": 0.25,
+     "p90": 0.5,
+     "ci95": [
+      0.25,
+      0.271
+     ]
+    },
+    "slowness": {
+     "n": 1000,
+     "mean": 0.332,
+     "median": 0.313,
+     "p90": 0.59,
+     "ci95": [
+      0.319,
+      0.346
+     ]
+    },
+    "critical_total": 2355,
+    "critical_failed_total": 438,
+    "critical_failed_rate": 0.186,
+    "unsafe_total": 0,
+    "cases_with_critical_failed": 329,
+    "must_not_violated_total": 100,
+    "seconds": 0.96
+   },
+   "by_family": {
+    "aggression": {
+     "n": 296,
+     "mean": 69.973,
+     "median": 73.99,
+     "p90": 93.29,
+     "ci95": [
+      67.567,
+      72.12
+     ]
+    },
+    "crowd": {
+     "n": 338,
+     "mean": 66.689,
+     "median": 70.15,
+     "p90": 91.74,
+     "ci95": [
+      64.201,
+      69.081
+     ]
+    },
+    "external": {
+     "n": 230,
+     "mean": 67.146,
+     "median": 72.56,
+     "p90": 91.98,
+     "ci95": [
+      64.396,
+      70.099
+     ]
+    },
+    "info": {
+     "n": 782,
+     "mean": 69.368,
+     "median": 75.185,
+     "p90": 92.33,
+     "ci95": [
+      67.913,
+      70.964
+     ]
+    },
+    "infra": {
+     "n": 310,
+     "mean": 68.286,
+     "median": 75.745,
+     "p90": 93.06,
+     "ci95": [
+      65.488,
+      70.917
+     ]
+    },
+    "medical": {
+     "n": 385,
+     "mean": 65.417,
+     "median": 67.33,
+     "p90": 92.2,
+     "ci95": [
+      63.163,
+      67.727
+     ]
+    },
+    "resource": {
+     "n": 737,
+     "mean": 69.302,
+     "median": 74.34,
+     "p90": 92.5,
+     "ci95": [
+      67.701,
+      70.718
+     ]
+    },
+    "supply": {
+     "n": 185,
+     "mean": 68.983,
+     "median": 73.79,
+     "p90": 92.02,
+     "ci95": [
+      66.183,
+      72.09
+     ]
+    },
+    "weather": {
+     "n": 109,
+     "mean": 62.471,
+     "median": 62.74,
+     "p90": 90.03,
+     "ci95": [
+      58.179,
+      66.223
+     ]
+    }
+   }
+  },
+  "baseline_plus": {
+   "aggregate": {
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 70.61,
+     "median": 76.235,
+     "p90": 92.88,
+     "ci95": [
+      69.332,
+      71.877
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 76.62,
+     "median": 82.65,
+     "p90": 98.44,
+     "ci95": [
+      75.392,
+      77.853
+     ]
+    },
+    "time_to_first_attention": {
+     "n": 971,
+     "mean": 1.868,
+     "median": 1.67,
+     "p90": 3.5,
+     "ci95": [
+      1.78,
+      1.965
+     ]
+    },
+    "critical_failed": {
+     "n": 1000,
+     "mean": 0.429,
+     "median": 0.0,
+     "p90": 1.0,
+     "ci95": [
+      0.385,
+      0.469
+     ]
+    },
+    "failed": {
+     "n": 1000,
+     "mean": 1.051,
+     "median": 1.0,
+     "p90": 2.0,
+     "ci95": [
+      0.994,
+      1.102
+     ]
+    },
+    "unsafe_actions": {
+     "n": 1000,
+     "mean": 0.0,
+     "median": 0.0,
+     "p90": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "time_to_first_action": {
+     "n": 974,
+     "mean": 0.432,
+     "median": 0.0,
+     "p90": 1.5,
+     "ci95": [
+      0.357,
+      0.498
+     ]
+    },
+    "time_to_resolve": {
+     "n": 935,
+     "mean": 23.941,
+     "median": 24.0,
+     "p90": 37.0,
+     "ci95": [
+      23.386,
+      24.581
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 2.48,
+     "median": 1.0,
+     "p90": 4.0,
+     "ci95": [
+      2.174,
+      2.814
+     ]
+    },
+    "replans": {
+     "n": 1000,
+     "mean": 0.0,
+     "median": 0.0,
+     "p90": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "approvals_requested": {
+     "n": 1000,
+     "mean": 0.226,
+     "median": 0.0,
+     "p90": 1.0,
+     "ci95": [
+      0.195,
+      0.258
+     ]
+    },
+    "vetoes": {
+     "n": 1000,
+     "mean": 0.021,
+     "median": 0.0,
+     "p90": 0.0,
+     "ci95": [
+      0.012,
+      0.03
+     ]
+    },
+    "peak_density": {
+     "n": 1000,
+     "mean": 5.042,
+     "median": 4.038,
+     "p90": 12.952,
+     "ci95": [
+      4.742,
+      5.322
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 11.077,
+     "median": 0.0,
+     "p90": 51.0,
+     "ci95": [
+      9.574,
+      12.442
+     ]
+    },
+    "must_rate": {
+     "n": 1000,
+     "mean": 0.275,
+     "median": 0.25,
+     "p90": 0.5,
+     "ci95": [
+      0.264,
+      0.286
+     ]
+    },
+    "slowness": {
+     "n": 1000,
+     "mean": 0.334,
+     "median": 0.316,
+     "p90": 0.6,
+     "ci95": [
+      0.321,
+      0.347
+     ]
+    },
+    "critical_total": 2357,
+    "critical_failed_total": 429,
+    "critical_failed_rate": 0.182,
+    "unsafe_total": 0,
+    "cases_with_critical_failed": 327,
+    "must_not_violated_total": 72,
+    "seconds": 0.89
+   },
+   "by_family": {
+    "aggression": {
+     "n": 296,
+     "mean": 70.828,
+     "median": 74.64,
+     "p90": 93.25,
+     "ci95": [
+      68.702,
+      72.847
+     ]
+    },
+    "crowd": {
+     "n": 338,
+     "mean": 68.121,
+     "median": 73.065,
+     "p90": 91.92,
+     "ci95": [
+      65.729,
+      70.464
+     ]
+    },
+    "external": {
+     "n": 230,
+     "mean": 67.697,
+     "median": 71.245,
+     "p90": 92.1,
+     "ci95": [
+      65.17,
+      70.195
+     ]
+    },
+    "info": {
+     "n": 782,
+     "mean": 70.282,
+     "median": 75.765,
+     "p90": 92.49,
+     "ci95": [
+      68.926,
+      71.931
+     ]
+    },
+    "infra": {
+     "n": 310,
+     "mean": 69.302,
+     "median": 76.94,
+     "p90": 93.1,
+     "ci95": [
+      66.925,
+      71.631
+     ]
+    },
+    "medical": {
+     "n": 385,
+     "mean": 66.288,
+     "median": 69.69,
+     "p90": 92.31,
+     "ci95": [
+      64.336,
+      68.454
+     ]
+    },
+    "resource": {
+     "n": 737,
+     "mean": 69.967,
+     "median": 75.27,
+     "p90": 92.55,
+     "ci95": [
+      68.522,
+      71.41
+     ]
+    },
+    "supply": {
+     "n": 185,
+     "mean": 68.915,
+     "median": 72.5,
+     "p90": 91.71,
+     "ci95": [
+      66.216,
+      71.689
+     ]
+    },
+    "weather": {
+     "n": 109,
+     "mean": 62.936,
+     "median": 63.2,
+     "p90": 90.09,
+     "ci95": [
+      58.647,
+      66.632
+     ]
+    }
+   }
+  },
+  "mando": {
+   "aggregate": {
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 78.71,
+     "median": 85.97,
+     "p90": 96.55,
+     "ci95": [
+      77.429,
+      79.996
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 82.929,
+     "median": 89.05,
+     "p90": 98.64,
+     "ci95": [
+      81.734,
+      84.103
+     ]
+    },
+    "time_to_first_attention": {
+     "n": 989,
+     "mean": 2.36,
+     "median": 2.2,
+     "p90": 4.0,
+     "ci95": [
+      2.266,
+      2.447
+     ]
+    },
+    "critical_failed": {
+     "n": 1000,
+     "mean": 0.309,
+     "median": 0.0,
+     "p90": 1.0,
+     "ci95": [
+      0.273,
+      0.352
+     ]
+    },
+    "failed": {
+     "n": 1000,
+     "mean": 0.72,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.663,
+      0.777
+     ]
+    },
+    "unsafe_actions": {
+     "n": 1000,
+     "mean": 0.0,
+     "median": 0.0,
+     "p90": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "time_to_first_action": {
+     "n": 989,
+     "mean": 0.941,
+     "median": 0.75,
+     "p90": 2.0,
+     "ci95": [
+      0.884,
+      1.01
+     ]
+    },
+    "time_to_resolve": {
+     "n": 990,
+     "mean": 18.872,
+     "median": 18.33,
+     "p90": 27.5,
+     "ci95": [
+      18.467,
+      19.286
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 0.831,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.754,
+      0.912
+     ]
+    },
+    "replans": {
+     "n": 1000,
+     "mean": 5.54,
+     "median": 4.0,
+     "p90": 11.0,
+     "ci95": [
+      5.276,
+      5.811
+     ]
+    },
+    "approvals_requested": {
+     "n": 1000,
+     "mean": 1.99,
+     "median": 1.0,
+     "p90": 5.0,
+     "ci95": [
+      1.853,
+      2.139
+     ]
+    },
+    "vetoes": {
+     "n": 1000,
+     "mean": 0.504,
+     "median": 0.0,
+     "p90": 1.0,
+     "ci95": [
+      0.459,
+      0.554
+     ]
+    },
+    "peak_density": {
+     "n": 1000,
+     "mean": 5.018,
+     "median": 3.961,
+     "p90": 12.952,
+     "ci95": [
+      4.733,
+      5.288
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 10.257,
+     "median": 0.0,
+     "p90": 48.0,
+     "ci95": [
+      8.904,
+      11.543
+     ]
+    },
+    "must_rate": {
+     "n": 1000,
+     "mean": 0.598,
+     "median": 0.6,
+     "p90": 1.0,
+     "ci95": [
+      0.582,
+      0.612
+     ]
+    },
+    "slowness": {
+     "n": 1000,
+     "mean": 0.301,
+     "median": 0.277,
+     "p90": 0.55,
+     "ci95": [
+      0.29,
+      0.311
+     ]
+    },
+    "critical_total": 2332,
+    "critical_failed_total": 309,
+    "critical_failed_rate": 0.1325,
+    "unsafe_total": 0,
+    "cases_with_critical_failed": 239,
+    "must_not_violated_total": 336,
+    "seconds": 2.22
+   },
+   "by_family": {
+    "aggression": {
+     "n": 296,
+     "mean": 77.934,
+     "median": 86.22,
+     "p90": 96.61,
+     "ci95": [
+      75.473,
+      80.328
+     ]
+    },
+    "crowd": {
+     "n": 338,
+     "mean": 74.383,
+     "median": 81.56,
+     "p90": 95.49,
+     "ci95": [
+      72.11,
+      76.429
+     ]
+    },
+    "external": {
+     "n": 230,
+     "mean": 75.51,
+     "median": 85.645,
+     "p90": 95.92,
+     "ci95": [
+      72.338,
+      78.832
+     ]
+    },
+    "info": {
+     "n": 782,
+     "mean": 78.38,
+     "median": 85.28,
+     "p90": 96.05,
+     "ci95": [
+      76.926,
+      79.844
+     ]
+    },
+    "infra": {
+     "n": 310,
+     "mean": 76.441,
+     "median": 83.99,
+     "p90": 96.5,
+     "ci95": [
+      74.218,
+      78.733
+     ]
+    },
+    "medical": {
+     "n": 385,
+     "mean": 76.007,
+     "median": 83.69,
+     "p90": 95.6,
+     "ci95": [
+      74.067,
+      78.064
+     ]
+    },
+    "resource": {
+     "n": 737,
+     "mean": 77.325,
+     "median": 84.42,
+     "p90": 96.39,
+     "ci95": [
+      75.644,
+      78.788
+     ]
+    },
+    "supply": {
+     "n": 185,
+     "mean": 77.943,
+     "median": 82.13,
+     "p90": 95.24,
+     "ci95": [
+      75.522,
+      80.614
+     ]
+    },
+    "weather": {
+     "n": 109,
+     "mean": 76.574,
+     "median": 82.66,
+     "p90": 96.39,
+     "ci95": [
+      71.919,
+      80.15
+     ]
+    }
+   }
+  },
+  "mando_learned": {
+   "aggregate": {
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 78.956,
+     "median": 86.09,
+     "p90": 96.81,
+     "ci95": [
+      77.688,
+      80.271
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 83.022,
+     "median": 89.09,
+     "p90": 98.67,
+     "ci95": [
+      81.824,
+      84.223
+     ]
+    },
+    "time_to_first_attention": {
+     "n": 989,
+     "mean": 2.363,
+     "median": 2.2,
+     "p90": 4.0,
+     "ci95": [
+      2.272,
+      2.448
+     ]
+    },
+    "critical_failed": {
+     "n": 1000,
+     "mean": 0.31,
+     "median": 0.0,
+     "p90": 1.0,
+     "ci95": [
+      0.274,
+      0.352
+     ]
+    },
+    "failed": {
+     "n": 1000,
+     "mean": 0.724,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.668,
+      0.783
+     ]
+    },
+    "unsafe_actions": {
+     "n": 1000,
+     "mean": 0.0,
+     "median": 0.0,
+     "p90": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "time_to_first_action": {
+     "n": 989,
+     "mean": 0.94,
+     "median": 0.75,
+     "p90": 2.0,
+     "ci95": [
+      0.879,
+      1.007
+     ]
+    },
+    "time_to_resolve": {
+     "n": 990,
+     "mean": 18.857,
+     "median": 18.33,
+     "p90": 27.5,
+     "ci95": [
+      18.469,
+      19.27
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 0.736,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.666,
+      0.811
+     ]
+    },
+    "replans": {
+     "n": 1000,
+     "mean": 5.446,
+     "median": 4.0,
+     "p90": 10.0,
+     "ci95": [
+      5.187,
+      5.695
+     ]
+    },
+    "approvals_requested": {
+     "n": 1000,
+     "mean": 2.641,
+     "median": 2.0,
+     "p90": 6.0,
+     "ci95": [
+      2.458,
+      2.813
+     ]
+    },
+    "vetoes": {
+     "n": 1000,
+     "mean": 0.471,
+     "median": 0.0,
+     "p90": 1.0,
+     "ci95": [
+      0.429,
+      0.512
+     ]
+    },
+    "peak_density": {
+     "n": 1000,
+     "mean": 5.019,
+     "median": 3.963,
+     "p90": 12.952,
+     "ci95": [
+      4.735,
+      5.289
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 10.203,
+     "median": 0.0,
+     "p90": 47.0,
+     "ci95": [
+      8.895,
+      11.5
+     ]
+    },
+    "must_rate": {
+     "n": 1000,
+     "mean": 0.62,
+     "median": 0.625,
+     "p90": 1.0,
+     "ci95": [
+      0.603,
+      0.635
+     ]
+    },
+    "slowness": {
+     "n": 1000,
+     "mean": 0.301,
+     "median": 0.276,
+     "p90": 0.552,
+     "ci95": [
+      0.29,
+      0.311
+     ]
+    },
+    "critical_total": 2334,
+    "critical_failed_total": 310,
+    "critical_failed_rate": 0.1328,
+    "unsafe_total": 0,
+    "cases_with_critical_failed": 239,
+    "must_not_violated_total": 343,
+    "seconds": 2.2
+   },
+   "by_family": {
+    "aggression": {
+     "n": 296,
+     "mean": 78.199,
+     "median": 86.66,
+     "p90": 96.99,
+     "ci95": [
+      75.781,
+      80.605
+     ]
+    },
+    "crowd": {
+     "n": 338,
+     "mean": 74.703,
+     "median": 81.67,
+     "p90": 95.7,
+     "ci95": [
+      72.401,
+      76.698
+     ]
+    },
+    "external": {
+     "n": 230,
+     "mean": 75.846,
+     "median": 85.395,
+     "p90": 96.07,
+     "ci95": [
+      72.743,
+      79.189
+     ]
+    },
+    "info": {
+     "n": 782,
+     "mean": 78.67,
+     "median": 85.83,
+     "p90": 96.36,
+     "ci95": [
+      77.215,
+      80.076
+     ]
+    },
+    "infra": {
+     "n": 310,
+     "mean": 76.721,
+     "median": 83.99,
+     "p90": 97.05,
+     "ci95": [
+      74.472,
+      79.066
+     ]
+    },
+    "medical": {
+     "n": 385,
+     "mean": 76.027,
+     "median": 83.96,
+     "p90": 95.7,
+     "ci95": [
+      73.947,
+      78.109
+     ]
+    },
+    "resource": {
+     "n": 737,
+     "mean": 77.589,
+     "median": 84.83,
+     "p90": 96.53,
+     "ci95": [
+      75.937,
+      79.042
+     ]
+    },
+    "supply": {
+     "n": 185,
+     "mean": 78.018,
+     "median": 82.29,
+     "p90": 95.88,
+     "ci95": [
+      75.6,
+      80.654
+     ]
+    },
+    "weather": {
+     "n": 109,
+     "mean": 76.548,
+     "median": 82.66,
+     "p90": 96.54,
+     "ci95": [
+      72.104,
+      80.134
+     ]
+    }
+   }
+  }
+ },
+ "case_signature": "63970392c7f75beb",
+ "errors": {
+  "baseline": [],
+  "baseline_plus": [],
+  "mando": [],
+  "mando_learned": []
+ },
+ "paired": {
+  "mando_minus_baseline": {
+   "n": 1000,
+   "mean": 8.89,
+   "ci": [
+    7.715,
+    10.125
+   ],
+   "level": 0.95,
+   "better": 736,
+   "worse": 262,
+   "evidence": true,
+   "world_score": {
+    "n": 1000,
+    "mean": 6.907,
+    "ci": [
+     5.78,
+     8.125
+    ],
+    "level": 0.95,
+    "better": 642,
+    "worse": 338,
+    "evidence": true
+   }
+  },
+  "mando_minus_baseline_plus": {
+   "n": 1000,
+   "mean": 8.1,
+   "ci": [
+    6.891,
+    9.342
+   ],
+   "level": 0.95,
+   "better": 724,
+   "worse": 272,
+   "evidence": true,
+   "world_score": {
+    "n": 1000,
+    "mean": 6.309,
+    "ci": [
+     5.176,
+     7.512
+    ],
+    "level": 0.95,
+    "better": 635,
+    "worse": 340,
+    "evidence": true
+   }
+  },
+  "mando_learned_minus_mando": {
+   "n": 1000,
+   "mean": 0.245,
+   "ci": [
+    0.096,
+    0.389
+   ],
+   "level": 0.95,
+   "better": 186,
+   "worse": 38,
+   "evidence": true,
+   "world_score": {
+    "n": 1000,
+    "mean": 0.093,
+    "ci": [
+     -0.044,
+     0.231
+    ],
+    "level": 0.95,
+    "better": 49,
+    "worse": 42,
+    "evidence": false
+   }
+  },
+  "mando_learned_minus_baseline": {
+   "n": 1000,
+   "mean": 9.136,
+   "ci": [
+    7.951,
+    10.365
+   ],
+   "level": 0.95,
+   "better": 740,
+   "worse": 257,
+   "evidence": true,
+   "world_score": {
+    "n": 1000,
+    "mean": 7.0,
+    "ci": [
+     5.864,
+     8.207
+    ],
+    "level": 0.95,
+    "better": 646,
+    "worse": 335,
+    "evidence": true
+   }
+  },
+  "baseline_plus_minus_baseline": {
+   "n": 1000,
+   "mean": 0.79,
+   "ci": [
+    0.44,
+    1.167
+   ],
+   "level": 0.95,
+   "better": 287,
+   "worse": 72,
+   "evidence": true,
+   "world_score": {
+    "n": 1000,
+    "mean": 0.597,
+    "ci": [
+     0.259,
+     0.959
+    ],
+    "level": 0.95,
+    "better": 245,
+    "worse": 73,
+    "evidence": true
+   }
+  }
+ },
+ "cases": "/Users/anayang/workspace/hackspain-2026/motor/harness/out/_frozen/3b6e1c0ecdf4-001320/data/heldout.jsonl",
+ "n_lessons": 8,
+ "top_failures": {
+  "mando": [
+   {
+    "pattern": "must",
+    "agent_type": "crush_risk",
+    "family": "crowd",
+    "detail": "request_external 112 for # with approval",
+    "n_cases": 70,
+    "examples": [
+     "c-h000006",
+     "c-h000008",
+     "c-h000012"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "gas_leak_food",
+    "family": "infra",
+    "detail": "evacuate food for # with approval",
+    "n_cases": 64,
+    "examples": [
+     "c-h000033",
+     "c-h000038",
+     "c-h000044"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "gas_leak_food",
+    "family": "infra",
+    "detail": "request_external fire for # with approval",
+    "n_cases": 64,
+    "examples": [
+     "c-h000033",
+     "c-h000038",
+     "c-h000044"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "medical_team_overwhelmed",
+    "family": "resource",
+    "detail": "notify medical_lead about #",
+    "n_cases": 63,
+    "examples": [
+     "c-h000021",
+     "c-h000030",
+     "c-h000053"
+    ]
+   },
+   {
+    "pattern": "critical_failed",
+    "agent_type": "crush_risk",
+    "family": "crowd",
+    "detail": "[\"security\"]",
+    "n_cases": 54,
+    "examples": [
+     "c-h000003",
+     "c-h000021",
+     "c-h000069"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "gas_leak_food",
+    "family": "infra",
+    "detail": "set_zone food restricted for #",
+    "n_cases": 54,
+    "examples": [
+     "c-h000038",
+     "c-h000044",
+     "c-h000080"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "crush_risk",
+    "family": "crowd",
+    "detail": "dispatch security to # within N min",
+    "n_cases": 53,
+    "examples": [
+     "c-h000006",
+     "c-h000008",
+     "c-h000045"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "structure_risk",
+    "family": "infra",
+    "detail": "notify security_lead about #",
+    "n_cases": 53,
+    "examples": [
+     "c-h000003",
+     "c-h000013",
+     "c-h000018"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "structure_risk",
+    "family": "infra",
+    "detail": "broadcast for #",
+    "n_cases": 52,
+    "examples": [
+     "c-h000005",
+     "c-h000010",
+     "c-h000013"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "injury",
+    "family": "medical",
+    "detail": "request_external 112 for # with approval",
+    "n_cases": 51,
+    "examples": [
+     "c-h000004",
+     "c-h000006",
+     "c-h000007"
+    ]
+   }
+  ],
+  "mando_learned": [
+   {
+    "pattern": "must",
+    "agent_type": "crush_risk",
+    "family": "crowd",
+    "detail": "request_external 112 for # with approval",
+    "n_cases": 70,
+    "examples": [
+     "c-h000006",
+     "c-h000008",
+     "c-h000012"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "gas_leak_food",
+    "family": "infra",
+    "detail": "evacuate food for # with approval",
+    "n_cases": 64,
+    "examples": [
+     "c-h000033",
+     "c-h000038",
+     "c-h000044"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "gas_leak_food",
+    "family": "infra",
+    "detail": "request_external fire for # with approval",
+    "n_cases": 64,
+    "examples": [
+     "c-h000033",
+     "c-h000038",
+     "c-h000044"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "medical_team_overwhelmed",
+    "family": "resource",
+    "detail": "notify medical_lead about #",
+    "n_cases": 63,
+    "examples": [
+     "c-h000021",
+     "c-h000030",
+     "c-h000053"
+    ]
+   },
+   {
+    "pattern": "critical_failed",
+    "agent_type": "crush_risk",
+    "family": "crowd",
+    "detail": "[\"security\"]",
+    "n_cases": 54,
+    "examples": [
+     "c-h000003",
+     "c-h000021",
+     "c-h000069"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "crush_risk",
+    "family": "crowd",
+    "detail": "dispatch security to # within N min",
+    "n_cases": 54,
+    "examples": [
+     "c-h000006",
+     "c-h000008",
+     "c-h000045"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "gas_leak_food",
+    "family": "infra",
+    "detail": "set_zone food restricted for #",
+    "n_cases": 54,
+    "examples": [
+     "c-h000038",
+     "c-h000044",
+     "c-h000080"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "structure_risk",
+    "family": "infra",
+    "detail": "notify security_lead about #",
+    "n_cases": 53,
+    "examples": [
+     "c-h000003",
+     "c-h000013",
+     "c-h000018"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "injury",
+    "family": "medical",
+    "detail": "request_external 112 for # with approval",
+    "n_cases": 51,
+    "examples": [
+     "c-h000004",
+     "c-h000006",
+     "c-h000007"
+    ]
+   },
+   {
+    "pattern": "must",
+    "agent_type": "crowd_surge",
+    "family": "crowd",
+    "detail": "request_external police for # with approval",
+    "n_cases": 49,
+    "examples": [
+     "c-h000002",
+     "c-h000014",
+     "c-h000029"
+    ]
+   }
+  ]
+ }
+}

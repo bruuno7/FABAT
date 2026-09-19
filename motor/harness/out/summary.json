@@ -1,0 +1,4468 @@
+{
+ "codes": {
+  "compare": "3b6e1c0ecdf4",
+  "learn": "3b6e1c0ecdf4",
+  "headline": "3b6e1c0ecdf4",
+  "load": "3b6e1c0ecdf4",
+  "day2": "cc17622e1b13"
+ },
+ "headline": {
+  "code": "3b6e1c0ecdf4",
+  "what": "Mando sin lecciones − lista fija; diferencia pareada en los mismos casos y semillas",
+  "train": {
+   "n": 1000,
+   "cases": "/Users/anayang/workspace/hackspain-2026/motor/harness/out/_frozen/3b6e1c0ecdf4-001320/data/train.jsonl",
+   "chaos": "none",
+   "budget": 0,
+   "case_signature": "4aa25bdcecfd0f94",
+   "mando": {
+    "n": 1000,
+    "mean": 81.363,
+    "median": 87.265,
+    "p90": 97.51,
+    "ci95": [
+     80.306,
+     82.515
+    ]
+   },
+   "baseline": {
+    "n": 1000,
+    "mean": 71.761,
+    "median": 77.89,
+    "p90": 93.25,
+    "ci95": [
+     70.521,
+     72.959
+    ]
+   },
+   "mando_world": {
+    "n": 1000,
+    "mean": 84.574,
+    "median": 89.49,
+    "p90": 98.8,
+    "ci95": [
+     83.585,
+     85.668
+    ]
+   },
+   "baseline_world": {
+    "n": 1000,
+    "mean": 77.77,
+    "median": 83.655,
+    "p90": 98.26,
+    "ci95": [
+     76.545,
+     78.977
+    ]
+   },
+   "critical_failed": {
+    "mando": [
+     244,
+     2136
+    ],
+    "baseline": [
+     387,
+     2144
+    ]
+   },
+   "errors": {
+    "mando": 0,
+    "baseline": 0
+   },
+   "paired_score": {
+    "n": 1000,
+    "mean": 9.603,
+    "ci": [
+     8.42,
+     10.781
+    ],
+    "level": 0.95,
+    "better": 767,
+    "worse": 230,
+    "evidence": true
+   },
+   "paired_world_score": {
+    "n": 1000,
+    "mean": 6.804,
+    "ci": [
+     5.689,
+     7.925
+    ],
+    "level": 0.95,
+    "better": 658,
+    "worse": 312,
+    "evidence": true
+   }
+  },
+  "heldout": {
+   "n": 1000,
+   "cases": "/Users/anayang/workspace/hackspain-2026/motor/harness/out/_frozen/3b6e1c0ecdf4-001320/data/heldout.jsonl",
+   "chaos": "none",
+   "budget": 0,
+   "case_signature": "63970392c7f75beb",
+   "mando": {
+    "n": 1000,
+    "mean": 78.71,
+    "median": 85.97,
+    "p90": 96.55,
+    "ci95": [
+     77.429,
+     79.996
+    ]
+   },
+   "baseline": {
+    "n": 1000,
+    "mean": 69.82,
+    "median": 75.46,
+    "p90": 92.81,
+    "ci95": [
+     68.488,
+     71.162
+    ]
+   },
+   "mando_world": {
+    "n": 1000,
+    "mean": 82.929,
+    "median": 89.05,
+    "p90": 98.64,
+    "ci95": [
+     81.734,
+     84.103
+    ]
+   },
+   "baseline_world": {
+    "n": 1000,
+    "mean": 76.022,
+    "median": 81.865,
+    "p90": 98.5,
+    "ci95": [
+     74.744,
+     77.329
+    ]
+   },
+   "critical_failed": {
+    "mando": [
+     309,
+     2332
+    ],
+    "baseline": [
+     438,
+     2355
+    ]
+   },
+   "errors": {
+    "mando": 0,
+    "baseline": 0
+   },
+   "paired_score": {
+    "n": 1000,
+    "mean": 8.89,
+    "ci": [
+     7.715,
+     10.125
+    ],
+    "level": 0.95,
+    "better": 736,
+    "worse": 262,
+    "evidence": true
+   },
+   "paired_world_score": {
+    "n": 1000,
+    "mean": 6.907,
+    "ci": [
+     5.78,
+     8.125
+    ],
+    "level": 0.95,
+    "better": 642,
+    "worse": 338,
+    "evidence": true
+   }
+  },
+  "train_smart_chaos": {
+   "n": 300,
+   "cases": "/Users/anayang/workspace/hackspain-2026/motor/harness/out/_frozen/3b6e1c0ecdf4-001320/data/train.jsonl",
+   "chaos": "smart",
+   "budget": 3,
+   "case_signature": "ec4b2ade90a47a50",
+   "mando": {
+    "n": 300,
+    "mean": 47.637,
+    "median": 44.265,
+    "p90": 90.92,
+    "ci95": [
+     44.49,
+     50.918
+    ]
+   },
+   "baseline": {
+    "n": 300,
+    "mean": 32.133,
+    "median": 28.46,
+    "p90": 64.5,
+    "ci95": [
+     29.568,
+     34.558
+    ]
+   },
+   "mando_world": {
+    "n": 300,
+    "mean": 51.409,
+    "median": 47.51,
+    "p90": 94.5,
+    "ci95": [
+     48.377,
+     54.598
+    ]
+   },
+   "baseline_world": {
+    "n": 300,
+    "mean": 38.218,
+    "median": 34.935,
+    "p90": 71.31,
+    "ci95": [
+     35.816,
+     40.649
+    ]
+   },
+   "critical_failed": {
+    "mando": [
+     488,
+     1083
+    ],
+    "baseline": [
+     587,
+     958
+    ]
+   },
+   "errors": {
+    "mando": 0,
+    "baseline": 0
+   },
+   "paired_score": {
+    "n": 300,
+    "mean": 15.504,
+    "ci": [
+     12.947,
+     18.201
+    ],
+    "level": 0.95,
+    "better": 226,
+    "worse": 71,
+    "evidence": true
+   },
+   "paired_world_score": {
+    "n": 300,
+    "mean": 13.191,
+    "ci": [
+     10.714,
+     15.785
+    ],
+    "level": 0.95,
+    "better": 221,
+    "worse": 78,
+    "evidence": true
+   }
+  },
+  "note": ""
+ },
+ "compare": {
+  "n": 1000,
+  "chaos": "none",
+  "code": "3b6e1c0ecdf4",
+  "paired": {
+   "mando_minus_baseline": {
+    "n": 1000,
+    "mean": 9.603,
+    "ci": [
+     8.42,
+     10.781
+    ],
+    "level": 0.95,
+    "better": 767,
+    "worse": 230,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 6.804,
+     "ci": [
+      5.689,
+      7.925
+     ],
+     "level": 0.95,
+     "better": 658,
+     "worse": 312,
+     "evidence": true
+    }
+   },
+   "mando_minus_baseline_plus": {
+    "n": 1000,
+    "mean": 8.557,
+    "ci": [
+     7.377,
+     9.766
+    ],
+    "level": 0.95,
+    "better": 747,
+    "worse": 247,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 5.959,
+     "ci": [
+      4.84,
+      7.054
+     ],
+     "level": 0.95,
+     "better": 639,
+     "worse": 326,
+     "evidence": true
+    }
+   },
+   "mando_learned_minus_mando": {
+    "n": 1000,
+    "mean": 0.517,
+    "ci": [
+     0.362,
+     0.69
+    ],
+    "level": 0.95,
+    "better": 235,
+    "worse": 24,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 0.289,
+     "ci": [
+      0.146,
+      0.451
+     ],
+     "level": 0.95,
+     "better": 62,
+     "worse": 29,
+     "evidence": true
+    }
+   },
+   "mando_learned_minus_baseline": {
+    "n": 1000,
+    "mean": 10.12,
+    "ci": [
+     8.965,
+     11.29
+    ],
+    "level": 0.95,
+    "better": 783,
+    "worse": 214,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 7.093,
+     "ci": [
+      5.999,
+      8.208
+     ],
+     "level": 0.95,
+     "better": 667,
+     "worse": 303,
+     "evidence": true
+    }
+   },
+   "baseline_plus_minus_baseline": {
+    "n": 1000,
+    "mean": 1.045,
+    "ci": [
+     0.74,
+     1.368
+    ],
+    "level": 0.95,
+    "better": 295,
+    "worse": 65,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 0.845,
+     "ci": [
+      0.55,
+      1.165
+     ],
+     "level": 0.95,
+     "better": 254,
+     "worse": 64,
+     "evidence": true
+    }
+   }
+  },
+  "agents": {
+   "baseline": {
+    "label": "Lista fija",
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 71.761,
+     "median": 77.89,
+     "p90": 93.25,
+     "ci95": [
+      70.521,
+      72.959
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 77.77,
+     "median": 83.655,
+     "p90": 98.26,
+     "ci95": [
+      76.545,
+      78.977
+     ]
+    },
+    "critical_failed_total": 387,
+    "critical_total": 2144,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 973,
+     "mean": 2.207,
+     "median": 2.0,
+     "p90": 4.33,
+     "ci95": [
+      2.091,
+      2.329
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 2.88,
+     "median": 1.0,
+     "p90": 6.0,
+     "ci95": [
+      2.515,
+      3.264
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 10.405,
+     "median": 0.0,
+     "p90": 47.0,
+     "ci95": [
+      9.005,
+      11.591
+     ]
+    }
+   },
+   "baseline_plus": {
+    "label": "Lista fija + (fusiona y ordena)",
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 72.806,
+     "median": 78.74,
+     "p90": 93.23,
+     "ci95": [
+      71.595,
+      74.018
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 78.615,
+     "median": 84.94,
+     "p90": 98.33,
+     "ci95": [
+      77.448,
+      79.799
+     ]
+    },
+    "critical_failed_total": 370,
+    "critical_total": 2145,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 973,
+     "mean": 2.085,
+     "median": 1.83,
+     "p90": 4.0,
+     "ci95": [
+      1.983,
+      2.191
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 2.377,
+     "median": 1.0,
+     "p90": 4.0,
+     "ci95": [
+      2.042,
+      2.72
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 10.405,
+     "median": 0.0,
+     "p90": 47.0,
+     "ci95": [
+      9.005,
+      11.591
+     ]
+    }
+   },
+   "mando": {
+    "label": "Mando (sin lecciones)",
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 81.363,
+     "median": 87.265,
+     "p90": 97.51,
+     "ci95": [
+      80.306,
+      82.515
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 84.574,
+     "median": 89.49,
+     "p90": 98.8,
+     "ci95": [
+      83.585,
+      85.668
+     ]
+    },
+    "critical_failed_total": 244,
+    "critical_total": 2136,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 983,
+     "mean": 2.272,
+     "median": 2.0,
+     "p90": 4.0,
+     "ci95": [
+      2.185,
+      2.361
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 0.864,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.772,
+      0.968
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 9.892,
+     "median": 0.0,
+     "p90": 44.0,
+     "ci95": [
+      8.583,
+      11.172
+     ]
+    }
+   },
+   "mando_learned": {
+    "label": "Mando (manual aprendido)",
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 81.881,
+     "median": 88.22,
+     "p90": 97.88,
+     "ci95": [
+      80.823,
+      82.987
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 84.863,
+     "median": 89.655,
+     "p90": 98.85,
+     "ci95": [
+      83.874,
+      85.942
+     ]
+    },
+    "critical_failed_total": 242,
+    "critical_total": 2135,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 983,
+     "mean": 2.275,
+     "median": 2.0,
+     "p90": 4.0,
+     "ci95": [
+      2.18,
+      2.362
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 0.723,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.655,
+      0.8
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 9.817,
+     "median": 0.0,
+     "p90": 44.0,
+     "ci95": [
+      8.519,
+      11.084
+     ]
+    }
+   }
+  }
+ },
+ "compare_heldout": {
+  "n": 1000,
+  "chaos": "none",
+  "code": "3b6e1c0ecdf4",
+  "paired": {
+   "mando_minus_baseline": {
+    "n": 1000,
+    "mean": 8.89,
+    "ci": [
+     7.715,
+     10.125
+    ],
+    "level": 0.95,
+    "better": 736,
+    "worse": 262,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 6.907,
+     "ci": [
+      5.78,
+      8.125
+     ],
+     "level": 0.95,
+     "better": 642,
+     "worse": 338,
+     "evidence": true
+    }
+   },
+   "mando_minus_baseline_plus": {
+    "n": 1000,
+    "mean": 8.1,
+    "ci": [
+     6.891,
+     9.342
+    ],
+    "level": 0.95,
+    "better": 724,
+    "worse": 272,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 6.309,
+     "ci": [
+      5.176,
+      7.512
+     ],
+     "level": 0.95,
+     "better": 635,
+     "worse": 340,
+     "evidence": true
+    }
+   },
+   "mando_learned_minus_mando": {
+    "n": 1000,
+    "mean": 0.245,
+    "ci": [
+     0.096,
+     0.389
+    ],
+    "level": 0.95,
+    "better": 186,
+    "worse": 38,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 0.093,
+     "ci": [
+      -0.044,
+      0.231
+     ],
+     "level": 0.95,
+     "better": 49,
+     "worse": 42,
+     "evidence": false
+    }
+   },
+   "mando_learned_minus_baseline": {
+    "n": 1000,
+    "mean": 9.136,
+    "ci": [
+     7.951,
+     10.365
+    ],
+    "level": 0.95,
+    "better": 740,
+    "worse": 257,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 7.0,
+     "ci": [
+      5.864,
+      8.207
+     ],
+     "level": 0.95,
+     "better": 646,
+     "worse": 335,
+     "evidence": true
+    }
+   },
+   "baseline_plus_minus_baseline": {
+    "n": 1000,
+    "mean": 0.79,
+    "ci": [
+     0.44,
+     1.167
+    ],
+    "level": 0.95,
+    "better": 287,
+    "worse": 72,
+    "evidence": true,
+    "world_score": {
+     "n": 1000,
+     "mean": 0.597,
+     "ci": [
+      0.259,
+      0.959
+     ],
+     "level": 0.95,
+     "better": 245,
+     "worse": 73,
+     "evidence": true
+    }
+   }
+  },
+  "agents": {
+   "baseline": {
+    "label": "Lista fija",
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 69.82,
+     "median": 75.46,
+     "p90": 92.81,
+     "ci95": [
+      68.488,
+      71.162
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 76.022,
+     "median": 81.865,
+     "p90": 98.5,
+     "ci95": [
+      74.744,
+      77.329
+     ]
+    },
+    "critical_failed_total": 438,
+    "critical_total": 2355,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 971,
+     "mean": 1.944,
+     "median": 1.67,
+     "p90": 3.75,
+     "ci95": [
+      1.848,
+      2.061
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 3.015,
+     "median": 1.0,
+     "p90": 6.0,
+     "ci95": [
+      2.69,
+      3.373
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 11.077,
+     "median": 0.0,
+     "p90": 51.0,
+     "ci95": [
+      9.574,
+      12.442
+     ]
+    }
+   },
+   "baseline_plus": {
+    "label": "Lista fija + (fusiona y ordena)",
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 70.61,
+     "median": 76.235,
+     "p90": 92.88,
+     "ci95": [
+      69.332,
+      71.877
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 76.62,
+     "median": 82.65,
+     "p90": 98.44,
+     "ci95": [
+      75.392,
+      77.853
+     ]
+    },
+    "critical_failed_total": 429,
+    "critical_total": 2357,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 971,
+     "mean": 1.868,
+     "median": 1.67,
+     "p90": 3.5,
+     "ci95": [
+      1.78,
+      1.965
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 2.48,
+     "median": 1.0,
+     "p90": 4.0,
+     "ci95": [
+      2.174,
+      2.814
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 11.077,
+     "median": 0.0,
+     "p90": 51.0,
+     "ci95": [
+      9.574,
+      12.442
+     ]
+    }
+   },
+   "mando": {
+    "label": "Mando (sin lecciones)",
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 78.71,
+     "median": 85.97,
+     "p90": 96.55,
+     "ci95": [
+      77.429,
+      79.996
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 82.929,
+     "median": 89.05,
+     "p90": 98.64,
+     "ci95": [
+      81.734,
+      84.103
+     ]
+    },
+    "critical_failed_total": 309,
+    "critical_total": 2332,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 989,
+     "mean": 2.36,
+     "median": 2.2,
+     "p90": 4.0,
+     "ci95": [
+      2.266,
+      2.447
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 0.831,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.754,
+      0.912
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 10.257,
+     "median": 0.0,
+     "p90": 48.0,
+     "ci95": [
+      8.904,
+      11.543
+     ]
+    }
+   },
+   "mando_learned": {
+    "label": "Mando (manual aprendido)",
+    "n": 1000,
+    "errors": 0,
+    "score": {
+     "n": 1000,
+     "mean": 78.956,
+     "median": 86.09,
+     "p90": 96.81,
+     "ci95": [
+      77.688,
+      80.271
+     ]
+    },
+    "world_score": {
+     "n": 1000,
+     "mean": 83.022,
+     "median": 89.09,
+     "p90": 98.67,
+     "ci95": [
+      81.824,
+      84.223
+     ]
+    },
+    "critical_failed_total": 310,
+    "critical_total": 2334,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 989,
+     "mean": 2.363,
+     "median": 2.2,
+     "p90": 4.0,
+     "ci95": [
+      2.272,
+      2.448
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 1000,
+     "mean": 0.736,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.666,
+      0.811
+     ]
+    },
+    "minutes_over_5": {
+     "n": 1000,
+     "mean": 10.203,
+     "median": 0.0,
+     "p90": 47.0,
+     "ci95": [
+      8.895,
+      11.5
+     ]
+    }
+   }
+  }
+ },
+ "compare_random": {
+  "n": 300,
+  "chaos": "random",
+  "code": "3b6e1c0ecdf4",
+  "paired": {
+   "mando_minus_baseline": {
+    "n": 300,
+    "mean": 13.029,
+    "ci": [
+     10.658,
+     15.353
+    ],
+    "level": 0.95,
+    "better": 232,
+    "worse": 68,
+    "evidence": true,
+    "world_score": {
+     "n": 300,
+     "mean": 10.508,
+     "ci": [
+      8.205,
+      12.796
+     ],
+     "level": 0.95,
+     "better": 220,
+     "worse": 78,
+     "evidence": true
+    }
+   },
+   "mando_minus_baseline_plus": {
+    "n": 300,
+    "mean": 12.954,
+    "ci": [
+     10.614,
+     15.3
+    ],
+    "level": 0.95,
+    "better": 236,
+    "worse": 62,
+    "evidence": true,
+    "world_score": {
+     "n": 300,
+     "mean": 10.61,
+     "ci": [
+      8.345,
+      12.844
+     ],
+     "level": 0.95,
+     "better": 220,
+     "worse": 75,
+     "evidence": true
+    }
+   },
+   "mando_learned_minus_mando": {
+    "n": 300,
+    "mean": 0.814,
+    "ci": [
+     0.267,
+     1.4
+    ],
+    "level": 0.95,
+    "better": 80,
+    "worse": 11,
+    "evidence": true,
+    "world_score": {
+     "n": 300,
+     "mean": 0.619,
+     "ci": [
+      0.087,
+      1.197
+     ],
+     "level": 0.95,
+     "better": 40,
+     "worse": 13,
+     "evidence": true
+    }
+   },
+   "mando_learned_minus_baseline": {
+    "n": 300,
+    "mean": 13.843,
+    "ci": [
+     11.482,
+     16.222
+    ],
+    "level": 0.95,
+    "better": 236,
+    "worse": 64,
+    "evidence": true,
+    "world_score": {
+     "n": 300,
+     "mean": 11.127,
+     "ci": [
+      8.862,
+      13.451
+     ],
+     "level": 0.95,
+     "better": 220,
+     "worse": 78,
+     "evidence": true
+    }
+   },
+   "baseline_plus_minus_baseline": {
+    "n": 300,
+    "mean": 0.075,
+    "ci": [
+     -0.851,
+     0.971
+    ],
+    "level": 0.95,
+    "better": 93,
+    "worse": 55,
+    "evidence": false,
+    "world_score": {
+     "n": 300,
+     "mean": -0.102,
+     "ci": [
+      -1.01,
+      0.787
+     ],
+     "level": 0.95,
+     "better": 84,
+     "worse": 56,
+     "evidence": false
+    }
+   }
+  },
+  "agents": {
+   "baseline": {
+    "label": "Lista fija",
+    "n": 300,
+    "errors": 0,
+    "score": {
+     "n": 300,
+     "mean": 64.802,
+     "median": 66.76,
+     "p90": 91.54,
+     "ci95": [
+      62.383,
+      67.358
+     ]
+    },
+    "world_score": {
+     "n": 300,
+     "mean": 70.822,
+     "median": 72.495,
+     "p90": 96.79,
+     "ci95": [
+      68.527,
+      73.328
+     ]
+    },
+    "critical_failed_total": 174,
+    "critical_total": 844,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 296,
+     "mean": 2.508,
+     "median": 2.29,
+     "p90": 4.75,
+     "ci95": [
+      2.299,
+      2.675
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 300,
+     "mean": 3.763,
+     "median": 2.0,
+     "p90": 7.0,
+     "ci95": [
+      3.143,
+      4.38
+     ]
+    },
+    "minutes_over_5": {
+     "n": 300,
+     "mean": 12.823,
+     "median": 0.0,
+     "p90": 47.0,
+     "ci95": [
+      10.467,
+      15.23
+     ]
+    }
+   },
+   "baseline_plus": {
+    "label": "Lista fija + (fusiona y ordena)",
+    "n": 300,
+    "errors": 0,
+    "score": {
+     "n": 300,
+     "mean": 64.876,
+     "median": 67.265,
+     "p90": 91.03,
+     "ci95": [
+      62.426,
+      67.426
+     ]
+    },
+    "world_score": {
+     "n": 300,
+     "mean": 70.72,
+     "median": 72.885,
+     "p90": 96.39,
+     "ci95": [
+      68.331,
+      73.184
+     ]
+    },
+    "critical_failed_total": 177,
+    "critical_total": 833,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 296,
+     "mean": 2.348,
+     "median": 2.17,
+     "p90": 4.5,
+     "ci95": [
+      2.169,
+      2.5
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 300,
+     "mean": 3.123,
+     "median": 2.0,
+     "p90": 6.0,
+     "ci95": [
+      2.583,
+      3.73
+     ]
+    },
+    "minutes_over_5": {
+     "n": 300,
+     "mean": 13.177,
+     "median": 0.0,
+     "p90": 47.0,
+     "ci95": [
+      10.973,
+      15.513
+     ]
+    }
+   },
+   "mando": {
+    "label": "Mando (sin lecciones)",
+    "n": 300,
+    "errors": 0,
+    "score": {
+     "n": 300,
+     "mean": 77.831,
+     "median": 85.04,
+     "p90": 96.96,
+     "ci95": [
+      75.759,
+      79.906
+     ]
+    },
+    "world_score": {
+     "n": 300,
+     "mean": 81.33,
+     "median": 87.89,
+     "p90": 98.35,
+     "ci95": [
+      79.38,
+      83.265
+     ]
+    },
+    "critical_failed_total": 99,
+    "critical_total": 791,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 296,
+     "mean": 2.406,
+     "median": 2.25,
+     "p90": 4.0,
+     "ci95": [
+      2.237,
+      2.583
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 300,
+     "mean": 1.017,
+     "median": 0.0,
+     "p90": 3.0,
+     "ci95": [
+      0.86,
+      1.187
+     ]
+    },
+    "minutes_over_5": {
+     "n": 300,
+     "mean": 10.48,
+     "median": 0.0,
+     "p90": 44.0,
+     "ci95": [
+      8.263,
+      12.517
+     ]
+    }
+   },
+   "mando_learned": {
+    "label": "Mando (manual aprendido)",
+    "n": 300,
+    "errors": 0,
+    "score": {
+     "n": 300,
+     "mean": 78.644,
+     "median": 86.04,
+     "p90": 97.06,
+     "ci95": [
+      76.533,
+      80.848
+     ]
+    },
+    "world_score": {
+     "n": 300,
+     "mean": 81.949,
+     "median": 88.505,
+     "p90": 98.47,
+     "ci95": [
+      79.952,
+      84.036
+     ]
+    },
+    "critical_failed_total": 97,
+    "critical_total": 798,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 296,
+     "mean": 2.415,
+     "median": 2.31,
+     "p90": 4.0,
+     "ci95": [
+      2.246,
+      2.575
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 300,
+     "mean": 0.753,
+     "median": 0.0,
+     "p90": 2.0,
+     "ci95": [
+      0.643,
+      0.867
+     ]
+    },
+    "minutes_over_5": {
+     "n": 300,
+     "mean": 10.207,
+     "median": 0.0,
+     "p90": 43.0,
+     "ci95": [
+      7.967,
+      12.227
+     ]
+    }
+   }
+  }
+ },
+ "compare_smart": {
+  "n": 300,
+  "chaos": "smart",
+  "code": "3b6e1c0ecdf4",
+  "paired": {
+   "mando_minus_baseline": {
+    "n": 300,
+    "mean": 15.504,
+    "ci": [
+     12.947,
+     18.201
+    ],
+    "level": 0.95,
+    "better": 226,
+    "worse": 71,
+    "evidence": true,
+    "world_score": {
+     "n": 300,
+     "mean": 13.191,
+     "ci": [
+      10.714,
+      15.785
+     ],
+     "level": 0.95,
+     "better": 221,
+     "worse": 78,
+     "evidence": true
+    }
+   },
+   "mando_minus_baseline_plus": {
+    "n": 300,
+    "mean": 17.149,
+    "ci": [
+     14.379,
+     19.877
+    ],
+    "level": 0.95,
+    "better": 224,
+    "worse": 72,
+    "evidence": true,
+    "world_score": {
+     "n": 300,
+     "mean": 15.07,
+     "ci": [
+      12.404,
+      17.697
+     ],
+     "level": 0.95,
+     "better": 220,
+     "worse": 79,
+     "evidence": true
+    }
+   },
+   "mando_learned_minus_mando": {
+    "n": 300,
+    "mean": 0.568,
+    "ci": [
+     0.069,
+     1.118
+    ],
+    "level": 0.95,
+    "better": 79,
+    "worse": 15,
+    "evidence": true,
+    "world_score": {
+     "n": 300,
+     "mean": 0.377,
+     "ci": [
+      -0.115,
+      0.912
+     ],
+     "level": 0.95,
+     "better": 34,
+     "worse": 18,
+     "evidence": false
+    }
+   },
+   "mando_learned_minus_baseline": {
+    "n": 300,
+    "mean": 16.072,
+    "ci": [
+     13.461,
+     18.79
+    ],
+    "level": 0.95,
+    "better": 232,
+    "worse": 65,
+    "evidence": true,
+    "world_score": {
+     "n": 300,
+     "mean": 13.568,
+     "ci": [
+      11.105,
+      16.198
+     ],
+     "level": 0.95,
+     "better": 224,
+     "worse": 75,
+     "evidence": true
+    }
+   },
+   "baseline_plus_minus_baseline": {
+    "n": 300,
+    "mean": -1.645,
+    "ci": [
+     -2.743,
+     -0.6
+    ],
+    "level": 0.95,
+    "better": 100,
+    "worse": 87,
+    "evidence": true,
+    "world_score": {
+     "n": 300,
+     "mean": -1.879,
+     "ci": [
+      -2.991,
+      -0.812
+     ],
+     "level": 0.95,
+     "better": 94,
+     "worse": 90,
+     "evidence": true
+    }
+   }
+  },
+  "agents": {
+   "baseline": {
+    "label": "Lista fija",
+    "n": 300,
+    "errors": 0,
+    "score": {
+     "n": 300,
+     "mean": 32.133,
+     "median": 28.46,
+     "p90": 64.5,
+     "ci95": [
+      29.568,
+      34.558
+     ]
+    },
+    "world_score": {
+     "n": 300,
+     "mean": 38.218,
+     "median": 34.935,
+     "p90": 71.31,
+     "ci95": [
+      35.816,
+      40.649
+     ]
+    },
+    "critical_failed_total": 587,
+    "critical_total": 958,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 294,
+     "mean": 2.192,
+     "median": 1.75,
+     "p90": 4.33,
+     "ci95": [
+      1.963,
+      2.447
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 300,
+     "mean": 4.463,
+     "median": 3.0,
+     "p90": 8.0,
+     "ci95": [
+      3.747,
+      5.173
+     ]
+    },
+    "minutes_over_5": {
+     "n": 300,
+     "mean": 22.393,
+     "median": 19.0,
+     "p90": 55.0,
+     "ci95": [
+      19.777,
+      24.693
+     ]
+    }
+   },
+   "baseline_plus": {
+    "label": "Lista fija + (fusiona y ordena)",
+    "n": 300,
+    "errors": 0,
+    "score": {
+     "n": 300,
+     "mean": 30.488,
+     "median": 25.025,
+     "p90": 66.52,
+     "ci95": [
+      28.078,
+      33.029
+     ]
+    },
+    "world_score": {
+     "n": 300,
+     "mean": 36.339,
+     "median": 31.005,
+     "p90": 71.57,
+     "ci95": [
+      33.976,
+      38.812
+     ]
+    },
+    "critical_failed_total": 625,
+    "critical_total": 938,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 293,
+     "mean": 2.004,
+     "median": 1.75,
+     "p90": 4.0,
+     "ci95": [
+      1.849,
+      2.229
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 300,
+     "mean": 3.753,
+     "median": 2.5,
+     "p90": 6.0,
+     "ci95": [
+      3.133,
+      4.46
+     ]
+    },
+    "minutes_over_5": {
+     "n": 300,
+     "mean": 22.803,
+     "median": 19.0,
+     "p90": 56.0,
+     "ci95": [
+      20.237,
+      25.15
+     ]
+    }
+   },
+   "mando": {
+    "label": "Mando (sin lecciones)",
+    "n": 300,
+    "errors": 0,
+    "score": {
+     "n": 300,
+     "mean": 47.637,
+     "median": 44.265,
+     "p90": 90.92,
+     "ci95": [
+      44.49,
+      50.918
+     ]
+    },
+    "world_score": {
+     "n": 300,
+     "mean": 51.409,
+     "median": 47.51,
+     "p90": 94.5,
+     "ci95": [
+      48.377,
+      54.598
+     ]
+    },
+    "critical_failed_total": 488,
+    "critical_total": 1083,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 295,
+     "mean": 2.18,
+     "median": 2.0,
+     "p90": 3.75,
+     "ci95": [
+      2.007,
+      2.336
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 300,
+     "mean": 1.15,
+     "median": 1.0,
+     "p90": 3.0,
+     "ci95": [
+      0.993,
+      1.307
+     ]
+    },
+    "minutes_over_5": {
+     "n": 300,
+     "mean": 10.947,
+     "median": 0.0,
+     "p90": 47.0,
+     "ci95": [
+      8.477,
+      13.117
+     ]
+    }
+   },
+   "mando_learned": {
+    "label": "Mando (manual aprendido)",
+    "n": 300,
+    "errors": 0,
+    "score": {
+     "n": 300,
+     "mean": 48.206,
+     "median": 44.54,
+     "p90": 90.96,
+     "ci95": [
+      45.033,
+      51.476
+     ]
+    },
+    "world_score": {
+     "n": 300,
+     "mean": 51.786,
+     "median": 47.51,
+     "p90": 95.3,
+     "ci95": [
+      48.78,
+      54.985
+     ]
+    },
+    "critical_failed_total": 488,
+    "critical_total": 1078,
+    "unsafe_total": 0,
+    "time_to_first_attention": {
+     "n": 295,
+     "mean": 2.178,
+     "median": 2.0,
+     "p90": 3.8,
+     "ci95": [
+      1.994,
+      2.33
+     ]
+    },
+    "wasted_dispatches": {
+     "n": 300,
+     "mean": 0.98,
+     "median": 1.0,
+     "p90": 3.0,
+     "ci95": [
+      0.863,
+      1.1
+     ]
+    },
+    "minutes_over_5": {
+     "n": 300,
+     "mean": 10.923,
+     "median": 0.0,
+     "p90": 46.0,
+     "ci95": [
+      8.507,
+      13.077
+     ]
+    }
+   }
+  }
+ },
+ "top_failures": [
+  {
+   "pattern": "must",
+   "agent_type": "payment_down",
+   "family": "infra",
+   "detail": "broadcast for #",
+   "n_cases": 56,
+   "examples": [
+    "c-t000001",
+    "c-t000015",
+    "c-t000018"
+   ]
+  },
+  {
+   "pattern": "critical_failed",
+   "agent_type": "crush_risk",
+   "family": "crowd",
+   "detail": "[\"security\"]",
+   "n_cases": 43,
+   "examples": [
+    "c-t000006",
+    "c-t000060",
+    "c-t000063"
+   ]
+  },
+  {
+   "pattern": "must",
+   "agent_type": "crush_risk",
+   "family": "crowd",
+   "detail": "dispatch security to # within N min",
+   "n_cases": 43,
+   "examples": [
+    "c-t000006",
+    "c-t000013",
+    "c-t000015"
+   ]
+  },
+  {
+   "pattern": "must",
+   "agent_type": "bottleneck",
+   "family": "crowd",
+   "detail": "dispatch security to # within N min",
+   "n_cases": 42,
+   "examples": [
+    "c-t000016",
+    "c-t000024",
+    "c-t000032"
+   ]
+  },
+  {
+   "pattern": "must",
+   "agent_type": "structure_risk",
+   "family": "infra",
+   "detail": "broadcast for #",
+   "n_cases": 40,
+   "examples": [
+    "c-t000002",
+    "c-t000039",
+    "c-t000045"
+   ]
+  },
+  {
+   "pattern": "critical_failed",
+   "agent_type": "structure_risk",
+   "family": "infra",
+   "detail": "[\"security\", \"tech\"]",
+   "n_cases": 37,
+   "examples": [
+    "c-t000006",
+    "c-t000045",
+    "c-t000049"
+   ]
+  },
+  {
+   "pattern": "must",
+   "agent_type": "vehicle_breakdown",
+   "family": "resource",
+   "detail": "request_external ambulance for # with approval",
+   "n_cases": 36,
+   "examples": [
+    "c-t000013",
+    "c-t000018",
+    "c-t000074"
+   ]
+  },
+  {
+   "pattern": "must",
+   "agent_type": "vehicle_breakdown",
+   "family": "resource",
+   "detail": "notify medical_lead about #",
+   "n_cases": 36,
+   "examples": [
+    "c-t000013",
+    "c-t000018",
+    "c-t000074"
+   ]
+  },
+  {
+   "pattern": "must",
+   "agent_type": "road_access_blocked",
+   "family": "external",
+   "detail": "request_external police for # with approval",
+   "n_cases": 33,
+   "examples": [
+    "c-t000016",
+    "c-t000032",
+    "c-t000144"
+   ]
+  },
+  {
+   "pattern": "must",
+   "agent_type": "road_access_blocked",
+   "family": "external",
+   "detail": "notify medical_lead about #",
+   "n_cases": 33,
+   "examples": [
+    "c-t000016",
+    "c-t000032",
+    "c-t000144"
+   ]
+  }
+ ],
+ "learning": {
+  "code": "3b6e1c0ecdf4",
+  "n_train": 3000,
+  "n_heldout": 1000,
+  "tracks": {
+   "mundo": {
+    "metric": "world_score",
+    "lessons": [
+     {
+      "when": {
+       "type": "structure_risk"
+      },
+      "then": {
+       "forbid_action": {
+        "kind": "set_zone",
+        "state": "closed"
+       }
+      },
+      "text": "el operador vetó «set_zone» en «structure_risk» 79 veces: no se vuelve a proponer",
+      "source": "veto del operador",
+      "basis": "operator",
+      "evidence_n": 79,
+      "evidence_cases": [
+       "c-t000002",
+       "c-t000008",
+       "c-t000029",
+       "c-t000064",
+       "c-t000113",
+       "c-t000225",
+       "c-t000241",
+       "c-t000262",
+       "c-t000329",
+       "c-t000343",
+       "c-t000345",
+       "c-t000352",
+       "c-t000358",
+       "c-t000492",
+       "c-t000525",
+       "c-t000558",
+       "c-t000602",
+       "c-t000625",
+       "c-t000632",
+       "c-t000783",
+       "c-t000785",
+       "c-t000801",
+       "c-t000869",
+       "c-t000918",
+       "c-t000920"
+      ],
+      "id": "R1-006",
+      "validation": {
+       "n": 400,
+       "metric": "world_score",
+       "before": 84.582,
+       "after": 84.702,
+       "paired": {
+        "n": 400,
+        "mean": 0.12,
+        "ci": [
+         0.001,
+         0.329
+        ],
+        "level": 0.99,
+        "better": 11,
+        "worse": 7,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     },
+     {
+      "when": {
+       "type": "bottleneck"
+      },
+      "then": {
+       "forbid_action": {
+        "kind": "stop_show"
+       }
+      },
+      "text": "el operador vetó «stop_show» en «bottleneck» 75 veces: no se vuelve a proponer",
+      "source": "veto del operador",
+      "basis": "operator",
+      "evidence_n": 75,
+      "evidence_cases": [
+       "c-t000032",
+       "c-t000187",
+       "c-t000219",
+       "c-t000275",
+       "c-t000387",
+       "c-t000504",
+       "c-t000513",
+       "c-t000577",
+       "c-t000679",
+       "c-t000704",
+       "c-t000750",
+       "c-t000752",
+       "c-t000754",
+       "c-t000803",
+       "c-t000835",
+       "c-t000844",
+       "c-t000909",
+       "c-t000965",
+       "c-t001003",
+       "c-t001009",
+       "c-t001028",
+       "c-t001114",
+       "c-t001124",
+       "c-t001176",
+       "c-t001201"
+      ],
+      "id": "R1-007",
+      "validation": {
+       "n": 400,
+       "metric": "world_score",
+       "before": 83.092,
+       "after": 83.306,
+       "paired": {
+        "n": 400,
+        "mean": 0.215,
+        "ci": [
+         0.062,
+         0.384
+        ],
+        "level": 0.99,
+        "better": 16,
+        "worse": 3,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     },
+     {
+      "when": {
+       "type": "heavy_rain_flooding"
+      },
+      "then": {
+       "forbid_action": {
+        "kind": "stop_show"
+       }
+      },
+      "text": "el operador vetó «stop_show» en «heavy_rain_flooding» 14 veces: no se vuelve a proponer",
+      "source": "veto del operador",
+      "basis": "operator",
+      "evidence_n": 14,
+      "evidence_cases": [
+       "c-t000211",
+       "c-t000323",
+       "c-t000379",
+       "c-t000547",
+       "c-t000995",
+       "c-t001107",
+       "c-t001109",
+       "c-t001667",
+       "c-t002059",
+       "c-t002074",
+       "c-t002339",
+       "c-t002451",
+       "c-t002507",
+       "c-t002563"
+      ],
+      "id": "R1-040",
+      "validation": {
+       "n": 33,
+       "metric": "world_score",
+       "before": 78.349,
+       "after": 80.358,
+       "paired": {
+        "n": 33,
+        "mean": 2.009,
+        "ci": [
+         0.91,
+         3.397
+        ],
+        "level": 0.99,
+        "better": 18,
+        "worse": 1,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     }
+    ],
+    "rejected": 77,
+    "verdict": {
+     "train": {
+      "score": "hay evidencia de mejora",
+      "world_score": "hay evidencia de mejora"
+     },
+     "heldout": {
+      "score": "hay evidencia de mejora",
+      "world_score": "hay evidencia de mejora"
+     }
+    },
+    "rounds": [
+     {
+      "round": 0,
+      "n_lessons": 0,
+      "train": {
+       "score": {
+        "n": 3000,
+        "mean": 80.539,
+        "median": 86.385,
+        "p90": 97.5,
+        "ci95": [
+         79.895,
+         81.238
+        ]
+       },
+       "world_score": {
+        "n": 3000,
+        "mean": 83.775,
+        "median": 89.135,
+        "p90": 98.72,
+        "ci95": [
+         83.176,
+         84.427
+        ]
+       }
+      },
+      "heldout": {
+       "score": {
+        "n": 1000,
+        "mean": 78.71,
+        "median": 85.97,
+        "p90": 96.55,
+        "ci95": [
+         77.429,
+         79.996
+        ]
+       },
+       "world_score": {
+        "n": 1000,
+        "mean": 82.929,
+        "median": 89.05,
+        "p90": 98.64,
+        "ci95": [
+         81.734,
+         84.103
+        ]
+       }
+      },
+      "vs_round0": {
+       "train": {
+        "score": {
+         "n": 3000,
+         "mean": 0.0,
+         "ci": [
+          0.0,
+          0.0
+         ],
+         "level": 0.95,
+         "better": 0,
+         "worse": 0,
+         "evidence": false
+        },
+        "world_score": {
+         "n": 3000,
+         "mean": 0.0,
+         "ci": [
+          0.0,
+          0.0
+         ],
+         "level": 0.95,
+         "better": 0,
+         "worse": 0,
+         "evidence": false
+        }
+       },
+       "heldout": {
+        "score": {
+         "n": 1000,
+         "mean": 0.0,
+         "ci": [
+          0.0,
+          0.0
+         ],
+         "level": 0.95,
+         "better": 0,
+         "worse": 0,
+         "evidence": false
+        },
+        "world_score": {
+         "n": 1000,
+         "mean": 0.0,
+         "ci": [
+          0.0,
+          0.0
+         ],
+         "level": 0.95,
+         "better": 0,
+         "worse": 0,
+         "evidence": false
+        }
+       }
+      }
+     },
+     {
+      "round": 1,
+      "n_lessons": 3,
+      "train": {
+       "score": {
+        "n": 3000,
+        "mean": 80.832,
+        "median": 86.715,
+        "p90": 97.44,
+        "ci95": [
+         80.189,
+         81.506
+        ]
+       },
+       "world_score": {
+        "n": 3000,
+        "mean": 84.078,
+        "median": 89.265,
+        "p90": 98.75,
+        "ci95": [
+         83.462,
+         84.707
+        ]
+       }
+      },
+      "heldout": {
+       "score": {
+        "n": 1000,
+        "mean": 79.0,
+        "median": 86.045,
+        "p90": 96.64,
+        "ci95": [
+         77.723,
+         80.269
+        ]
+       },
+       "world_score": {
+        "n": 1000,
+        "mean": 83.217,
+        "median": 89.3,
+        "p90": 98.68,
+        "ci95": [
+         82.05,
+         84.378
+        ]
+       }
+      },
+      "vs_round0": {
+       "train": {
+        "score": {
+         "n": 3000,
+         "mean": 0.292,
+         "ci": [
+          0.21,
+          0.375
+         ],
+         "level": 0.95,
+         "better": 238,
+         "worse": 125,
+         "evidence": true
+        },
+        "world_score": {
+         "n": 3000,
+         "mean": 0.303,
+         "ci": [
+          0.222,
+          0.388
+         ],
+         "level": 0.95,
+         "better": 224,
+         "worse": 70,
+         "evidence": true
+        }
+       },
+       "heldout": {
+        "score": {
+         "n": 1000,
+         "mean": 0.29,
+         "ci": [
+          0.165,
+          0.439
+         ],
+         "level": 0.95,
+         "better": 70,
+         "worse": 27,
+         "evidence": true
+        },
+        "world_score": {
+         "n": 1000,
+         "mean": 0.288,
+         "ci": [
+          0.167,
+          0.431
+         ],
+         "level": 0.95,
+         "better": 65,
+         "worse": 17,
+         "evidence": true
+        }
+       }
+      }
+     }
+    ]
+   },
+   "todo": {
+    "metric": "score",
+    "lessons": [
+     {
+      "when": {
+       "type": "payment_down"
+      },
+      "then": {
+       "pre_action": {
+        "kind": "broadcast",
+        "params": {
+         "message": "Atención: seguid las indicaciones del personal."
+        }
+       }
+      },
+      "text": "en «payment_down» faltó el aviso por megafonía en 78 casos: se avisa antes de planificar",
+      "source": "must incumplido",
+      "basis": "grader",
+      "evidence_n": 78,
+      "evidence_cases": [
+       "c-t000015",
+       "c-t000089",
+       "c-t000145",
+       "c-t000229",
+       "c-t000273",
+       "c-t000313",
+       "c-t000356",
+       "c-t000427",
+       "c-t000481",
+       "c-t000517",
+       "c-t000530",
+       "c-t000541",
+       "c-t000543",
+       "c-t000571",
+       "c-t000664",
+       "c-t000736",
+       "c-t000741",
+       "c-t000773",
+       "c-t000775",
+       "c-t000840",
+       "c-t000907",
+       "c-t000924",
+       "c-t000931",
+       "c-t001053",
+       "c-t001080"
+      ],
+      "id": "R1-007",
+      "validation": {
+       "n": 97,
+       "metric": "score",
+       "before": 80.97,
+       "after": 81.904,
+       "paired": {
+        "n": 97,
+        "mean": 0.934,
+        "ci": [
+         0.808,
+         1.064
+        ],
+        "level": 0.99,
+        "better": 86,
+        "worse": 0,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     },
+     {
+      "when": {
+       "type": "bottleneck"
+      },
+      "then": {
+       "forbid_action": {
+        "kind": "stop_show"
+       }
+      },
+      "text": "el operador vetó «stop_show» en «bottleneck» 75 veces: no se vuelve a proponer",
+      "source": "veto del operador",
+      "basis": "operator",
+      "evidence_n": 75,
+      "evidence_cases": [
+       "c-t000032",
+       "c-t000187",
+       "c-t000219",
+       "c-t000275",
+       "c-t000387",
+       "c-t000504",
+       "c-t000513",
+       "c-t000577",
+       "c-t000679",
+       "c-t000704",
+       "c-t000750",
+       "c-t000752",
+       "c-t000754",
+       "c-t000803",
+       "c-t000835",
+       "c-t000844",
+       "c-t000909",
+       "c-t000965",
+       "c-t001003",
+       "c-t001009",
+       "c-t001028",
+       "c-t001114",
+       "c-t001124",
+       "c-t001176",
+       "c-t001201"
+      ],
+      "id": "R1-008",
+      "validation": {
+       "n": 400,
+       "metric": "score",
+       "before": 79.508,
+       "after": 79.73,
+       "paired": {
+        "n": 400,
+        "mean": 0.221,
+        "ci": [
+         0.065,
+         0.395
+        ],
+        "level": 0.99,
+        "better": 16,
+        "worse": 3,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     },
+     {
+      "when": {
+       "type": "structure_risk"
+      },
+      "then": {
+       "pre_action": {
+        "kind": "broadcast",
+        "params": {
+         "message": "Atención: seguid las indicaciones del personal."
+        }
+       }
+      },
+      "text": "en «structure_risk» faltó el aviso por megafonía en 58 casos: se avisa antes de planificar",
+      "source": "must incumplido",
+      "basis": "grader",
+      "evidence_n": 58,
+      "evidence_cases": [
+       "c-t000002",
+       "c-t000045",
+       "c-t000056",
+       "c-t000062",
+       "c-t000213",
+       "c-t000217",
+       "c-t000294",
+       "c-t000296",
+       "c-t000417",
+       "c-t000449",
+       "c-t000454",
+       "c-t000492",
+       "c-t000711",
+       "c-t000717",
+       "c-t000734",
+       "c-t000833",
+       "c-t000846",
+       "c-t000853",
+       "c-t000897",
+       "c-t000901",
+       "c-t000903",
+       "c-t000957",
+       "c-t000995",
+       "c-t000997",
+       "c-t001010"
+      ],
+      "id": "R1-013",
+      "validation": {
+       "n": 400,
+       "metric": "score",
+       "before": 81.725,
+       "after": 81.889,
+       "paired": {
+        "n": 400,
+        "mean": 0.164,
+        "ci": [
+         0.027,
+         0.439
+        ],
+        "level": 0.99,
+        "better": 25,
+        "worse": 6,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     },
+     {
+      "when": {
+       "type": "road_access_blocked"
+      },
+      "then": {
+       "pre_action": {
+        "kind": "notify",
+        "params": {
+         "to": "medical_lead",
+         "message": "Aviso de road_access_blocked"
+        }
+       }
+      },
+      "text": "en «road_access_blocked» no se avisó a medical_lead en 46 casos: se le avisa siempre",
+      "source": "must incumplido",
+      "basis": "grader",
+      "evidence_n": 46,
+      "evidence_cases": [
+       "c-t000032",
+       "c-t000200",
+       "c-t000256",
+       "c-t000262",
+       "c-t000368",
+       "c-t000456",
+       "c-t000532",
+       "c-t000536",
+       "c-t000592",
+       "c-t000608",
+       "c-t000694",
+       "c-t000704",
+       "c-t000760",
+       "c-t000816",
+       "c-t000872",
+       "c-t000884",
+       "c-t000928",
+       "c-t000974",
+       "c-t000984",
+       "c-t001040",
+       "c-t001135",
+       "c-t001276",
+       "c-t001284",
+       "c-t001305",
+       "c-t001320"
+      ],
+      "id": "R1-018",
+      "validation": {
+       "n": 143,
+       "metric": "score",
+       "before": 79.578,
+       "after": 80.27,
+       "paired": {
+        "n": 143,
+        "mean": 0.692,
+        "ci": [
+         0.332,
+         1.496
+        ],
+        "level": 0.99,
+        "better": 46,
+        "worse": 0,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     },
+     {
+      "when": {
+       "type": "harassment_group"
+      },
+      "then": {
+       "pre_action": {
+        "kind": "notify",
+        "params": {
+         "to": "violet_point",
+         "message": "Aviso de harassment_group"
+        }
+       }
+      },
+      "text": "en «harassment_group» no se avisó a violet_point en 44 casos: se le avisa siempre",
+      "source": "must incumplido",
+      "basis": "grader",
+      "evidence_n": 44,
+      "evidence_cases": [
+       "c-t000021",
+       "c-t000050",
+       "c-t000245",
+       "c-t000249",
+       "c-t000413",
+       "c-t000443",
+       "c-t000525",
+       "c-t000534",
+       "c-t000749",
+       "c-t000805",
+       "c-t000810",
+       "c-t000861",
+       "c-t000918",
+       "c-t000928",
+       "c-t001031",
+       "c-t001197",
+       "c-t001318",
+       "c-t001391",
+       "c-t001420",
+       "c-t001533",
+       "c-t001565",
+       "c-t001593",
+       "c-t001981",
+       "c-t002010",
+       "c-t002093"
+      ],
+      "id": "R1-021",
+      "validation": {
+       "n": 80,
+       "metric": "score",
+       "before": 81.511,
+       "after": 82.286,
+       "paired": {
+        "n": 80,
+        "mean": 0.775,
+        "ci": [
+         0.035,
+         1.91
+        ],
+        "level": 0.99,
+        "better": 28,
+        "worse": 4,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     },
+     {
+      "when": {
+       "type": "transport_cut",
+       "zone": "exit_transport"
+      },
+      "then": {
+       "pre_action": {
+        "kind": "reroute",
+        "zone": "exit_transport",
+        "params": {
+         "to": "gate_a"
+        }
+       }
+      },
+      "text": "en «transport_cut» faltó desviar exit_transport → gate_a en 33 casos",
+      "source": "must incumplido",
+      "basis": "grader",
+      "evidence_n": 33,
+      "evidence_cases": [
+       "c-t000102",
+       "c-t000250",
+       "c-t000306",
+       "c-t000308",
+       "c-t000375",
+       "c-t000394",
+       "c-t000530",
+       "c-t000696",
+       "c-t000698",
+       "c-t000704",
+       "c-t000752",
+       "c-t000754",
+       "c-t000810",
+       "c-t000909",
+       "c-t000922",
+       "c-t000978",
+       "c-t001146",
+       "c-t001201",
+       "c-t001314",
+       "c-t001348",
+       "c-t001426",
+       "c-t001442",
+       "c-t001932",
+       "c-t002033",
+       "c-t002042"
+      ],
+      "id": "R1-030",
+      "validation": {
+       "n": 135,
+       "metric": "score",
+       "before": 80.089,
+       "after": 80.259,
+       "paired": {
+        "n": 135,
+        "mean": 0.169,
+        "ci": [
+         0.081,
+         0.268
+        ],
+        "level": 0.99,
+        "better": 23,
+        "worse": 0,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     },
+     {
+      "when": {
+       "type": "medical_post_saturated",
+       "zone": "medical_2"
+      },
+      "then": {
+       "pre_action": {
+        "kind": "reroute",
+        "zone": "medical_2",
+        "params": {
+         "to": "medical_1"
+        }
+       }
+      },
+      "text": "en «medical_post_saturated» faltó desviar medical_2 → medical_1 en 28 casos",
+      "source": "must incumplido",
+      "basis": "grader",
+      "evidence_n": 28,
+      "evidence_cases": [
+       "c-t000238",
+       "c-t000245",
+       "c-t000662",
+       "c-t000741",
+       "c-t000745",
+       "c-t000771",
+       "c-t001114",
+       "c-t001186",
+       "c-t001203",
+       "c-t001397",
+       "c-t001446",
+       "c-t001544",
+       "c-t001609",
+       "c-t001614",
+       "c-t001724",
+       "c-t001733",
+       "c-t001753",
+       "c-t001782",
+       "c-t001881",
+       "c-t001950",
+       "c-t001994",
+       "c-t002180",
+       "c-t002237",
+       "c-t002288",
+       "c-t002365"
+      ],
+      "id": "R1-037",
+      "validation": {
+       "n": 153,
+       "metric": "score",
+       "before": 73.709,
+       "after": 73.845,
+       "paired": {
+        "n": 153,
+        "mean": 0.136,
+        "ci": [
+         0.073,
+         0.214
+        ],
+        "level": 0.99,
+        "better": 23,
+        "worse": 0,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     },
+     {
+      "when": {
+       "type": "stage_power_failure"
+      },
+      "then": {
+       "pre_action": {
+        "kind": "broadcast",
+        "params": {
+         "message": "Atención: seguid las indicaciones del personal."
+        }
+       }
+      },
+      "text": "en «stage_power_failure» faltó el aviso por megafonía en 27 casos: se avisa antes de planificar",
+      "source": "must incumplido",
+      "basis": "grader",
+      "evidence_n": 27,
+      "evidence_cases": [
+       "c-t000038",
+       "c-t000145",
+       "c-t000479",
+       "c-t000487",
+       "c-t000521",
+       "c-t000543",
+       "c-t000658",
+       "c-t001159",
+       "c-t001205",
+       "c-t001509",
+       "c-t001551",
+       "c-t001567",
+       "c-t001607",
+       "c-t001663",
+       "c-t001684",
+       "c-t001693",
+       "c-t001856",
+       "c-t001943",
+       "c-t002151",
+       "c-t002159",
+       "c-t002167",
+       "c-t002391",
+       "c-t002503",
+       "c-t002559",
+       "c-t002563"
+      ],
+      "id": "R1-040",
+      "validation": {
+       "n": 178,
+       "metric": "score",
+       "before": 80.732,
+       "after": 80.945,
+       "paired": {
+        "n": 178,
+        "mean": 0.213,
+        "ci": [
+         0.125,
+         0.32
+        ],
+        "level": 0.99,
+        "better": 31,
+        "worse": 0,
+        "evidence": true
+       },
+       "unpaired_no_overlap": false
+      }
+     }
+    ],
+    "rejected": 72,
+    "verdict": {
+     "train": {
+      "score": "hay evidencia de mejora",
+      "world_score": "hay evidencia de mejora"
+     },
+     "heldout": {
+      "score": "hay evidencia de mejora",
+      "world_score": "NO HAY EVIDENCIA DE APRENDIZAJE (el IC incluye el 0)"
+     }
+    },
+    "rounds": [
+     {
+      "round": 0,
+      "n_lessons": 0,
+      "train": {
+       "score": {
+        "n": 3000,
+        "mean": 80.539,
+        "median": 86.385,
+        "p90": 97.5,
+        "ci95": [
+         79.895,
+         81.238
+        ]
+       },
+       "world_score": {
+        "n": 3000,
+        "mean": 83.775,
+        "median": 89.135,
+        "p90": 98.72,
+        "ci95": [
+         83.176,
+         84.427
+        ]
+       }
+      },
+      "heldout": {
+       "score": {
+        "n": 1000,
+        "mean": 78.71,
+        "median": 85.97,
+        "p90": 96.55,
+        "ci95": [
+         77.429,
+         79.996
+        ]
+       },
+       "world_score": {
+        "n": 1000,
+        "mean": 82.929,
+        "median": 89.05,
+        "p90": 98.64,
+        "ci95": [
+         81.734,
+         84.103
+        ]
+       }
+      },
+      "vs_round0": {
+       "train": {
+        "score": {
+         "n": 3000,
+         "mean": 0.0,
+         "ci": [
+          0.0,
+          0.0
+         ],
+         "level": 0.95,
+         "better": 0,
+         "worse": 0,
+         "evidence": false
+        },
+        "world_score": {
+         "n": 3000,
+         "mean": 0.0,
+         "ci": [
+          0.0,
+          0.0
+         ],
+         "level": 0.95,
+         "better": 0,
+         "worse": 0,
+         "evidence": false
+        }
+       },
+       "heldout": {
+        "score": {
+         "n": 1000,
+         "mean": 0.0,
+         "ci": [
+          0.0,
+          0.0
+         ],
+         "level": 0.95,
+         "better": 0,
+         "worse": 0,
+         "evidence": false
+        },
+        "world_score": {
+         "n": 1000,
+         "mean": 0.0,
+         "ci": [
+          0.0,
+          0.0
+         ],
+         "level": 0.95,
+         "better": 0,
+         "worse": 0,
+         "evidence": false
+        }
+       }
+      }
+     },
+     {
+      "round": 1,
+      "n_lessons": 8,
+      "train": {
+       "score": {
+        "n": 3000,
+        "mean": 81.031,
+        "median": 87.015,
+        "p90": 97.74,
+        "ci95": [
+         80.394,
+         81.729
+        ]
+       },
+       "world_score": {
+        "n": 3000,
+        "mean": 84.046,
+        "median": 89.255,
+        "p90": 98.74,
+        "ci95": [
+         83.443,
+         84.686
+        ]
+       }
+      },
+      "heldout": {
+       "score": {
+        "n": 1000,
+        "mean": 78.956,
+        "median": 86.09,
+        "p90": 96.81,
+        "ci95": [
+         77.688,
+         80.271
+        ]
+       },
+       "world_score": {
+        "n": 1000,
+        "mean": 83.022,
+        "median": 89.09,
+        "p90": 98.67,
+        "ci95": [
+         81.824,
+         84.223
+        ]
+       }
+      },
+      "vs_round0": {
+       "train": {
+        "score": {
+         "n": 3000,
+         "mean": 0.491,
+         "ci": [
+          0.415,
+          0.582
+         ],
+         "level": 0.95,
+         "better": 695,
+         "worse": 81,
+         "evidence": true
+        },
+        "world_score": {
+         "n": 3000,
+         "mean": 0.271,
+         "ci": [
+          0.197,
+          0.36
+         ],
+         "level": 0.95,
+         "better": 190,
+         "worse": 101,
+         "evidence": true
+        }
+       },
+       "heldout": {
+        "score": {
+         "n": 1000,
+         "mean": 0.245,
+         "ci": [
+          0.096,
+          0.389
+         ],
+         "level": 0.95,
+         "better": 186,
+         "worse": 38,
+         "evidence": true
+        },
+        "world_score": {
+         "n": 1000,
+         "mean": 0.093,
+         "ci": [
+          -0.044,
+          0.231
+         ],
+         "level": 0.95,
+         "better": 49,
+         "worse": 42,
+         "evidence": false
+        }
+       }
+      }
+     }
+    ]
+   }
+  },
+  "regression": {
+   "n": 6,
+   "ok": true,
+   "broken": [],
+   "obsolete": [
+    "c-t000163",
+    "c-t000217",
+    "c-t000378",
+    "c-t001076",
+    "c-t001867"
+   ],
+   "world": "7f821eb195be"
+  }
+ },
+ "load": {
+  "code": "3b6e1c0ecdf4",
+  "n": 1200,
+  "sentence": "Mando ya falla críticos en el nivel más bajo medido (1 frentes); la lista fija ya falla críticos en el nivel más bajo medido (1 frentes) (N=1200, huella 3b6e1c0ecdf4).",
+  "first_level_with_critical_failed": {
+   "baseline": 1,
+   "baseline_plus": 1,
+   "mando": 1,
+   "mando_twin": 1
+  },
+  "surprise_cost": {
+   "baseline": {
+    "with_surprise": {
+     "n": 300,
+     "mean": 55.192,
+     "median": 59.36,
+     "p90": 87.6,
+     "ci95": [
+      52.28,
+      58.186
+     ]
+    },
+    "without_surprise": {
+     "n": 900,
+     "mean": 70.541,
+     "median": 75.25,
+     "p90": 97.38,
+     "ci95": [
+      69.008,
+      72.063
+     ]
+    }
+   },
+   "baseline_plus": {
+    "with_surprise": {
+     "n": 300,
+     "mean": 56.976,
+     "median": 61.075,
+     "p90": 88.23,
+     "ci95": [
+      54.254,
+      59.644
+     ]
+    },
+    "without_surprise": {
+     "n": 900,
+     "mean": 71.605,
+     "median": 77.05,
+     "p90": 97.26,
+     "ci95": [
+      70.045,
+      72.999
+     ]
+    }
+   },
+   "mando": {
+    "with_surprise": {
+     "n": 300,
+     "mean": 57.964,
+     "median": 58.53,
+     "p90": 89.16,
+     "ci95": [
+      55.329,
+      60.826
+     ]
+    },
+    "without_surprise": {
+     "n": 900,
+     "mean": 76.632,
+     "median": 83.2,
+     "p90": 98.42,
+     "ci95": [
+      75.281,
+      78.014
+     ]
+    }
+   },
+   "mando_twin": {
+    "with_surprise": {
+     "n": 300,
+     "mean": 57.709,
+     "median": 57.765,
+     "p90": 89.38,
+     "ci95": [
+      54.884,
+      60.514
+     ]
+    },
+    "without_surprise": {
+     "n": 900,
+     "mean": 76.64,
+     "median": 83.255,
+     "p90": 98.42,
+     "ci95": [
+      75.211,
+      78.075
+     ]
+    }
+   }
+  },
+  "twin_available": true,
+  "twin_gain": {
+   "n": 1200,
+   "mean": -0.093,
+   "ci": [
+    -0.33,
+    0.133
+   ],
+   "level": 0.95,
+   "better": 88,
+   "worse": 112,
+   "evidence": false,
+   "world_score": {
+    "n": 1200,
+    "mean": -0.058,
+    "ci": [
+     -0.283,
+     0.171
+    ],
+    "level": 0.95,
+    "better": 87,
+    "worse": 68,
+    "evidence": false
+   }
+  }
+ },
+ "day2": {
+  "code": "cc17622e1b13",
+  "n_per_arm": 400,
+  "proposals": [
+   {
+    "id": "C-01",
+    "param": "resupply_lead_min",
+    "key": "water_n",
+    "old": 10,
+    "new": 32,
+    "n": 50,
+    "text": "Reposición en Punto de agua norte: tardó 28,7 min de media (N=50; 46 veces el depósito llegó a 0 antes); propongo pedirla 22 min antes (con 32 min de margen en vez de 10)",
+    "evidence": {
+     "minutes_mean": 28.7,
+     "minutes_p80": 32.0,
+     "dry_before_refill": 46,
+     "consumption_l_per_min": 7.3
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=50 ≥ 5"
+   },
+   {
+    "id": "C-02",
+    "param": "resupply_lead_min",
+    "key": "water_s",
+    "old": 10,
+    "new": 15,
+    "n": 70,
+    "text": "Reposición en Punto de agua sur: tardó 13,1 min de media (N=70; 44 veces el depósito llegó a 0 antes); propongo pedirla 5 min antes (con 15 min de margen en vez de 10)",
+    "evidence": {
+     "minutes_mean": 13.1,
+     "minutes_p80": 15.0,
+     "dry_before_refill": 44,
+     "consumption_l_per_min": 7.4
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=70 ≥ 5"
+   },
+   {
+    "id": "C-03",
+    "param": "contact_order",
+    "key": "medical",
+    "old": null,
+    "new": {
+     "order": [
+      "med_1",
+      "med_2",
+      "med_3"
+     ],
+     "rate": {
+      "med_1": 0.914,
+      "med_2": 0.891,
+      "med_3": 0.743
+     },
+     "n": {
+      "med_1": 248,
+      "med_2": 212,
+      "med_3": 239
+     },
+     "fail_cost_min": 1.5
+    },
+    "n": 699,
+    "text": "Contacto de medical: Equipo médico 3 (itinerante) aceptó 177 de 239 llamadas y Equipo médico 1 227 de 248 (N=699); propongo llamar primero a quien contesta, salvo que esté mucho más lejos",
+    "evidence": {
+     "sent": {
+      "med_1": 248,
+      "med_2": 212,
+      "med_3": 239
+     },
+     "accepted": {
+      "med_1": 227,
+      "med_2": 189,
+      "med_3": 177
+     },
+     "smoothed_rate": {
+      "med_1": 0.914,
+      "med_2": 0.891,
+      "med_3": 0.743
+     },
+     "pooled_rate": 0.848
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=699 ≥ 5"
+   },
+   {
+    "id": "C-04",
+    "param": "contact_order",
+    "key": "security",
+    "old": null,
+    "new": {
+     "order": [
+      "sec_5",
+      "sec_2",
+      "sec_3",
+      "sec_1",
+      "sec_4"
+     ],
+     "rate": {
+      "sec_1": 0.722,
+      "sec_2": 0.938,
+      "sec_3": 0.911,
+      "sec_4": 0.649,
+      "sec_5": 0.943
+     },
+     "n": {
+      "sec_1": 566,
+      "sec_2": 445,
+      "sec_3": 468,
+      "sec_4": 590,
+      "sec_5": 326
+     },
+     "fail_cost_min": 1.7
+    },
+    "n": 2395,
+    "text": "Contacto de security: Seguridad 4 (pista) aceptó 382 de 590 llamadas y Seguridad 5 (Puerta C) 308 de 326 (N=2395); propongo llamar primero a quien contesta, salvo que esté mucho más lejos",
+    "evidence": {
+     "sent": {
+      "sec_1": 566,
+      "sec_2": 445,
+      "sec_3": 468,
+      "sec_4": 590,
+      "sec_5": 326
+     },
+     "accepted": {
+      "sec_1": 408,
+      "sec_2": 418,
+      "sec_3": 427,
+      "sec_4": 382,
+      "sec_5": 308
+     },
+     "smoothed_rate": {
+      "sec_1": 0.722,
+      "sec_2": 0.938,
+      "sec_3": 0.911,
+      "sec_4": 0.649,
+      "sec_5": 0.943
+     },
+     "pooled_rate": 0.811
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=2395 ≥ 5"
+   },
+   {
+    "id": "C-05",
+    "param": "require_precise_location",
+    "key": "corridor_s",
+    "old": false,
+    "new": true,
+    "n": 1,
+    "text": "En Pasillo sur (ruta de ambulancia) el equipo tardó 3,0 min de media en dar con la persona (N=1): «Pasillo sur (ruta de ambulancia)» es demasiado amplio; propongo que el ASK pida un punto concreto (torre, puesto o acceso numerado) mientras el equipo va de camino — EVIDENCIA LIMITADA, cambio conservador",
+    "evidence": {
+     "search_min_mean": 3.0,
+     "search_min_p80": 3.0
+    },
+    "limited": true,
+    "status": "rejected",
+    "decided_by": "operador simulado (criterion)",
+    "note": "evidencia limitada (N=1 < 5): faltan datos"
+   },
+   {
+    "id": "C-06",
+    "param": "require_precise_location",
+    "key": "general",
+    "old": false,
+    "new": true,
+    "n": 115,
+    "text": "En Pista general el equipo tardó 6,4 min de media en dar con la persona (N=115): «Pista general» es demasiado amplio; propongo que el ASK pida un punto concreto (torre, puesto o acceso numerado) mientras el equipo va de camino",
+    "evidence": {
+     "search_min_mean": 6.4,
+     "search_min_p80": 8.0
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=115 ≥ 5"
+   },
+   {
+    "id": "C-07",
+    "param": "require_precise_location",
+    "key": "toilets",
+    "old": false,
+    "new": true,
+    "n": 2,
+    "text": "En Baños el equipo tardó 5,0 min de media en dar con la persona (N=2): «Baños» es demasiado amplio; propongo que el ASK pida un punto concreto (torre, puesto o acceso numerado) mientras el equipo va de camino — EVIDENCIA LIMITADA, cambio conservador",
+    "evidence": {
+     "search_min_mean": 5.0,
+     "search_min_p80": 8.0
+    },
+    "limited": true,
+    "status": "rejected",
+    "decided_by": "operador simulado (criterion)",
+    "note": "evidencia limitada (N=2 < 5): faltan datos"
+   },
+   {
+    "id": "C-08",
+    "param": "weather_standdown_min",
+    "key": null,
+    "old": null,
+    "new": 10,
+    "n": 48,
+    "text": "Meteorología: 55 de 247 alertas de viento no llegaron a más y se desactivaron a los 9,6 min de media (N=48); propongo cancelar los preparativos tras 10 min seguidos en calma, en vez de dejarlos abiertos. No cambia ningún criterio de seguridad: viento de parada 70 km/h, escalones 40/50/60, densidades de alerta y aprobación humana para parar, evacuar o pedir ayuda externa siguen igual.",
+    "evidence": {
+     "alerts": 247,
+     "did_not_arrive": 55,
+     "arrived": 192,
+     "minutes_to_clear_mean": 9.6,
+     "preparations": 778
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=48 ≥ 5"
+   },
+   {
+    "id": "C-09",
+    "param": "weather_followup_min",
+    "key": null,
+    "old": 5,
+    "new": 3,
+    "n": 159,
+    "text": "Meteorología: en 159 alertas el viento pasó de preaviso a riesgo en menos de 5 min; propongo revisar cada 3 min mientras haya alerta. No cambia ningún criterio de seguridad: viento de parada 70 km/h, escalones 40/50/60, densidades de alerta y aprobación humana para parar, evacuar o pedir ayuda externa siguen igual.",
+    "evidence": {
+     "alerts": 247,
+     "did_not_arrive": 55,
+     "arrived": 192,
+     "minutes_to_clear_mean": 9.6,
+     "preparations": 778
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=159 ≥ 5"
+   }
+  ],
+  "splits": {
+   "day2_train": {
+    "sentence": "day2_train (N=400 por brazo, mismos casos y semillas): con los parámetros revisados MEJORA: roturas de stock de agua que llegan a ocurrir (por caso): 0.33 → 0.175 (diferencia pareada -0.155, IC 99 % [-0.212, -0.105], N=400); minutos-punto con el depósito a cero (por caso): 4.393 → 2.485 (diferencia pareada -1.907, IC 99 % [-2.79, -1.145], N=400; ojo: los intervalos NO pareados de los dos brazos se solapan, solo vale como diferencia pareada); minutos buscando a la persona en zona amplia: 4.292 → 2.854 (diferencia pareada -1.438, IC 99 % [-2.006, -0.963], N=112). sin evidencia de mejora en: incidentes de calor espontáneos (por caso); incidentes derivados que se evitan, `skipped_events` (por caso); minutos del aviso al despacho que acaba llegando; equipos movidos por un duplicado (por caso); minutos hasta la primera atención; críticos fallidos (por caso); `world_score` (solo-mundo, 0–100).",
+    "compare": {
+     "stockouts": {
+      "text": "roturas de stock de agua que llegan a ocurrir (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.33,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.268,
+        0.398
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.175,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.128,
+        0.223
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": -0.155,
+       "ci": [
+        -0.2,
+        -0.115
+       ],
+       "level": 0.95,
+       "better": 1,
+       "worse": 55,
+       "evidence": true
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": -0.155,
+       "ci": [
+        -0.212,
+        -0.105
+       ],
+       "level": 0.99,
+       "better": 1,
+       "worse": 55,
+       "evidence": true
+      },
+      "unpaired_ci95_overlap": false,
+      "verdict": "MEJORA",
+      "totals": {
+       "initial": 132.0,
+       "revised": 70.0
+      }
+     },
+     "dry_minutes": {
+      "text": "minutos-punto con el depósito a cero (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 4.393,
+       "median": 0.0,
+       "p90": 18.0,
+       "ci95": [
+        3.342,
+        5.52
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 2.485,
+       "median": 0.0,
+       "p90": 8.0,
+       "ci95": [
+        1.685,
+        3.368
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": -1.907,
+       "ci": [
+        -2.572,
+        -1.325
+       ],
+       "level": 0.95,
+       "better": 9,
+       "worse": 68,
+       "evidence": true
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": -1.907,
+       "ci": [
+        -2.79,
+        -1.145
+       ],
+       "level": 0.99,
+       "better": 9,
+       "worse": 68,
+       "evidence": true
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "MEJORA",
+      "totals": {
+       "initial": 1757.0,
+       "revised": 994.0
+      }
+     },
+     "heat_incidents": {
+      "text": "incidentes de calor espontáneos (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.427,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.318,
+        0.557
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.425,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.312,
+        0.557
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": -0.003,
+       "ci": [
+        -0.015,
+        0.013
+       ],
+       "level": 0.95,
+       "better": 1,
+       "worse": 3,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": -0.003,
+       "ci": [
+        -0.018,
+        0.018
+       ],
+       "level": 0.99,
+       "better": 1,
+       "worse": 3,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 171.0,
+       "revised": 170.0
+      }
+     },
+     "skipped_events": {
+      "text": "incidentes derivados que se evitan, `skipped_events` (por caso)",
+      "lower_is_better": false,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.117,
+       "median": 0.0,
+       "p90": 0.0,
+       "ci95": [
+        0.077,
+        0.16
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.125,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.085,
+        0.168
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": 0.007,
+       "ci": [
+        0.0,
+        0.02
+       ],
+       "level": 0.95,
+       "better": 2,
+       "worse": 0,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": 0.007,
+       "ci": [
+        0.0,
+        0.025
+       ],
+       "level": 0.99,
+       "better": 2,
+       "worse": 0,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 47.0,
+       "revised": 50.0
+      }
+     },
+     "accept_min": {
+      "text": "minutos del aviso al despacho que acaba llegando",
+      "lower_is_better": true,
+      "n_pairs": 389,
+      "initial": {
+       "n": 389,
+       "mean": 0.902,
+       "median": 0.667,
+       "p90": 2.0,
+       "ci95": [
+        0.796,
+        1.014
+       ]
+      },
+      "revised": {
+       "n": 389,
+       "mean": 0.939,
+       "median": 0.667,
+       "p90": 2.0,
+       "ci95": [
+        0.813,
+        1.07
+       ]
+      },
+      "paired_diff_95": {
+       "n": 389,
+       "mean": 0.038,
+       "ci": [
+        -0.02,
+        0.111
+       ],
+       "level": 0.95,
+       "better": 34,
+       "worse": 38,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 389,
+       "mean": 0.038,
+       "ci": [
+        -0.031,
+        0.139
+       ],
+       "level": 0.99,
+       "better": 34,
+       "worse": 38,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 350.73,
+       "revised": 365.4
+      }
+     },
+     "dup_moved": {
+      "text": "equipos movidos por un duplicado (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.158,
+       "median": 0.0,
+       "p90": 0.0,
+       "ci95": [
+        0.095,
+        0.242
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.172,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.107,
+        0.268
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": 0.015,
+       "ci": [
+        -0.013,
+        0.043
+       ],
+       "level": 0.95,
+       "better": 9,
+       "worse": 4,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": 0.015,
+       "ci": [
+        -0.02,
+        0.05
+       ],
+       "level": 0.99,
+       "better": 9,
+       "worse": 4,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 63.0,
+       "revised": 69.0
+      }
+     },
+     "locate_min": {
+      "text": "minutos buscando a la persona en zona amplia",
+      "lower_is_better": true,
+      "n_pairs": 112,
+      "initial": {
+       "n": 112,
+       "mean": 4.292,
+       "median": 4.0,
+       "p90": 7.0,
+       "ci95": [
+        3.97,
+        4.644
+       ]
+      },
+      "revised": {
+       "n": 112,
+       "mean": 2.854,
+       "median": 3.0,
+       "p90": 4.5,
+       "ci95": [
+        2.574,
+        3.14
+       ]
+      },
+      "paired_diff_95": {
+       "n": 112,
+       "mean": -1.438,
+       "ci": [
+        -1.826,
+        -1.053
+       ],
+       "level": 0.95,
+       "better": 2,
+       "worse": 47,
+       "evidence": true
+      },
+      "paired_diff_99": {
+       "n": 112,
+       "mean": -1.438,
+       "ci": [
+        -2.006,
+        -0.963
+       ],
+       "level": 0.99,
+       "better": 2,
+       "worse": 47,
+       "evidence": true
+      },
+      "unpaired_ci95_overlap": false,
+      "verdict": "MEJORA",
+      "totals": {
+       "initial": 480.68,
+       "revised": 319.65
+      }
+     },
+     "time_to_first_attention": {
+      "text": "minutos hasta la primera atención",
+      "lower_is_better": true,
+      "n_pairs": 389,
+      "initial": {
+       "n": 389,
+       "mean": 2.914,
+       "median": 2.5,
+       "p90": 5.5,
+       "ci95": [
+        2.708,
+        3.127
+       ]
+      },
+      "revised": {
+       "n": 389,
+       "mean": 2.805,
+       "median": 2.5,
+       "p90": 5.0,
+       "ci95": [
+        2.599,
+        3.028
+       ]
+      },
+      "paired_diff_95": {
+       "n": 389,
+       "mean": -0.108,
+       "ci": [
+        -0.204,
+        -0.013
+       ],
+       "level": 0.95,
+       "better": 36,
+       "worse": 72,
+       "evidence": true
+      },
+      "paired_diff_99": {
+       "n": 389,
+       "mean": -0.108,
+       "ci": [
+        -0.234,
+        0.018
+       ],
+       "level": 0.99,
+       "better": 36,
+       "worse": 72,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 1133.48,
+       "revised": 1091.28
+      }
+     },
+     "critical_failed": {
+      "text": "críticos fallidos (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.258,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.207,
+        0.307
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.263,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.212,
+        0.312
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": 0.005,
+       "ci": [
+        -0.007,
+        0.02
+       ],
+       "level": 0.95,
+       "better": 5,
+       "worse": 3,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": 0.005,
+       "ci": [
+        -0.013,
+        0.022
+       ],
+       "level": 0.99,
+       "better": 5,
+       "worse": 3,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 103.0,
+       "revised": 105.0
+      }
+     },
+     "world_score": {
+      "text": "`world_score` (solo-mundo, 0–100)",
+      "lower_is_better": false,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 82.6,
+       "median": 87.79,
+       "p90": 98.67,
+       "ci95": [
+        81.031,
+        84.216
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 82.716,
+       "median": 87.685,
+       "p90": 98.67,
+       "ci95": [
+        81.076,
+        84.327
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": 0.115,
+       "ci": [
+        -0.334,
+        0.551
+       ],
+       "level": 0.95,
+       "better": 77,
+       "worse": 46,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": 0.115,
+       "ci": [
+        -0.478,
+        0.686
+       ],
+       "level": 0.99,
+       "better": 77,
+       "worse": 46,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 33040.12,
+       "revised": 33086.25
+      }
+     }
+    }
+   },
+   "heldout": {
+    "sentence": "heldout (N=400 por brazo, mismos casos y semillas): con los parámetros revisados MEJORA: roturas de stock de agua que llegan a ocurrir (por caso): 0.383 → 0.247 (diferencia pareada -0.135, IC 99 % [-0.19, -0.083], N=400); minutos-punto con el depósito a cero (por caso): 5.338 → 3.522 (diferencia pareada -1.815, IC 99 % [-2.665, -1.04], N=400; ojo: los intervalos NO pareados de los dos brazos se solapan, solo vale como diferencia pareada); minutos buscando a la persona en zona amplia: 4.648 → 2.846 (diferencia pareada -1.802, IC 99 % [-2.409, -1.221], N=121); minutos hasta la primera atención: 3.073 → 2.837 (diferencia pareada -0.236, IC 99 % [-0.373, -0.121], N=394; ojo: los intervalos NO pareados de los dos brazos se solapan, solo vale como diferencia pareada). sin evidencia de mejora en: incidentes de calor espontáneos (por caso); incidentes derivados que se evitan, `skipped_events` (por caso); minutos del aviso al despacho que acaba llegando; equipos movidos por un duplicado (por caso); críticos fallidos (por caso); `world_score` (solo-mundo, 0–100).",
+    "compare": {
+     "stockouts": {
+      "text": "roturas de stock de agua que llegan a ocurrir (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.383,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.32,
+        0.448
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.247,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.195,
+        0.3
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": -0.135,
+       "ci": [
+        -0.175,
+        -0.098
+       ],
+       "level": 0.95,
+       "better": 4,
+       "worse": 55,
+       "evidence": true
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": -0.135,
+       "ci": [
+        -0.19,
+        -0.083
+       ],
+       "level": 0.99,
+       "better": 4,
+       "worse": 55,
+       "evidence": true
+      },
+      "unpaired_ci95_overlap": false,
+      "verdict": "MEJORA",
+      "totals": {
+       "initial": 153.0,
+       "revised": 99.0
+      }
+     },
+     "dry_minutes": {
+      "text": "minutos-punto con el depósito a cero (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 5.338,
+       "median": 0.0,
+       "p90": 20.0,
+       "ci95": [
+        4.197,
+        6.588
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 3.522,
+       "median": 0.0,
+       "p90": 13.0,
+       "ci95": [
+        2.567,
+        4.647
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": -1.815,
+       "ci": [
+        -2.46,
+        -1.21
+       ],
+       "level": 0.95,
+       "better": 8,
+       "worse": 78,
+       "evidence": true
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": -1.815,
+       "ci": [
+        -2.665,
+        -1.04
+       ],
+       "level": 0.99,
+       "better": 8,
+       "worse": 78,
+       "evidence": true
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "MEJORA",
+      "totals": {
+       "initial": 2135.0,
+       "revised": 1409.0
+      }
+     },
+     "heat_incidents": {
+      "text": "incidentes de calor espontáneos (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.398,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.302,
+        0.505
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.4,
+       "median": 0.0,
+       "p90": 2.0,
+       "ci95": [
+        0.305,
+        0.507
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": 0.003,
+       "ci": [
+        -0.022,
+        0.033
+       ],
+       "level": 0.95,
+       "better": 3,
+       "worse": 4,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": 0.003,
+       "ci": [
+        -0.03,
+        0.043
+       ],
+       "level": 0.99,
+       "better": 3,
+       "worse": 4,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 159.0,
+       "revised": 160.0
+      }
+     },
+     "skipped_events": {
+      "text": "incidentes derivados que se evitan, `skipped_events` (por caso)",
+      "lower_is_better": false,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.028,
+       "median": 0.0,
+       "p90": 0.0,
+       "ci95": [
+        0.013,
+        0.045
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.028,
+       "median": 0.0,
+       "p90": 0.0,
+       "ci95": [
+        0.013,
+        0.045
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": 0.0,
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "level": 0.95,
+       "better": 0,
+       "worse": 0,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": 0.0,
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "level": 0.99,
+       "better": 0,
+       "worse": 0,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 11.0,
+       "revised": 11.0
+      }
+     },
+     "accept_min": {
+      "text": "minutos del aviso al despacho que acaba llegando",
+      "lower_is_better": true,
+      "n_pairs": 394,
+      "initial": {
+       "n": 394,
+       "mean": 1.001,
+       "median": 0.75,
+       "p90": 2.0,
+       "ci95": [
+        0.886,
+        1.117
+       ]
+      },
+      "revised": {
+       "n": 394,
+       "mean": 0.97,
+       "median": 0.75,
+       "p90": 2.0,
+       "ci95": [
+        0.861,
+        1.085
+       ]
+      },
+      "paired_diff_95": {
+       "n": 394,
+       "mean": -0.031,
+       "ci": [
+        -0.076,
+        0.015
+       ],
+       "level": 0.95,
+       "better": 43,
+       "worse": 61,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 394,
+       "mean": -0.031,
+       "ci": [
+        -0.088,
+        0.033
+       ],
+       "level": 0.99,
+       "better": 43,
+       "worse": 61,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 394.49,
+       "revised": 382.18
+      }
+     },
+     "dup_moved": {
+      "text": "equipos movidos por un duplicado (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.212,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.158,
+        0.278
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.215,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.152,
+        0.287
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": 0.003,
+       "ci": [
+        -0.02,
+        0.025
+       ],
+       "level": 0.95,
+       "better": 6,
+       "worse": 6,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": 0.003,
+       "ci": [
+        -0.028,
+        0.033
+       ],
+       "level": 0.99,
+       "better": 6,
+       "worse": 6,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 85.0,
+       "revised": 86.0
+      }
+     },
+     "locate_min": {
+      "text": "minutos buscando a la persona en zona amplia",
+      "lower_is_better": true,
+      "n_pairs": 121,
+      "initial": {
+       "n": 121,
+       "mean": 4.648,
+       "median": 4.0,
+       "p90": 7.0,
+       "ci95": [
+        4.311,
+        5.02
+       ]
+      },
+      "revised": {
+       "n": 121,
+       "mean": 2.846,
+       "median": 3.0,
+       "p90": 5.0,
+       "ci95": [
+        2.563,
+        3.16
+       ]
+      },
+      "paired_diff_95": {
+       "n": 121,
+       "mean": -1.802,
+       "ci": [
+        -2.259,
+        -1.346
+       ],
+       "level": 0.95,
+       "better": 4,
+       "worse": 60,
+       "evidence": true
+      },
+      "paired_diff_99": {
+       "n": 121,
+       "mean": -1.802,
+       "ci": [
+        -2.409,
+        -1.221
+       ],
+       "level": 0.99,
+       "better": 4,
+       "worse": 60,
+       "evidence": true
+      },
+      "unpaired_ci95_overlap": false,
+      "verdict": "MEJORA",
+      "totals": {
+       "initial": 562.35,
+       "revised": 344.33
+      }
+     },
+     "time_to_first_attention": {
+      "text": "minutos hasta la primera atención",
+      "lower_is_better": true,
+      "n_pairs": 394,
+      "initial": {
+       "n": 394,
+       "mean": 3.073,
+       "median": 2.67,
+       "p90": 6.0,
+       "ci95": [
+        2.867,
+        3.302
+       ]
+      },
+      "revised": {
+       "n": 394,
+       "mean": 2.837,
+       "median": 2.5,
+       "p90": 5.4,
+       "ci95": [
+        2.661,
+        3.033
+       ]
+      },
+      "paired_diff_95": {
+       "n": 394,
+       "mean": -0.236,
+       "ci": [
+        -0.338,
+        -0.146
+       ],
+       "level": 0.95,
+       "better": 48,
+       "worse": 95,
+       "evidence": true
+      },
+      "paired_diff_99": {
+       "n": 394,
+       "mean": -0.236,
+       "ci": [
+        -0.373,
+        -0.121
+       ],
+       "level": 0.99,
+       "better": 48,
+       "worse": 95,
+       "evidence": true
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "MEJORA",
+      "totals": {
+       "initial": 1210.8,
+       "revised": 1117.66
+      }
+     },
+     "critical_failed": {
+      "text": "críticos fallidos (por caso)",
+      "lower_is_better": true,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 0.398,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.328,
+        0.47
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 0.383,
+       "median": 0.0,
+       "p90": 1.0,
+       "ci95": [
+        0.312,
+        0.455
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": -0.015,
+       "ci": [
+        -0.037,
+        0.005
+       ],
+       "level": 0.95,
+       "better": 6,
+       "worse": 11,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": -0.015,
+       "ci": [
+        -0.045,
+        0.013
+       ],
+       "level": 0.99,
+       "better": 6,
+       "worse": 11,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 159.0,
+       "revised": 153.0
+      }
+     },
+     "world_score": {
+      "text": "`world_score` (solo-mundo, 0–100)",
+      "lower_is_better": false,
+      "n_pairs": 400,
+      "initial": {
+       "n": 400,
+       "mean": 78.824,
+       "median": 86.635,
+       "p90": 97.93,
+       "ci95": [
+        76.553,
+        81.002
+       ]
+      },
+      "revised": {
+       "n": 400,
+       "mean": 79.377,
+       "median": 87.605,
+       "p90": 98.1,
+       "ci95": [
+        77.073,
+        81.561
+       ]
+      },
+      "paired_diff_95": {
+       "n": 400,
+       "mean": 0.553,
+       "ci": [
+        -0.018,
+        1.175
+       ],
+       "level": 0.95,
+       "better": 108,
+       "worse": 63,
+       "evidence": false
+      },
+      "paired_diff_99": {
+       "n": 400,
+       "mean": 0.553,
+       "ci": [
+        -0.189,
+        1.344
+       ],
+       "level": 0.99,
+       "better": 108,
+       "worse": 63,
+       "evidence": false
+      },
+      "unpaired_ci95_overlap": true,
+      "verdict": "sin evidencia de mejora",
+      "totals": {
+       "initial": 31529.7,
+       "revised": 31750.95
+      }
+     }
+    }
+   }
+  }
+ }
+}

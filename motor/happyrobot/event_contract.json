@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FABAT multichannel event v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "event_id", "event_type", "occurred_at", "received_at", "channel", "actor_id", "conversation_id", "correlation_id", "payload"],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.~:-]{0,119}$" },
+    "timestamp": { "type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d{1,3})?Z$" }
+  },
+  "properties": {
+    "schema_version": { "const": 2 },
+    "event_id": { "$ref": "#/$defs/id" },
+    "event_type": {
+      "enum": [
+        "message.received", "actor.role_claimed", "actor.role_released", "actor.availability_updated",
+        "incident.reported", "incident.updated", "incident.close_requested", "incident.closed",
+        "question.created", "question.answered",
+        "assignment.offered", "assignment.accepted", "assignment.declined", "assignment.eta_updated",
+        "assignment.arrived", "assignment.located", "assignment.completed", "assignment.timed_out",
+        "call.started", "call.ended", "call.failed", "delivery.updated",
+        "review.requested", "review.completed", "approval.requested", "approval.decided", "deadline.elapsed"
+      ]
+    },
+    "occurred_at": { "$ref": "#/$defs/timestamp" },
+    "received_at": { "$ref": "#/$defs/timestamp" },
+    "channel": { "enum": ["telegram", "phone", "webcall", "web", "system"] },
+    "actor_id": { "$ref": "#/$defs/id" },
+    "conversation_id": { "$ref": "#/$defs/id" },
+    "correlation_id": { "$ref": "#/$defs/id" },
+    "incident_id": { "$ref": "#/$defs/id" },
+    "assignment_id": { "$ref": "#/$defs/id" },
+    "question_id": { "$ref": "#/$defs/id" },
+    "causation_id": { "$ref": "#/$defs/id" },
+    "source_message_id": { "$ref": "#/$defs/id" },
+    "call_id": { "$ref": "#/$defs/id" },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event_type": { "pattern": "^assignment\\." } } },
+      "then": { "required": ["assignment_id", "incident_id"] }
+    },
+    {
+      "if": { "properties": { "event_type": { "pattern": "^question\\." } } },
+      "then": { "required": ["question_id", "incident_id"] }
+    },
+    {
+      "if": { "properties": { "event_type": { "pattern": "^call\\." } } },
+      "then": { "required": ["call_id"] }
+    }
+  ]
+}

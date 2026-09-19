@@ -117,6 +117,55 @@ Además de `agent_reply` / `extract_ready` / `needs_human` / `session_ended`:
 | POST | `/hr/tg/staff-response` | proxy a MANDO (`acc`/`dec`/`eta`/`loc`); `x-hr-secret` |
 | POST | `/demo/public-report` | solo si `ALLOW_DEMO_INJECT=1` |
 
+## Base multicanal v2 (en desarrollo, desactivada)
+
+La API técnica `/hr/state/*` es independiente de los hooks actuales: **no migra Telegram ni llamadas**.
+`HR_STATE_API_ENABLED=0` es el valor por defecto; no habilitarla en producción antes de completar
+la migración y las pruebas contra Redis. Los workflows LIVE siguen usando v1.
+
+El contrato está en `motor/happyrobot/event_contract.json`. Los eventos identifican persona,
+conversación, incidente, asignación y pregunta por separado. La API no elige recursos ni interpreta
+mensajes: recibe propuestas de HappyRobot y realiza commits con versiones esperadas.
+
+Variables: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `HR_STATE_NAMESPACE`
+(`test-...`, `dev-...` o `live-...`) y cuatro secretos distintos, privados, en
+`x-hr-state-secret`. No reutilizar el token público del bot ni incluir credenciales en prompts.
+
+| POST relativo a `/hr/state` | Secreto | Efecto |
+|---|---|---|
+| `/inbox` | `HR_STATE_INGRESS_SECRET` | Acepta evento de un adaptador autenticado; deduplica por ID y contenido |
+| `/inbox/event`, `/inbox/pending`, `/snapshot` | `HR_STATE_READ_SECRET` | Lectura privada y versionada |
+| `/commit` | `HR_STATE_COMMIT_SECRET` | CAS de entidades + evento aplicado + mensajes pendientes; conflicto devuelve 409 |
+| `/outbox/pending`, `/outbox/claim`, `/outbox/settle` | `HR_STATE_DELIVERY_SECRET` | Reserva temporal de envío y confirmación del resultado |
+
+Los scripts Lua son fijos y solo escriben bajo `fa:v2:{namespace}:...`; no se admiten comandos
+Redis ni URLs de destinatarios arbitrarios. Un lease vencido pasa a entrega `unknown`, no a reenvío
+automático: un timeout puede haber ocurrido después de entregar el mensaje. Todavía falta conectar
+los consumidores, la recuperación programada, los adaptadores de identidad y todas las operaciones.
+
+Pruebas sin red externa:
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
+
+Desde la raíz: `python3 -m unittest motor.happyrobot.sandbox.test_operaciones` comprueba el primer
+núcleo puro de transiciones (aceptación, rechazo, ETA, hitos, cierre y preguntas). No crea ni publica
+workflows. Los eventos aún no implementados fallan explícitamente; no se convierten en incidentes nuevos.
+
+La prueba real de CAS es opt-in. Configura de forma privada `FABAT_TEST_REDIS_URL` y
+`FABAT_TEST_REDIS_TOKEN` de una base de pruebas y ejecuta desde `puente/`:
+
+```bash
+FABAT_RUN_REDIS_TESTS=1 node --import tsx --test src/lib/redis-state.integration.test.ts
+```
+
+Cada ejecución crea un namespace `test-<uuid>`, no envía mensajes ni llama a HappyRobot y aplica
+caducidad solo a las claves creadas por esa prueba. Sin opt-in la prueba aparece como omitida;
+los mocks de transporte no acreditan atomicidad real. No habilitar v2 basándose solo en ellos.
+
 ## Bloqueado hasta
 
 1. Token BotFather

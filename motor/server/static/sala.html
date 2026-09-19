@@ -145,7 +145,25 @@
     </section>
 
     <section class="tab-panel" id="tab-equipo" role="tabpanel" aria-labelledby="tab-btn-equipo" data-tab="equipo" hidden>
-      <div class="panel-scroll" id="panel-equipo"><p class="tiny empty-tab">Sin votos del equipo de agentes todavía.</p></div>
+      <div class="panel-scroll">
+        <section class="box workflow-panel" aria-labelledby="workflow-title">
+          <h2 id="workflow-title">Probar HappyRobot</h2>
+          <p>prueba-ana-rapido → prueba-ana-equipo → especialistas. Las decisiones y la revisión aparecen aquí.</p>
+          <p id="workflow-config" role="status">Comprobando configuración…</p>
+          <form id="workflow-form">
+            <label for="workflow-text">Aviso de prueba</label>
+            <textarea id="workflow-text" required maxlength="400" rows="3" placeholder="Hay una pelea en la puerta B"></textarea>
+            <label for="workflow-zone">Zona sugerida</label>
+            <select id="workflow-zone"><option value="">Sin especificar</option></select>
+            <p class="tiny">Ejecuta un workflow real. Procesar el aviso avanza dos minutos del recinto simulado (N = 1 aviso).
+              Teléfono y Telegram usan la configuración de comunicaciones de esta sesión.</p>
+            <button type="submit" id="workflow-launch" disabled>Lanzar en HappyRobot</button>
+          </form>
+          <p id="workflow-result" role="status"></p>
+          <div id="workflow-runs" aria-label="Ejecuciones del workflow rápido"></div>
+        </section>
+        <div id="panel-equipo" class="equipo-results"><p class="tiny empty-tab">Sin votos del equipo de agentes todavía.</p></div>
+      </div>
     </section>
 
     <section class="tab-panel" id="tab-enjambre" role="tabpanel" aria-labelledby="tab-btn-enjambre" data-tab="enjambre" hidden>

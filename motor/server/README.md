@@ -2,6 +2,10 @@
 
 La interfaz de supervisión es `/` (Sala: `static/sala*`). Público `/asistente`, jurado `/jurado`. Pantallas viejas → `archivo/motor/server/static/` (las rutas redirigen a `/`).
 
+La pestaña **Equipo → Probar HappyRobot** permite lanzar `prueba-ana-rapido` y seguir
+su decisión y la revisión. Configuración de agentes, Telegram y teléfono:
+[Integración de Ana](../../docs/INTEGRACION-ANA.md).
+
 Carpeta privada. Nada de aquí se sube a ningún sitio. El servidor escucha en `127.0.0.1`; con `--lan`, en la red
 local (para los móviles del jurado). Nunca se abre a internet desde aquí.
 
@@ -48,6 +52,7 @@ por IP de conexión, 400 caracteres y 8192 bytes de cuerpo; no se confía en `cl
 | POST | `/api/session` | `{case_id | case:{...}, seed?, speed?, comms?: sim|happyrobot, playbook?, autoplay?}` |
 | POST | `/api/control` | `{cmd: play|pause|toggle|step|speed|reset|key_moment, value?, n?}` |
 | POST | `/api/report` | `{channel, text, zone?, preset?}` aviso del jurado → `world.inject`. Devuelve `report_id` |
+| POST | `/api/workflows/rapido` | Operador: `{request_id, text, zone?}` → aviso + dos ticks simulados → workflow rápido, si abre un incidente pendiente. Reintentos con el mismo `request_id` no repiten efectos. |
 | GET | `/api/report/{id}` | qué ha hecho Mando con ese aviso (lo ve el jurado en su móvil) |
 | POST | `/api/strike` | `{preset}` o `{effect:{...}}` validado y acotado, `client_id?`, `origin: jury|chaos` |
 | GET | `/api/chaos/suggest` | `Chaos.suggest(world, agent)` normalizado: label, why, damage, effect |

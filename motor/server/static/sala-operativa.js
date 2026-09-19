@@ -133,7 +133,7 @@
       if (options.choices) for (const [value, caption] of options.choices) {
         const option = node("option", caption); option.value = value; input.append(option);
       }
-      else input.type = options.checkbox ? "checkbox" : options.number ? "number" : "text";
+      else if (!options.multiline) input.type = options.checkbox ? "checkbox" : options.number ? "number" : "text";
       if (options.number) { input.min = "0"; input.max = "240"; input.step = "1"; }
       if (options.multiline) input.rows = 3;
       input.required = options.required !== false;

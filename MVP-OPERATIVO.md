@@ -130,9 +130,9 @@ El timeout de un workflow conserva el plan seguro existente.
 ## Verificación reproducible
 
 ```sh
-uv run --project motor/server python -m unittest motor.server.test_operational motor.server.test_operational_http -q
+uv run --project motor/server python -m unittest motor.server.test_operational motor.server.test_operational_http motor.server.test_operational_assessment -q
 uv run --project motor/server python -m unittest discover -s motor/server -p 'test_*.py' -t .
-node --test motor/server/test_sala_interface.cjs
+node --test motor/server/test_sala*.cjs
 uv run --project motor/server python -m motor.server.benchmark_operational --n 120 --seed 17 --workers 8
 cd puente
 npm ci

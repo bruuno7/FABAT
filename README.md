@@ -7,26 +7,28 @@
 > Before acting, it **rehearses the decision in a digital twin of the venue**; that rehearsal is what writes the
 > assumptions. When one breaks — sometimes because of MANDO's own decision, sometimes because an outsider breaks it
 > from their phone — MANDO drops the plan by itself and builds a new one, saying why. The public reports through a
-> **Telegram bot**; MANDO places **real phone calls through HappyRobot** (a US number provisioned on the platform) to
-> team leads, who ACCEPT or REJECT. Grave actions (stop the show, evacuate, open the gates) are never taken by the
-> machine: a named person gets a **decision card** with both rehearsed futures and a clock. Measured against a
-> fixed-checklist agent on 1,000 never-seen simulated cases: **+8.89 points** (95% CI 7.71–10.12), paired, same seeds.
+> **Telegram bot**; MANDO can place **phone calls through HappyRobot** (workflows mounted on the platform; with
+> credentials and an allowlisted number) to team leads, who ACCEPT or REJECT. Grave actions (stop the show, evacuate,
+> open the gates) are never taken by the machine: a named person gets a **decision card** with both rehearsed futures
+> and a clock. Measured against a fixed-checklist agent on never-seen simulated cases: run
+> `python3 -m motor.harness headline` for the current paired difference with N and 95 % CI; the headline figure is
+> published with the final delivery.
 > **Honest note:** the decision core is a deterministic closed-loop planner with rules — no LLM. The language model
-> lives where language is: in the phone conversation. The venue and the incidents are simulated; the reports, the
-> calls, the people answering them and the human approvals are real.
+> lives where language is: in the phone conversation. The venue and the incidents are simulated; reports, calls and
+> human approvals can be real in a configured demo, or fully simulated when credentials are missing (the UI labels it).
 
 HackSpain 2026 · reto HappyRobot «¿Puede la IA gestionar una crisis?» · equipo FABAT · construido en 36 horas.
 
-Vídeo (3 min, se entiende sin sonido): {{ENLACE: vídeo de la entrega}}
-
 ---
+
+> **Por dónde empezar:** [`GUIA.md`](GUIA.md) (cómo levantarlo, cómo se usa desde el público y desde el control, y cómo probar cada función) · [`COMO-DECIDE.md`](COMO-DECIDE.md) (cómo prioriza, a quién llama y cuándo tira el plan, con las fórmulas reales) · [`COBERTURA-RETO.md`](COBERTURA-RETO.md) (qué cubre del reto y cómo demostrarlo en 30 segundos).
 
 ## El problema
 
 Houston, 5 de noviembre de 2021, festival Astroworld. La primera llamada al 911 entra a las **21:07**. La parada del
 concierto se inicia a las 21:39, el incidente de múltiples víctimas se declara a las 21:47 y el concierto termina a
 las **22:12**. Son **65 minutos con información y sin decisión**; murieron diez personas.
-*Fuente: cronología de la policía de Houston, publicada por ABC13 — {{ENLACE: artículo de ABC13 con la cronología; cotejar literalidad antes de publicar}}.*
+*Fuente: cronología de la policía de Houston, publicada por ABC13.*
 
 En los grandes fallos de gestión de multitudes la información casi siempre existía. Lo que falla es lo que viene
 después: quién decide, con qué dato, hasta cuándo, y qué pasa cuando el plan que se eligió deja de ser verdad.
@@ -43,10 +45,11 @@ vez y, además, el teléfono del centro (proveedores, transporte, relevos, servi
    sanitaria) se prueba en un **gemelo del recinto**: copia del estado de ahora, sin futuro. El ensayo elige entre
    alternativas con un criterio fijo (nadie por encima de 6,5 personas/m²; menos minutos por encima de 4/m²; pico más
    bajo; la opción menos intrusiva) y **escribe los supuestos del plan**: «válido mientras Puerta A < 4/m²».
-4. **Despacha y llama de verdad.** Lo urgente no espera a nadie: en una posible parada el equipo a pie sale al
-   instante. La orden se da con una **llamada telefónica de HappyRobot** al móvil de quien manda el equipo, que
+4. **Despacha por voz.** Lo urgente no espera a nadie: en una posible parada el equipo a pie sale al instante. La
+   orden se da con un **workflow de voz de HappyRobot** (teléfono o Web Call) al móvil de quien manda el equipo, que
    contesta ACEPTA o RECHAZA; si rechaza o no contesta, reasigna a la vista. Cuando el plan cambia, vuelve a llamar
-   con la orden nueva.
+   con la orden nueva. Sin credenciales de HappyRobot ni números en lista blanca, las llamadas se simulan y la pantalla
+   lo rotula.
 5. **Vigila sus supuestos y tira el plan él solo** cuando uno se rompe —también cuando lo ha roto su propia
    decisión— y explica el plan nuevo con su porqué.
 6. **No decide lo grave.** Parar el concierto, evacuar, abrir portones, pedir servicios externos o cerrar una zona
@@ -57,20 +60,19 @@ vez y, además, el teléfono del centro (proveedores, transporte, relevos, servi
 7. **Se deja romper.** Una persona de fuera, desde su móvil, corta un pasillo, deja a un equipo sin contestar o
    cierra el metro: tres golpes por partida y un marcador «JURADO — MANDO». Si un golpe provoca un fallo, queda
    bloqueado como test de regresión con el nombre de quien lo provocó y se vuelve a pasar delante de él.
-8. {{ESTADO: solo si está hecho y medido (H4); si no, borrar este punto}} **Apunta lo que pasó y propone cambios
-   pequeños.** Guarda resultados observados (cuánto tardó de verdad una reposición, quién contestó al teléfono y quién
-   no, qué avisos no traían un punto concreto) y propone cambiar **parámetros**, cada propuesta con su N. Una persona
-   aprueba cada cambio. Ninguna propuesta puede tocar los niveles de autonomía ni los umbrales de seguridad.
+8. **Apunta lo que pasó y propone cambios pequeños.** La pantalla `/memoria` recoge observaciones del día 1 y propone
+   cambiar **parámetros**; cada propuesta requiere aprobación humana. Ninguna propuesta puede tocar los niveles de
+   autonomía ni los umbrales de seguridad. El impacto medido día 1 → día 2 se obtiene con
+   `python3 -m motor.harness day2` (N e intervalo en la entrega).
 
 ## Qué tiene de distinto
 
 - **Supuestos escritos.** El plan dice de qué depende; cuando eso deja de ser verdad, se ve en pantalla qué supuesto
   se rompió y por qué nace el plan nuevo.
 - **El fallo emerge, no está guionizado.** El recinto es un simulador de flujo de multitudes. En el caso de la Puerta
-  B, el agente de lista fija sigue su protocolo, no desvía y deja que la puerta llegue a 8,1 personas/m² (25 min por
-  encima de 5/m²); MANDO ensaya en el gemelo desviar a la A, a la C o no desviar —desviarlo *todo* a la A la saturaría—,
-  elige destino y fracción y mantiene la Puerta B en 4,0/m². *(Un caso de demostración, `demo-gates`; la estadística
-  está más abajo.)* {{CIFRA: reconfirmar 8,1 y 4,0 con la huella final}}
+  B (`demo-gates`), el agente de lista fija sigue su protocolo y deja que la puerta se sature; MANDO ensaya en el
+  gemelo desviar a la A, a la C o no desviar —desviarlo *todo* a la A la saturaría—, elige destino y fracción y
+  mantiene la Puerta B por debajo del umbral. *(Un caso de demostración; la estadística agregada está más abajo.)*
 - **El adversario ataca el mundo, no la conversación.** HappyRobot ya ofrece agentes adversarios que intentan romper
   al agente de voz *hablando* con él. El nuestro amplía esa idea a la capa de al lado: rompe el escenario, los
   recursos y los supuestos del plan.
@@ -119,7 +121,7 @@ flowchart LR
   PL -- "orden de despacho" --> WC
   WC <--> J
   WC -- "webhook: acepta / rechaza / ETA" --> V
-  V -. "orden nueva: segunda llamada {{ESTADO: o Signals dentro de la llamada, solo si está probado}}" .-> WC
+  V -. "orden nueva: segunda llamada" .-> WC
   PL -- "acciones GRAVES: nunca solas" --> D
   D -- "aprueba / veta (con reloj y suplente)" --> PL
   X -- "golpe al mundo" --> W
@@ -134,11 +136,11 @@ flowchart LR
 | `motor/caos/` | adversario | Golpes al mundo con presupuesto limitado, elegidos simulando futuros sobre copias |
 | `motor/harness/` | banco | N ejecuciones sin pantalla, métricas con intervalo, regresión |
 | `motor/server/` | pantalla | FastAPI + SSE: puesto de mando, duelo en pantalla partida, página móvil de quien avisa y rompe el plan, bot de Telegram (*long polling*), tarjeta de decisión, marcador y bloqueo de fallos como test, adaptador de HappyRobot |
-| `motor/happyrobot/` | plataforma | Especificación de los workflows de voz (despacho por teléfono, despacho por Web Call {{ESTADO: y avisos entrantes, si se publica}}), prompts, northstars y escenarios adversarios |
+| `motor/happyrobot/` | plataforma | Especificación de los workflows de voz (despacho por teléfono, despacho por Web Call), prompts, northstars y escenarios adversarios |
 
 ## Cómo se ejecuta en local (3 comandos)
 
-Requisitos: Python 3.14 y [`uv`](https://docs.astral.sh/uv/). El núcleo usa solo la biblioteca estándar; solo el
+Requisitos: Python ≥3.12 y [`uv`](https://docs.astral.sh/uv/). El núcleo usa solo la biblioteca estándar; solo el
 servidor tiene dependencias. No hace falta ninguna clave: sin credenciales de HappyRobot las llamadas se simulan y
 la pantalla lo rotula; sin `TELEGRAM_BOT_TOKEN` el bot no arranca y los avisos entran por la página `/jurado`.
 
@@ -154,7 +156,7 @@ Otras vistas: `/?escena=1` (puesto de mando en modo escena) · `/jurado` (móvil
 Pruebas y banco de medida:
 
 ```sh
-python3 -m unittest discover -s motor -p "test_*.py"          # {{CIFRA: nº de tests en verde, N}}
+./mvp.sh check                                                 # tests del núcleo, del servidor y doctor
 python3 -m motor.world.demo --reroute 6                        # el simulador a pelo: desviar TODO B→A satura la Puerta A
 python3 -m motor.harness headline                              # MANDO − lista fija, pareado, con IC 95 %
 ```
@@ -165,7 +167,7 @@ Con HappyRobot de verdad (opcional): variables `HR_API_KEY`, `HR_API_BASE`, `HR_
 
 ## Cómo ejecutar las interfaces (todas)
 
-Un solo servidor sirve todas las pantallas. Requisitos: Python 3.14 y [`uv`](https://docs.astral.sh/uv/); nada más.
+Un solo servidor sirve todas las pantallas. Requisitos: Python ≥3.12 y [`uv`](https://docs.astral.sh/uv/); nada más.
 Sin claves todo funciona en simulado y la pantalla lo rotula.
 
 **1. Arrancar** (elige una):
@@ -232,27 +234,26 @@ Todo lo de esta sección es **simulación, no dato de campo**, y cada cifra llev
 - **Un error cuenta como fallo.** Si el agente o el puntuador revientan en un caso, ese caso puntúa 0 y se queda en el N.
 - **Código congelado:** cada informe lleva la huella del código medido; solo publicamos cifras de una única huella.
 
-| Medida | Resultado |
-|---|---|
-| MANDO − lista fija, casos nunca vistos (`heldout`), sin adversario | **+8,89** [7,71 – 10,12] · 78,71 frente a 69,82 · N = 1.000 (mejor en 736 casos, peor en 262) |
-| Lo mismo, variante «solo-mundo» | **+6,91** [5,78 – 8,12] · N = 1.000 |
-| Lo mismo contra una lista fija mejorada (fusiona duplicados y ordena por gravedad) | **+8,10** [6,89 – 9,34] · N = 1.000 |
-| Incidentes críticos que fallan, MANDO / lista fija (`heldout`) | 309 de 2.332 (13,2 %) frente a 438 de 2.355 (18,6 %) · N = 1.000 casos |
-| Bajo adversario que elige sus golpes (3 por caso), casos de entrenamiento | **+15,50** [12,95 – 18,20] · 47,64 frente a 32,13 · críticos fallidos 488 de 1.083 frente a 587 de 958 · N = 300 |
-| Bajo adversario al azar (3 golpes por caso), casos de entrenamiento | **+13,03** [10,66 – 15,35] · N = 300 |
-| Acciones graves ejecutadas sin aprobación humana | 0 en todos los brazos (N = 1.000 y N = 300). La lista fija también da 0: es un suelo, no una ventaja |
-| Minutos hasta la primera atención (`heldout`) | MANDO 2,36 · lista fija 1,94 · N = 1.000. **MANDO no llega antes**: ensaya y pregunta antes de mover recursos; falla menos |
-| Despachos desperdiciados por caso (`heldout`) | MANDO 0,83 · lista fija 3,02 · N = 1.000 |
-| Con 1 a 8 incidentes a la vez | los dos se degradan; MANDO 87,3 → 70,0 (5 frentes) → 52,7 (8); lista fija 78,4 → 63,8 → 46,5. Con 6 y 7 frentes los intervalos se solapan · N = 1.200 (solo-mundo) |
-| Efecto del ensayo en el gemelo sobre la nota media | −0,09 [−0,33 – 0,13] · N = 1.200: **ninguno medible** (ver «Límites») |
-| {{ESTADO: solo si H4 pasa}} Misma secuencia, configuración inicial frente a revisada por la memoria | {{CIFRA: métrica física, diferencia pareada con IC 95 %, N}} |
-| Latencia de decisión humana con tarjeta (señal → tarjeta → respuesta) | {{CIFRA: mediana en minutos simulados, N tarjetas}} |
-| Llamadas reales por HappyRobot hechas durante el evento | {{CIFRA: nº de runs reales, N; aceptadas / rechazadas / sin respuesta}} |
-| Latencia por turno de voz medida en esas llamadas | {{CIFRA: mediana y p90 en ms del «latency breakdown», N turnos}} |
-| Tiempo desde el cambio de orden hasta que el agente lo dice en la llamada | {{CIFRA: ms desde el POST de la Signal, N}} · {{ESTADO: solo si Signals funciona}} |
+Para obtener las cifras vigentes (con N, intervalo de confianza al 95 % y huella del código):
 
-Huella del código medido: `3b6e1c0ecdf4` {{CIFRA: sustituir por la huella final si el núcleo cambia}}. 0 ejecuciones
-con error en todos los brazos. Informe completo: {{ENLACE: `docs/report.md` en el repo}}.
+```sh
+python3 -m motor.harness headline    # titular pareado heldout y train
+./mvp.sh cifras                      # mismo titular, atajo desde la raíz
+```
+
+La cifra publicada en la entrega sale de ese comando sobre el código congelado de la entrega. Informe completo y
+tablas desglosadas: `motor/harness/out/latest/` (generado al ejecutar el banco; no versionado).
+
+| Medida | Cómo obtenerla |
+|---|---|
+| MANDO − lista fija, casos nunca vistos (`heldout`), sin adversario | `python3 -m motor.harness headline` → bloque `heldout` |
+| Variante «solo-mundo» del mismo brazo | mismo comando → columna `solo-mundo` |
+| Contra lista fija mejorada (fusiona duplicados y ordena por gravedad) | `python3 -m motor.harness compare --cases motor/cases/data/heldout.jsonl --n 1000` |
+| Bajo adversario inteligente o al azar | `python3 -m motor.harness run --chaos smart\|random --n 300` |
+| Acciones graves ejecutadas sin aprobación humana | incluido en la agregación del banco (debe ser 0) |
+| Degradación con 1–8 incidentes a la vez | `python3 -m motor.harness load` |
+| Efecto del ensayo en el gemelo | `python3 -m motor.harness curve` |
+| Memoria operativa día 1 → día 2 | `python3 -m motor.harness day2 --n 400` |
 
 **Lo que esta medida NO demuestra.** Mide al planificador dentro de nuestro simulador, con nuestra fórmula y contra
 nuestra lista fija. No dice nada de un recinto real. Por eso el producto que proponemos no es «nuestro festival»,
@@ -264,53 +265,51 @@ sino el ensayo del plan de autoprotección *del cliente* sobre el plano *del cli
 |---|---|---|
 | El recinto, el público y los incidentes | — | **Todo.** Simulador propio, determinista |
 | Sensores de aforo | — | Salen del simulador |
-| Los avisos del público | **Sí** en la demo: texto libre escrito por personas al bot de Telegram o a la página del móvil. Telegram entra por su API a nuestro backend, no por un canal de HappyRobot {{ESTADO: si el workflow de entrada está publicado, añadir: «el backend le pasa el texto a un workflow de HappyRobot que lo devuelve estructurado; si no contesta a tiempo, lo lee nuestro parser de reglas»}}. El bot avisa de que es una simulación y no un servicio de emergencias | En el banco de pruebas, avisos generados |
-| La llamada | **Sí**: agente de voz de HappyRobot que **llama por la red telefónica** desde un número de EE. UU. aprovisionado en la plataforma (Telnyx), a móviles de personas que han dado su número. Web Call de reserva. {{ESTADO: nº de llamadas reales y fecha}} | En pantalla solo una llamada es real a la vez; el resto las contesta un simulador y **se rotula** («1 real · N simuladas») |
-| Quien contesta la llamada | **Una persona**, con su voz; puede decir que no | En el banco de pruebas, respuestas simuladas |
-| Quien aprueba o veta lo grave | **Una persona**, con un botón y un reloj | En el banco, un «operador simulado» con reglas fijas |
-| Quien rompe el plan | **Una persona de fuera del equipo**, desde su móvil | En el banco, el adversario automático |
-| El caso «de examen» de la demo | Lo elige alguien de fuera entre {{CIFRA: nº de casos de la lista, N}} casos `heldout` de dificultad alta | Esa lista está **prefiltrada**: son casos que MANDO ya había corrido sin fallos críticos. Nunca se usaron para ajustar nada |
+| Tiempo del evento | — | Minutos simulados; la pantalla acelera o pausa el reloj |
+| Recursos en el recinto (equipos, ambulancias, puertas) | — | Estado del simulador |
+| Los avisos del público | **Sí**, en demo configurada: texto libre al bot de Telegram (`puente/` en Vercel → webhooks al backend) o a la página `/asistente` / `/jurado`. El bot avisa de que es una simulación y no un servicio de emergencias | En el banco de pruebas, avisos generados |
+| La llamada de despacho | **Montada** sobre workflows de HappyRobot (teléfono o Web Call); el backend lanza el run y recibe webhooks. **Requiere** credenciales, workflows publicados y números en `MANDO_ALLOWED_NUMBERS` | Sin esa configuración, o cuando la plataforma no responde: `SimComms` y la pantalla lo **rotula** («simulada») |
+| Quien contesta la llamada | **Puede ser** una persona real con su voz, si la llamada sale de verdad | En local y en el banco, respuestas simuladas |
+| Quien aprueba o veta lo grave | **Una persona**, con un botón y un reloj en la pantalla | En el banco, un «operador simulado» con reglas fijas |
+| Quien rompe el plan | **Una persona de fuera del equipo**, desde su móvil (`/jurado`) | En el banco, el adversario automático |
+| El caso «de examen» de la demo | Lo elige alguien de fuera entre casos `heldout` prefiltrados (`python3 -m motor.harness pick`) | Esa lista está **prefiltrada**: casos que MANDO ya había corrido sin fallos críticos. Nunca se usaron para ajustar nada |
 | A quién se llama | Solo a móviles del equipo o de quien da su número delante de nosotros (lista blanca; se borra al acabar) | **Nunca** a emergencias (lista `NEVER_DIAL`): el «112» de la demo es un móvil nuestro. SMS y WhatsApp no se usan |
-| Modelo de lenguaje | En la conversación de voz (HappyRobot) {{ESTADO: y en la lectura de avisos de texto libre, si el workflow de entrada de HappyRobot está publicado}} | **Ninguno en la decisión.** Triaje, prioridad, asignación, supuestos y replanificación son reglas deterministas. El banco de pruebas corre entero sin ningún modelo |
+| Modelo de lenguaje | En la conversación de voz (HappyRobot), cuando la llamada sale por la plataforma | **Ninguno en la decisión.** Triaje, prioridad, asignación, supuestos y replanificación son reglas deterministas. El banco de pruebas corre entero sin ningún modelo |
 
 ## Qué usa de HappyRobot
 
 | Capacidad | Para qué | Estado |
 |---|---|---|
-| **Número de teléfono** de la plataforma (EE. UU., Telnyx) + **agente de voz saliente** (`es-ES`), workflow `mando-despacho-telefono` | llamar al móvil de quien manda el equipo, dar la orden en una frase, confirmar por repetición y recoger ACEPTA / RECHAZA / ETA | {{ESTADO: probado con N runs}} |
-| Trigger **Web Call** + agente de voz, workflow `mando-despacho-webcall` | la misma conversación por el navegador: canal de reserva de las salientes y canal recomendado para entrantes | {{ESTADO: publicado en development; N runs}} |
-| Lanzar el run desde nuestro backend con los datos de la orden | la llamada nace con la orden ya dentro y devuelve el `run_id` | {{ESTADO}} |
-| {{ESTADO: solo si se publica}} Workflow de **avisos entrantes** | recoger un aviso hablado y convertirlo en campos (zona, hecho, informante) | {{ESTADO}} |
-| **Tool** con nodo **Webhook** hacia nuestro backend | la respuesta de la persona vuelve al plan en la misma llamada | {{ESTADO}} |
-| **Signals** a `session.<id>` | cambiar la orden **sin colgar** cuando se rompe un supuesto | {{ESTADO: solo si está probado 3 de 3; si no, BORRAR la fila: lo que hace MANDO es volver a llamar con la orden nueva}} |
-| Escucha y **toma de llamada** (`should_takeover`) | una persona del centro de control coge la llamada en un clic | {{ESTADO}} |
-| **Northstars** escritos a mano | reglas de la conversación: no cuelga sin repetición, no inventa recursos, se niega a lo grave | {{CIFRA: nº de northstars y pass-rate por versión, N}} |
-| **Tests adversarios** (E2E, `agent_isolated`) | {{CIFRA: nº de escenarios}} personas difíciles contra el agente de voz | {{ESTADO}} |
-| De fallo real a test (`extract-from-run`) | un fallo visto en una llamada queda bloqueado como prueba | {{ESTADO: hecho una vez, run nº …}} |
-| Aviso legal de IA y grabación (UE) | se deja activado; sus segundos se cuentan en la latencia que publicamos | activado |
+| **Número de teléfono** de la plataforma (EE. UU., Telnyx) + **agente de voz saliente** (`es-ES`), workflow `mando-despacho-telefono` | llamar al móvil de quien manda el equipo, dar la orden en una frase, confirmar por repetición y recoger ACEPTA / RECHAZA / ETA | Workflow especificado en `motor/happyrobot/`; requiere credenciales y lista blanca para una llamada real |
+| Trigger **Web Call** + agente de voz, workflow `mando-despacho-webcall` | la misma conversación por el navegador: canal de reserva de las salientes | Workflow especificado; probado en simulado y en development con credenciales |
+| Lanzar el run desde nuestro backend con los datos de la orden | la llamada nace con la orden ya dentro y devuelve el `run_id` | Implementado en `motor/server/comms_happyrobot.py` (`POST /workflows/.../runs`) |
+| **Tool** con nodo **Webhook** hacia nuestro backend | la respuesta de la persona vuelve al plan en la misma llamada | Contrato en `motor/happyrobot/webhook_contract.json`; el endpoint es `/hr/events` |
+| Escucha y **toma de llamada** (`should_takeover`) | una persona del centro de control coge la llamada en un clic | Implementado en el adaptador; requiere sesión activa en la plataforma |
+| **Northstars** (24 reglas en `motor/happyrobot/NORTHSTARS.md`) | reglas de la conversación: no cuelga sin repetición, no inventa recursos, se niega a lo grave | Redactadas; auditoría en la plataforma pendiente de calibrar |
+| **Tests adversarios** (E2E, `agent_isolated`) | personas difíciles contra el agente de voz (24 perfiles en `adversarial_personas.json`) | Especificados; ejecución en la plataforma bajo demanda |
+| De fallo real a test (`extract-from-run`) | un fallo visto en una llamada queda bloqueado como prueba | Flujo documentado en `motor/happyrobot/TESTS.md`; no bloqueado automáticamente en el repo |
+| Aviso legal de IA y grabación (UE) | se deja activado en los workflows | Activado en la especificación |
+
+Cuando el plan cambia en plena conversación, MANDO **vuelve a llamar** con la orden nueva. El backend incluye
+`signal()` hacia la plataforma, pero no lo afirmamos como probado en producción.
 
 El reparto es deliberado: HappyRobot habla y gobierna la conversación; la asignación de recursos es nuestra, sin
 modelo, porque tiene que poder repetirse y auditarse.
 
 ## Límites conocidos
 
-- **Qué significa y qué no significa «aprende» aquí.** No se entrena ningún modelo. Probamos un manual de lecciones con
-  un revisor que las valida: en casos nunca vistos sube +0,24 puntos [0,10 – 0,39] (N = 1.000), y en «solo-mundo» el
-  intervalo incluye el 0. Es marginal y **no lo afirmamos**. {{ESTADO: si H4 pasa, añadir: «Lo que sí medimos es la
-  memoria operativa de parámetros: {{CIFRA}}, misma secuencia y semillas, N»; si no pasa, dejar:}} Lo que sí hay: un
-  veto humano queda apuntado y un fallo queda bloqueado como caso de regresión.
-- **El ensayo en el gemelo no sube la nota media del banco:** con y sin gemelo, −0,09 [−0,33 – 0,13] (N = 1.200). Su
-  valor está en casos de flujo concretos (la puerta), en que escribe los supuestos con números y en que da los dos
-  futuros de la tarjeta de decisión. La ventaja de +8,89 viene del triaje, la prioridad, el reparto conjunto y la
-  replanificación.
-- **No es más rápido.** Hasta la primera atención tarda 2,36 min frente a 1,94 de la lista fija (N = 1.000).
-- **Con muchos frentes se degrada**, como la lista fija, y los dos fallan críticos desde un solo frente; con 6–7
-  frentes la ventaja no es estadísticamente distinguible (N = 150 por nivel). Lo que hace con carga es decir a quién
-  deja esperando y por qué.
-- **Bajo adversario MANDO también sufre:** 47,64 sobre 100 y 488 de 1.083 críticos fallidos (N = 300).
-- **Entender avisos libres:** el parser es heurístico (reglas y léxico). {{CIFRA: aciertos de tipo y de zona en avisos libres, N}}.
-  Cuando no entiende, pregunta o escala; no inventa. La página del móvil pide tocar la zona en el plano para no
-  depender de ello.
+- **Qué significa y qué no significa «aprende» aquí.** No se entrena ningún modelo. Hay un manual de lecciones con
+  revisor y veto humano; el impacto en casos nunca vistos se mide con `python3 -m motor.harness day2` (N e intervalo
+  en la entrega). Lo que sí hay hoy: un veto humano queda apuntado y un fallo queda bloqueado como caso de regresión.
+- **El ensayo en el gemelo** escribe los supuestos con números y da los dos futuros de la tarjeta de decisión; su
+  efecto agregado sobre la nota del banco se obtiene con `python3 -m motor.harness curve`.
+- **No es más rápido que la lista fija** hasta la primera atención: MANDO ensaya y pregunta antes de mover recursos.
+  La cifra pareada está en `python3 -m motor.harness headline`.
+- **Con muchos frentes se degrada**, como la lista fija. Lo que hace con carga es decir a quién deja esperando y por
+  qué (`python3 -m motor.harness load`).
+- **Bajo adversario MANDO también sufre:** ver brazos `train_smart_chaos` en `python3 -m motor.harness headline`.
+- **Entender avisos libres:** el parser es heurístico (reglas y léxico). Cuando no entiende, pregunta o escala; no
+  inventa. La página del móvil pide tocar la zona en el plano para no depender de ello.
 - **Qué quiere decir «casos nunca vistos»:** la partición `heldout` separa *combinaciones* (familia × tipo ×
   perturbación) que el agente no ha corrido y que nunca se usan para ajustar nada. No decimos «tipos de crisis que
   nunca vio». Encontramos una fuga en nuestro propio léxico (contenía tipos solo-`heldout`), la quitamos y volvimos a
@@ -319,12 +318,12 @@ modelo, porque tiene que poder repetirse y auditarse.
   —por eso publicamos también «solo-mundo».
 - **El gemelo prevé por persistencia** (supone que una oleada en curso sigue al mismo ritmo): a 12 min acierta, a 30
   sobreestima. Por eso los supuestos se escriben a horizonte corto y se reensayan.
-- **Una sola llamada real a la vez**; no hemos probado concurrencia. El número es de EE. UU.: quien recibe ve un
-  «+1», y algún operador puede filtrarlo. No hay numeración +34. {{ESTADO: nº de llamadas a móviles +34 que entraron / intentadas}}
-- **Telegram es el canal del público en la demo, no una recomendación de producto:** entra por su API a nuestro
-  backend, sin pasar por HappyRobot, y es justo el tipo de canal (datos) que antes se satura en un recinto lleno. Por
-  eso un aviso del público nunca es la única fuente.
-- **Latencia de voz:** publicamos la medida, sin listón. {{CIFRA: ms por turno, N}}.
+- **Una sola llamada real a la vez** (`MANDO_HR_MAX_INFLIGHT=1` por defecto); no hemos probado concurrencia. El número
+  es de EE. UU.: quien recibe ve un «+1», y algún operador puede filtrarlo. No hay numeración +34.
+- **Telegram es el canal del público en la demo, no una recomendación de producto:** entra por su API (directo o vía
+  `puente/`), sin pasar por HappyRobot, y es justo el tipo de canal (datos) que antes se satura en un recinto lleno.
+  Por eso un aviso del público nunca es la única fuente.
+- **Latencia de voz en llamadas reales:** no publicamos cifra hasta medirla en runs reales con N documentado.
 - **Un recinto se manda por radio.** MANDO no sustituye la malla de radio: se queda con el teléfono del centro de
   control y con lo que no debe radiarse en abierto. La pasarela radio-IP es hoja de ruta, no está hecha.
 - **Fuera del alcance de la demo, a propósito:** violencia sexual, amenazas, armas, atrapados y cualquier cifra de
@@ -357,4 +356,4 @@ de Telegram por HTTP; el resto es biblioteca estándar.
 
 ## Licencia
 
-{{DECIDIR: licencia — propuesta MIT}}. Ver `LICENSE`.
+Por definir.

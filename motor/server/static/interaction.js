@@ -115,7 +115,7 @@
     const f=S.funnel;
     setHTML($('funnel'),f?`<strong>${U.num(f.reports,0)} avisos → ${U.num(f.incidents,0)} incidentes → ${U.num(f.actions,0)} acciones</strong><div class="channels">${['voice','sms','telegram','email','web','sensor'].map(ch=>`<span>${U.channel(ch)}${U.labels[ch]} <b>${U.num(!f.by_channel?null:ch==='web'?(f.by_channel.web||0)+(f.by_channel.chat||0):f.by_channel[ch]||0,0)}</b></span>`).join('')}${Object.entries(f.by_channel||{}).filter(([ch])=>!['voice','sms','telegram','email','web','chat','sensor'].includes(ch)).map(([ch,n])=>`<span>${U.channel(ch)}${E(U.labels[ch]||ch)} <b>${U.num(n,0)}</b></span>`).join('')}</div>`:'<span>Embudo de avisos pendiente del servidor</span>');
     const tg={off:'sin configurar',starting:'conectando',on:'conectado',error:'error de conexión'};
-    $('integrations').textContent=`Telegram: ${tg[S.telegram?.status]||'sin datos'} · HappyRobot: ${S.calls?.mode==='happyrobot'?`modo híbrido · ${S.calls.real_sent??0} llamadas reales · ${S.calls.fallbacks??0} pasadas a simulación`:'llamadas simuladas'} · Recogida de avisos: ${S.intake?.delegated?'HappyRobot':'local'}`;
+    $('integrations').textContent=`Telegram: ${tg[S.telegram_bot?.status]||'sin datos'} · HappyRobot: ${S.calls?.mode==='happyrobot'?`modo híbrido · ${S.calls.real_sent??0} llamadas reales · ${S.calls.fallbacks??0} pasadas a simulación`:'llamadas simuladas'} · Recogida de avisos: ${S.intake?.delegated?'HappyRobot':'local'}`;
   }
   function decisions(){
     const a=S.approvals[0], box=$('decision-graph');if(!a||!box)return;

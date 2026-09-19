@@ -259,7 +259,9 @@ class HardeningTest(unittest.TestCase):
             self.assertIn('peak_zone', st[side])
             self.assertIn('reroutes', st[side])
             self.assertEqual(st[side]['n'], 1)
-        self.assertEqual(self.c.get('/duelo?baseline=unknown').status_code, 400)
+        self.assertEqual(self.c.get('/duelo?baseline=unknown').status_code, 200)
+        self.assertEqual(self.c.get('/api/duel/state').json()['session']['baseline'], 'reroute')
+        self.assertEqual(self.c.post('/api/duel/session', json={'baseline': 'unknown'}).status_code, 422)
         self.app.state.duel.close()
 
     def test_memory_real_observations_and_paired_comparison(self):

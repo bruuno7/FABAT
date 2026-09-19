@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.route-active-stream {
+  stroke-dasharray: 6 3;
+  animation: dash-flow 1.2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-active-stream {
+    animation: none;
+    stroke-dasharray: none;
+  }
+}
+</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"tertiary":"#792c00","on-tertiary-fixed-variant":"#7c2e00","secondary":"#0058bf","on-primary":"#ffffff","on-error":"#ffffff","surface-container-high":"#dde9ff","tertiary-fixed":"#ffdbcd","primary":"#004191","on-secondary-container":"#fefcff","primary-fixed":"#d8e2ff","tertiary-container":"#9f3d01","surface-container":"#e6eeff","surface-tint":"#085ac0","on-tertiary-container":"#ffc9b3","on-tertiary-fixed":"#360f00","primary-fixed-dim":"#adc6ff","surface-variant":"#d3e3ff","surface":"#f8f9ff","on-primary-fixed":"#001a42","surface-dim":"#cbdbf6","secondary-fixed-dim":"#aec6ff","inverse-surface":"#213146","on-tertiary":"#ffffff","secondary-container":"#2170e4","on-secondary":"#ffffff","primary-container":"#0058be","surface-bright":"#f8f9ff","surface-container-lowest":"#ffffff","background":"#f8f9ff","inverse-on-surface":"#ebf1ff","outline":"#727784","error":"#ba1a1a","tertiary-fixed-dim":"#ffb596","on-error-container":"#93000a","on-secondary-fixed-variant":"#004396","on-primary-fixed-variant":"#004395","outline-variant":"#c2c6d5","surface-container-low":"#eff4ff","surface-container-highest":"#d3e3ff","on-secondary-fixed":"#001a42","on-surface":"#0b1c30","on-surface-variant":"#424753","error-container":"#ffdad6","secondary-fixed":"#d8e2ff","inverse-primary":"#adc6ff","on-primary-container":"#c4d5ff","on-background":"#0b1c30"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xl":"1.5rem","space-sm":"0.5rem","space-lg":"1rem","gutter":"1rem","space-xs":"0.25rem","margin":"1.25rem","space-md":"0.75rem"},"fontFamily":{"body-md":["Plus Jakarta Sans"],"title-md":["Plus Jakarta Sans"],"body-md-bold":["Plus Jakarta Sans"],"body-md-medium":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"label-sm-bold":["Plus Jakarta Sans"],"label-sm":["Plus Jakarta Sans"]},"fontSize":{"body-md":["13.5px",{"lineHeight":"19px","fontWeight":"400"}],"title-md":["19px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-md-bold":["13.5px",{"lineHeight":"19px","fontWeight":"700"}],"body-md-medium":["13.5px",{"lineHeight":"19px","fontWeight":"500"}],"headline-sm":["19px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"700"}],"label-sm-bold":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"700"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface select-none antialiased"><aside class="fixed left-0 top-0 h-screen w-[230px] bg-[#152033] text-white z-50 flex flex-col justify-between border-r border-[#152033]"><div class="flex flex-col"><div class="p-space-md border-b border-[#213146] flex flex-col gap-space-xs"><div class="flex items-center justify-between"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-secondary-fixed text-[20px]">emergency</span><span class="font-headline-sm text-headline-sm tracking-wider uppercase text-white">MANDO</span></div><span class="px-space-xs py-[2px] bg-secondary text-white rounded-full font-label-sm-bold text-label-sm-bold uppercase">40K PAX</span></div><div class="flex items-center gap-space-xs mt-space-xs"><span class="w-2 h-2 rounded-full bg-[#4edea3] animate-pulse"></span><span class="font-label-sm-bold text-label-sm-bold tracking-wide uppercase text-white/80">FESTIVAL ABIERTO</span></div></div><div class="p-space-sm"><div class="px-space-xs py-space-xs text-white/50 font-label-sm-bold text-label-sm-bold uppercase">Filtros de control</div><nav class="flex flex-col gap-[2px] mt-space-xs" data-active-classes="bg-[#213146] text-white font-body-md-bold"><a aria-current="page" class="flex items-center justify-between px-space-sm py-space-xs rounded-lg transition-colors bg-[#213146] text-white font-body-md-bold" data-path="sala-de-control" href="#"><span class="">Todos los sectores</span><span class="px-space-xs py-[1px] bg-[#00081a] rounded text-white font-label-sm-bold text-label-sm-bold">24</span></a><a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-white/80 hover:bg-[#213146] hover:text-white transition-colors font-body-md-medium text-body-md-medium" data-path="sala-de-control-graves" href="#"><span class="text-[#ffb596]">Solo graves</span><span class="px-space-xs py-[1px] bg-error-container text-on-error-container rounded font-label-sm-bold text-label-sm-bold">3</span></a><a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-white/80 hover:bg-[#213146] hover:text-white transition-colors font-body-md-medium text-body-md-medium" data-path="sala-de-control-sin-recursos" href="#"><span class="">Sin recursos</span><span class="px-space-xs py-[1px] bg-tertiary-container text-on-tertiary-container rounded font-label-sm-bold text-label-sm-bold">2</span></a><a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-white/80 hover:bg-[#213146] hover:text-white transition-colors font-body-md-medium text-body-md-medium" data-path="sala-de-control-sectores" href="#"><span class="">Por sector activo</span><span class="px-space-xs py-[1px] bg-[#213146] text-white/90 rounded font-label-sm text-label-sm">6</span></a></nav></div></div><div class="p-space-sm border-t border-[#213146] flex flex-col gap-space-xs bg-[#0f1726]"><div class="flex items-center justify-between px-space-xs py-space-xs bg-error/20 border border-error/40 rounded"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-error text-[18px]">phone_in_talk</span><span class="font-label-sm-bold text-label-sm-bold text-error uppercase">112 Emergencias</span></div><span class="w-2 h-2 rounded-full bg-error"></span></div><div class="flex flex-col gap-[2px] px-space-xs pt-space-xs"><div class="text-white/70 font-label-sm text-label-sm flex items-center justify-between"><span class="">Agente HR</span><span class="text-[#4edea3] font-label-sm-bold text-label-sm-bold">Enlace directo</span></div><div class="text-white/40 font-label-sm text-label-sm">Entorno de demo · Ficticio</div></div></div></aside><div class="pl-[230px] h-screen flex flex-col overflow-hidden"><header class="fixed top-0 left-[230px] right-0 h-[52px] bg-surface-container-lowest border-b border-[#c5c6cd] z-40 px-space-margin flex items-center justify-between"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-on-surface">Sala de control</span><span class="px-space-xs py-[1px] bg-surface-container text-primary font-label-sm-bold text-label-sm-bold rounded">V1.4</span></div><div class="relative w-80"><span class="material-symbols-outlined absolute left-space-xs top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span><input class="w-full h-8 pl-8 pr-space-xs bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary" placeholder="Buscar por zona, tipo o ID..." type="text"/></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-sm bg-surface-container-low px-space-sm py-1 rounded-lg border border-outline-variant"><div class="flex items-center gap-space-xs"><span class="font-label-sm text-label-sm text-on-surface-variant">ACTIVOS</span><span class="font-body-md-bold text-body-md-bold text-on-surface">14</span></div><div class="h-4 w-[1px] bg-outline-variant"></div><div class="flex items-center gap-space-xs"><span class="font-label-sm text-label-sm text-error">CRÍTICOS</span><span class="font-body-md-bold text-body-md-bold text-error">3</span></div><div class="h-4 w-[1px] bg-outline-variant"></div><div class="flex items-center gap-space-xs"><span class="font-label-sm text-label-sm text-on-surface-variant">LIBRES</span><span class="font-body-md-bold text-body-md-bold text-secondary">8/12</span></div></div><div class="flex items-center gap-space-xs px-space-sm py-1 bg-error-container border border-error text-on-error-container rounded-lg font-label-sm-bold text-label-sm-bold animate-pulse"><span class="material-symbols-outlined text-[16px]">warning</span><span class="">Carga médica al 100%</span></div><button class="h-8 px-space-sm bg-primary text-on-primary rounded-lg font-body-md-bold text-body-md-bold hover:bg-secondary-container transition-colors flex items-center gap-space-xs shadow-[0_1px_3px_rgba(11,28,48,0.04)]"><span class="material-symbols-outlined text-[16px]">playlist_add</span><span class="">Mesa de inyección</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="relative pt-[52px] h-full w-full bg-surface overflow-hidden"><div class="flex flex-col w-full h-[calc(100vh-52px)] overflow-hidden font-body-md text-on-surface select-none">
+<!-- WORKSPACE VIEWPORT (Central Stage 72% + Side Panel 28%) -->
+<div class="flex-1 flex overflow-hidden relative">
+<!-- REGION 1: CENTRAL WORKSPACE (Interactive Map + Incident Data Grid) -->
+<section class="flex-1 flex flex-col h-full overflow-hidden bg-surface-container-lowest">
+<!-- TOP: TACTICAL VECTOR MAP CONTAINER (Fixed viewport flex-1) -->
+<div class="relative flex-1 bg-[#f1f5f9] overflow-hidden flex flex-col">
+<!-- Architectural Grid Overlay -->
+<div class="absolute inset-0 pointer-events-none opacity-40 bg-[linear-gradient(to_right,#c2c6d5_1px,transparent_1px),linear-gradient(to_bottom,#c2c6d5_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+<!-- TOP BAR / MAP HUD CONTROLS -->
+<div class="relative z-20 flex items-center justify-between p-space-sm pointer-events-none">
+<!-- Tactical Floating Status Card -->
+<div class="pointer-events-auto flex items-center gap-space-sm bg-surface-container-lowest px-space-md py-space-xs rounded-xl shadow-sm border border-outline-variant" id="tactical-status-pill">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-ping"></span>
+<div class="flex flex-col">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-error tracking-wider">El plan ha dejado de valer</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Déficit: 0 equipos médicos libres para 2 incidentes vitales</span>
+</div>
+<button class="ml-space-xs px-space-xs py-1 text-primary hover:bg-surface-container rounded font-label-sm-bold text-label-sm-bold" onclick="togglePlanStatus()">
+              Alternar
+            </button>
+</div>
+<!-- Quick Map Controls with Realtime GPS / Tetra Telemetry -->
+<div class="pointer-events-auto flex items-center gap-space-xs bg-surface-container-lowest p-1 rounded-xl shadow-sm border border-outline-variant">
+<!-- Live Feed Badge -->
+<div class="flex items-center gap-1.5 px-2 py-1 bg-surface-container-low rounded-lg border border-outline-variant/60">
+<span class="w-2 h-2 rounded-full bg-[#4edea3] animate-pulse" id="live-pulse-indicator"></span>
+<span class="font-label-sm-bold text-[10px] text-on-surface uppercase tracking-wider" id="live-feed-badge">EN TIEMPO REAL · GPS 1Hz</span>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<button class="flex items-center gap-space-xs px-space-sm py-1 rounded-lg bg-surface-container font-label-sm-bold text-label-sm-bold text-primary hover:bg-primary hover:text-on-primary transition-colors" id="routes-btn" onclick="toggleRoutesLayer()"><span class="material-symbols-outlined text-[15px]">alt_route</span><span class="">Trayectos recursos (activos)</span></button>
+<!-- Sim speed & pause controller -->
+<button class="flex items-center gap-1 px-2 py-1 rounded-lg bg-surface-container-low border border-outline-variant text-on-surface font-label-sm-bold text-label-sm hover:bg-surface-container transition-colors" id="sim-speed-btn" onclick="cycleSimSpeed()" title="Velocidad del tiempo real">
+<span class="material-symbols-outlined text-[15px] text-primary" id="sim-speed-icon">play_arrow</span>
+<span class="font-mono text-[11px]" id="sim-speed-text">1x</span>
+</button>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<button class="flex items-center gap-space-xs px-space-sm py-1 rounded-lg bg-surface-container font-label-sm-bold text-label-sm-bold text-primary hover:bg-primary hover:text-on-primary transition-colors" id="density-btn" onclick="toggleDensityLayer()">
+<span class="material-symbols-outlined text-[15px]">grid_view</span>
+<span class="">Capa de densidad (estimación)</span>
+</button>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<span class="px-space-xs font-label-sm text-label-sm text-outline">ESTIMACIÓN DERIVADA DE AVISOS</span>
+</div>
+</div>
+<!-- VECTORIAL ARCHITECTURAL MAP SVG CANVAS -->
+<div class="relative flex-1 w-full h-full overflow-hidden flex items-center justify-center p-2">
+<svg class="w-full h-full object-contain select-none" id="festival-map-svg" viewbox="0 0 1000 540">
+<defs>
+<!-- Heatmap Density Layers (Switchable) -->
+<radialgradient cx="50%" cy="50%" id="heat-north" r="50%">
+<stop offset="0%" stop-color="#ba1a1a" stop-opacity="0.55"></stop>
+<stop offset="60%" stop-color="#f59e0b" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#f59e0b" stop-opacity="0"></stop>
+</radialgradient>
+<radialgradient cx="50%" cy="50%" id="heat-food" r="50%">
+<stop offset="0%" stop-color="#f59e0b" stop-opacity="0.4"></stop>
+<stop offset="100%" stop-color="#f59e0b" stop-opacity="0"></stop>
+</radialgradient>
+<pattern height="16" id="camp-tent" patternunits="userSpaceOnUse" width="16">
+<path d="M8 2 L14 14 L2 14 Z" fill="none" opacity="0.3" stroke="#727784" stroke-width="0.8"></path>
+</pattern><marker id="arrowhead" markerheight="6" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="7" refy="3"><path d="M0,0 L8,3 L0,6 Z" fill="#334155"></path></marker><marker id="arrowhead-active" markerheight="7" markerunits="userSpaceOnUse" markerwidth="9" orient="auto" refx="8" refy="3.5"><path d="M0,0 L9,3.5 L0,7 Z" fill="#004191"></path></marker>
+</defs>
+<!-- EXTERIOR BOUNDARIES -->
+<rect fill="#f8f9ff" height="500" rx="14" stroke="#c2c6d5" stroke-dasharray="4,4" stroke-width="1.5" width="960" x="20" y="20"></rect>
+<!-- CAMPAMENTO (Oeste Exterior) -->
+<g id="sec-campamento">
+<rect fill="#e6eeff" height="230" rx="8" stroke="#c2c6d5" stroke-width="1" width="120" x="35" y="40"></rect>
+<rect fill="url(#camp-tent)" height="230" rx="8" width="120" x="35" y="40"></rect>
+<text class="font-label-sm-bold text-[10px] tracking-wider uppercase" fill="#424753" text-anchor="middle" x="95" y="65">CAMPAMENTO</text>
+<text class="font-label-sm text-[9px]" fill="#727784" text-anchor="middle" x="95" y="80">4.500 TIENDAS</text>
+</g>
+<!-- PARKING & ACCESO VEHICULOS (Sur Exterior) -->
+<g id="sec-parking">
+<rect fill="#dde9ff" height="180" rx="8" stroke="#c2c6d5" stroke-width="1" width="170" x="35" y="320"></rect>
+<text class="font-label-sm-bold text-[11px] tracking-wider uppercase" fill="#424753" text-anchor="middle" x="120" y="350">PARKING P1 &amp; LOGÍSTICA</text>
+<!-- Parking slots sketch -->
+<line stroke="#c2c6d5" stroke-dasharray="2,2" x1="50" x2="190" y1="375" y2="375"></line>
+<line stroke="#c2c6d5" stroke-dasharray="2,2" x1="50" x2="190" y1="410" y2="410"></line>
+<line stroke="#c2c6d5" stroke-dasharray="2,2" x1="50" x2="190" y1="445" y2="445"></line>
+<text class="font-label-sm text-[9px]" fill="#727784" text-anchor="middle" x="120" y="480">VIAL SERVICIOS EXCLUSIVO</text>
+</g>
+<!-- MAIN FESTIVAL PERIMETER -->
+<rect fill="#ffffff" height="470" rx="12" stroke="#727784" stroke-width="1.5" width="730" x="230" y="35"></rect>
+<!-- ESCENARIO PRINCIPAL & BACKSTAGE -->
+<g id="sec-stage">
+<!-- Backstage & VIP -->
+<rect fill="#eff4ff" height="120" rx="8" stroke="#c2c6d5" stroke-width="1" width="230" x="710" y="45"></rect>
+<text class="font-label-sm-bold text-[11px] uppercase tracking-wider" fill="#004191" text-anchor="middle" x="825" y="70">ZONA VIP &amp; PRODUCTION</text>
+<rect fill="#cbdbf6" height="35" rx="4" stroke="#004191" stroke-width="0.8" width="120" x="800" y="85"></rect>
+<text class="font-label-sm-bold text-[9px]" fill="#001a42" text-anchor="middle" x="860" y="107">ACCESO BACKSTAGE</text>
+<!-- Escenario Base -->
+<rect fill="#0b1c30" height="100" rx="6" width="330" x="360" y="45"></rect>
+<text class="font-headline-sm text-[16px] tracking-widest font-bold uppercase" fill="#ffffff" text-anchor="middle" x="525" y="85">ESCENARIO PRINCIPAL</text>
+<!-- Towers & Sound -->
+<rect fill="#213146" height="45" rx="2" width="25" x="375" y="55"></rect>
+<rect fill="#213146" height="45" rx="2" width="25" x="650" y="55"></rect>
+<line stroke="#ffb596" stroke-width="3" x1="360" x2="690" y1="145" y2="145"></line>
+<text class="font-label-sm text-[10px]" fill="#c4d5ff" text-anchor="middle" x="525" y="115">LINE ARRAY &amp; SUB-BASS ARRAY 120dB</text>
+</g>
+<!-- ZONA NORTE / FOSO / PISTA CENTRAL -->
+<g id="sec-north">
+<!-- Foso -->
+<rect fill="#eff4ff" height="45" stroke="#c2c6d5" stroke-width="1" width="270" x="390" y="155"></rect>
+<text class="font-label-sm-bold text-[10px] tracking-wider uppercase" fill="#0b1c30" text-anchor="middle" x="525" y="182">FOSO DE SEGURIDAD (FRONT STAGE)</text>
+<!-- Pista Central -->
+<rect fill="#f8f9ff" height="145" stroke="#c2c6d5" stroke-dasharray="3,3" stroke-width="1" width="350" x="350" y="210"></rect>
+<text class="font-title-md text-[14px] uppercase tracking-wider font-semibold" fill="#424753" text-anchor="middle" x="525" y="280">ZONA NORTE · PISTA CENTRAL</text>
+<text class="font-label-sm text-[10px]" fill="#727784" text-anchor="middle" x="525" y="298">AFORO MÁX 18.000 PAX</text>
+</g>
+<!-- PASILLO NORTE & SUR -->
+<rect fill="#e6eeff" height="240" rx="4" stroke="#c2c6d5" stroke-width="1" width="70" x="250" y="195"></rect>
+<text class="font-label-sm-bold text-[10px] tracking-wider uppercase" fill="#424753" text-anchor="middle" transform="rotate(-90 285 320)" x="285" y="320">PASILLO OESTE</text>
+<rect fill="#e6eeff" height="240" rx="4" stroke="#c2c6d5" stroke-width="1" width="50" x="900" y="195"></rect>
+<text class="font-label-sm-bold text-[10px] tracking-wider uppercase" fill="#424753" text-anchor="middle" transform="rotate(90 925 320)" x="925" y="320">PASILLO ESTE</text>
+<!-- BAÑOS (Oeste de la zona central) -->
+<g id="sec-toilets">
+<rect fill="#eff4ff" height="75" rx="6" stroke="#c2c6d5" stroke-width="1" width="85" x="330" y="365"></rect>
+<text class="font-label-sm-bold text-[11px] uppercase tracking-wider" fill="#0b1c30" text-anchor="middle" x="372" y="395">BAÑOS</text>
+<text class="font-label-sm text-[9px]" fill="#727784" text-anchor="middle" x="372" y="415">40 MÓDULOS WC</text>
+</g>
+<!-- ZONA DE FOOD TRUCKS (Este) -->
+<g id="sec-foodtrucks">
+<rect fill="#eff4ff" height="155" rx="6" stroke="#c2c6d5" stroke-width="1" width="180" x="710" y="235"></rect>
+<text class="font-label-sm-bold text-[11px] uppercase tracking-wider" fill="#0b1c30" text-anchor="middle" x="800" y="260">ZONA FOOD TRUCKS</text>
+<!-- Stalls sketch -->
+<rect fill="#d3e3ff" height="20" rx="2" width="30" x="720" y="275"></rect>
+<rect fill="#d3e3ff" height="20" rx="2" width="30" x="760" y="275"></rect>
+<rect fill="#d3e3ff" height="20" rx="2" width="30" x="800" y="275"></rect>
+<rect fill="#d3e3ff" height="20" rx="2" width="30" x="840" y="275"></rect>
+<rect fill="#d3e3ff" height="20" rx="2" width="30" x="720" y="310"></rect>
+<rect fill="#d3e3ff" height="20" rx="2" width="30" x="760" y="310"></rect>
+<rect fill="#d3e3ff" height="20" rx="2" width="30" x="800" y="310"></rect>
+<rect fill="#d3e3ff" height="20" rx="2" width="30" x="840" y="310"></rect>
+<text class="font-label-sm text-[9px]" fill="#727784" text-anchor="middle" x="800" y="360">16 PUESTOS RESTAURACIÓN</text>
+</g>
+<!-- ESPACIO ABIERTO CENTRAL CIRCULACIÓN & ZONA SUR -->
+<rect fill="#f8f9ff" height="75" rx="6" stroke="#c2c6d5" stroke-width="1" width="265" x="430" y="365"></rect>
+<text class="font-label-sm-bold text-[11px] uppercase tracking-wider" fill="#0b1c30" text-anchor="middle" x="562" y="405">PLAZA CENTRAL &amp; ZONA SUR</text>
+<text class="font-label-sm text-[9px]" fill="#727784" text-anchor="middle" x="562" y="423">ÁREA DE TRÁNSITO LIBRE</text>
+<!-- ENTRADA Y CONTROL DE ACCESOS -->
+<g id="sec-entrance">
+<rect fill="#e6eeff" height="45" rx="4" stroke="#727784" stroke-width="1.2" width="265" x="430" y="450"></rect>
+<text class="font-label-sm-bold text-[11px] uppercase tracking-wider" fill="#001a42" text-anchor="middle" x="562" y="475">ENTRADA GENERAL · CONTROL TORNOS</text>
+</g>
+<!-- INFRAESTRUCTURA TÉCNICA: PUERTAS & EVACUACIONES -->
+<!-- Puerta A (Norte) -->
+<g transform="translate(245, 45)">
+<rect fill="#004191" height="20" rx="4" width="60"></rect>
+<text class="font-label-sm-bold text-[9px]" fill="#ffffff" text-anchor="middle" x="30" y="14">PUERTA A</text>
+</g>
+<!-- Puerta B (Este) -->
+<g transform="translate(940, 160)">
+<rect fill="#004191" height="50" rx="4" width="20"></rect>
+<text class="font-label-sm-bold text-[9px]" fill="#ffffff" text-anchor="middle" transform="rotate(90 10 30)" x="10" y="30">PUERTA B</text>
+</g>
+<!-- Puerta C (Sur con Badge Desvío Activo) -->
+<g transform="translate(710, 460)">
+<rect fill="#ba1a1a" height="24" rx="4" width="65"></rect>
+<text class="font-label-sm-bold text-[9px]" fill="#ffffff" text-anchor="middle" x="32" y="15">PUERTA C</text>
+<rect fill="#ffdad6" height="14" rx="3" stroke="#ba1a1a" stroke-width="0.8" width="80" x="-8" y="-12"></rect>
+<text class="font-label-sm-bold text-[7.5px] uppercase" fill="#93000a" text-anchor="middle" x="32" y="-3">DESVÍO ACTIVO</text>
+</g>
+<!-- Puerta D (Oeste emergencias) -->
+<g transform="translate(230, 455)">
+<rect fill="#004191" height="22" rx="4" width="60"></rect>
+<text class="font-label-sm-bold text-[9px]" fill="#ffffff" text-anchor="middle" x="30" y="15">PUERTA D</text>
+</g>
+<!-- EVACUATION DOORS (Verde Evacuación) -->
+<g transform="translate(480, 25)">
+<rect fill="#005236" height="18" rx="3" width="70"></rect>
+<text class="font-label-sm-bold text-[9px] uppercase tracking-wider" fill="#ffffff" text-anchor="middle" x="35" y="13">EVAC-N</text>
+</g>
+<g transform="translate(950, 390)">
+<rect fill="#005236" height="55" rx="3" width="18"></rect>
+<text class="font-label-sm-bold text-[9px] uppercase tracking-wider" fill="#ffffff" text-anchor="middle" transform="rotate(90 9 32)" x="9" y="32">EVAC-E</text>
+</g>
+<g transform="translate(525, 498)">
+<rect fill="#005236" height="18" rx="3" width="70"></rect>
+<text class="font-label-sm-bold text-[9px] uppercase tracking-wider" fill="#ffffff" text-anchor="middle" x="35" y="13">EVAC-S</text>
+</g>
+<g transform="translate(222, 120)">
+<rect fill="#005236" height="55" rx="3" width="18"></rect>
+<text class="font-label-sm-bold text-[9px] uppercase tracking-wider" fill="#ffffff" text-anchor="middle" transform="rotate(-90 9 32)" x="9" y="32">EVAC-O</text>
+</g>
+<!-- PUESTOS MÉDICOS AVANZADOS (PMA) -->
+<!-- PMA 1 (LIBRE) -->
+<g transform="translate(260, 80)">
+<rect fill="#ffffff" height="40" rx="6" stroke="#005236" stroke-width="1.5" width="55"></rect>
+<text class="font-label-sm-bold text-[10px]" fill="#005236" text-anchor="middle" x="27" y="17">PMA 1</text>
+<rect fill="#e6f9f1" height="12" rx="3" width="40" x="8" y="23"></rect>
+<text class="font-label-sm-bold text-[8px]" fill="#005236" text-anchor="middle" x="27" y="32">LIBRE</text>
+</g>
+<!-- PMA 2 (OCUPADO / SATURADO) -->
+<g transform="translate(860, 420)">
+<rect fill="#ffffff" height="40" rx="6" stroke="#ba1a1a" stroke-width="1.5" width="60"></rect>
+<text class="font-label-sm-bold text-[10px]" fill="#ba1a1a" text-anchor="middle" x="30" y="17">PMA 2</text>
+<rect fill="#ffdad6" height="12" rx="3" width="48" x="6" y="23"></rect>
+<text class="font-label-sm-bold text-[8px]" fill="#93000a" text-anchor="middle" x="30" y="32">OCUPADO</text>
+</g>
+<!-- PUNTO DE ENCUENTRO SEÑALIZADO -->
+<g transform="translate(340, 240)">
+<rect fill="#2170e4" height="36" rx="6" stroke="#ffffff" stroke-width="1" width="36"></rect>
+<path d="M18 7 L25 18 L11 18 Z" fill="#ffffff"></path>
+<circle cx="18" cy="24" fill="#ffffff" r="3"></circle>
+<text class="font-label-sm-bold text-[8px]" fill="#0b1c30" text-anchor="middle" x="18" y="44">PE-1</text>
+</g>
+<!-- HEATMAP GRADIENTS OVERLAY (Density layer) -->
+<g class="transition-opacity duration-300 opacity-90" id="density-heatmap-layer">
+<circle cx="525" cy="220" fill="url(#heat-north)" r="140"></circle>
+<circle cx="780" cy="300" fill="url(#heat-food)" r="95"></circle>
+</g>
+<!-- RESOURCE TRAJECTORIES WITH REAL-TIME MOVING BEACONS & DYNAMIC ETA -->
+<g class="transition-opacity duration-300 opacity-95" id="resource-routes-layer">
+<!-- Route 1: ALFA-2 from PMA 2 (x:875, y:425) to Food Trucks INC-102 (x:760, y:285) -->
+<g class="route-group cursor-pointer" id="route-alfa-2" onclick="openIncidentDrawer('INC-102')">
+<!-- Static baseline guide -->
+<path d="M 875 425 Q 840 340 775 292" fill="none" stroke="#cbd5e1" stroke-dasharray="2,2" stroke-width="1.8"></path>
+<!-- Animated active path stream -->
+<path class="route-active-stream" d="M 875 425 Q 840 340 775 292" fill="none" id="path-alfa-2" marker-end="url(#arrowhead)" stroke="#ba1a1a" stroke-linecap="round" stroke-width="2.6"></path>
+<!-- Real-time moving unit beacon ALFA-2 -->
+<g id="unit-marker-alfa-2" transform="translate(875, 425)">
+<!-- Beacon radar pulse -->
+<circle class="animate-ping" cx="0" cy="0" fill="#ba1a1a" opacity="0.2" r="10"></circle>
+<circle cx="0" cy="0" fill="#ba1a1a" r="6" stroke="#ffffff" stroke-width="2"></circle>
+<text fill="#ffffff" font-size="6" font-weight="bold" text-anchor="middle" x="0" y="2.5">+</text>
+<!-- Telemetry Live Tag with dynamic ETA & progress -->
+<g transform="translate(10, -18)">
+<rect fill="#ffffff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.12))" height="22" rx="5" stroke="#ba1a1a" stroke-width="1.2" width="138" x="0" y="0"></rect>
+<circle cx="8" cy="11" fill="#ba1a1a" r="3"></circle>
+<text class="font-label-sm-bold text-[9.5px] font-sans" fill="#0b1c30" x="16" y="10">ALFA-2 · Médica</text>
+<text class="font-mono text-[8.5px]" fill="#ba1a1a" id="eta-text-alfa-2" x="16" y="19">ETA 1m 08s · 32%</text>
+</g>
+</g>
+</g>
+<!-- Route 2: SEG-01 from East/West Access patrolling towards INC-101 Baños -->
+<g class="route-group cursor-pointer" id="route-seg-02" onclick="openIncidentDrawer('INC-101')">
+<path d="M 935 185 Q 680 195 385 385" fill="none" stroke="#cbd5e1" stroke-dasharray="2,2" stroke-width="1.8"></path>
+<path class="route-active-stream" d="M 935 185 Q 680 195 385 385" fill="none" id="path-seg-01" marker-end="url(#arrowhead)" stroke="#2170e4" stroke-linecap="round" stroke-width="2.6"></path>
+<!-- Real-time moving unit beacon SEG-01 -->
+<g id="unit-marker-seg-01" transform="translate(935, 185)">
+<circle class="animate-ping" cx="0" cy="0" fill="#2170e4" opacity="0.2" r="10"></circle>
+<circle cx="0" cy="0" fill="#2170e4" r="6" stroke="#ffffff" stroke-width="2"></circle>
+<text fill="#ffffff" font-size="6" font-weight="bold" text-anchor="middle" x="0" y="2.5">🛡</text>
+<!-- Telemetry Live Tag with dynamic ETA & progress -->
+<g transform="translate(10, -18)">
+<rect fill="#ffffff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.12))" height="22" rx="5" stroke="#2170e4" stroke-width="1.2" width="144" x="0" y="0"></rect>
+<circle cx="8" cy="11" fill="#2170e4" r="3"></circle>
+<text class="font-label-sm-bold text-[9.5px] font-sans" fill="#0b1c30" x="16" y="10">SEG-01 · Seguridad</text>
+<text class="font-mono text-[8.5px]" fill="#2170e4" id="eta-text-seg-01" x="16" y="19">ETA 2m 15s · 45%</text>
+</g>
+</g>
+</g>
+<!-- Route 3: APO-1 from Parking Logistics (x:195, y:410) towards INC-098 Plaza Central -->
+<g class="route-group cursor-pointer" id="route-apo-1" onclick="openIncidentDrawer('INC-098')">
+<path d="M 195 410 Q 360 435 545 395" fill="none" stroke="#cbd5e1" stroke-dasharray="2,2" stroke-width="1.8"></path>
+<path class="route-active-stream" d="M 195 410 Q 360 435 545 395" fill="none" id="path-apo-1" marker-end="url(#arrowhead)" stroke="#f59e0b" stroke-linecap="round" stroke-width="2.6"></path>
+<!-- Real-time moving unit beacon APO-1 -->
+<g id="unit-marker-apo-1" transform="translate(195, 410)">
+<circle class="animate-ping" cx="0" cy="0" fill="#f59e0b" opacity="0.2" r="10"></circle>
+<circle cx="0" cy="0" fill="#f59e0b" r="6" stroke="#ffffff" stroke-width="2"></circle>
+<text fill="#ffffff" font-size="6" font-weight="bold" text-anchor="middle" x="0" y="2.5">⚡</text>
+<!-- Telemetry Live Tag with dynamic ETA & progress -->
+<g transform="translate(10, -18)">
+<rect fill="#ffffff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.12))" height="22" rx="5" stroke="#f59e0b" stroke-width="1.2" width="134" x="0" y="0"></rect>
+<circle cx="8" cy="11" fill="#f59e0b" r="3"></circle>
+<text class="font-label-sm-bold text-[9.5px] font-sans" fill="#0b1c30" x="16" y="10">APO-1 · Técnico</text>
+<text class="font-mono text-[8.5px]" fill="#b45309" id="eta-text-apo-1" x="16" y="19">ETA 0m 48s · 68%</text>
+</g>
+</g>
+</g>
+</g>
+<!-- INCIDENT MARKERS (10 technical pins) -->
+<!-- 1. INC-104 Vital (North Stage Front) - STRICTLY NO RESOURCE ALLOCATED (DEFICIT 0 MEDICAS) -->
+<g class="cursor-pointer group" onclick="openIncidentDrawer('INC-104')">
+<circle cx="500" cy="180" fill="#00081a" r="14" stroke="#ffffff" stroke-width="2"></circle>
+<circle class="animate-spin origin-[500px_180px]" cx="500" cy="180" fill="none" r="18" stroke="#ba1a1a" stroke-dasharray="4,2" stroke-width="2.5"></circle>
+<text class="font-label-sm-bold text-[10px] pointer-events-none" fill="#ffffff" text-anchor="middle" x="500" y="184">!</text>
+<!-- Deficit Badge Floating over INC-104 -->
+<g transform="translate(500, 150)">
+<rect fill="#00081a" height="17" rx="4" stroke="#ba1a1a" stroke-width="1" width="132" x="-66" y="-8"></rect>
+<circle cx="-56" cy="0.5" fill="#ba1a1a" r="2.5"></circle>
+<text class="font-label-sm-bold text-[8.5px]" fill="#ffffff" text-anchor="middle" x="4" y="3.5">INC-104 · SIN ASIGNAR</text>
+</g>
+</g>
+<!-- 2. INC-102 Emergencia (Cluster count 3 at Food Trucks) -->
+<g class="cursor-pointer" onclick="openIncidentDrawer('INC-102')">
+<circle cx="760" cy="285" fill="#ba1a1a" r="12" stroke="#ffffff" stroke-width="1.8"></circle>
+<text class="font-label-sm-bold text-[10px] pointer-events-none" fill="#ffffff" text-anchor="middle" x="760" y="289">3</text>
+</g>
+<!-- 3. INC-098 Urgente (Plaza central) -->
+<g class="cursor-pointer" onclick="openIncidentDrawer('INC-098')">
+<circle cx="560" cy="390" fill="#f59e0b" r="11" stroke="#ffffff" stroke-width="1.8"></circle>
+<text class="font-label-sm-bold text-[9px] pointer-events-none" fill="#ffffff" text-anchor="middle" x="560" y="394">⚡</text>
+</g>
+<!-- 4. INC-101 Emergencia (Baños) -->
+<g class="cursor-pointer" onclick="openIncidentDrawer('INC-101')">
+<circle cx="370" cy="390" fill="#ba1a1a" r="11" stroke="#ffffff" stroke-width="1.8"></circle>
+<text class="font-label-sm-bold text-[9px] pointer-events-none" fill="#ffffff" text-anchor="middle" x="370" y="394">⚔</text>
+</g>
+<!-- 5. INC-095 Leve (VIP Access) -->
+<g class="cursor-pointer" onclick="openIncidentDrawer('INC-095')">
+<circle cx="860" cy="100" fill="#4edea3" r="10" stroke="#ffffff" stroke-width="1.8"></circle>
+<text class="font-label-sm-bold text-[8.5px] pointer-events-none" fill="#005236" text-anchor="middle" x="860" y="104">i</text>
+</g>
+<!-- 6. INC-093 Sin Clasificar (Parking) -->
+<g class="cursor-pointer" onclick="openIncidentDrawer('INC-093')">
+<circle cx="110" cy="400" fill="#75777d" r="10" stroke="#ffffff" stroke-width="1.8"></circle>
+<text class="font-label-sm-bold text-[9px] pointer-events-none" fill="#ffffff" text-anchor="middle" x="110" y="404">?</text>
+</g>
+<!-- 7. INC-105 Emergencia (Puerta C Desvío) -->
+<g class="cursor-pointer" onclick="openIncidentDrawer('INC-105')">
+<circle cx="725" cy="470" fill="#ba1a1a" r="11" stroke="#ffffff" stroke-width="1.8"></circle>
+<text class="font-label-sm-bold text-[9px] pointer-events-none" fill="#ffffff" text-anchor="middle" x="725" y="474">👥</text>
+</g>
+<!-- 8. INC-092 Leve (Campamento) -->
+<g class="cursor-pointer" onclick="openIncidentDrawer('INC-092')">
+<circle cx="95" cy="160" fill="#4edea3" r="10" stroke="#ffffff" stroke-width="1.8"></circle>
+<text class="font-label-sm-bold text-[8.5px] pointer-events-none" fill="#005236" text-anchor="middle" x="95" y="164">+</text>
+</g>
+<!-- 9. INC-089 Urgente (Puerta D) -->
+<g class="cursor-pointer" onclick="openIncidentDrawer('INC-089')">
+<circle cx="255" cy="465" fill="#f59e0b" r="10" stroke="#ffffff" stroke-width="1.8"></circle>
+<text class="font-label-sm-bold text-[8.5px] pointer-events-none" fill="#ffffff" text-anchor="middle" x="255" y="469">🔧</text>
+</g>
+<!-- 10. INC-087 Urgente (Pista Central este) -->
+<g class="cursor-pointer" onclick="openIncidentDrawer('INC-087')">
+<circle cx="640" cy="270" fill="#f59e0b" r="10" stroke="#ffffff" stroke-width="1.8"></circle>
+<text class="font-label-sm-bold text-[8.5px] pointer-events-none" fill="#ffffff" text-anchor="middle" x="640" y="274">+</text>
+</g>
+</svg>
+</div>
+<!-- DISCREET BOTTOM-LEFT HUD LEGEND (2 compact rows) -->
+<div class="absolute bottom-2 left-2 z-20 bg-surface-container-lowest/95 backdrop-blur px-space-sm py-1.5 rounded-xl border border-outline-variant shadow-sm flex flex-col gap-1 pointer-events-auto">
+<!-- Row 1: Severity -->
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-outline text-[10px]">GRAVEDAD:</span>
+<div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#00081a] ring-1 ring-black"></span><span class="text-on-surface">Vital</span></div>
+<div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#ba1a1a]"></span><span class="text-on-surface">Emergencia</span></div>
+<div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span><span class="text-on-surface">Urgente</span></div>
+<div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#4edea3]"></span><span class="text-on-surface">Leve</span></div>
+<div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#75777d]"></span><span class="text-on-surface">Sin clasificar</span></div>
+</div>
+<!-- Row 2: Category -->
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm text-on-surface-variant">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-outline text-[10px]">TIPO:</span>
+<span class="">+ Médica</span>
+<span class="">🛡 Agresión</span>
+<span class="">👥 Aglomeración</span>
+<span class="">⚡ Clima</span>
+<span class="">🔧 Infraestructura</span>
+<span class="">ℹ Otro</span>
+</div>
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm pt-0.5 border-t border-outline-variant/60"><span class="font-label-sm-bold text-label-sm-bold uppercase text-outline text-[10px]">TRAYECTOS EN TIEMPO REAL:</span><div class="flex items-center gap-1.5"><svg class="overflow-visible" height="10" width="28"><line stroke="#ba1a1a" stroke-dasharray="4 2" stroke-width="2" x1="1" x2="21" y1="5" y2="5"></line><polygon fill="#ba1a1a" points="20,2 26,5 20,8"></polygon></svg><span class="text-on-surface">Balizas móviles con ETA dinámico</span></div><span class="text-outline text-[10px]">·</span><span class="text-error font-label-sm-bold">(INC-104 en foso: SIN baliza / Sin médica asignada)</span></div></div>
+</div>
+<!-- BOTTOM: TACTICAL INCIDENT QUEUE TABLE (~220px fixed vertical scroll) -->
+<div class="h-[210px] border-t border-outline-variant bg-surface-container-lowest flex flex-col">
+<!-- Table Toolbar -->
+<div class="px-space-md py-1.5 bg-surface-container-low flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-space-md">
+<span class="font-label-sm-bold text-label-sm-bold text-on-surface uppercase tracking-wider">COLA ACTIVA DE INCIDENTES EN VIVO</span>
+<span class="px-space-xs py-[1px] bg-secondary-container text-on-secondary-container rounded font-label-sm-bold text-label-sm-bold">10 TOTALES</span>
+</div>
+<div class="flex items-center gap-space-sm text-on-surface-variant font-label-sm text-label-sm">
+<span class="">Sincronización en tiempo real con Agente HR</span>
+<span class="w-2 h-2 rounded-full bg-[#4edea3]"></span>
+</div>
+</div>
+<!-- Scrollable Incident Rows -->
+<div class="flex-1 overflow-y-auto overflow-x-hidden">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-low text-on-surface-variant font-label-sm-bold text-label-sm-bold uppercase border-b border-outline-variant z-10">
+<tr>
+<th class="py-1.5 pl-space-md pr-space-xs font-semibold">Gravedad</th>
+<th class="py-1.5 px-space-xs font-semibold">ID / Tipo</th>
+<th class="py-1.5 px-space-xs font-semibold">Sector</th>
+<th class="py-1.5 px-space-xs font-semibold">Hora</th>
+<th class="py-1.5 px-space-xs font-semibold">Estado</th>
+<th class="py-1.5 px-space-xs font-semibold">Recursos MANDO</th>
+<th class="py-1.5 pr-space-md px-space-xs font-semibold text-right">Agente HR</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container font-body-md text-body-md">
+<!-- Incident 104 (CRITICAL) -->
+<tr class="hover:bg-error-container/20 cursor-pointer transition-colors bg-error-container/10" onclick="openIncidentDrawer('INC-104')">
+<td class="py-2 pl-space-md pr-space-xs">
+<span class="inline-flex items-center gap-1.5 px-2 py-[2px] rounded-full bg-[#00081a] text-white font-label-sm-bold text-label-sm-bold shadow-[0_0_0_2px_#00081a]">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span>VITAL
+                  </span>
+</td>
+<td class="py-2 px-space-xs font-body-md-bold text-body-md-bold text-on-surface">
+<span class="text-error font-mono mr-1">INC-104</span> Parada cardio / Foso
+                </td>
+<td class="py-2 px-space-xs text-on-surface">FOSO ESCENARIO (Norte)</td>
+<td class="py-2 px-space-xs text-on-surface-variant font-mono">22:14:02</td>
+<td class="py-2 px-space-xs">
+<span class="px-2 py-[1px] rounded bg-error text-white font-label-sm-bold text-label-sm-bold uppercase">NUEVO (112)</span>
+</td>
+<td class="py-2 px-space-xs text-error font-body-md-bold text-body-md-bold">
+                  Déficit: 0 médicas libres
+                </td>
+<td class="py-2 pr-space-md px-space-xs text-right">
+<span class="px-2 py-[2px] rounded-full bg-error-container text-on-error-container font-label-sm-bold text-label-sm-bold">
+                    Requiere humano urgente
+                  </span>
+</td>
+</tr>
+<!-- Incident 102 -->
+<tr class="hover:bg-surface-container-low cursor-pointer transition-colors" onclick="openIncidentDrawer('INC-102')">
+<td class="py-2 pl-space-md pr-space-xs">
+<span class="inline-flex items-center gap-1 px-2 py-[2px] rounded-full bg-error-container text-on-error-container border border-error font-label-sm-bold text-label-sm-bold">
+                    EMERGENCIA
+                  </span>
+</td>
+<td class="py-2 px-space-xs text-on-surface">
+<span class="text-primary font-mono mr-1">INC-102</span> Lipotimia y asfixia
+                </td>
+<td class="py-2 px-space-xs text-on-surface">FOOD TRUCKS ESTE</td>
+<td class="py-2 px-space-xs text-on-surface-variant font-mono">22:12:15</td>
+<td class="py-2 px-space-xs">
+<span class="px-2 py-[1px] rounded bg-secondary-container text-white font-label-sm-bold text-label-sm-bold">ASIGNADO</span>
+</td>
+<td class="py-2 px-space-xs text-on-surface-variant font-mono" id="table-status-alfa2">ALFA-2 (En ruta · ETA 1m 08s)</td>
+<td class="py-2 pr-space-md px-space-xs text-right">
+<span class="px-2 py-[2px] rounded-full bg-surface-container text-primary font-label-sm text-label-sm">
+                    Extracción lista
+                  </span>
+</td>
+</tr>
+<!-- Incident 101 -->
+<tr class="hover:bg-surface-container-low cursor-pointer transition-colors" onclick="openIncidentDrawer('INC-101')">
+<td class="py-2 pl-space-md pr-space-xs">
+<span class="inline-flex items-center gap-1 px-2 py-[2px] rounded-full bg-error-container text-on-error-container border border-error font-label-sm-bold text-label-sm-bold">
+                    EMERGENCIA
+                  </span>
+</td>
+<td class="py-2 px-space-xs text-on-surface">
+<span class="text-primary font-mono mr-1">INC-101</span> Conato riña y botellas
+                </td>
+<td class="py-2 px-space-xs text-on-surface">BAÑOS OESTE</td>
+<td class="py-2 px-space-xs text-on-surface-variant font-mono">22:11:40</td>
+<td class="py-2 px-space-xs">
+<span class="px-2 py-[1px] rounded bg-secondary text-white font-label-sm-bold text-label-sm-bold">INTERVINIENDO</span>
+</td>
+<td class="py-2 px-space-xs text-on-surface-variant font-mono" id="table-status-seg01">SEG-01 (En ruta · ETA 2m 15s)</td>
+<td class="py-2 pr-space-md px-space-xs text-right">
+<span class="px-2 py-[2px] rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+                    Canal Telegram cerrado
+                  </span>
+</td>
+</tr>
+<!-- Incident 098 -->
+<tr class="hover:bg-surface-container-low cursor-pointer transition-colors" onclick="openIncidentDrawer('INC-098')">
+<td class="py-2 pl-space-md pr-space-xs">
+<span class="inline-flex items-center gap-1 px-2 py-[2px] rounded-full bg-[#fef3c7] text-[#92400e] border border-[#f59e0b] font-label-sm-bold text-label-sm-bold">
+                    URGENTE
+                  </span>
+</td>
+<td class="py-2 px-space-xs text-on-surface">
+<span class="text-primary font-mono mr-1">INC-098</span> Cuadro eléctrico chispeante
+                </td>
+<td class="py-2 px-space-xs text-on-surface">PLAZA CENTRAL SUR</td>
+<td class="py-2 px-space-xs text-on-surface-variant font-mono">22:08:11</td>
+<td class="py-2 px-space-xs">
+<span class="px-2 py-[1px] rounded bg-secondary-container text-white font-label-sm-bold text-label-sm-bold">ASIGNADO</span>
+</td>
+<td class="py-2 px-space-xs text-on-surface-variant font-mono" id="table-status-apo1">APO-1 (En ruta · ETA 0m 48s)</td>
+<td class="py-2 pr-space-md px-space-xs text-right">
+<span class="px-2 py-[2px] rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+                    Aviso verificado
+                  </span>
+</td>
+</tr>
+<!-- Incident 095 -->
+<tr class="hover:bg-surface-container-low cursor-pointer transition-colors" onclick="openIncidentDrawer('INC-095')">
+<td class="py-2 pl-space-md pr-space-xs">
+<span class="inline-flex items-center gap-1 px-2 py-[2px] rounded-full bg-[#e6f9f1] text-[#005236] border border-[#4edea3] font-label-sm-bold text-label-sm-bold">
+                    LEVE
+                  </span>
+</td>
+<td class="py-2 px-space-xs text-on-surface">
+<span class="text-primary font-mono mr-1">INC-095</span> Torcedura de tobillo
+                </td>
+<td class="py-2 px-space-xs text-on-surface">ZONA VIP ACCESO</td>
+<td class="py-2 px-space-xs text-on-surface-variant font-mono">22:02:50</td>
+<td class="py-2 px-space-xs">
+<span class="px-2 py-[1px] rounded bg-surface-container text-on-surface-variant font-label-sm-bold text-label-sm-bold">RESUELTO</span>
+</td>
+<td class="py-2 px-space-xs text-on-surface-variant font-mono">PMA 1 (Autotratado)</td>
+<td class="py-2 pr-space-md px-space-xs text-right">
+<span class="px-2 py-[2px] rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+                    Finalizado
+                  </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- REGION 2: RIGHT ACCORDION COLUMN (Width ~340px: Recursos vs Chat Agente HR) -->
+<aside class="w-[340px] bg-surface border-l border-outline-variant flex flex-col h-full overflow-hidden shrink-0 z-20">
+<!-- ACCORDION ITEM 1: BLOQUE RECURSOS (Active by default) -->
+<div class="flex-1 flex flex-col overflow-hidden border-b border-outline-variant bg-surface-container-lowest" id="accordion-resources">
+<!-- Header / Toggle -->
+<button class="w-full h-11 px-space-md bg-surface-container-low flex items-center justify-between border-b border-outline-variant hover:bg-surface-container transition-colors" onclick="toggleRightPanel('resources')">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">badge</span>
+<span class="font-headline-sm text-headline-sm text-on-surface uppercase tracking-wider text-[14px]">Recursos Terrestres</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[20px]" id="icon-resources-chevron">expand_less</span>
+</button>
+<!-- Resources Content Pane -->
+<div class="flex-1 p-space-md overflow-y-auto flex flex-col gap-space-md" id="content-resources">
+<!-- Capacidad 1: Médicos -->
+<div class="p-space-sm bg-surface-container-lowest rounded-xl border border-outline-variant flex flex-col gap-space-xs shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-on-surface">Equipos Médicos SVA</span>
+<span class="px-2 py-[1px] bg-error-container text-on-error-container rounded-full font-label-sm-bold text-label-sm-bold">0 / 2 LIBRES - AGOTADO</span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs mt-1">
+<div class="flex items-center justify-between p-2 rounded-lg bg-error/10 border border-error/30">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-body-md-bold text-body-md-bold text-on-surface">ALFA-1</span>
+</div>
+<span class="font-label-sm text-label-sm text-error">FOSO</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-error/10 border border-error/30">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+<span class="font-body-md-bold text-body-md-bold text-on-surface">ALFA-2</span>
+</div>
+<span class="font-label-sm text-label-sm text-error font-mono" id="sidebar-alfa2-eta">RUTA (1m)</span>
+</div>
+</div>
+</div>
+<!-- Capacidad 2: Seguridad -->
+<div class="p-space-sm bg-surface-container-lowest rounded-xl border border-outline-variant flex flex-col gap-space-xs shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-on-surface">Seguridad y Control</span>
+<span class="px-2 py-[1px] bg-surface-container text-primary rounded-full font-label-sm-bold text-label-sm-bold">2 / 3 LIBRES</span>
+</div>
+<div class="grid grid-cols-3 gap-1.5 mt-1">
+<div class="p-1.5 rounded-lg bg-secondary/10 border border-secondary/20 flex flex-col items-center">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">SEG-01</span>
+<span class="font-label-sm text-[10px] text-primary font-mono" id="sidebar-seg01-eta">RUTA (2m)</span>
+</div>
+<div class="p-1.5 rounded-lg bg-[#e6f9f1] border border-[#4edea3]/40 flex flex-col items-center">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">SEG-02</span>
+<span class="font-label-sm text-[10px] text-[#005236]">Libre</span>
+</div>
+<div class="p-1.5 rounded-lg bg-[#e6f9f1] border border-[#4edea3]/40 flex flex-col items-center">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">SEG-03</span>
+<span class="font-label-sm text-[10px] text-[#005236]">Libre</span>
+</div>
+</div>
+</div>
+<!-- Capacidad 3: Apoyo y Logística -->
+<div class="p-space-sm bg-surface-container-lowest rounded-xl border border-outline-variant flex flex-col gap-space-xs shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-on-surface">Apoyo e Infraestructura</span>
+<span class="px-2 py-[1px] bg-surface-container text-on-surface-variant rounded-full font-label-sm-bold text-label-sm-bold">1 / 2 LIBRES</span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs mt-1">
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container border border-outline-variant">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">APO-1</span>
+<span class="font-label-sm text-label-sm text-tertiary-container font-mono" id="sidebar-apo1-eta">RUTA (45s)</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-[#e6f9f1] border border-[#4edea3]/40">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">APO-2</span>
+<span class="font-label-sm text-label-sm text-[#005236]">Libre</span>
+</div>
+</div>
+</div>
+<!-- Capacidad 4: Coordinación -->
+<div class="p-space-sm bg-surface-container-lowest rounded-xl border border-outline-variant flex flex-col gap-space-xs shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-on-surface">Mesa Coordinación</span>
+<span class="px-2 py-[1px] bg-surface-container text-primary rounded-full font-label-sm-bold text-label-sm-bold">0 / 1 LIBRES</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-between">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">COORD-MANDO</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">OCUPADA (HR Link)</span>
+</div>
+</div>
+<!-- Single Micro Bar Chart: "Abiertos por gravedad" -->
+<div class="p-space-sm bg-surface-container-lowest rounded-xl border border-outline-variant flex flex-col gap-2 mt-auto">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-on-surface tracking-wider">Abiertos por Gravedad</span>
+<div class="flex flex-col gap-1.5 font-label-sm text-label-sm">
+<div class="flex items-center gap-2">
+<span class="w-16 font-body-md-medium text-body-md-medium">Vital (1)</span>
+<div class="flex-1 bg-surface-container rounded-full h-2 overflow-hidden">
+<div class="bg-[#00081a] h-full w-[25%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-16 font-body-md-medium text-body-md-medium">Emerg. (3)</span>
+<div class="flex-1 bg-surface-container rounded-full h-2 overflow-hidden">
+<div class="bg-[#ba1a1a] h-full w-[75%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-16 font-body-md-medium text-body-md-medium">Urg. (4)</span>
+<div class="flex-1 bg-surface-container rounded-full h-2 overflow-hidden">
+<div class="bg-[#f59e0b] h-full w-[100%] rounded-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-16 font-body-md-medium text-body-md-medium">Leve (2)</span>
+<div class="flex-1 bg-surface-container rounded-full h-2 overflow-hidden">
+<div class="bg-[#4edea3] h-full w-[50%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ACCORDION ITEM 2: BLOQUE CHAT · AGENTE HR (Collapsed by default, expands to full) -->
+<div class="flex flex-col overflow-hidden bg-surface-container-lowest h-11 transition-all duration-200" id="accordion-chat">
+<!-- Header / Toggle -->
+<button class="w-full h-11 px-space-md bg-surface-container-low flex items-center justify-between border-t border-outline-variant hover:bg-surface-container transition-colors shrink-0" onclick="toggleRightPanel('chat')">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-[#4edea3] animate-pulse"></span>
+<span class="font-headline-sm text-headline-sm text-on-surface uppercase tracking-wider text-[14px]">Chat · Agente HR</span>
+<span class="px-1.5 py-[1px] bg-secondary-fixed text-on-secondary-fixed text-[10px] rounded font-label-sm-bold uppercase">Telegram</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[20px]" id="icon-chat-chevron">expand_more</span>
+</button>
+<!-- Chat Full Body Pane -->
+<div class="flex-1 flex flex-col overflow-hidden hidden bg-surface-container-lowest" id="content-chat">
+<!-- Operator Telemetry HUD Controls -->
+<div class="p-space-sm bg-surface-container-low border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-1">
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant text-on-surface rounded font-label-sm-bold text-label-sm-bold flex items-center gap-1 hover:bg-surface-container">
+<span class="material-symbols-outlined text-[14px]">headphones</span>
+<span class="">ESCUCHAR</span>
+</button>
+<button class="px-2 py-1 bg-primary text-on-primary rounded font-label-sm-bold text-label-sm-bold flex items-center gap-1 hover:bg-secondary-container">
+<span class="material-symbols-outlined text-[14px]">pan_tool</span>
+<span class="">TOMAR CONTROL</span>
+</button>
+</div>
+<span class="font-mono text-outline font-label-sm text-[10px]">HR-SYN-88</span>
+</div>
+<!-- HR Live Extraction Card -->
+<div class="m-space-sm p-space-sm rounded-xl bg-surface-container-high border border-outline-variant flex flex-col gap-1">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-primary tracking-wider">EXTRACCIÓN DEL AGENTE HR</span>
+<div class="grid grid-cols-2 gap-1 text-[11px]">
+<div><span class="text-outline">Tipo:</span> <strong class="text-on-surface">Médica (Parada)</strong></div>
+<div><span class="text-outline">Sector:</span> <strong class="text-on-surface">Foso Escenario</strong></div>
+<div><span class="text-outline">Gravedad:</span> <strong class="text-error">VITAL (N5)</strong></div>
+<div><span class="text-outline">Perfil:</span> <strong class="text-on-surface">Menor s/ tutor</strong></div>
+</div>
+</div>
+<!-- Chat Messages Scroll View -->
+<div class="flex-1 p-space-sm overflow-y-auto flex flex-col gap-space-sm text-body-md font-body-md">
+<!-- Message Citizen -->
+<div class="self-start max-w-[85%] flex flex-col gap-0.5">
+<div class="bg-surface-container-low border border-outline-variant p-2 rounded-xl rounded-tl-none text-on-surface">
+                ¡Por favor ayuda! Mi amigo se ha desplomado en primera fila, la gente está empujando y no puede respirar.
+              </div>
+<span class="font-mono text-[9.5px] text-outline ml-1">Ciudadano · 22:13:48</span>
+</div>
+<!-- Message HR Agent -->
+<div class="self-end max-w-[85%] flex flex-col gap-0.5 items-end">
+<div class="bg-primary-fixed text-on-primary-fixed p-2 rounded-xl rounded-tr-none">
+                Mantén la calma. Estoy avisando al puesto de mando del festival. ¿Respira o responde si le hablas?
+              </div>
+<span class="font-mono text-[9.5px] text-outline mr-1">Agente HR · 22:13:54</span>
+</div>
+<!-- Message Citizen -->
+<div class="self-start max-w-[85%] flex flex-col gap-0.5">
+<div class="bg-surface-container-low border border-outline-variant p-2 rounded-xl rounded-tl-none text-on-surface">
+                No contesta, tiene los ojos cerrados y los labios blancos. Tenemos 16 años por favor que venga alguien ya.
+              </div>
+<span class="font-mono text-[9.5px] text-outline ml-1">Ciudadano · 22:14:02</span>
+</div>
+<!-- Message HR Agent -->
+<div class="self-end max-w-[85%] flex flex-col gap-0.5 items-end">
+<div class="bg-primary-fixed text-on-primary-fixed p-2 rounded-xl rounded-tr-none font-body-md-medium">
+                Incidente clasificado como VITAL. Mesa MANDO informada. Protégele la cabeza del público circundante.
+              </div>
+<span class="font-mono text-[9.5px] text-outline mr-1">Agente HR · 22:14:06</span>
+</div>
+</div>
+<!-- Operator Prompt Input Bar -->
+<div class="p-space-sm bg-surface-container-low border-t border-outline-variant flex items-center gap-space-xs">
+<input class="flex-1 h-8 bg-surface-container-lowest border border-outline-variant rounded-lg px-2 text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary" placeholder="Intervenir como Operador MANDO..." type="text"/>
+<button class="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center hover:bg-secondary-container">
+<span class="material-symbols-outlined text-[16px]">send</span>
+</button>
+</div>
+</div>
+</div>
+</aside>
+</div>
+<!-- REGION 3: SLIDING DRAWERS / MODALS -->
+<!-- DRAWER 1: FICHA DE INCIDENTE (~460px Slide Over from Right) -->
+<div class="fixed top-[52px] right-0 bottom-0 w-[460px] bg-surface-container-lowest border-l border-outline-variant shadow-xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col" id="drawer-incident">
+<!-- Drawer Header -->
+<div class="p-space-md bg-surface-container-low border-b border-outline-variant flex items-start justify-between">
+<div class="flex items-start gap-space-sm">
+<div class="w-10 h-10 rounded-xl bg-error-container text-on-error-container flex items-center justify-center font-bold text-[20px] shrink-0">
+          !
+        </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">INC-104</span>
+<span class="px-2 py-[1px] rounded-full bg-[#00081a] text-white font-label-sm-bold text-label-sm-bold">VITAL</span>
+<span class="px-2 py-[1px] rounded-full bg-error-container text-on-error-container font-label-sm-bold text-label-sm-bold">MENOR DE EDAD</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface-variant">Médica · Parada cardio / Desmayo masivo · FOSO ESCENARIO</span>
+<span class="font-mono text-outline font-label-sm text-label-sm">Notificado: 22:14:02 CET · Triage N5</span>
+</div>
+</div>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container flex items-center justify-center text-outline hover:text-on-surface" onclick="closeIncidentDrawer()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Drawer Content Body -->
+<div class="flex-1 p-space-md overflow-y-auto flex flex-col gap-space-md">
+<!-- Mandatory Confirmation Banner -->
+<div class="p-space-sm bg-error-container/40 border border-error rounded-xl flex items-center gap-space-sm text-on-error-container">
+<span class="material-symbols-outlined text-error text-[22px]">gavel</span>
+<div class="flex flex-col">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-error">REQUIERE CONFIRMACIÓN HUMANA</span>
+<span class="font-body-md text-body-md">La máquina propone el protocolo, la Mesa MANDO firma la ejecución legal.</span>
+</div>
+</div>
+<!-- Caller Direct Quote -->
+<div class="p-space-sm bg-surface-container rounded-xl flex flex-col gap-1 border border-outline-variant">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-outline">Transcripción Directa del Denunciante:</span>
+<p class="font-body-md-medium text-body-md-medium text-on-surface italic">
+          "Mi amigo se ha desplomado en primera fila, la gente está empujando y no puede respirar... no contesta, tiene los ojos cerrados y los labios blancos."
+        </p>
+</div>
+<!-- Action Proposals Form -->
+<div class="flex flex-col gap-space-sm">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-on-surface tracking-wider">Actuaciones Propuestas para Validación:</span>
+<label class="flex items-start gap-space-sm p-space-sm rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-0" type="checkbox"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">Parar el espectáculo y pedir silencio</span>
+<span class="px-1.5 py-[1px] bg-error text-white font-label-sm-bold text-[10px] rounded uppercase">OBLIGATORIA</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Comunica con mesa de sonido y producción artística.</span>
+</div>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-0" type="checkbox"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">Escalar a 112 / recurso externo (SVA)</span>
+<span class="px-1.5 py-[1px] bg-error text-white font-label-sm-bold text-[10px] rounded uppercase">OBLIGATORIA</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Llamada automática prioritaria a centralita SUMMA 112.</span>
+</div>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-0" type="checkbox"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">Activar protocolo de menor: localizar tutor</span>
+<span class="px-1.5 py-[1px] bg-primary text-white font-label-sm-bold text-[10px] rounded uppercase">POR PERFIL</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Cruce con base de datos de pulseras RFID de menores.</span>
+</div>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low cursor-pointer">
+<input class="mt-1 w-4 h-4 rounded text-primary focus:ring-0" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">Abrir pasillo de evacuación sanitaria EVAC-N</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">SEG-02 y SEG-03 asignados a despejar foso.</span>
+</div>
+</label>
+</div>
+<!-- Resource Block Alert -->
+<div class="p-space-sm rounded-xl bg-error-container/30 border border-error/50 flex flex-col gap-1">
+<span class="font-label-sm-bold text-label-sm-bold text-error uppercase">SIN DISPONIBILIDAD INMEDIATA MÉDICA:</span>
+<span class="font-body-md text-body-md text-on-surface">
+          ALFA-1 y ALFA-2 ocupadas en Zona Norte y Food Trucks. Se propone reasignación forzada de ALFA-2 o espera de UVI externa (14 min).
+        </span>
+</div>
+</div>
+<!-- Drawer Sticky Footer -->
+<div class="p-space-md bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase">AUTORIDAD DE FIRMA</span>
+<span class="font-body-md-bold text-body-md-bold text-on-surface">Mesa MANDO Principal</span>
+</div>
+<button class="px-space-md py-2 bg-error text-white rounded-lg font-body-md-bold text-body-md-bold hover:bg-on-error-container shadow-md flex items-center gap-2" onclick="confirmIncidentAction()">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span class="">Confirmar decisión</span>
+</button>
+</div>
+</div>
+<!-- DRAWER 2: MESA DE INYECCIÓN (~420px Slide Over from Right) -->
+<div class="fixed top-[52px] right-0 bottom-0 w-[420px] bg-surface-container-lowest border-l border-outline-variant shadow-xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col" id="drawer-injection">
+<!-- Drawer Header -->
+<div class="p-space-md bg-surface-container-low border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">playlist_add</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Mesa de Inyección</span>
+</div>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container flex items-center justify-center text-outline hover:text-on-surface" onclick="closeInjectionDrawer()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Injection Content Body -->
+<div class="flex-1 p-space-md overflow-y-auto flex flex-col gap-space-lg">
+<!-- Preset Scenarios Comparative -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-on-surface tracking-wider">Cenarios Preconfigurados de Estrés</span>
+<!-- Day 1 Normal -->
+<div class="p-space-sm bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">Día 1 — Carga Normal</span>
+<span class="px-2 py-[1px] bg-[#e6f9f1] text-[#005236] font-label-sm-bold text-label-sm-bold rounded">CONTROLADO</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">
+            Incidentes dispersos leves, aforos al 60%, recursos holgados en todos los sectores.
+          </p>
+<button class="w-full py-1.5 bg-surface-container hover:bg-secondary-fixed text-primary rounded-lg font-body-md-bold text-body-md-bold transition-colors" onclick="loadScenario('normal')">
+            Cargar escenario normal
+          </button>
+</div>
+<!-- Day 2 Disaster / Saturation -->
+<div class="p-space-sm bg-error-container/20 border border-error rounded-xl flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">Día 2 — El Plan No Vale</span>
+<span class="px-2 py-[1px] bg-error text-white font-label-sm-bold text-label-sm-bold rounded">SATURACIÓN</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">
+            Saturación médica simultánea, aglomeración crítica en front stage y tapón en Puerta C.
+          </p>
+<button class="w-full py-1.5 bg-error text-white hover:bg-on-error-container rounded-lg font-body-md-bold text-body-md-bold transition-colors" onclick="loadScenario('stress')">
+            Cargar escenario de saturación
+          </button>
+</div>
+</div>
+<!-- Manual Incident Injection Form -->
+<div class="flex flex-col gap-space-sm">
+<span class="font-label-sm-bold text-label-sm-bold uppercase text-on-surface tracking-wider">Inyectar Aviso Manual</span>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline">Texto del aviso libre o transcripción de radio:</label>
+<textarea class="w-full p-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary" id="manual-incident-text" placeholder="Ej: Tres personas intoxicadas en carpa este no responden..." rows="3"></textarea>
+</div>
+<button class="py-2 bg-primary text-on-primary rounded-lg font-body-md-bold text-body-md-bold hover:bg-secondary-container transition-colors flex items-center justify-center gap-2" onclick="simulateManualInjection()">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+<span class="">Clasificar e inyectar</span>
+</button>
+<!-- Simulated Triage Result -->
+<div class="hidden p-space-sm bg-surface-container rounded-xl border border-outline-variant flex flex-col gap-1" id="injection-result">
+<span class="font-label-sm-bold text-label-sm-bold text-primary uppercase">Resultado Clasificación IA:</span>
+<div class="flex items-center justify-between text-body-md">
+<span class="">Gravedad deducida:</span>
+<span class="font-bold text-error">EMERGENCIA (N4)</span>
+</div>
+<div class="flex items-center justify-between text-body-md">
+<span class="">Sector asignado:</span>
+<span class="font-bold text-on-surface">ZONA ESTE FOOD TRUCKS</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Drawer Footer -->
+<div class="p-space-md bg-surface-container-low border-t border-outline-variant flex items-center justify-end">
+<button class="px-space-md py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md hover:bg-surface-container" onclick="closeInjectionDrawer()">
+        Cerrar mesa
+      </button>
+</div>
+</div>
+<!-- Notification Toast Alert Overlay -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#00081a] text-white px-space-md py-2 rounded-xl shadow-lg border border-outline flex items-center gap-space-sm z-50 transform translate-y-24 opacity-0 transition-all duration-300" id="mando-toast">
+<span class="material-symbols-outlined text-[#4edea3] text-[20px]">check_circle</span>
+<span class="font-body-md-medium text-body-md-medium" id="toast-message">Acción registrada en MANDO</span>
+</div>
+</div>
+<script>
+  // Plan Status Toggle
+  let isUnderStress = true;
+  function togglePlanStatus() {
+    isUnderStress = !isUnderStress;
+    const pill = document.getElementById('tactical-status-pill');
+    if (isUnderStress) {
+      pill.innerHTML = `
+        <span class="w-2.5 h-2.5 rounded-full bg-error animate-ping"></span>
+        <div class="flex flex-col">
+          <span class="font-label-sm-bold text-label-sm-bold uppercase text-error tracking-wider">El plan ha dejado de valer</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Déficit: 0 equipos médicos libres para 2 incidentes vitales</span>
+        </div>
+        <button onclick="togglePlanStatus()" class="ml-space-xs px-space-xs py-1 text-primary hover:bg-surface-container rounded font-label-sm-bold text-label-sm-bold">Alternar</button>
+      `;
+    } else {
+      pill.innerHTML = `
+        <span class="w-2.5 h-2.5 rounded-full bg-[#4edea3]"></span>
+        <div class="flex flex-col">
+          <span class="font-label-sm-bold text-label-sm-bold uppercase text-[#005236] tracking-wider">Operación Bajo Control</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Capacidad suficiente · Recursos disponibles</span>
+        </div>
+        <button onclick="togglePlanStatus()" class="ml-space-xs px-space-xs py-1 text-primary hover:bg-surface-container rounded font-label-sm-bold text-label-sm-bold">Alternar</button>
+      `;
+    }
+  }
+
+  // Heatmap Density Toggle
+  let densityVisible = true;
+  function toggleDensityLayer() {
+    const layer = document.getElementById('density-heatmap-layer');
+    const btn = document.getElementById('density-btn');
+    densityVisible = !densityVisible;
+    if (densityVisible) {
+      layer.classList.remove('opacity-0');
+      layer.classList.add('opacity-90');
+      btn.classList.add('bg-surface-container', 'text-primary');
+    } else {
+      layer.classList.remove('opacity-90');
+      layer.classList.add('opacity-0');
+      btn.classList.remove('bg-surface-container', 'text-primary');
+    }
+  }
+
+  // Routes Layer Toggle
+  let routesVisible = true;
+  function toggleRoutesLayer() {
+    const layer = document.getElementById('resource-routes-layer');
+    const btn = document.getElementById('routes-btn');
+    routesVisible = !routesVisible;
+    if (routesVisible) {
+      layer.classList.remove('opacity-0');
+      layer.classList.add('opacity-95');
+      btn.classList.add('bg-surface-container', 'text-primary');
+    } else {
+      layer.classList.remove('opacity-95');
+      layer.classList.add('opacity-0');
+      btn.classList.remove('bg-surface-container', 'text-primary');
+    }
+  }
+
+  // REAL-TIME MOVING BEACONS & TELEMETRY ENGINE
+  const simUnits = [
+    {
+      id: 'alfa-2',
+      name: 'ALFA-2',
+      category: 'Médica',
+      pathId: 'path-alfa-2',
+      markerId: 'unit-marker-alfa-2',
+      etaTextId: 'eta-text-alfa-2',
+      sidebarEtaId: 'sidebar-alfa2-eta',
+      tableStatusId: 'table-status-alfa2',
+      baseSeconds: 120, // Total trip time
+      progress: 0.32,   // initial progress ratio (0 to 1)
+      speedMult: 1.0,
+      color: '#ba1a1a'
+    },
+    {
+      id: 'seg-01',
+      name: 'SEG-01',
+      category: 'Seguridad',
+      pathId: 'path-seg-01',
+      markerId: 'unit-marker-seg-01',
+      etaTextId: 'eta-text-seg-01',
+      sidebarEtaId: 'sidebar-seg01-eta',
+      tableStatusId: 'table-status-seg01',
+      baseSeconds: 180,
+      progress: 0.45,
+      speedMult: 0.85,
+      color: '#2170e4'
+    },
+    {
+      id: 'apo-1',
+      name: 'APO-1',
+      category: 'Técnico',
+      pathId: 'path-apo-1',
+      markerId: 'unit-marker-apo-1',
+      etaTextId: 'eta-text-apo-1',
+      sidebarEtaId: 'sidebar-apo1-eta',
+      tableStatusId: 'table-status-apo1',
+      baseSeconds: 90,
+      progress: 0.68,
+      speedMult: 1.15,
+      color: '#f59e0b'
+    }
+  ];
+
+  let simSpeeds = [1, 2, 0]; // 1x, 2x, 0 (pause)
+  let currentSpeedIndex = 0;
+  let simSpeed = simSpeeds[currentSpeedIndex];
+  let lastTimestamp = null;
+
+  function cycleSimSpeed() {
+    currentSpeedIndex = (currentSpeedIndex + 1) % simSpeeds.length;
+    simSpeed = simSpeeds[currentSpeedIndex];
+    const textEl = document.getElementById('sim-speed-text');
+    const iconEl = document.getElementById('sim-speed-icon');
+    const pulse = document.getElementById('live-pulse-indicator');
+    const badge = document.getElementById('live-feed-badge');
+
+    if (simSpeed === 0) {
+      textEl.innerText = 'PAUSA';
+      iconEl.innerText = 'pause';
+      pulse.classList.remove('bg-[#4edea3]', 'animate-pulse');
+      pulse.classList.add('bg-outline');
+      badge.innerText = 'EN PAUSA · TELEMETRÍA DETENIDA';
+    } else {
+      textEl.innerText = simSpeed + 'x';
+      iconEl.innerText = 'play_arrow';
+      pulse.classList.remove('bg-outline');
+      pulse.classList.add('bg-[#4edea3]', 'animate-pulse');
+      badge.innerText = `EN TIEMPO REAL · GPS ${simSpeed}x`;
+    }
+  }
+
+  function formatETA(remainingSec) {
+    if (remainingSec <= 0) return 'EN DESTINO · 100%';
+    const mins = Math.floor(remainingSec / 60);
+    const secs = Math.floor(remainingSec % 60);
+    if (mins > 0) {
+      return `ETA ${mins}m ${secs.toString().padStart(2, '0')}s`;
+    }
+    return `ETA ${secs}s`;
+  }
+
+  function updateSimulation(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const deltaSeconds = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    simUnits.forEach(unit => {
+      const pathEl = document.getElementById(unit.pathId);
+      const markerEl = document.getElementById(unit.markerId);
+      const etaTextEl = document.getElementById(unit.etaTextId);
+      const sidebarEtaEl = document.getElementById(unit.sidebarEtaId);
+      const tableStatusEl = document.getElementById(unit.tableStatusId);
+
+      if (!pathEl || !markerEl) return;
+
+      if (!prefersReducedMotion && simSpeed > 0) {
+        const pathLen = pathEl.getTotalLength();
+        // Advance progress
+        unit.progress += (deltaSeconds / unit.baseSeconds) * simSpeed * unit.speedMult;
+        if (unit.progress > 1) {
+          unit.progress = 0; // loop back realistically for ongoing demo dispatch
+        }
+
+        const point = pathEl.getPointAtLength(unit.progress * pathLen);
+        markerEl.setAttribute('transform', `translate(${point.x}, ${point.y})`);
+      }
+
+      // Compute dynamic ETA & Percentage
+      const remainingSec = Math.max(0, (1 - unit.progress) * unit.baseSeconds);
+      const percent = Math.round(unit.progress * 100);
+      const etaFormatted = formatETA(remainingSec);
+
+      if (etaTextEl) {
+        etaTextEl.textContent = `${etaFormatted} · ${percent}%`;
+      }
+      if (sidebarEtaEl) {
+        sidebarEtaEl.textContent = `${unit.name} (${Math.ceil(remainingSec)}s)`;
+      }
+      if (tableStatusEl) {
+        tableStatusEl.textContent = `${unit.name} (En ruta · ${etaFormatted})`;
+      }
+    });
+
+    requestAnimationFrame(updateSimulation);
+  }
+
+  // Start real-time movement on load
+  window.addEventListener('DOMContentLoaded', () => {
+    requestAnimationFrame(updateSimulation);
+  });
+
+  // Right Column Accordion: Resources vs Chat Agente HR
+  let activeRightTab = 'resources';
+  function toggleRightPanel(target) {
+    const resContainer = document.getElementById('accordion-resources');
+    const chatContainer = document.getElementById('accordion-chat');
+    const resChevron = document.getElementById('icon-resources-chevron');
+    const chatChevron = document.getElementById('icon-chat-chevron');
+    const chatContent = document.getElementById('content-chat');
+
+    if (target === 'chat') {
+      resContainer.classList.remove('flex-1');
+      resContainer.classList.add('h-11');
+      chatContainer.classList.remove('h-11');
+      chatContainer.classList.add('flex-1');
+      chatContent.classList.remove('hidden');
+      resChevron.innerText = 'expand_more';
+      chatChevron.innerText = 'expand_less';
+      activeRightTab = 'chat';
+    } else {
+      chatContainer.classList.remove('flex-1');
+      chatContainer.classList.add('h-11');
+      chatContent.classList.add('hidden');
+      resContainer.classList.remove('h-11');
+      resContainer.classList.add('flex-1');
+      resChevron.innerText = 'expand_less';
+      chatChevron.innerText = 'expand_more';
+      activeRightTab = 'resources';
+    }
+  }
+
+  // Drawers Controls
+  function openIncidentDrawer(id) {
+    closeInjectionDrawer();
+    const drawer = document.getElementById('drawer-incident');
+    drawer.classList.remove('translate-x-full');
+  }
+
+  function closeIncidentDrawer() {
+    const drawer = document.getElementById('drawer-incident');
+    drawer.classList.add('translate-x-full');
+  }
+
+  function openInjectionDrawer() {
+    closeIncidentDrawer();
+    const drawer = document.getElementById('drawer-injection');
+    drawer.classList.remove('translate-x-full');
+  }
+
+  function closeInjectionDrawer() {
+    const drawer = document.getElementById('drawer-injection');
+    drawer.classList.add('translate-x-full');
+  }
+
+  // Wire Top Shell Button to open Injection Drawer
+  document.addEventListener('DOMContentLoaded', () => {
+    const buttons = document.querySelectorAll('header button');
+    buttons.forEach(btn => {
+      if (btn.innerText.includes('Mesa de inyección')) {
+        btn.addEventListener('click', openInjectionDrawer);
+      }
+    });
+  });
+
+  // Notification Toast Helper
+  function showToast(msg) {
+    const toast = document.getElementById('mando-toast');
+    const msgEl = document.getElementById('toast-message');
+    msgEl.innerText = msg;
+    toast.classList.remove('translate-y-24', 'opacity-0');
+    setTimeout(() => {
+      toast.classList.add('translate-y-24', 'opacity-0');
+    }, 2800);
+  }
+
+  function confirmIncidentAction() {
+    closeIncidentDrawer();
+    showToast('Orden confirmada por Mesa MANDO: Parada solicitada y 112 despachado.');
+  }
+
+  function loadScenario(type) {
+    if (type === 'normal') {
+      if (isUnderStress) togglePlanStatus();
+      showToast('Escenario Normal cargado: Telemetría restablecida.');
+    } else {
+      if (!isUnderStress) togglePlanStatus();
+      showToast('Escenario de Saturación activo: Protocolo de emergencia.');
+    }
+  }
+
+  function simulateManualInjection() {
+    const text = document.getElementById('manual-incident-text').value;
+    if (!text.trim()) {
+      showToast('Introduce descripción del aviso.');
+      return;
+    }
+    const result = document.getElementById('injection-result');
+    result.classList.remove('hidden');
+    showToast('Incidente inyectado y priorizado en cola.');
+  }
+</script></main></div>
+</body></html>

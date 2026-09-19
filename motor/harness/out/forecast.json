@@ -1,0 +1,6566 @@
+{
+  "n": 200,
+  "predictions": 32,
+  "actual_crossings": 47,
+  "matched": 28,
+  "censored_predictions": 12,
+  "metrics": {
+    "precision": {
+      "value": 0.875,
+      "ci95": [
+        0.7428571428571429,
+        0.96875
+      ]
+    },
+    "recall": {
+      "value": 0.5957446808510638,
+      "ci95": [
+        0.4423076923076923,
+        0.7258064516129032
+      ]
+    },
+    "median_lead_min": {
+      "value": 7.5,
+      "ci95": [
+        4,
+        13
+      ]
+    }
+  },
+  "interval": "bootstrap por casos; percentiles 2,5 y 97,5; 2000 réplicas",
+  "protocol": "Cruces ascendentes densidad ≥4 y ≥5, ruta sanitaria bloqueada; descendentes agua/unidades libres ≤0. Cada umbral es un evento distinto. Predicciones cada 3 ticks; ventana 15 min; una previsión por clave y ventana, un cruce por acierto. Precisión: cruce dentro de ventana, no exactitud del minuto anunciado. Antelación: cruce real menos primera emisión. Predicciones sin 15 min completos de seguimiento censuradas; todos los cruces reales cuentan en exhaustividad.",
+  "limits": "Simulación: el gemelo conoce la dinámica del simulador. No valida sensores ni predicción de campo. No conoce sucesos futuros ni incidentes espontáneos. Brazo sin agente y sin intervenciones. No mide EVITADO ni demuestra que una intervención evitó un daño.",
+  "by_metric": {
+    "density": {
+      "predicted": 28,
+      "hits": 24,
+      "crossings": 24
+    },
+    "water_l": {
+      "predicted": 0,
+      "hits": 0,
+      "crossings": 8
+    },
+    "route_blocked": {
+      "predicted": 4,
+      "hits": 4,
+      "crossings": 4
+    },
+    "free_units": {
+      "predicted": 0,
+      "hits": 0,
+      "crossings": 11
+    }
+  },
+  "cases": [
+    {
+      "case_id": "c-h700000",
+      "seed": 1960392076,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700001",
+      "seed": 64881946,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700002",
+      "seed": 2597803168,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700003",
+      "seed": 3989857334,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700004",
+      "seed": 1941238165,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700005",
+      "seed": 78889219,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700006",
+      "seed": 2646249657,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700007",
+      "seed": 3938295855,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700008",
+      "seed": 2046999998,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700009",
+      "seed": 218467624,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700010",
+      "seed": 1841431757,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700011",
+      "seed": 449131611,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700012",
+      "seed": 2211210721,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700013",
+      "seed": 4106966391,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700014",
+      "seed": 1789903060,
+      "predicted": 1,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        14
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700015",
+      "seed": 497610818,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700016",
+      "seed": 2225185272,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700017",
+      "seed": 4087779694,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700018",
+      "seed": 1662618879,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 1,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700019",
+      "seed": 337558633,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700020",
+      "seed": 1190090510,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700021",
+      "seed": 837314456,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700022",
+      "seed": 2833331746,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700023",
+      "seed": 3756394164,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700024",
+      "seed": 1099076375,
+      "predicted": 1,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        8
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700025",
+      "seed": 914727809,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700026",
+      "seed": 2945249851,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700027",
+      "seed": 3633037997,
+      "predicted": 1,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        14
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700028",
+      "seed": 1211424572,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700029",
+      "seed": 1060368298,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700030",
+      "seed": 1609852495,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700031",
+      "seed": 687036121,
+      "predicted": 2,
+      "crossings": 2,
+      "hits": 2,
+      "censored": 0,
+      "leads": [
+        3,
+        15
+      ],
+      "eta_absolute_errors": [
+        0,
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700032",
+      "seed": 2985953123,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700033",
+      "seed": 3338483701,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700034",
+      "seed": 1486463574,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700035",
+      "seed": 798921408,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700036",
+      "seed": 3063399290,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 1,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700037",
+      "seed": 3247502316,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700038",
+      "seed": 1362095741,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700039",
+      "seed": 640212715,
+      "predicted": 1,
+      "crossings": 2,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        14
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700040",
+      "seed": 280359048,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700041",
+      "seed": 1739767838,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700042",
+      "seed": 4273705380,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700043",
+      "seed": 2310840626,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700044",
+      "seed": 400045201,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700045",
+      "seed": 1625228295,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700046",
+      "seed": 4191573437,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700047",
+      "seed": 2396087595,
+      "predicted": 1,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 1,
+      "leads": [
+        15
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700048",
+      "seed": 510556346,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700049",
+      "seed": 1768507436,
+      "predicted": 2,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        6
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 2,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700050",
+      "seed": 162447817,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700051",
+      "seed": 2125066591,
+      "predicted": 1,
+      "crossings": 2,
+      "hits": 1,
+      "censored": 1,
+      "leads": [
+        15
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700052",
+      "seed": 3886063845,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700053",
+      "seed": 2426900595,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700054",
+      "seed": 247662032,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700055",
+      "seed": 2042901830,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 1,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700056",
+      "seed": 3771557116,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700057",
+      "seed": 2546619498,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700058",
+      "seed": 125127163,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700059",
+      "seed": 1886550381,
+      "predicted": 1,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        7
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700060",
+      "seed": 579047946,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700061",
+      "seed": 1434755740,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700062",
+      "seed": 3431854886,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700063",
+      "seed": 3146433456,
+      "predicted": 1,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700064",
+      "seed": 636376595,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 1,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700065",
+      "seed": 1391027845,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700066",
+      "seed": 3420469055,
+      "predicted": 1,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        4
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700067",
+      "seed": 3169257385,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700068",
+      "seed": 743971384,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700069",
+      "seed": 1532963502,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700070",
+      "seed": 999859019,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 1,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700071",
+      "seed": 1285526493,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 1,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700072",
+      "seed": 3583427175,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700073",
+      "seed": 2727473905,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700074",
+      "seed": 1022715730,
+      "predicted": 2,
+      "crossings": 2,
+      "hits": 2,
+      "censored": 0,
+      "leads": [
+        3,
+        1
+      ],
+      "eta_absolute_errors": [
+        0,
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 2,
+          "hits": 2,
+          "crossings": 2
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700075",
+      "seed": 1274173380,
+      "predicted": 2,
+      "crossings": 3,
+      "hits": 2,
+      "censored": 0,
+      "leads": [
+        11,
+        4
+      ],
+      "eta_absolute_errors": [
+        0,
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 2,
+          "hits": 2,
+          "crossings": 2
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700076",
+      "seed": 3539666558,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700077",
+      "seed": 2784769768,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700078",
+      "seed": 893594489,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700079",
+      "seed": 1111759855,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 1,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700080",
+      "seed": 3154165636,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700081",
+      "seed": 3406270226,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700082",
+      "seed": 1376706216,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700083",
+      "seed": 621407806,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700084",
+      "seed": 3144514461,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700085",
+      "seed": 3429518091,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700086",
+      "seed": 1432558257,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700087",
+      "seed": 576989735,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700088",
+      "seed": 3000711094,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700089",
+      "seed": 3319531296,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700090",
+      "seed": 2770046661,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700091",
+      "seed": 3525099091,
+      "predicted": 1,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        14
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700092",
+      "seed": 1259728873,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700093",
+      "seed": 1007869823,
+      "predicted": 2,
+      "crossings": 3,
+      "hits": 2,
+      "censored": 0,
+      "leads": [
+        3,
+        15
+      ],
+      "eta_absolute_errors": [
+        0,
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700094",
+      "seed": 2725661404,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700095",
+      "seed": 3580983882,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700096",
+      "seed": 1282943984,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700097",
+      "seed": 998185830,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700098",
+      "seed": 2881488631,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700099",
+      "seed": 3704043105,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700100",
+      "seed": 1964728251,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700101",
+      "seed": 35417901,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700102",
+      "seed": 2601860759,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700103",
+      "seed": 3960606209,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 1,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700104",
+      "seed": 1920375714,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700105",
+      "seed": 91335476,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700106",
+      "seed": 2625174158,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700107",
+      "seed": 3951020568,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700108",
+      "seed": 2076235657,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700109",
+      "seed": 214427423,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700110",
+      "seed": 1811967738,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700111",
+      "seed": 453467756,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700112",
+      "seed": 2181959638,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700113",
+      "seed": 4111023936,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700114",
+      "seed": 1802349283,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700115",
+      "seed": 476748405,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700116",
+      "seed": 2237909967,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700117",
+      "seed": 4066704217,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700118",
+      "seed": 1658578632,
+      "predicted": 2,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        9
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 2,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700119",
+      "seed": 366794334,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700120",
+      "seed": 1194147129,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700121",
+      "seed": 808062383,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700122",
+      "seed": 2837666837,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700123",
+      "seed": 3726929027,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700124",
+      "seed": 1077999904,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700125",
+      "seed": 927451574,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700126",
+      "seed": 2924386316,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700127",
+      "seed": 3645483162,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700128",
+      "seed": 1240904971,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700129",
+      "seed": 1056015773,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700130",
+      "seed": 1580600440,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700131",
+      "seed": 691092718,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700132",
+      "seed": 2956488020,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700133",
+      "seed": 3342818754,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700134",
+      "seed": 1499187297,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700135",
+      "seed": 777844983,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700136",
+      "seed": 3075844429,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700137",
+      "seed": 3226638811,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700138",
+      "seed": 1357743178,
+      "predicted": 2,
+      "crossings": 2,
+      "hits": 2,
+      "censored": 1,
+      "leads": [
+        4,
+        1
+      ],
+      "eta_absolute_errors": [
+        0,
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 2,
+          "hits": 2,
+          "crossings": 2
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700139",
+      "seed": 669693148,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700140",
+      "seed": 293051071,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700141",
+      "seed": 1718659625,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700142",
+      "seed": 4286184339,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700143",
+      "seed": 2290010885,
+      "predicted": 1,
+      "crossings": 2,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        3
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700144",
+      "seed": 370826918,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700145",
+      "seed": 1629318704,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700146",
+      "seed": 4162076554,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700147",
+      "seed": 2400390940,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700148",
+      "seed": 531370637,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700149",
+      "seed": 1756045851,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700150",
+      "seed": 141339646,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700151",
+      "seed": 2137758568,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700152",
+      "seed": 3865234130,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700153",
+      "seed": 2439379524,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700154",
+      "seed": 251752423,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700155",
+      "seed": 2013683569,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700156",
+      "seed": 3775860427,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700157",
+      "seed": 2517122653,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700158",
+      "seed": 112665548,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700159",
+      "seed": 1907364698,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700160",
+      "seed": 591525949,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700161",
+      "seed": 1413925035,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700162",
+      "seed": 3444545809,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700163",
+      "seed": 3125324167,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700164",
+      "seed": 606878756,
+      "predicted": 2,
+      "crossings": 2,
+      "hits": 2,
+      "censored": 0,
+      "leads": [
+        5,
+        2
+      ],
+      "eta_absolute_errors": [
+        0,
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 2,
+          "hits": 2,
+          "crossings": 2
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700165",
+      "seed": 1395330226,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700166",
+      "seed": 3391249672,
+      "predicted": 1,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        1
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700167",
+      "seed": 3173346718,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700168",
+      "seed": 765095951,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700169",
+      "seed": 1520255129,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700170",
+      "seed": 979028348,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700171",
+      "seed": 1298004458,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700172",
+      "seed": 3562317904,
+      "predicted": 2,
+      "crossings": 2,
+      "hits": 2,
+      "censored": 0,
+      "leads": [
+        11,
+        8
+      ],
+      "eta_absolute_errors": [
+        0,
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 2,
+          "hits": 2,
+          "crossings": 2
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700173",
+      "seed": 2740164806,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700174",
+      "seed": 1027018085,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700175",
+      "seed": 1244675571,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700176",
+      "seed": 3543755849,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700177",
+      "seed": 2755550431,
+      "predicted": 1,
+      "crossings": 1,
+      "hits": 1,
+      "censored": 0,
+      "leads": [
+        13
+      ],
+      "eta_absolute_errors": [
+        0
+      ],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 1,
+          "crossings": 1
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700178",
+      "seed": 880886094,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700179",
+      "seed": 1132884440,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700180",
+      "seed": 3183662515,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700181",
+      "seed": 3401966885,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700182",
+      "seed": 1405924511,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700183",
+      "seed": 617317385,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700184",
+      "seed": 3132035498,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700185",
+      "seed": 3450347836,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700186",
+      "seed": 1419866246,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700187",
+      "seed": 598097936,
+      "predicted": 0,
+      "crossings": 1,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 1
+        }
+      }
+    },
+    {
+      "case_id": "c-h700188",
+      "seed": 3004784001,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700189",
+      "seed": 3290328343,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700190",
+      "seed": 2765743346,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700191",
+      "seed": 3554595940,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700192",
+      "seed": 1255638494,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700193",
+      "seed": 1037088072,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700194",
+      "seed": 2746491115,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700195",
+      "seed": 3568504957,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700196",
+      "seed": 1304052167,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700197",
+      "seed": 985493841,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 1,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700198",
+      "seed": 2852285632,
+      "predicted": 1,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 1,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    },
+    {
+      "case_id": "c-h700199",
+      "seed": 3708116054,
+      "predicted": 0,
+      "crossings": 0,
+      "hits": 0,
+      "censored": 0,
+      "leads": [],
+      "eta_absolute_errors": [],
+      "by_metric": {
+        "density": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "water_l": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "route_blocked": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        },
+        "free_units": {
+          "predicted": 0,
+          "hits": 0,
+          "crossings": 0
+        }
+      }
+    }
+  ],
+  "split": "heldout",
+  "seed": 20260919,
+  "offset": 700000,
+  "horizon_min": 15,
+  "cadence_ticks": 3,
+  "cases_sha256": "1da785fe223b27829e31ae75db59f0628a28293249077fbb550deeab24c2a09a",
+  "code_sha256": {
+    "motor/world/world.py": "cd4559d67c1c3531e6ec678f2ca9c4bd4eb7735f90ee952e3134fb40b5817164",
+    "motor/server/forecast.py": "8f4b24c32c7d73f8dbfabc4fac782338e2991eb40627f14839a76a7a99b7c3d8",
+    "motor/harness/forecast_bench.py": "eecbe0109e552eba4aa6790158ef88153d7910a0abaf26b3de3e93509863724f"
+  }
+}

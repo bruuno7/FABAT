@@ -78,7 +78,9 @@ class TelegramTest(EnvTest):
         os.environ["TELEGRAM_BOT_TOKEN"] = ""
         app = self.app()
         self.assertIsNone(app.state.telegram)
-        self.assertEqual(TestClient(app).get("/api/state").json()["telegram"], {"status": "off"})
+        st = TestClient(app).get("/api/state").json()
+        self.assertEqual(st["telegram"], {"status": "off"})
+        self.assertEqual(st["telegram_bot"], {"status": "off"})
 
     def test_report_ask_answer_and_closing(self) -> None:
         with Served(self.fake, self.tg_port):
@@ -86,7 +88,8 @@ class TelegramTest(EnvTest):
             s, bot = app.state.session, app.state.telegram
             self.assertTrue(wait_for(lambda: bot.status == "on"), bot.error)
             st = s.state()
-            self.assertEqual((st["telegram"]["status"], st["telegram"]["bot"], st["links"]["telegram"]),
+            bot = st["telegram_bot"]
+            self.assertEqual((bot["status"], bot["bot"], st["links"]["telegram"]),
                              ("on", "mando_demo_bot", "https://t.me/mando_demo_bot"))
             self.assertNotIn(TOKEN, s.state_json())
             self.push("text", chat_id=1, text="/start")

@@ -90,7 +90,7 @@ def structured_report(ev: dict[str, Any], zones: dict[str, str]) -> dict[str, An
                                      "pending", "category", "sensitive", "instruction_given") if val(k)}
     return {"channel": CONTRACT_CHANNEL.get(real, "whatsapp"), "real_channel": real if real in CONTRACT_CHANNEL else "web",
             "text": text[:400], "zone": hint, "where": hint or match_zone(location, zones),
-            "source": (val("informant") or "asistente")[:40], "lang": val("lang") or "es", "extracted": extracted,
+            "source": (val("source") or val("informant") or "asistente")[:40], "lang": val("lang") or "es", "extracted": extracted,
             "preset_hint": CATEGORY_PRESET.get(_plain(val("category"))), "reply_to": val("reply_to"), "hr_run_id": val("hr_run_id"),
             "report_ref": val("report_ref"), "partial": str(ev.get("partial")).lower() == "true" or ev.get("final") is False}
 

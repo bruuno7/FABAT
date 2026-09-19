@@ -1,16 +1,19 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Informe posterior · Mando</title>
-<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/pages.css"></head>
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/pages.css"><link rel="stylesheet" href="/static/evidence.css"></head>
 <body class="page">
 <header><h1>INFORME POSTERIOR</h1><p id="sub"></p><a href="/">pantalla de mando</a></header>
 <div id="kpis" class="kpis"></div>
 <p class="note">Cifras de UNA ejecución (N=1 caso). No son una media: las medias con su N salen del banco de pruebas (<a href="/curva">/curva</a>).</p>
+<section id="evidence-coordination" aria-label="Contador de coordinación"></section>
+<section id="evidence-receipts" aria-label="Recibos de decisiones"></section>
 <h2>INCIDENTES</h2>
 <table><thead><tr><th>id</th><th>qué</th><th>dónde</th><th>prioridad</th><th>avisos</th><th>abierto</th><th>1.ª acción</th><th>estado</th></tr></thead><tbody id="inc"></tbody></table>
 <h2>PLANES: QUÉ SUPUESTO SE ROMPIÓ Y QUÉ SE HIZO DESPUÉS</h2><div id="chains"></div>
 <h2>DECISIONES DE LA PERSONA</h2>
-<table><thead><tr><th>min</th><th>acción</th><th>decisión</th><th>nota</th></tr></thead><tbody id="aps"></tbody></table>
+<table><thead><tr><th>min</th><th>acción</th><th>decisión</th><th>quién / cuándo</th><th>nota</th></tr></thead><tbody id="aps"></tbody></table>
+<h2>LATENCIA HUMANA POR OPERADOR</h2><table><thead><tr><th>Operador</th><th>N decisiones</th><th>Media (s)</th><th>Máxima (s)</th></tr></thead><tbody id="op-latency"></tbody></table><h2>ACTIVIDAD DEL EQUIPO</h2><table><thead><tr><th>Hora</th><th>Quién</th><th>Acción</th></tr></thead><tbody id="op-audit"></tbody></table>
 <h2>GOLPES RECIBIDOS</h2>
 <table><thead><tr><th>min</th><th>quién</th><th>golpe</th></tr></thead><tbody id="strikes"></tbody></table>
 <h2>LLAMADAS</h2>
@@ -46,7 +49,9 @@
       });
       $("chains").append(box);
     });
-    d.approvals.forEach((a) => row($("aps"), [T("td", a.t, "num"), a.action, a.ok ? "APRUEBA" : "VETA", a.note || ""]));
+    d.approvals.forEach((a) => row($("aps"), [T("td", a.t, "num"), a.action, a.ok ? "APRUEBA" : "VETA", (a.by || "operador") + (a.at ? " · " + new Date(a.at*1000).toLocaleTimeString() : ""), a.note || ""]));
+    (d.operator_latency||[]).forEach(x=>row($("op-latency"),[`${x.operator.name} (${x.operator.role})`,x.n,es(x.mean_s),es(x.max_s)]));
+    (d.operator_audit||[]).forEach(x=>row($("op-audit"),[new Date(x.at*1000).toLocaleTimeString(),`${x.operator?.name||'Operador'} (${x.operator?.role||''})`,x.verb||'Acción reservada']));
     d.strikes.forEach((k) => row($("strikes"), [T("td", k.t, "num"), k.origin === "jury" ? "jurado" : k.origin, k.label]));
     d.calls.forEach((c) => row($("calls"), [T("td", c.t, "num"), c.to + (c.real ? " (REAL)" : ""), c.channel, c.result || "en curso", c.text || ""]));
     const cand = (d.lessons && d.lessons.candidates) || [];
@@ -55,4 +60,5 @@
   });
 })();
 </script>
+<script src="/static/evidence.js"></script>
 </body></html>

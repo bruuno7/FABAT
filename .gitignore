@@ -27,3 +27,6 @@ dist/
 *.log
 .turbo
 coverage/
+
+# base de datos local (se crea al arrancar)
+motor/server/data/

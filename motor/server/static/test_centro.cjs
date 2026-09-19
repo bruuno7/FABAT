@@ -1,0 +1,95 @@
+/* Pruebas de render puro y comandos con DOM mínimo, sin navegador ni conexiones. */
+const {readFileSync}=require('node:fs'), vm=require('node:vm'), assert=require('node:assert/strict');
+const elements=new Map(), listeners={}, streamListeners={}, windowListeners={}, requests=[];
+let stream, responseOverride=null;
+function element(id){if(!elements.has(id))elements.set(id,{id,innerHTML:'',textContent:'',dataset:{},style:{},open:false,setAttribute(k,v){this[k]=v;},contains(node){return node?.parentId===id;},querySelectorAll(){return [];},querySelector(){return null;},addEventListener(k,f){this[k==='close'?'onclose':k]=f;},classList:{toggle(){this.on=!this.on;return this.on;}},replaceChildren(){},focus(){document.activeElement=this;},showModal(){this.open=true;},close(){this.open=false;this.onclose?.();}});return elements.get(id);}
+const document={getElementById:element,documentElement:{dataset:{}},body:element('body'),activeElement:null,addEventListener(k,f){listeners[k]=f;},querySelectorAll(){return [];}};
+const state={session:{id:'test',running:false},t:2,zones:[],incidents:[],plans:[],forecasts:[],calls:{mode:'sim',calls:[]}};
+const context={document,console,URL,URLSearchParams,location:{search:''},Date,FormData,MouseEvent:class{},CustomEvent:class{constructor(type,data){this.type=type;Object.assign(this,data);}},setTimeout(){return 1;},clearTimeout(){},localStorage:{getItem(){return null;},setItem(){}},fetch:async(url,options)=>{requests.push({url,body:options?.body&&JSON.parse(options.body)});return{ok:true,json:async()=>url==='/api/festival'?{zones:[],edges:[]}:options&&responseOverride?responseOverride:state};},EventSource:class{constructor(){stream=this;}addEventListener(k,f){streamListeners[k]=f;}},window:{addEventListener(k,f){windowListeners[k]=f;},dispatchEvent(e){windowListeners[e.type]?.(e);}},Map,Set,Number,Array,String,Object,Math,Promise};
+context.window.PLANO={build:()=>({zones:{},edges:{},gReroutes:{replaceChildren(){}},gTokens:{replaceChildren(){}}}),ZONES:{}};
+vm.createContext(context);
+vm.runInContext(readFileSync(__dirname+'/ui.js','utf8'),context);
+vm.runInContext(readFileSync(__dirname+'/centro.js','utf8'),context);
+function render(s){streamListeners.state({data:JSON.stringify(s)});assert(!element('feedback').textContent.includes('No se pudo interpretar'),'No se debe ocultar un error de render');}
+function click(data){listeners.click({target:{closest(){return {dataset:data};}}});}
+function key(value,target={tagName:'BODY'}){listeners.keydown({key:value,target,preventDefault(){}});}
+(async()=>{
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(document.documentElement.dataset.theme,'light');
+  render({});
+  assert.match(element('incidents').innerHTML,/No hay avisos/);
+  const attack='<img src=x onerror="alert(1)">';
+  render({...state,incidents:[{id:'I1',label:attack,priority:9,status:'open',explain:'Urgencia',t_open:0}],reports:[{incident:'I1',text:attack,channel:'telegram'}]});
+  assert(!element('incidents').innerHTML.includes('<img'));
+  assert(element('incidents').innerHTML.includes('&lt;img'));
+  assert(!element('detail').innerHTML.includes('<img'));
+  assert.match(element('incidents').innerHTML,/9<small>\/10/);
+  render({...state,t:5,forecasts:[{id:'F1',status:'PREVISTO',metric:'density',zone:'gate_a',threshold:4,eta_min:11,issued_t:5,severity:'atencion'}]});
+  assert.match(element('incidents').innerHTML,/En 11 min/);
+  assert.match(element('detail').innerHTML,/Previsión del gemelo/);
+  render({...state,t:5,service_health:{comms_down:{voice:15}}});
+  assert.match(element('services').innerHTML,/Caído/);
+  render({...state,t:16,service_health:{comms_down:{voice:15}}});
+  assert(!element('services').innerHTML.includes('Caído'));
+  render({...state,happyrobot:{dispatch:{configured:true,last_event:'2026-09-19T10:30:00Z'}},presentation:{voice:'Contacto +34 600 000 999'}});
+  assert.match(element('services').innerHTML,/2026-09-19T10:30:00Z/);
+  assert(!element('honesty').textContent.includes('600 000 999'));
+  render({...state,incidents:[{id:'I1',label:'Prueba',priority:10,status:'open'}],plans:[{id:'P0',incident:'I1',objective:'Entrar por norte',invalidated_by:'S0',assumptions:[{text:'Norte libre',holds:false}]},{id:'P1',incident:'I1',objective:'Entrar por sur',assumptions:[{text:'Sur libre',holds:true}]}],approvals:[{id:'A1',incident:'I1',card:{remaining_min:3,deputy:'Suplente',if_approved:{text:'Futuro A'},if_vetoed:{text:'Futuro B'}}}]});
+  assert.match(element('detail').innerHTML,/SUPUESTO ROTO/);
+  assert.match(element('detail').innerHTML,/Entrar por sur/);
+  assert.match(element('detail').innerHTML,/Futuro A/);
+  render({...state,incidents:[{id:'I1',label:'Prueba',priority:10,status:'open'}],fronts:[{id:'I1',resources:['Equipo vigente']}],actions:[{id:'OLD',incident:'I1',resource:'Equipo retirado',status:'done'}],plans:[{id:'P1',incident:'I1',rehearsal:[{label:'Ensayo',value:'4,5 /m²'}]}],approvals:[{id:'A1',incident:'I1',card:{if_approved:{text:'',figures:[{k:'pico',v:4.5}]}}}]});
+  assert.match(element('detail').innerHTML,/Equipo vigente/);
+  assert(!element('detail').innerHTML.includes('Equipo retirado'));
+  assert.match(element('detail').innerHTML,/4,5 \/m²/);
+  let prevented=false;
+  listeners.keydown({key:'v',target:{tagName:'BODY'},preventDefault(){prevented=true;}});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert(prevented);
+  assert.deepEqual(requests.at(-1),{url:'/api/approve',body:{action_id:'A1',ok:false}});
+  render({...state,incidents:[{id:'I2',label:'Segundo',priority:10,status:'open'}],approvals:[{id:'A1',incident:'I1'},{id:'A2',incident:'I2'}]});
+  listeners.keydown({key:'a',target:{tagName:'BODY'},preventDefault(){}});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(requests.at(-1),{url:'/api/approve',body:{action_id:'A2',ok:true}});
+  render({...state,incidents:[{id:'I2',label:'Segundo',priority:10,status:'open'}],approvals:[{id:'A2',incident:'I2',kind:'evacuate'}],actions:[{id:'A2',kind:'evacuate',params:{prepared:true}}]});
+  listeners.input({target:{dataset:{decisionNote:'A2'},value:'EVACUAR la zona indicada'}});
+  const beforeConfirm=requests.length;
+  listeners.keydown({key:'a',target:{tagName:'BODY'},preventDefault(){}});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(requests.length,beforeConfirm,'A no puede ejecutar una evacuación sin confirmar');
+  assert.equal(element('confirm-decision').open,true);
+  element('confirm-approve').onclick();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(requests.at(-1),{url:'/api/approve',body:{action_id:'A2',ok:true,note:'EVACUAR la zona indicada'}});
+  const before=requests.length;
+  listeners.keydown({key:'s',target:{tagName:'INPUT'},preventDefault(){}});
+  assert.equal(requests.length,before);
+  element('theme').onclick();assert.equal(document.documentElement.dataset.theme,'dark');
+  const two={...state,clock:{hhmm:'20:10'},zones:[{id:'north',name:'Norte'},{id:'south',name:'Sur'}],incidents:[{id:'I1',zone:'north',label:'Norte crítico',priority:9,status:'open'},{id:'I2',zone:'south',label:'Sur atención',priority:6,status:'open'}],approvals:[{id:'A3',incident:'I2',kind:'stop_show',card:{if_approved:{text:'El espectáculo se detendrá.'}}}]};
+  render(two);click({item:'I2'});
+  stream.onerror();assert.equal(element('reconnecting').hidden,false);
+  render(two);assert.equal(element('reconnecting').hidden,true);assert.match(element('detail').innerHTML,/Sur atención/);
+  key('a',{tagName:'BUTTON'});assert.equal(element('confirm-consequence').textContent,'El espectáculo se detendrá.');
+  element('confirm-decision').close();const afterCancel=requests.length;
+  key('ArrowUp',{tagName:'BUTTON',dataset:{item:'I2'},parentId:'incidents'});assert.match(element('detail').innerHTML,/Norte crítico/);
+  key('Enter',{tagName:'BUTTON',dataset:{item:'I1'}});assert.equal(document.activeElement,element('detail'));
+  key('Escape');key('a');assert.equal(requests.length,afterCancel,'La ficha cerrada no aprueba decisiones ocultas');
+  render(two);assert(!element('detail').innerHTML.includes('Norte crítico'),'La reconexión conserva la ficha cerrada');
+  element('map').click({target:{closest(){return {dataset:{zone:'south'}};}}});
+  assert(!element('incidents').innerHTML.includes('Norte crítico'));assert.match(element('incidents').innerHTML,/Sur atención/);
+  element('clear-zone').onclick();assert.match(element('incidents').innerHTML,/Norte crítico/);
+  key('e');assert.equal(element('large')['aria-pressed'],'true');
+  key('e');assert.equal(element('large')['aria-pressed'],'false');
+  for(const kind of ['stop_show','request_external']){
+    render({...two,approvals:[{id:'grave',incident:'I2',kind,card:{if_approved:{text:'Consecuencia explícita'}}}]});click({item:'I2'});
+    const n=requests.length;key('a');assert.equal(requests.length,n);assert.equal(element('confirm-decision').open,true);
+    render({...two,approvals:[]});assert.equal(element('confirm-decision').open,false,'Otra persona resuelve: se retira la confirmación');
+    element('confirm-approve').onclick();assert.equal(requests.length,n);
+  }
+  render({...two,approvals:[{id:'double',incident:'I2',required:2,votes:0}]});click({item:'I2'});responseOverride={pending:true,votes:1,required:2};
+  key('a');await new Promise(resolve=>setImmediate(resolve));assert.match(element('detail').innerHTML,/1 de 2 firmas/);assert(!element('feedback').textContent.includes('Aprobado por ti'));responseOverride=null;
+  windowListeners['mando:team-filter']({detail:{mine:true,operator:'other'}});assert(!element('incidents').innerHTML.includes('Norte crítico'));
+  windowListeners['mando:team-filter']({detail:{mine:false,operator:null}});
+  render({...state,incidents:[{id:'old',label:'Agua repuesta',status:'resolved'}]});assert.match(element('incidents').innerHTML,/Todo en orden/);assert.match(element('incidents').innerHTML,/Agua repuesta/);
+  console.log('Centro: escape, previsiones, servicios, planes, confirmación grave, doble firma, filtros, teclado, reconexión y temas OK.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

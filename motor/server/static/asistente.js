@@ -23,12 +23,12 @@
   /* ------------------------------------------------------------------ lo que se recuerda en este móvil */
   const KEY = "asistente.v2";
   const store = Object.assign({ lang: null, name: "", zone: null, entered: false, toured: false, num: 0, session: null, convs: [], cur: null, strikes: [] }, (() => {
-    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
+    try { return JSON.parse(sessionStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
   })());
   if (!store.num) store.num = 1 + Math.floor(Math.random() * 40000);
   if (!store.lang) store.lang = (qs.get("lang") || navigator.language || "es").toLowerCase().startsWith("en") ? "en" : "es";
   let saveTimer = 0;
-  function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { /* modo privado */ } }, 150); }
+  function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { sessionStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { /* modo privado */ } }, 150); }
 
   /* ------------------------------------------------------------------ textos ES / EN */
   const TX = {
@@ -439,6 +439,7 @@
   }
   function applyTurn(conv, j) {
     const fresh = !conv.sid; conv.sid = j.session_id || conv.sid;
+    conv.reportRefs = Object.assign(conv.reportRefs || {}, j.report_refs || {});
     (j.reports || []).concat(j.report_id ? [j.report_id] : []).forEach((id) => { if (id && !conv.reports.includes(id)) conv.reports.push(id); });
     const ins = normInstr(j.instruction); if (ins) { conv.instr = ins; conv.instrOpen = true; }
     const sl = normSlots(j.state); if (sl) { const before = JSON.stringify(conv.slots || []); conv.slots = sl; if (before !== JSON.stringify(sl)) conv.slotsAt = Date.now(); }
@@ -457,6 +458,7 @@
     r = await api("POST", "/api/report", { channel: "whatsapp", text, zone: opts.zone || store.zone || null, preset: opts.preset || null, source: store.name || "asistente", lang: store.lang, reply_to: conv.reports[0] || undefined });
     if (!r.ok) throw new Error("report");
     const firstOne = !conv.reports.length;
+    conv.reportRefs = Object.assign(conv.reportRefs || {}, r.j.report_refs || {});
     if (r.j.report_id) conv.reports.push(r.j.report_id);
     const ins = normInstr(r.j.safety); if (ins && firstOne) { conv.instr = ins; conv.instrOpen = true; }
     addMsg(conv, { who: "agent", text: t(firstOne ? "c.ack" : "c.added") });
@@ -494,7 +496,8 @@
     return "";
   }
   function derive(conv, s) {
-    const ids = conv.reports; if (!ids.length) return;
+    const refs = conv.reportRefs || {};
+    const ids = conv.reports.map((ref) => refs[ref] || ref); if (!ids.length) return;
     const L = (conv.live = conv.live || {});
     const incs = (s.incidents || []).filter((i) => (i.reports || []).some((r) => ids.includes(r)));
     const inc = incs.sort((a, b) => (CLOSED.includes(a.status) - CLOSED.includes(b.status)) || ((b.priority || 0) - (a.priority || 0)))[0];
@@ -531,7 +534,7 @@
       } else if (a.kind === "ask" && !a.resource && !resById[p.to] && (p.reports || []).some((r) => ids.includes(r)) && !reserved) {
         const open = a.status === "executing" || a.status === "proposed";
         upsert(conv, "ask:" + a.id, "ask", { q: p.message || "", purpose: p.purpose || "", open }, "ask");
-        if (open) { conv.ask = conv.ask || { action: a.id, q: p.message, report: (p.reports || []).find((r) => ids.includes(r)) }; conv.ask.purpose = p.purpose; }
+        if (open) { conv.ask = conv.ask || { action: a.id, q: p.message, report: conv.reports.find((ref) => (p.reports || []).includes(refs[ref] || ref)) }; conv.ask.purpose = p.purpose; }
         else if (conv.ask && conv.ask.action === a.id) conv.ask = null;
       } else if (a.kind === "request_external" && !reserved) {
         const k = a.status === "awaiting_approval" || a.status === "proposed" ? "ext_wait" : a.status === "rejected" || a.status === "cancelled" ? "ext_no" : "ext_ok";
@@ -926,6 +929,7 @@
   applyThemeChrome();
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", applyThemeChrome);
   (async function boot() {
+    await window.mandoChatTab(store, KEY);
     for (let i = 0; !F; i++) {
       try { const r = await api("GET", "/api/festival"); if (r.ok) { F = r.j; break; } } catch (e) { /* reintento */ }
       net(true); await new Promise((ok) => setTimeout(ok, Math.min(4000, 600 * (i + 1))));

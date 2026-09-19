@@ -230,7 +230,7 @@ CONCEPTS: list[Concept] = [
     _c("injured", ("injur", "herid", "hurt", "casualt", "danger", "peligro"),
        r"herid|sangr|injur|\bhurt\b|bleed|golpe en la cabeza|lesionad|wounded|en peligro|in danger",
        r"no hay (ningun |nadie )?herid|nadie (esta )?herid|sin heridos|ningun herido|no one (is |was )?(hurt|injured)|"
-       r"nobody (is |was )?(hurt|injured)|no injur|nadie en peligro|no one (is )?in danger",
+       r"nobody (is |was )?(hurt|injured)|no injur|nadie (esta )?en peligro|no one (is )?in danger",
        ("hay heridos", "sin heridos"), ("hay heridos", "sin heridos"), ("someone hurt", "nobody hurt")),
     _c("ongoing", ("ongoing", "still", "active", "sigue", "continu"),
        r"siguen|se estan (pegando|peleando)|todavia|aun se|still (fighting|going|at it)|ahora mismo|right now",

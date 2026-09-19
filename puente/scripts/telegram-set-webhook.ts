@@ -9,6 +9,7 @@
  */
 import "dotenv/config";
 import { loadEnv } from "../src/lib/hr-client.js";
+import { TELEGRAM_ALLOWED_UPDATES } from "../src/lib/telegram-map.js";
 
 const env = loadEnv();
 const del = process.argv.includes("--delete");
@@ -35,7 +36,7 @@ async function main() {
 
   const body: Record<string, unknown> = {
     url: webhookUrl,
-    allowed_updates: ["message"],
+    allowed_updates: [...TELEGRAM_ALLOWED_UPDATES],
     drop_pending_updates: true,
   };
   if (env.telegramWebhookSecret) {

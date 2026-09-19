@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#152033">
+<title>MANDO · Sala de control</title>
+<link rel="stylesheet" href="/static/sala.css">
+</head>
+<body>
+<a class="skip" href="#cola">Ir a la cola de incidentes</a>
+
+<!-- ============================ BARRA LATERAL ============================ -->
+<nav class="nav" aria-label="Filtros y accesos">
+  <div class="nav-top">
+    <a class="brand" href="/sala">
+      <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3 13.7 8.3 19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7Z" fill="currentColor"/>
+      </svg>
+      MANDO
+    </a>
+    <span class="pax" id="pax" title="Aforo del recinto según motor/world/festival.json">—</span>
+  </div>
+  <p class="nav-state" id="event-state">CARGANDO…</p>
+  <p class="sim-ribbon">Simulación · N = este caso</p>
+
+  <h2 id="filters-title">Filtros de control</h2>
+  <div class="filters" role="group" aria-labelledby="filters-title">
+    <button data-filter="todos" aria-pressed="true">Todos los sectores <span class="n" id="n-todos">0</span></button>
+    <button data-filter="grave" aria-pressed="false">Solo graves <span class="n" id="n-grave">0</span></button>
+    <button data-filter="sin-recurso" aria-pressed="false">Sin recursos <span class="n" id="n-sin-recurso">0</span></button>
+    <button data-filter="sector" aria-pressed="false">Por sector activo <span class="n" id="n-sector">0</span></button>
+  </div>
+  <p class="tiny" id="sector-note" hidden></p>
+
+  <div class="nav-foot">
+    <button class="btn-112" id="btn-112" aria-haspopup="dialog" aria-controls="externa" aria-describedby="btn-112-hint">
+      <span class="btn-112-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M7 3H3v4c0 8 6 14 14 14h4v-4l-5-2-2 2a13 13 0 0 1-7-7l2-2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="btn-112-copy">112 EMERGENCIAS<span>No marca ningún número</span></span>
+      <span class="btn-112-dot" aria-hidden="true"></span>
+    </button>
+    <p class="sr" id="btn-112-hint">Abre el parte de ayuda externa. No marca el 112 ni ningún teléfono.</p>
+    <div class="hr-link" id="hr-link"><span class="dot" aria-hidden="true"></span>
+      <span><b>Agente HR</b><br><span id="hr-link-text">Enlace directo</span></span></div>
+    <p class="tiny">Entorno de demo · Ficticio. Ningún número de emergencias real se marca nunca.</p>
+    <p class="tiny nav-more"><a href="/centro">Centro</a> · <a href="/clasico">Vista técnica</a> · <a href="/informe">Informe</a></p>
+  </div>
+</nav>
+
+<!-- ============================ COLUMNA CENTRAL ============================ -->
+<div class="main">
+  <header class="head">
+    <h1>Sala de control</h1>
+    <span class="chip-v" id="version">v—</span>
+    <span class="sim-chip" title="Cifras y posiciones salen del simulador, no de sensores">SIMULACIÓN</span>
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16.5 16.5 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="search" type="search" placeholder="Buscar por zona, tipo o ID…" aria-label="Buscar por zona, tipo o identificador de incidente">
+    </div>
+    <div class="counts" role="status">
+      <span>Hora <b id="clock">—:—</b></span>
+      <span>Activos <b id="c-activos">0</b></span>
+      <span class="crit">Críticos <b id="c-criticos">0</b></span>
+      <span class="free">Libres <b id="c-libres">0/0</b></span>
+    </div>
+    <div class="alarm" id="alarm" hidden><span aria-hidden="true">⚠</span><span id="alarm-text"></span></div>
+    <button class="btn-inject" id="btn-inject" aria-haspopup="dialog" aria-controls="inyeccion">Mesa de inyección</button>
+    <button class="btn-theme" id="theme" aria-pressed="false" title="Cambiar a modo oscuro">Oscuro</button>
+    <button class="who" id="btn-operator" title="Operador de esta sesión" aria-label="Operador de esta sesión">
+      <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21a8 8 0 0 1 16 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+    </button>
+  </header>
+
+  <div class="workspace">
+    <div class="map">
+      <div class="band">
+        <section class="plan-band" id="plan-band" aria-live="polite">
+          <span class="plan-dot" aria-hidden="true"></span>
+          <div class="grow"><h2 id="plan-title">El plan sigue en pie</h2><p id="plan-cause"></p></div>
+          <button id="plan-toggle" hidden>Alternar</button>
+        </section>
+        <div class="map-tools" role="group" aria-label="Controles del plano">
+          <span class="live-chip" id="live-chip" role="status">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span class="live-copy"><b>SIMULACIÓN</b><span id="live-sub">posición simulada por zona</span></span>
+          </span>
+          <button id="t-routes" aria-pressed="true"><span>Trayectos</span><small>recursos activos</small></button>
+          <button id="t-speed" title="Velocidad de reproducción de la simulación">▶ <span id="speed-label">1x</span></button>
+          <button id="t-heat" aria-pressed="true"><span>Densidad</span><small>estimación</small></button>
+          <span class="note">ESTIMACIÓN DEL SIMULADOR, DERIVADA DE AVISOS</span>
+        </div>
+      </div>
+      <svg id="plano" role="group" tabindex="-1" aria-label="Plano del recinto: zonas, densidad, incidentes y recursos"></svg>
+    </div>
+  </div>
+
+  <section class="legend" aria-label="Leyenda del plano">
+    <div class="legend-row"><b>GRAVEDAD:</b>
+      <span><i class="k g-vital"></i>Vital</span><span><i class="k g-emergencia"></i>Emergencia</span>
+      <span><i class="k g-urgente"></i>Urgente</span><span><i class="k g-leve"></i>Leve</span>
+      <span><i class="k g-sin"></i>Sin clasificar</span>
+      <button class="help" id="help-gravedad" aria-label="Cómo se calcula la gravedad">?</button></div>
+    <div class="legend-row"><b>TIPO:</b>
+      <span>✚ Médica</span><span>⚠ Agresión</span><span>▦ Aglomeración</span><span>☂ Clima</span>
+      <span>⚙ Infraestructura</span><span>• Otro</span></div>
+    <div class="legend-row"><b>TRAYECTOS DEL SIMULADOR:</b><span><i class="dash"></i>Balizas con ETA del recinto simulado</span>
+      <span class="warnnote" id="legend-note"></span></div>
+  </section>
+
+  <section class="queue" id="cola" tabindex="-1" aria-label="Cola activa de incidentes">
+    <div class="queue-head">COLA ACTIVA DE INCIDENTES EN VIVO
+      <span class="total" id="q-total">0 TOTALES</span>
+      <span class="sync">Enlace con Agente HR <i id="sync-dot" aria-hidden="true"></i></span></div>
+    <div class="queue-body">
+      <table>
+        <thead><tr><th>GRAVEDAD</th><th>ID / TIPO</th><th>SECTOR</th><th>HORA</th><th>ESTADO</th>
+          <th>RECURSOS MANDO</th><th>AGENTE HR</th></tr></thead>
+        <tbody id="q-rows"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- ============================ COLUMNA DERECHA ============================ -->
+<aside class="aside" aria-label="Recursos y canales">
+  <div class="aside-head"><span aria-hidden="true">▣</span>RECURSOS TERRESTRES</div>
+  <div class="res-groups scroll" id="res-groups"></div>
+  <div class="bars"><h3>ABIERTOS POR GRAVEDAD</h3><div id="sev-bars"></div></div>
+  <details class="chat" id="chat-panel">
+    <summary><span aria-hidden="true">●</span>CHAT · AGENTE HR <span class="tag" id="chat-channels">—</span><span class="arrow" aria-hidden="true">⌄</span></summary>
+    <div class="chat-body" id="chat-body"><p class="tiny">Sin conversaciones abiertas todavía.</p></div>
+  </details>
+</aside>
+
+<!-- ============================ CAPAS ============================ -->
+<p class="reconnect" id="reconnect" role="status" hidden>↻ Reconectando… se conservan la selección y los últimos datos recibidos.</p>
+<p class="toast" id="toast" role="status" hidden></p>
+<div class="scrim" id="scrim" hidden></div>
+
+<!-- Ficha del incidente -->
+<section class="drawer wide" id="ficha" role="dialog" aria-modal="false" aria-labelledby="ficha-title" hidden>
+  <header><div><h2 id="ficha-title">Ficha</h2><p class="tiny" id="ficha-sub"></p></div>
+    <button class="x" data-close="ficha" aria-label="Cerrar ficha · Esc">✕</button></header>
+  <div class="drawer-body" id="ficha-body"></div>
+</section>
+
+<!-- Mesa de inyección -->
+<section class="drawer" id="inyeccion" role="dialog" aria-modal="false" aria-labelledby="iny-title" hidden>
+  <header><div><h2 id="iny-title">Mesa de inyección</h2>
+    <p class="tiny">Imprevistos del adversario sobre el recinto simulado. Solo operador.</p></div>
+    <button class="x" data-close="inyeccion" aria-label="Cerrar mesa de inyección">✕</button></header>
+  <div class="drawer-body" id="iny-body"></div>
+</section>
+
+<!-- Ayuda externa (112) -->
+<section class="drawer" id="externa" role="dialog" aria-modal="false" aria-labelledby="ext-title" hidden>
+  <header><div><h2 id="ext-title">Pedir ayuda externa</h2>
+    <p class="tiny">Esta pantalla NO marca ningún número. Prepara el parte y espera a una persona.</p></div>
+    <button class="x" data-close="externa" aria-label="Cerrar ayuda externa">✕</button></header>
+  <div class="drawer-body" id="ext-body"></div>
+</section>
+
+<!-- Cómo se calcula la gravedad -->
+<section class="drawer" id="ayuda" role="dialog" aria-modal="false" aria-labelledby="ayuda-title" hidden>
+  <header><div><h2 id="ayuda-title">Cómo se calcula la gravedad</h2>
+    <p class="tiny">Regla escrita, aplicada igual en la píldora, el marcador y las barras.</p></div>
+    <button class="x" data-close="ayuda" aria-label="Cerrar ayuda">✕</button></header>
+  <div class="drawer-body">
+    <div class="box"><h3>REGLA</h3>
+      <ul>
+        <li><b>Vital</b>: prioridad ≥ 9 <i>o</i> el triaje ha marcado riesgo vital (<code>life_threat</code>).</li>
+        <li><b>Emergencia</b>: prioridad ≥ 7.</li>
+        <li><b>Urgente</b>: prioridad ≥ 5.</li>
+        <li><b>Leve</b>: prioridad &lt; 5.</li>
+        <li><b>Sin clasificar</b>: el incidente todavía no tiene prioridad (Mando no lo ha triado).</li>
+      </ul>
+      <p class="tiny">La prioridad es la que publica el motor en <code>/api/state</code>, escala 0–10. Esta pantalla
+        no la recalcula: solo la agrupa en cinco tramos. El porqué de cada prioridad (gravedad × plazo × confianza)
+        sale al pasar el ratón por la píldora y en la ficha del incidente.</p></div>
+    <div class="box"><h3>CRÍTICOS DE LA CABECERA</h3>
+      <p class="tiny">«CRÍTICOS» cuenta los incidentes abiertos de gravedad Vital o Emergencia. Es la misma regla,
+        no una segunda definición.</p></div>
+  </div>
+</section>
+
+<script src="/static/ui.js"></script>
+<script src="/static/sala-plano.js"></script>
+<script src="/static/sala.js"></script>
+</body>
+</html>

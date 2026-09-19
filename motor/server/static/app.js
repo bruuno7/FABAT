@@ -310,7 +310,7 @@
   function approvals() {
     const ap = S.approvals || [];
     $("approvals-panel").classList.toggle("waiting", ap.length > 0);
-    $("ap-count").textContent = ap.length ? ap.length + " pendientes" : "";
+    $("ap-count").textContent = ap.length ? ap.length + " pendientes" + (ap[0].required===2 ? ` · ${ap[0].votes||0} de 2 firmas` : "") : "";
     if (ap.length && $("ap-note")?.dataset.id === ap[0].id) {
       const c=ap[0].card || {}, w=$("approvals").querySelector(".window b"), clock=$("approvals").querySelector(".window");
       if(w && c.remaining_min != null) w.textContent=c.remaining_min;

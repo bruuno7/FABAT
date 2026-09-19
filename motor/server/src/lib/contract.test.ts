@@ -176,3 +176,21 @@ describe("handleTelegramUpdate", () => {
     mock.restoreAll();
   });
 });
+
+it("checkSecret: en despliegue público sin secreto configurado se rechaza; en local se deja pasar", async () => {
+  const { checkSecret } = await import("./hr-client.js");
+  const publico = loadEnv({ VERCEL: "1" } as NodeJS.ProcessEnv);
+  const local = loadEnv({} as NodeJS.ProcessEnv);
+  assert.deepEqual(checkSecret(publico, undefined, undefined), {
+    ok: false,
+    status: 503,
+    error: "secret not configured",
+  });
+  assert.deepEqual(checkSecret(local, undefined, undefined), { ok: true });
+  assert.deepEqual(checkSecret(publico, "s3", "otro"), {
+    ok: false,
+    status: 401,
+    error: "invalid secret",
+  });
+  assert.deepEqual(checkSecret(publico, "s3", "s3"), { ok: true });
+});

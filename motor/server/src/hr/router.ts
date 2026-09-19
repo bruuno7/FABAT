@@ -1,6 +1,10 @@
 import { Router } from "express";
 import type { Env } from "../lib/hr-client.js";
-import { telegramSendMessage, forwardToHappyRobot } from "../lib/hr-client.js";
+import {
+  checkSecret,
+  telegramSendMessage,
+  forwardToHappyRobot,
+} from "../lib/hr-client.js";
 import { isHrToMando, isPublicReport } from "../lib/contract.js";
 import type { IncidentStore } from "./store.js";
 
@@ -8,12 +12,10 @@ export function hrRouter(env: Env, store: IncidentStore): Router {
   const router = Router();
 
   router.post("/events", async (req, res) => {
-    if (env.hrSecret) {
-      const got = req.header("x-hr-secret");
-      if (got !== env.hrSecret) {
-        res.status(401).json({ error: "invalid hr secret" });
-        return;
-      }
+    const auth = checkSecret(env, env.hrSecret, req.header("x-hr-secret"));
+    if (!auth.ok) {
+      res.status(auth.status).json({ error: auth.error });
+      return;
     }
 
     const body = req.body;
@@ -54,7 +56,13 @@ export function hrRouter(env: Env, store: IncidentStore): Router {
     res.status(200).json({ ok: true, telegram: tg });
   });
 
-  router.get("/incidents", (_req, res) => {
+  // Contiene texto de los avisos de personas: mismo secreto que /events.
+  router.get("/incidents", (req, res) => {
+    const auth = checkSecret(env, env.hrSecret, req.header("x-hr-secret"));
+    if (!auth.ok) {
+      res.status(auth.status).json({ error: auth.error });
+      return;
+    }
     res.json({ incidents: store.list() });
   });
 

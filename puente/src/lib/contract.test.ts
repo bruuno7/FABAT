@@ -146,11 +146,15 @@ describe("loadEnv", () => {
     const e = loadEnv({
       TELEGRAM_BOT_TOKEN: "  ",
       HR_HOOK_TG: "",
+      HR_HOOK_TG_RESPONSE: "  ",
+      STAFF_PIN: "",
       TELEGRAM_MODE: "poll",
       PORT: "9000",
     });
     assert.equal(e.telegramBotToken, undefined);
     assert.equal(e.hrHookTg, undefined);
+    assert.equal(e.hrHookTgResponse, undefined);
+    assert.equal(e.staffPin, undefined);
     assert.equal(e.mandoBackendUrl, undefined);
     assert.equal(e.telegramMode, "poll");
     assert.equal(e.port, 9000);

@@ -1,4 +1,7 @@
-import type { MandoPublicReport, PublicReport } from "./contract.js";
+import type {
+  MandoPublicReport,
+  TelegramOutbound,
+} from "./contract.js";
 
 export type Env = {
   port: number;
@@ -6,8 +9,10 @@ export type Env = {
   telegramWebhookSecret: string | undefined;
   telegramMode: "webhook" | "poll";
   hrHookTg: string | undefined;
+  hrHookTgResponse: string | undefined;
   hrHookApiKey: string | undefined;
   hrSecret: string | undefined;
+  staffPin: string | undefined;
   mandoBackendUrl: string | undefined;
   mandoCallbackUrl: string;
   allowDemoInject: boolean;
@@ -23,8 +28,10 @@ export function loadEnv(env: NodeJS.ProcessEnv = process.env): Env {
     telegramWebhookSecret: emptyToUndef(env.TELEGRAM_WEBHOOK_SECRET),
     telegramMode: mode === "poll" ? "poll" : "webhook",
     hrHookTg: emptyToUndef(env.HR_HOOK_TG),
+    hrHookTgResponse: emptyToUndef(env.HR_HOOK_TG_RESPONSE),
     hrHookApiKey: emptyToUndef(env.HR_HOOK_API_KEY),
     hrSecret: emptyToUndef(env.HR_SECRET),
+    staffPin: emptyToUndef(env.STAFF_PIN),
     mandoBackendUrl: emptyToUndef(env.MANDO_BACKEND_URL),
     mandoCallbackUrl: env.MANDO_CALLBACK_URL ?? "http://127.0.0.1:8787",
     allowDemoInject: env.ALLOW_DEMO_INJECT === "1",
@@ -62,16 +69,24 @@ function emptyToUndef(v: string | undefined): string | undefined {
   return v.trim();
 }
 
+export type ForwardResult = {
+  ok: boolean;
+  status: number;
+  body: string;
+  skipped?: boolean;
+};
+
 export async function forwardToHappyRobot(
   hookUrl: string | undefined,
-  report: PublicReport,
+  payload: unknown,
   apiKey?: string,
-): Promise<{ ok: boolean; status: number; body: string; skipped?: boolean }> {
+  missing = "HR_HOOK_TG not configured",
+): Promise<ForwardResult> {
   if (!hookUrl) {
     return {
       ok: false,
       status: 0,
-      body: "HR_HOOK_TG not configured",
+      body: missing,
       skipped: true,
     };
   }
@@ -84,7 +99,34 @@ export async function forwardToHappyRobot(
   const res = await fetch(hookUrl, {
     method: "POST",
     headers,
-    body: JSON.stringify(report),
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  const body = await res.text();
+  return { ok: res.ok, status: res.status, body };
+}
+
+export type TelegramCallResult = ForwardResult;
+
+async function telegramCall(
+  token: string | undefined,
+  method: string,
+  payload: Record<string, unknown>,
+): Promise<TelegramCallResult> {
+  if (!token) {
+    return {
+      ok: false,
+      status: 0,
+      body: "TELEGRAM_BOT_TOKEN not configured",
+      skipped: true,
+    };
+  }
+
+  const url = `https://api.telegram.org/bot${token}/${method}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   const body = await res.text();
@@ -127,23 +169,62 @@ export async function telegramSendMessage(
   token: string | undefined,
   chatId: string,
   text: string,
-): Promise<{ ok: boolean; status: number; body: string; skipped?: boolean }> {
-  if (!token) {
-    return {
-      ok: false,
-      status: 0,
-      body: "TELEGRAM_BOT_TOKEN not configured",
-      skipped: true,
-    };
-  }
+  opts?: { reply_markup?: unknown },
+): Promise<TelegramCallResult> {
+  const payload: Record<string, unknown> = { chat_id: chatId, text };
+  if (opts?.reply_markup) payload.reply_markup = opts.reply_markup;
+  return telegramCall(token, "sendMessage", payload);
+}
 
-  const url = `https://api.telegram.org/bot${token}/sendMessage`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text }),
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+export async function telegramEditMessage(
+  token: string | undefined,
+  chatId: string,
+  messageId: number,
+  text: string,
+  opts?: { reply_markup?: unknown },
+): Promise<TelegramCallResult> {
+  const payload: Record<string, unknown> = {
+    chat_id: chatId,
+    message_id: messageId,
+    text,
+  };
+  if (opts?.reply_markup) payload.reply_markup = opts.reply_markup;
+  return telegramCall(token, "editMessageText", payload);
+}
+
+export async function telegramAnswerCallback(
+  token: string | undefined,
+  callbackQueryId: string,
+  opts?: { text?: string; show_alert?: boolean },
+): Promise<TelegramCallResult> {
+  const payload: Record<string, unknown> = {
+    callback_query_id: callbackQueryId,
+  };
+  if (opts?.text) payload.text = opts.text;
+  if (opts?.show_alert) payload.show_alert = true;
+  return telegramCall(token, "answerCallbackQuery", payload);
+}
+
+export async function executeTelegramOutbound(
+  env: Env,
+  event: TelegramOutbound,
+): Promise<TelegramCallResult> {
+  if (event.event === "telegram_send") {
+    return telegramSendMessage(env.telegramBotToken, event.chat_id, event.text, {
+      reply_markup: event.reply_markup,
+    });
+  }
+  if (event.event === "telegram_edit") {
+    return telegramEditMessage(
+      env.telegramBotToken,
+      event.chat_id,
+      event.message_id,
+      event.text,
+      { reply_markup: event.reply_markup },
+    );
+  }
+  return telegramAnswerCallback(env.telegramBotToken, event.callback_query_id, {
+    text: event.text,
+    show_alert: event.show_alert,
   });
-  const body = await res.text();
-  return { ok: res.ok, status: res.status, body };
 }

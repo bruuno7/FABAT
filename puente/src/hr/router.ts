@@ -5,10 +5,12 @@ import {
   forwardToMando,
   telegramSendMessage,
   forwardToHappyRobot,
+  executeTelegramOutbound,
 } from "../lib/hr-client.js";
 import {
   isHrToMando,
   isPublicReport,
+  parseTelegramOutbound,
   toMandoPublicReport,
 } from "../lib/contract.js";
 import type { IncidentStore } from "./store.js";
@@ -24,6 +26,24 @@ export function hrRouter(env: Env, store: IncidentStore): Router {
     }
 
     const body = req.body;
+    const outbound = parseTelegramOutbound(body);
+    if (outbound && "error" in outbound) {
+      res.status(400).json({ error: outbound.error });
+      return;
+    }
+    if (outbound) {
+      const tg = await executeTelegramOutbound(env, outbound);
+      console.info("[hr] telegram_outbound", {
+        event: outbound.event,
+        tg: { ok: tg.ok, skipped: tg.skipped ?? false, status: tg.status },
+      });
+      res.status(200).json({
+        ok: true,
+        telegram: { ok: tg.ok, skipped: tg.skipped, status: tg.status },
+      });
+      return;
+    }
+
     if (!isHrToMando(body)) {
       res.status(400).json({ error: "invalid hr_to_mando payload" });
       return;

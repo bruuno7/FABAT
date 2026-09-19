@@ -1,0 +1,834 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   MANDO — capa de tokens (Tailwind v4, config por CSS: no hay tailwind.config.js)
+
+   SISTEMA VISUAL: Material Design 3 (tema claro) + Plus Jakarta Sans, portado
+   del fichero de estilo del usuario. Fuente de los valores:
+   `C:\Users\bfir2\AppData\Local\Temp\mando-design-ref.md` (§1 tipografía, §2 paleta).
+
+   Los ratios de contraste anotados están MEDIDOS con la fórmula WCAG 2.x
+   (relative luminance) sobre las superficies reales, no estimados.
+
+   AUDITORÍA: TODO el color sensible vive aquí. Para conmutar a tema oscuro sin
+   refactor basta con redefinir estos tokens (nombres estables).
+   ============================================================================ */
+@theme {
+  /* --- Superficies M3 ------------------------------------------------------ */
+  --color-bg: #f8f9ff; /* background / surface */
+  --color-surface: #ffffff; /* surface-container-lowest: tarjetas */
+  --color-surface-low: #eff4ff; /* surface-container-low: campos, cabeceras */
+  --color-surface-container: #e5eeff; /* surface-container: chips neutros */
+  --color-surface-high: #dce9ff; /* surface-container-high */
+  --color-surface-dim: #cbdbf5; /* surface-dim */
+
+  /* --- Barra lateral (primary-container) ---------------------------------- */
+  --color-sidebar: #152033;
+  --color-sidebar-deep: #00081a; /* primary: marca */
+  --color-sidebar-text: #ffffff; /* 16.33:1 */
+  --color-sidebar-muted: #9aa4b8; /* 6.51:1 — secundario del sidebar */
+  --color-sidebar-active: rgba(84, 95, 116, 0.2); /* surface-tint/20 */
+  --color-sidebar-accent: #2170e4; /* secondary-container, 3.50:1 (no-texto) */
+
+  /* --- Texto --------------------------------------------------------------- */
+  --color-ink: #0b1c30; /* on-surface — 17.17:1 sobre blanco */
+  --color-ink-2: #45474c; /* on-surface-variant — 9.30:1 */
+  --color-muted: #45474c; /* alias semántico de ink-2 */
+  --color-outline: #75777d; /* 4.26:1 sobre bg — BORDE DE CONTROL */
+  --color-outline-soft: #c5c6cd; /* hairlines decorativos (1.62:1, sin deber) */
+
+  /* --- Acento (secondary) -------------------------------------------------- */
+  --color-accent: #0058be; /* 6.37:1 sobre bg */
+  --color-accent-ink: #ffffff; /* 6.69:1 sobre el botón */
+  --color-accent-container: #2170e4;
+  --color-accent-tint: #d8e2ff; /* secondary-fixed */
+  --color-accent-deep: #004395; /* 7.26:1 sobre su tinte */
+  --color-focus: #0058be; /* anillo de foco — 6.37:1 sobre bg */
+
+  /* --- Error (M3) ---------------------------------------------------------- */
+  --color-danger: #ba1a1a; /* 6.15:1 sobre bg */
+  --color-danger-ink: #93000a; /* 8.90:1 sobre bg */
+  --color-danger-tint: #ffdad6; /* error-container */
+
+  /* --- Verde de evacuación / leve (tertiary) ------------------------------ */
+  --color-ok: #005236; /* 9.29:1 sobre blanco */
+  --color-ok-tint: #d7f7e6;
+  --color-evac: #005236; /* 8.26:1 sobre el mapa */
+
+  /* --- Ámbar (urgente) ----------------------------------------------------- */
+  --color-warn: #92400e; /* 7.09:1 sobre blanco */
+  --color-warn-tint: #fef3c7;
+
+  /* --- TRIAGE: 3 variantes por nivel (fill · ink · text) -------------------
+     COMPLIANCE (WCAG 1.4.1 + contraste AA): cada nivel lleva color + FORMA de
+     borde + GLIFO + ETIQUETA textual, y su tinta está medida.
+       · FILL → relleno del marcador y de la pastilla, SIEMPRE con INK encima.
+       · INK  → el texto sobre el fill.
+       · TEXT → variante para cuando el color va como TEXTO o BARRA sobre claro,
+                que es donde el ámbar y el verde fallan si se usan crudos.
+     Medidas de la trampa del tema claro (ver informe):
+       #f59e0b como texto sobre blanco = 2.15 ✗  → TEXT usa #92400e (7.09 ✓)
+       #009b6b como texto sobre blanco = 3.56 ✗  → TEXT usa #005236 (9.29 ✓)
+       #92400e como tinta SOBRE el relleno ámbar = 3.30 ✗ → INK usa #3a2a00 (6.47 ✓) */
+  --color-triage-negro: #00081a; /* fill · ink #fff → 20.01:1 */
+  --color-triage-negro-ink: #ffffff;
+  --color-triage-negro-text: #00081a; /* 20.01:1 sobre blanco */
+  --color-triage-rojo: #ba1a1a; /* fill · ink #fff → 6.46:1 */
+  --color-triage-rojo-ink: #ffffff;
+  --color-triage-rojo-text: #93000a; /* 9.35:1 sobre blanco */
+  --color-triage-amarillo: #f59e0b; /* fill · ink #3a2a00 → 6.47:1 */
+  --color-triage-amarillo-ink: #3a2a00;
+  --color-triage-amarillo-text: #92400e; /* 7.09:1 sobre blanco */
+  --color-triage-verde: #00845a; /* fill · ink #fff → 4.72:1 (M3 #009b6b no daba AA) */
+  --color-triage-verde-ink: #ffffff;
+  --color-triage-verde-text: #005236; /* 9.29:1 sobre blanco */
+  --color-triage-desconocido: #6b6d73; /* fill · ink #fff → 5.17:1 */
+  --color-triage-desconocido-ink: #ffffff;
+  --color-triage-desconocido-text: #45474c; /* 9.30:1 sobre blanco */
+
+  /* --- Tintes de las pastillas de triage (para texto, no para el marcador) -- */
+  --color-triage-negro-tint: #d3e4fe;
+  --color-triage-rojo-tint: #ffdad6; /* #93000a encima → 7.24:1 */
+  --color-triage-amarillo-tint: #fef3c7; /* #92400e encima → 6.37:1 */
+  --color-triage-verde-tint: #d7f7e6; /* #005236 encima → 8.11:1 */
+  --color-triage-desconocido-tint: #e5eeff; /* #45474c encima → 7.97:1 */
+
+  /* Anillo del marcador: OSCURO. Sin él, ámbar (1.91:1) se pierde sobre el mapa.
+     Es neutro a propósito: no compite con la escala de gravedad. */
+  --color-marker-ring: #0b1c30;
+
+  /* --- Mapa esquemático ---------------------------------------------------- */
+  --color-map-bg: #eef2f7;
+  --color-map-zone: #ffffff;
+  --color-map-zone-out: #e5eeff;
+  --color-map-fence: #9aa1ae;
+  --color-map-corridor: #d8e2ff; /* PASILLO NORTE / SUR */
+  --color-map-vial: #b45309; /* 4.47:1 — vial de ambulancia */
+  --color-map-label: #0b1c30;
+  --color-map-water: #bcc7e0;
+
+  /* --- Tipografía: SOLO 3 TAMAÑOS (presupuesto tipográfico) ---------------- */
+  --font-sans: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jakarta), ui-monospace, SFMono-Regular, monospace;
+  --text-t1: 11px; /* micro / etiquetas · 600 · ls 0.03em */
+  --text-t1--line-height: 15px;
+  --text-t1--letter-spacing: 0.03em;
+  --text-t1--font-weight: 600;
+  --text-t2: 13.5px; /* cuerpo · 400-500 */
+  --text-t2--line-height: 19px;
+  --text-t3: 19px; /* título de ficha / cifra · 700 · ls -0.01em */
+  --text-t3--line-height: 24px;
+  --text-t3--letter-spacing: -0.01em;
+  --text-t3--font-weight: 700;
+
+  /* --- Geometría ----------------------------------------------------------- */
+  --sidebar-w: 230px;
+  --right-w: 320px;
+  --topbar-h: 52px;
+  --tap-min: 1.5rem; /* objetivo mínimo WCAG 2.5.8 = 24x24px */
+  --radius-card: 16px; /* rounded-2xl de la referencia */
+}
+
+html {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13.5px; /* el cuerpo ES t2 */
+  line-height: 19px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================================
+   FOCO VISIBLE (COMPLIANCE: WCAG 2.4.7 + 2.4.11)
+   Nunca `outline: none` sin sustituto. En el sidebar oscuro el azul no
+   contrasta (2.44:1), así que se conmuta el color del anillo.
+   ============================================================================ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+.sidebar :where(a, button, [tabindex]):focus-visible {
+  outline-color: #adc6ff; /* 9.56:1 sobre el sidebar */
+}
+
+/* ============================================================================
+   BARRA LATERAL
+   ============================================================================ */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--color-sidebar);
+}
+
+.side-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--color-sidebar-muted);
+  min-height: var(--tap-min);
+  text-align: left;
+}
+.side-link:hover {
+  background: rgba(84, 95, 116, 0.1);
+  color: var(--color-sidebar-text);
+}
+/* Activo por TRES canales: fondo + barra de acento + peso del texto. El fondo
+   solo da 1.05:1 sobre el sidebar, así que la barra es imprescindible. */
+.side-link[aria-pressed="true"] {
+  background: var(--color-sidebar-active);
+  color: var(--color-sidebar-text);
+  font-weight: 700;
+}
+.side-link[aria-pressed="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--color-sidebar-accent);
+}
+
+/* ============================================================================
+   TARJETAS
+   Sombras suaves, cero glassmorphism, cero degradados llamativos.
+   ============================================================================ */
+.card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--color-surface);
+  border: 1px solid #e8eefb;
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 8px rgb(0 0 0 / 0.04);
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem 0.5rem;
+  flex-shrink: 0;
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-ink-2);
+}
+.card-body {
+  min-height: 0;
+  padding: 0 1rem 1rem;
+}
+
+/* ============================================================================
+   BOTONES — un único sitio para contraste, foco y tamaño de objetivo
+   ============================================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid var(--color-outline);
+  border-radius: 10px;
+  padding: 0.35rem 0.75rem;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  min-height: var(--tap-min);
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) {
+  background: var(--color-surface-low);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-accent-deep);
+  border-color: var(--color-accent-deep);
+}
+.btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-ink-2);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--color-surface-container);
+}
+/* Acción principal: objetivo de 44x44px (COMPLIANCE 2.5.5) */
+.btn-lg {
+  min-height: 2.75rem;
+  padding: 0.6rem 1rem;
+}
+.btn-sm {
+  padding: 0.2rem 0.5rem;
+  font-size: 11px;
+  min-height: var(--tap-min);
+  border-radius: 8px;
+}
+.btn-icon {
+  padding: 0.35rem;
+  min-width: var(--tap-min);
+}
+
+/* ============================================================================
+   CAMPOS
+   ============================================================================ */
+.field {
+  width: 100%;
+  min-height: 2rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline);
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  font-size: 13.5px;
+  color: var(--color-ink);
+}
+.field::placeholder {
+  color: var(--color-outline);
+}
+
+/* ============================================================================
+   PASTILLAS DE TRIAGE
+   COMPLIANCE (WCAG 1.4.1): color + forma de borde + glifo + etiqueta textual.
+   El texto va sobre TINTE con la variante -text oscura, no sobre el relleno
+   saturado: es lo que permite que ámbar y verde cumplan AA.
+   ============================================================================ */
+.tri {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  white-space: nowrap;
+  border: 1px solid;
+  text-transform: uppercase;
+}
+.tri-mark {
+  font-size: 0.95em;
+  line-height: 1;
+}
+/* vital: el MÁS grave debe verse como el más grave, no como "desactivado".
+   Relleno sólido oscuro + anillo doble + borde negro. */
+.tri-negro {
+  background: var(--color-triage-negro);
+  color: var(--color-triage-negro-ink);
+  border-color: #000000;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--color-triage-negro);
+}
+.tri-rojo {
+  background: var(--color-triage-rojo);
+  color: var(--color-triage-rojo-ink);
+  border-color: #8c1414;
+  border-radius: 9999px;
+}
+.tri-amarillo {
+  background: var(--color-triage-amarillo);
+  color: var(--color-triage-amarillo-ink);
+  border-color: #92400e;
+  border-radius: 4px;
+  border-style: dashed;
+}
+.tri-verde {
+  background: var(--color-triage-verde);
+  color: var(--color-triage-verde-ink);
+  border-color: #00452f;
+  border-radius: 4px;
+  border-style: dotted;
+}
+.tri-desconocido {
+  background: repeating-linear-gradient(
+    45deg,
+    #dfe6f2 0 3px,
+    #c9d3e4 3px 6px
+  ); /* rayado = "sin dato" */
+  color: var(--color-triage-desconocido-text);
+  border-color: #6b6d73;
+  border-radius: 9999px;
+  border-style: dashed;
+}
+
+/* --- Perfil (solo en la ficha, no en el flujo principal: RGPD Art. 9) ----- */
+.pf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.05rem 0.4rem;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+}
+.pf-menor {
+  color: #86198f;
+}
+.pf-pmr {
+  color: #0369a1;
+}
+.pf-adulto {
+  color: var(--color-ink-2);
+}
+.pf-personal {
+  color: #6d28d9;
+}
+.pf-vip {
+  color: #0f766e;
+}
+
+/* --- Estado del incidente: pastilla de tinte M3 --------------------------- */
+.st {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  border-radius: 9999px;
+}
+.st-nuevo {
+  color: var(--color-accent-deep);
+  background: var(--color-accent-tint);
+}
+.st-asignado {
+  color: var(--color-ok);
+  background: var(--color-ok-tint);
+}
+.st-escalado {
+  color: var(--color-danger-ink);
+  background: var(--color-danger-tint);
+}
+.st-resuelto {
+  color: var(--color-ink-2);
+  background: var(--color-surface-container);
+  text-decoration: line-through;
+}
+
+/* --- Tonos de la traza (texto + glifo + color) --------------------------- */
+.tone-info {
+  border-left-color: var(--color-outline);
+  color: var(--color-ink-2);
+}
+.tone-ok {
+  border-left-color: var(--color-ok);
+  color: var(--color-ok);
+}
+.tone-warn {
+  border-left-color: #d97706;
+  color: var(--color-warn);
+}
+.tone-danger {
+  border-left-color: var(--color-danger);
+  color: var(--color-danger-ink);
+}
+
+/* --- Medidor de severidad (barras + número, nunca solo color) ----------- */
+.sev {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.sev-bar {
+  width: 0.55rem;
+  height: 0.3rem;
+  border-radius: 1px;
+  background: var(--color-surface-container);
+  border: 1px solid #c9d3e4;
+}
+.sev-fill {
+  background: currentColor;
+  border-color: currentColor;
+}
+.sev-negro {
+  color: var(--color-triage-negro-text);
+}
+.sev-rojo {
+  color: var(--color-triage-rojo-text);
+}
+.sev-amarillo {
+  color: var(--color-triage-amarillo-text);
+}
+.sev-verde {
+  color: var(--color-triage-verde-text);
+}
+.sev-desconocido {
+  color: var(--color-triage-desconocido-text);
+}
+
+/* ============================================================================
+   MAPA
+   ============================================================================ */
+.map-shell {
+  position: relative;
+  min-height: 0;
+  background: var(--color-map-bg);
+  border: 1px solid #e8eefb;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.map-zone {
+  fill: var(--color-map-zone);
+  stroke: #c5c6cd;
+  stroke-width: 1;
+}
+.map-zone-out {
+  fill: var(--color-map-zone-out);
+  stroke: #c5c6cd;
+  stroke-dasharray: 5 4;
+}
+.map-zone-label {
+  fill: var(--color-map-label);
+  font-size: 12px;
+  font-weight: 700;
+}
+.map-zone-sub {
+  fill: var(--color-ink-2);
+  font-size: 10px;
+  font-weight: 600;
+}
+.map-corridor {
+  fill: none;
+  stroke: var(--color-map-corridor);
+  stroke-width: 30;
+  stroke-linecap: round;
+}
+.map-corridor-label {
+  fill: var(--color-accent-deep);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+/* Vial de ambulancia hasta los PMA */
+.map-vial {
+  fill: none;
+  stroke: var(--color-map-vial);
+  stroke-width: 3;
+  stroke-dasharray: 8 5;
+  stroke-linecap: round;
+}
+/* Salida de emergencia: verde de evacuación, con rótulo */
+.map-evac {
+  fill: none;
+  stroke: var(--color-evac);
+  stroke-width: 2;
+  stroke-dasharray: 7 5;
+  opacity: 0.6;
+}
+.map-evac-label {
+  fill: var(--color-evac);
+  font-size: 9px;
+  font-weight: 700;
+}
+/* Infraestructura: puertas, PMA, punto de encuentro */
+.map-infra {
+  fill: var(--color-surface);
+  stroke: var(--color-outline);
+  stroke-width: 1.5;
+}
+.map-infra-open {
+  fill: var(--color-ok-tint);
+  stroke: var(--color-ok);
+  stroke-width: 1.5;
+}
+.map-infra-busy {
+  fill: var(--color-danger-tint);
+  stroke: var(--color-danger);
+  stroke-width: 1.5;
+}
+.map-infra-label {
+  fill: var(--color-map-label);
+  font-size: 9.5px;
+  font-weight: 700;
+}
+.map-infra-sub {
+  fill: var(--color-ink-2);
+  font-size: 8px;
+  font-weight: 600;
+}
+.map-infra-glyph {
+  fill: var(--color-ink-2);
+  font-size: 11px;
+}
+/* Marcador: relleno = gravedad, anillo OSCURO = perceptibilidad */
+.marker {
+  cursor: pointer;
+}
+.marker-body {
+  stroke: var(--color-marker-ring);
+  stroke-width: 1.75;
+}
+.marker-glyph {
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+.marker-selected {
+  fill: none;
+  stroke: var(--color-focus);
+  stroke-width: 2.5;
+}
+.marker-count {
+  font-size: 9px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: var(--color-ink);
+}
+.marker-halo {
+  fill: transparent;
+}
+
+/* ============================================================================
+   TARJETA FLOTANTE (sobre el mapa). Sin backdrop-filter: no glassmorphism.
+   ============================================================================ */
+.floating-card {
+  background: var(--color-surface);
+  border: 1px solid #e8eefb;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgb(11 28 48 / 0.1);
+}
+
+/* ============================================================================
+   AVISO DE SATURACIÓN — el momento clave del producto
+   ============================================================================ */
+.banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+/* COMPLIANCE: el estado crítico lleva glifo + texto, no solo color. */
+.banner-broken {
+  background: var(--color-danger-tint);
+  color: var(--color-danger-ink);
+  border: 1px solid var(--color-danger);
+}
+.banner-calm {
+  background: var(--color-ok-tint);
+  color: var(--color-ok);
+  border: 1px solid var(--color-ok);
+}
+/* Estado neutro mientras no hay datos: no afirma nada sobre el plan. */
+.banner-neutral {
+  background: var(--color-surface-container);
+  color: var(--color-ink-2);
+  border: 1px solid var(--color-outline-soft);
+}
+@keyframes mando-alert {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.alert-pulse {
+  animation: mando-alert 2s ease-in-out infinite;
+}
+
+/* ============================================================================
+   MEDIDOR DE CAPACIDAD (unidades ocupadas / totales)
+   ============================================================================ */
+.meter-seg {
+  height: 1.25rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-surface-high);
+  background: var(--color-surface-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-ink-2);
+  overflow: hidden;
+  text-align: center;
+}
+/* Ocupado: relleno sólido con el nombre de la unidad (no solo color) */
+.meter-seg-busy {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+.meter-seg-short {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-danger-tint);
+}
+
+/* ============================================================================
+   TABLA DE INCIDENTES
+   ============================================================================ */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tbl thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface-low);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-ink-2);
+  white-space: nowrap;
+}
+.tbl tbody td {
+  padding: 0.45rem 0.75rem;
+  border-top: 1px solid #eef2fb;
+  vertical-align: middle;
+}
+.tbl tbody tr {
+  cursor: pointer;
+}
+.tbl tbody tr:hover {
+  background: var(--color-surface-low);
+}
+/* Fila seleccionada: fondo + barra izquierda. Dos canales, porque el fondo
+   solo no basta para localizarla de un vistazo. */
+.tbl tbody tr[aria-selected="true"] {
+  background: var(--color-accent-tint);
+  box-shadow: inset 3px 0 0 0 var(--color-accent);
+}
+
+/* ============================================================================
+   CAJONES LATERALES (ficha, preparación, traza). Uno a la vez.
+   ============================================================================ */
+.drawer {
+  background: var(--color-surface);
+  border-left: 1px solid #e8eefb;
+  box-shadow: -8px 0 28px rgb(11 28 48 / 0.12);
+}
+
+/* ============================================================================
+   TRANSCRIPCIÓN — registro de operador, no burbujas de mensajería
+   ============================================================================ */
+.turn {
+  border-radius: 10px;
+  padding: 0.45rem 0.65rem;
+  max-width: 92%;
+}
+.turn-caller {
+  background: var(--color-surface-low);
+  color: var(--color-ink);
+  align-self: flex-start;
+}
+.turn-agent {
+  background: var(--color-accent-tint);
+  color: var(--color-ink);
+  align-self: flex-end;
+}
+.turn-system {
+  background: var(--color-warn-tint);
+  color: var(--color-warn);
+  align-self: stretch;
+  max-width: 100%;
+}
+
+/* ============================================================================
+   UTILIDADES
+   ============================================================================ */
+.mono {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+/* Glifos de icono: fuerza presentación de TEXTO para que el sistema no los
+   pinte como emoji a color. Un emoji a color rompe la accesibilidad porque el
+   lector de pantalla anuncia su nombre Unicode ("busts in silhouette") en vez
+   del concepto operativo. Los glifos llevan además U+FE0E. */
+.glyph {
+  font-variant-emoji: text;
+  font-family: var(--font-sans);
+}
+/* Scroll SIEMPRE visible: ocultarlo dificulta el uso (problema nº7 del prototipo) */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #b8c4d8 transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: #b8c4d8;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb:hover {
+  background: #9aa8c0;
+  background-clip: content-box;
+}
+/* Enlace de salto: invisible hasta que recibe foco por teclado (WCAG 2.4.1). */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  border: 2px solid var(--color-focus);
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+}
+
+/* COMPLIANCE (WCAG 2.3.3): respeta la preferencia de movimiento reducido.
+   El prototipo usaba pulsos infinitos sin esta salvaguarda (problema nº2). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -13,7 +13,8 @@ HR telegram_send / telegram_edit / answer_callback → Bot API
 
 También: `POST /hr/events` genérico para webcall y otros canales.
 
-Los puestos de personal viven en memoria del puente (se pierden en un cold start de Vercel). Twin y los workflows de despacho no están en este módulo.
+Los puestos de personal se cachean en el puente y se persisten en MANDO (`POST /hr/tg/roster`).
+Sin `MANDO_BACKEND_URL` el mapa sigue siendo solo memoria (se pierde en un cold start de Vercel).
 
 ## Arranque local
 
@@ -36,7 +37,8 @@ Webhook (con túnel CF / similar):
 1. Exponer `https://…/telegram/webhook`
 2. `setWebhook` con `secret_token` = `TELEGRAM_WEBHOOK_SECRET` (incluye `callback_query`)
 3. Rellenar `HR_HOOK_TG` con URL development del Incoming Hook
-4. `HR_HOOK_TG_RESPONSE` cuando exista `fa-respuesta-tg`; si falta, los botones no rompen el bot
+4. `HR_HOOK_TG_RESPONSE` = Incoming Hook development de `fa-respuesta-tg`
+5. `MANDO_BACKEND_URL` = URL pública de MANDO (túnel). `/rol` escribe el directorio ahí.
 
 ## Variables
 
@@ -69,7 +71,10 @@ Puestos: `medico`, `staff_entradas`, `organizador`, `bomberos`, `policia`.
 | `/estado` | Lista ocupados y libres |
 | `/baja` | Suelta el puesto |
 
-Un chat = un puesto. Un puesto = un chat. En local, sin `STAFF_PIN`, `/rol` funciona para poder ensayar. En Vercel, sin PIN no se toma ningún puesto.
+Un chat = un puesto. Un puesto = un chat. El mapa se guarda en MANDO (`/hr/tg/roster`) para que
+`fa-despacho-tg` sepa el `chat_id` tras un cold start. HappyRobot llama a este puente
+(`/hr/tg/dispatch` y `/hr/tg/staff-response`); el puente reenvía a MANDO. En local, sin `STAFF_PIN`,
+`/rol` funciona para poder ensayar. En Vercel, sin PIN no se toma ningún puesto.
 
 `callback_data` de los botones: `kind:assignment_id` o `kind|assignment_id|correlation_id`. Kinds: `acc`, `dec`, `eta`, `loc`, `apr`, `vet`.
 
@@ -102,6 +107,8 @@ Además de `agent_reply` / `extract_ready` / `needs_human` / `session_ended`:
 | GET | `/health` | — |
 | POST | `/telegram/webhook` | `X-Telegram-Bot-Api-Secret-Token` si configurado |
 | POST | `/hr/events` | `x-hr-secret` si `HR_SECRET` set |
+| POST | `/hr/tg/dispatch` | proxy a MANDO (`telegram_send` listo); `x-hr-secret` |
+| POST | `/hr/tg/staff-response` | proxy a MANDO (`acc`/`dec`/`eta`/`loc`); `x-hr-secret` |
 | POST | `/demo/public-report` | solo si `ALLOW_DEMO_INJECT=1` |
 
 ## Bloqueado hasta

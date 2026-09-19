@@ -3,6 +3,7 @@ import type { Env } from "../lib/hr-client.js";
 import {
   checkSecret,
   forwardToMando,
+  forwardMandoPath,
   telegramSendMessage,
   forwardToHappyRobot,
   executeTelegramOutbound,
@@ -123,6 +124,14 @@ export function hrRouter(env: Env, store: IncidentStore): Router {
     });
   });
 
+  // HappyRobot no alcanza el túnel de MANDO: estas rutas reenvían el cerrojo.
+  router.post("/tg/dispatch", (req, res) =>
+    proxyMando(env, req, res, "/hr/tg/dispatch"),
+  );
+  router.post("/tg/staff-response", (req, res) =>
+    proxyMando(env, req, res, "/hr/tg/staff-response"),
+  );
+
   // Contiene texto de los avisos de personas: mismo secreto que /events.
   router.get("/incidents", (req, res) => {
     const auth = checkSecret(env, env.hrSecret, req.header("x-hr-secret"));
@@ -133,7 +142,104 @@ export function hrRouter(env: Env, store: IncidentStore): Router {
     res.json({ incidents: store.list() });
   });
 
+  /**
+   * POST /hr/tg-reply
+   * Permite a MANDO cerrar el loop con el ciudadano que reportó un incidente.
+   * Body: { chat_id: string, text: string, correlation_id?: string }
+   * Header: x-hr-secret
+   *
+   * Ejemplo de uso desde MANDO:
+   *   POST /hr/tg-reply
+   *   { "chat_id": "-1001234567890", "text": "Hemos enviado un equipo médico. Ref: INC-041.", "correlation_id": "tg-..." }
+   */
+  router.post("/tg-reply", async (req, res) => {
+    const auth = checkSecret(env, env.hrSecret, req.header("x-hr-secret"));
+    if (!auth.ok) {
+      res.status(auth.status).json({ error: auth.error });
+      return;
+    }
+
+    const body = req.body as {
+      chat_id?: unknown;
+      text?: unknown;
+      correlation_id?: unknown;
+    };
+
+    const rawChatId = body.chat_id;
+    const chat_id = rawChatId != null ? String(rawChatId).trim() : "";
+    const text = typeof body.text === "string" ? body.text.trim() : "";
+    const correlation_id =
+      typeof body.correlation_id === "string"
+        ? body.correlation_id.trim()
+        : undefined;
+
+    if (!chat_id) {
+      res.status(400).json({ error: "chat_id requerido (string o número)" });
+      return;
+    }
+    if (!text) {
+      res.status(400).json({ error: "text requerido (string)" });
+      return;
+    }
+
+    const sent = await telegramSendMessage(
+      env.telegramBotToken,
+      chat_id.trim(),
+      text.trim(),
+    );
+
+    console.info("[hr] tg-reply", {
+      chat_id,
+      correlation_id: correlation_id ?? null,
+      tg: { ok: sent.ok, skipped: sent.skipped ?? false, status: sent.status },
+    });
+
+    res.status(sent.ok || sent.skipped ? 200 : 502).json({
+      ok: sent.ok,
+      skipped: sent.skipped ?? false,
+      status: sent.status,
+    });
+  });
+
   return router;
+}
+
+async function proxyMando(
+  env: Env,
+  req: { method: string; header: (name: string) => string | undefined; body: unknown },
+  res: {
+    status: (code: number) => { json: (body: unknown) => void };
+    json: (body: unknown) => void;
+  },
+  path: string,
+): Promise<void> {
+  const auth = checkSecret(env, env.hrSecret, req.header("x-hr-secret"));
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
+    return;
+  }
+  const method = req.method.toUpperCase();
+  const result = await forwardMandoPath(env.mandoBackendUrl, env.hrSecret, path, {
+    method,
+    body: method === "GET" ? undefined : JSON.stringify(req.body ?? {}),
+  });
+  if (result.skipped) {
+    res.status(503).json({
+      ok: false,
+      dispatched: false,
+      reason: "mando_unconfigured",
+      outbound: null,
+      next_outbound: null,
+    });
+    return;
+  }
+  let payload: unknown = { ok: result.ok, body: result.body };
+  try {
+    payload = JSON.parse(result.body);
+  } catch {
+    // MANDO a veces responde texto; lo envolvemos para que HR no reciba un string crudo.
+  }
+  res.status(result.status || (result.ok ? 200 : 502)).json(payload);
 }
 
 export function demoRouter(env: Env, store: IncidentStore): Router {

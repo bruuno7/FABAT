@@ -258,6 +258,24 @@ class EspejoTelegramTest(unittest.TestCase):
         self.assertTrue(self.send(event)['duplicate'])
         self.assertEqual(len(self.espejo()['asignaciones']), 1)
 
+    def test_primer_acc_gana_en_el_espejo(self):
+        self.aviso()
+        self.send({'type': 'tg_assignment', 'event_id': 'a1', 'incident_id': 'tg-1', 'rol': 'medico',
+                   'estado': 'accepted', 'alias': 'Marta', 'intento': 1})
+        out = self.send({'type': 'tg_assignment', 'event_id': 'a2', 'incident_id': 'tg-1', 'rol': 'medico',
+                         'estado': 'accepted', 'alias': 'Bruno', 'intento': 2})
+        self.assertEqual(out['estado'], 'covered')
+        estados = {(a['alias'], a['estado']) for a in self.espejo()['asignaciones']}
+        self.assertEqual(estados, {('Marta', 'accepted'), ('Bruno', 'covered')})
+
+    def test_puestos_del_bot_en_el_espejo(self):
+        self.send({'type': 'tg_incident', 'schema': 'mando.hr.v1', 'event_id': 'tg-b-0', 'id': 'tg-b',
+                   'texto': 'Humo en restauración, simulación', 'tipo': 'incendio', 'zona': 'front_pit',
+                   'gravedad': 'urgente', 'recursos_requeridos': [{'rol': 'bomberos', 'cantidad': 1}]})
+        self.send({'type': 'tg_assignment', 'event_id': 'tg-b-1', 'incident_id': 'tg-b',
+                   'rol': 'bomberos', 'estado': 'pending', 'alias': 'Luis', 'intento': 1})
+        self.assertEqual(self.espejo()['asignaciones'][0]['rol'], 'bomberos')
+
     def test_token_de_webhooks(self):
         self.assertEqual(self.c.post('/hr/events', json={'type': 'tg_incident'}).status_code, 401)
         self.assertEqual(self.c.post('/hr/events', json={'type': 'tg_incident'},

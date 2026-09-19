@@ -77,7 +77,9 @@ Opción **A**: API key Editor + crear workflow por API/MCP
 
 Webhook saliente HR → `https://….vercel.app/hr/events` header `x-hr-secret`.
 
-Para despachar al personal, HR POST `telegram_send` con `inline_keyboard`. Las pulsaciones vuelven como `staff_response` a `HR_HOOK_TG_RESPONSE` (`kind` = acc|dec|eta|loc|apr|vet). Ese workflow aún no está en este cambio.
+Para despachar al personal, `fa-despacho-tg` POST `/hr/tg/dispatch` (este puente reenvía a MANDO)
+y luego `telegram_send` con `inline_keyboard`. Las pulsaciones vuelven como `staff_response` a
+`HR_HOOK_TG_RESPONSE` (`kind` = acc|dec|eta|loc|apr|vet) → `fa-respuesta-tg`.
 
 ## Qué necesito de ti (para live)
 

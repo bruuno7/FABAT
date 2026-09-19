@@ -63,7 +63,10 @@ por IP de conexión, 400 caracteres y 8192 bytes de cuerpo; no se confía en `cl
 | GET | `/api/regression` · POST `/api/regression/lock {author}`, `/api/regression/run {n}` | «el test con tu nombre»: guarda caso + entradas en `regression_live/` y lo re-ejecuta, determinista, a ×16 |
 | GET | `/api/webcalls` (operador) · GET `/api/webcall/{id}` · POST `/api/webcall/{id}/answer` | llamada web: pendientes con su enlace · datos para quien contesta · DESCOLGAR (aquí se pide el token) |
 | POST | `/api/call/{action_id}/token {takeover}` · `/api/call/{action_id}/signal {text}` (operador) | ESCUCHAR o TOMAR una llamada viva · cambio de orden a mano dentro de la llamada |
-| POST | `/hr/events` | webhooks de HappyRobot: `progress`, `*_result`, `public_report` (contrato `mando.hr.v1`) |
+| POST | `/hr/events` | webhooks de HappyRobot: `progress`, `*_result`, `public_report`, `tg_*` (contrato `mando.hr.v1`) |
+| GET/POST | `/hr/tg/roster` | directorio privado rol↔chat_id (exige `HR_SECRET`; no sale por `/api/state`) |
+| POST | `/hr/tg/dispatch` | elige puesto reclamado, espeja `tg_*`, devuelve `telegram_send` |
+| POST | `/hr/tg/staff-response` | `acc`/`dec`/`eta`/`loc`/`apr`/`vet`; primer acc gana; reasigna |
 | POST | `/hr/identify`, `/hr/approval_check`, `/hr/webcall/next` | consultas síncronas del contrato |
 
 Los `/hr/*` exigen la cabecera `X-Mando-Token` igual a `HR_SECRET`. Sin secreto configurado responden 503.
@@ -87,6 +90,8 @@ aviso y Mando tendrá que preguntar.
 | `HR_DISCLAIMER_S` (4) | segundos del aviso legal UE al descolgar: se restan, no son latencia del agente |
 | `MANDO_OPERATOR_TOKEN` | permite operar (aprobar, reloj, tomar llamadas) desde otra máquina de la red |
 | `MANDO_DB` | una sola SQLite (historial + ledger + episodios de agentes). Por defecto `motor/server/data/mando.db`; `off` apaga el historial (el reloj sigue). `MANDO_LEDGER_PATH` es un alias si `MANDO_DB` no está |
+| `MANDO_DB` | ruta de SQLite del historial (por defecto `motor/server/data/mando.db`); `off` lo desactiva |
+| `MANDO_TG_ROSTER` | SQLite privado rol↔chat_id de Telegram (por defecto `motor/server/data/tg_roster.db`); `off` o `MANDO_DB=off` = memoria |
 | `MANDO_CALLBACK_URL` | URL a la que HappyRobot devuelve los webhooks (por defecto `http://127.0.0.1:<puerto>`). El túnel, si hace falta, lo abre una persona, no este código |
 | `MANDO_ALLOWED_NUMBERS` | lista blanca OBLIGATORIA de teléfonos (E.164, comas) |
 | `MANDO_CONTACTS` | ruta alternativa a `contacts.local.json` |

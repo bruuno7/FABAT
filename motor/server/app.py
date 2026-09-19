@@ -39,6 +39,7 @@ from .multi import Operators, identity, label, configured
 from .personal import FieldStaff, external_notice
 from . import espejo_telegram
 from .espejo_telegram import TelegramMirror
+from . import tg_roster
 from .state_refresh import StateRefresh
 from .evidence_runtime import ReceiptService, action_from_dict, evidence
 
@@ -1306,6 +1307,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
                 app.state.chat.stop()
                 app.state.simulacro.close()
                 app.state.session.close()
+                app.state.tg_roster.close()
 
     app = FastAPI(title="Mando", docs_url=None, redoc_url=None, lifespan=lifespan)
     configured()  # configuración inválida: fallar al arrancar, no a media operación
@@ -1315,6 +1317,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
     Session.callback_url = f"http://127.0.0.1:{port}"
     app.state.session = Session(load_case(case_id), seed=seed, speed=speed, comms_mode=comms_mode,
                                 autoplay=autoplay, threaded=threaded, playbook=playbook, local_params=local_params)
+    app.state.tg_roster = tg_roster.TelegramRoster()
     app.state.threaded = threaded
     app.state.duel = None
     from .db import History, Recorder
@@ -1422,6 +1425,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         hub._sync()
         if app.state.telegram is not None:
             app.state.telegram._sync_session()
+        app.state.tg_roster.clear_assignments()
         new._rebuild()
 
     def operator(request: Request) -> None:
@@ -2102,6 +2106,42 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
     @app.get("/api/curve")
     def curve() -> dict[str, Any]:
         return load_curve()
+
+    # ---- directorio Telegram (privado: chat_id no sale por /api/state) ----
+    @app.get("/hr/tg/roster")
+    async def hr_tg_roster_get(request: Request) -> dict[str, Any]:
+        check_token(request)
+        role = (request.query_params.get("role") or "").strip().lower()
+        view = await asyncio.to_thread(app.state.tg_roster.seats_view)
+        if role:
+            seats = [s for s in view["seats"] if s["rol"] == role]
+            return {**view, "seats": seats}
+        return view
+
+    @app.post("/hr/tg/roster")
+    async def hr_tg_roster_post(request: Request) -> dict[str, Any]:
+        check_token(request)
+        data = await body(request)
+        action = str(data.get("action") or "claim").strip().lower()
+        if action == "list":
+            return await asyncio.to_thread(app.state.tg_roster.seats_view)
+        if action == "release":
+            return await asyncio.to_thread(app.state.tg_roster.release, data, S().tg_mirror)
+        if action == "claim":
+            return await asyncio.to_thread(app.state.tg_roster.claim, data, S().tg_mirror)
+        raise HTTPException(422, "action debe ser claim, release o list")
+
+    @app.post("/hr/tg/dispatch")
+    async def hr_tg_dispatch(request: Request) -> dict[str, Any]:
+        check_token(request)
+        data = await body(request)
+        return await asyncio.to_thread(app.state.tg_roster.dispatch, data, S().tg_mirror)
+
+    @app.post("/hr/tg/staff-response")
+    async def hr_tg_staff_response(request: Request) -> dict[str, Any]:
+        check_token(request)
+        data = await body(request)
+        return await asyncio.to_thread(app.state.tg_roster.staff_response, data, S().tg_mirror)
 
     # ---- webhooks de HappyRobot (contrato mando.hr.v1). Responder primero y deprisa.
     @app.post("/hr/events")

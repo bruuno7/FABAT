@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="es" style=""><svg class="inline-defs-container" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></svg><head>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>MANDO Ops — Logistics &amp; Emergency Fleet Dashboard</title>
+<title>ResQval Ops — Logistics &amp; Emergency Fleet Dashboard</title>
 <link href="https://fonts.googleapis.com" rel="preconnect">
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -93,7 +93,7 @@
 </div>
 <div class="flex flex-col">
 <span class="font-extrabold text-[17px] tracking-tight leading-tight text-white flex items-center gap-1">
-            MANDO<span class="text-blue-400 font-semibold text-sm">Ops</span>
+            ResQval<span class="text-blue-400 font-semibold text-sm">Ops</span>
 </span>
 <span class="text-[10.5px] text-slate-400 font-medium tracking-wide uppercase">Command Admin · 40K</span>
 </div>
@@ -146,7 +146,7 @@
 <div class="flex flex-col">
 <span class="text-[12.5px] font-bold text-white tracking-tight">Admin User</span>
 <span class="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> MANDO 112 ACTIVO
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> ResQval 112 ACTIVO
             </span>
 </div>
 </div>
@@ -319,51 +319,9 @@
 <!-- Capa de SECTORES CON AVISOS ABIERTOS (no es aforo): la pinta el script
      de cableado a partir de los reportes y se enciende con «Densidad». -->
 <g class="pointer-events-none" id="density-heatmap-layer" style="display:none"></g>
-<!-- Moving Routes Layer with Dynamic Beacons -->
-<g class="transition-opacity duration-300" id="resource-routes-layer">
-<!-- Route ALFA-2 -->
-<g class="cursor-default">
-<path class="route-active-stream" d="M 875 400 Q 840 330 775 292" fill="none" id="path-alfa-2" marker-end="url(#arrowhead)" stroke="#ba1a1a" stroke-width="2.5"></path>
-<g id="unit-marker-alfa-2" transform="translate(780.429931640625, 295.2632751464844)">
-<circle class="animate-ping" cx="0" cy="0" fill="#ba1a1a" opacity="0.25" r="9"></circle>
-<circle cx="0" cy="0" fill="#ba1a1a" r="6" stroke="#ffffff" stroke-width="2"></circle>
-<!-- Live Tag -->
-<g transform="translate(10, -16)">
-<rect fill="#ffffff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))" height="20" rx="4" stroke="#ba1a1a" stroke-width="1" width="130" x="0" y="0"></rect>
-<text fill="#0f172a" font-size="9" font-weight="bold" x="6" y="14">ALFA-2 · <tspan fill="#ba1a1a" id="eta-text-alfa-2">ETA 5s</tspan></text>
-</g>
-</g>
-</g>
-<!-- Route SEG-01 -->
-<g class="cursor-default">
-<path class="route-active-stream" d="M 920 170 Q 660 190 295 285" fill="none" id="path-seg-01" marker-end="url(#arrowhead)" stroke="#2563eb" stroke-width="2.5"></path>
-<g id="unit-marker-seg-01" transform="translate(653.8782348632812, 205.105224609375)">
-<circle class="animate-ping" cx="0" cy="0" fill="#2563eb" opacity="0.25" r="9"></circle>
-<circle cx="0" cy="0" fill="#2563eb" r="6" stroke="#ffffff" stroke-width="2"></circle>
-<g transform="translate(10, -16)">
-<rect fill="#ffffff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))" height="20" rx="4" stroke="#2563eb" stroke-width="1" width="130" x="0" y="0"></rect>
-<text fill="#0f172a" font-size="9" font-weight="bold" x="6" y="14">SEG-01 · <tspan fill="#2563eb" id="eta-text-seg-01">ETA 1m 44s</tspan></text>
-</g>
-</g>
-</g>
-<!-- Route APO-1 -->
-<g class="cursor-default">
-<path class="route-active-stream" d="M 190 390 Q 360 420 520 380" fill="none" id="path-apo-1" marker-end="url(#arrowhead)" stroke="#d97706" stroke-width="2.5"></path>
-<g id="unit-marker-apo-1" transform="translate(403.09625244140625, 399.76397705078125)">
-<circle class="animate-ping" cx="0" cy="0" fill="#d97706" opacity="0.25" r="9"></circle>
-<circle cx="0" cy="0" fill="#d97706" r="6" stroke="#ffffff" stroke-width="2"></circle>
-<g transform="translate(10, -16)">
-<rect fill="#ffffff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))" height="20" rx="4" stroke="#d97706" stroke-width="1" width="125" x="0" y="0"></rect>
-<text fill="#0f172a" font-size="9" font-weight="bold" x="6" y="14">APO-1 · <tspan fill="#d97706" id="eta-text-apo-1">ETA 32s</tspan></text>
-</g>
-</g>
-</g>
-</g>
 <!-- Pines de los avisos REALES (los pinta el script de cableado) -->
 <g id="interfaz-pines"></g>
 </svg>
-<!-- Floating Network Pulse Widget (Lower Left - Exact Template Recreation) -->
-<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md text-slate-800 p-3 rounded-xl border border-slate-200/80 shadow-sm w-[220px] z-10"><div class="flex items-center justify-between mb-2"><span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Network Pulse</span><span class="w-2 h-2 rounded-full bg-emerald-500"></span></div><div class="space-y-2"><div><div class="flex items-center justify-between text-[11px] text-slate-600 mb-1"><span class="font-medium">On schedule</span><span class="text-slate-800 font-semibold" id="pulse-onschedule">88%</span></div><div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden"><div class="bg-slate-700 h-full rounded-full transition-all duration-500" id="pulse-onschedule-bar" style="width: 88%"></div></div></div><div><div class="flex items-center justify-between text-[11px] text-slate-600 mb-1"><span class="font-medium">Idle capacity</span><span class="text-slate-600 font-semibold" id="pulse-idle">12%</span></div><div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden"><div class="bg-slate-300 h-full rounded-full transition-all duration-500" id="pulse-idle-bar" style="width: 12%"></div></div></div></div><div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400"><span class="" title="Derivado del tablero real: avisos con recursos asignados y capacidad libre">Estado plan:</span><span class="text-slate-700 font-semibold cursor-pointer hover:underline" id="plan-status" onclick="togglePlanStatus()">Saturado (déficit)</span></div><div class="mt-2 pt-2 border-t border-slate-100 text-[10px] text-slate-500 space-y-1" id="plan-detalle" style="display:none"></div></div>
 </div>
 </div>
 <!-- 4. COLUMNA DERECHA (GRÁFICAS CIRCULARES / DONUTS SOLICITADAS) -->
@@ -376,7 +334,7 @@
 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/90 flex flex-col flex-1"><div class="flex items-center justify-between mb-2"><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Incidentes por Gravedad</span><span class="text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md" id="grav-badge">10 Activos</span></div><div class="flex items-center gap-4 my-auto"><div class="relative w-20 h-20 shrink-0 flex items-center justify-center"><svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100"><circle cx="50" cy="50" fill="none" r="36" stroke="#334155" stroke-dasharray="23 203" stroke-dashoffset="0" stroke-width="8"></circle><circle cx="50" cy="50" fill="none" r="36" stroke="#f87171" stroke-dasharray="68 158" stroke-dashoffset="-25" stroke-width="8"></circle><circle cx="50" cy="50" fill="none" r="36" stroke="#fbbf24" stroke-dasharray="90 136" stroke-dashoffset="-95" stroke-width="8"></circle><circle cx="50" cy="50" fill="none" r="36" stroke="#94a3b8" stroke-dasharray="45 181" stroke-dashoffset="-188" stroke-width="8"></circle></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-sm font-bold text-slate-800" id="grav-center">10</span><span class="text-[7.5px] font-medium text-slate-400 uppercase tracking-wider">Casos</span></div></div><div class="flex-1 space-y-1.5 text-[11px]"><div class="flex items-center justify-between"><span class="flex items-center gap-1.5 text-slate-600 font-medium"><span class="w-2 h-2 rounded-full bg-slate-700"></span> Vital (P1)</span><span class="font-semibold text-slate-800">1 (10%)</span></div><div class="flex items-center justify-between"><span class="flex items-center gap-1.5 text-slate-600 font-medium"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Emergencia</span><span class="font-semibold text-slate-800">3 (30%)</span></div><div class="flex items-center justify-between"><span class="flex items-center gap-1.5 text-slate-600 font-medium"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Urgente</span><span class="font-semibold text-slate-800">4 (40%)</span></div><div class="flex items-center justify-between"><span class="flex items-center gap-1.5 text-slate-600 font-medium"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Leve</span><span class="font-semibold text-slate-800">2 (20%)</span></div></div></div></div>
 </div>
 </div>
-<!-- 5. TABLA INFERIOR ("Fleet Driver Manifest" -> "MANDO Incident & Fleet Manifest") -->
+<!-- 5. TABLA INFERIOR ("Fleet Driver Manifest" -> "ResQval Incident & Fleet Manifest") -->
 <div class="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-5">
 <!-- Manifest Header matching Image 2 -->
 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
@@ -663,7 +621,7 @@ IN ROUTE
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
 <div class="font-bold text-sm text-slate-900 flex items-center justify-between">
-<span class="">Avisos Pendientes de Firma MANDO</span>
+<span class="">Avisos Pendientes de Firma ResQval</span>
 <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
 </div>
 <!-- Avisos REALES que exigen firma humana (needs_card y no resueltos). El
@@ -816,7 +774,7 @@ IN ROUTE
 <span class="material-symbols-outlined text-red-600 text-[24px]">gavel</span>
 <div class="text-xs">
 <div class="font-bold uppercase tracking-wide">Requiere Confirmación Humana</div>
-<div class="text-red-700 mt-0.5">La máquina propone el protocolo, la Mesa MANDO firma la ejecución legal.</div>
+<div class="text-red-700 mt-0.5">La máquina propone el protocolo, la Mesa ResQval firma la ejecución legal.</div>
 </div>
 </div>
 <!-- Citizen Quote -->
@@ -865,7 +823,7 @@ IN ROUTE
 </div>
 <!-- Estado del plan: dato REAL de allocation. Lo rellena el cableado. -->
 <div class="space-y-2 pt-2">
-<span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Propuesta de MANDO:</span>
+<span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Propuesta de ResQval:</span>
 <p class="text-[11px] text-slate-600 p-2.5 rounded-xl bg-slate-50 border border-slate-200" id="ficha-propuesta">—</p>
 </div>
 <!-- Traza del aviso (timeline real + feed del backend) -->
@@ -971,7 +929,7 @@ IN ROUTE
 <!-- TOAST NOTIFICATION -->
 <div class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#0a1526] text-white px-4 py-2.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2.5 z-50 transform translate-y-24 opacity-0 transition-all duration-300" id="mando-toast">
 <span class="material-symbols-outlined text-emerald-400 text-[20px]">check_circle</span>
-<span class="text-xs font-semibold" id="toast-message">Acción registrada en MANDO Ops</span>
+<span class="text-xs font-semibold" id="toast-message">Acción registrada en ResQval Ops</span>
 </div>
 <!-- ========================================================= -->
 <!-- JAVASCRIPT CONTROLLER (Tabs, Live Telemetry, & Drawers) -->
@@ -1211,7 +1169,7 @@ IN ROUTE
   </script>
 
 <!-- ============================================================================
-     CABLEADO CON EL BACKEND DEL REPOSITORIO (MANDO — pantalla /interfaz)
+     CABLEADO CON EL BACKEND DEL REPOSITORIO (ResQval — pantalla /interfaz)
 
      Este bloque NO cambia el diseno: solo rellena con datos reales los sitios
      que ya existen en el marcado de arriba. Todo lo que se pinta reutiliza las
@@ -1260,9 +1218,9 @@ const NOMBRE_RECURSO = {
   medico: "UVI movil",
   seguridad: "Patrulla rapida",
   apoyo: "Apoyo / logistica",
-  coordinacion: "Mesa MANDO",
+  coordinacion: "Mesa ResQval",
 };
-const SIGLAS_RECURSO = { medico: "ALFA", seguridad: "SEG", apoyo: "APO", coordinacion: "MANDO" };
+const SIGLAS_RECURSO = { medico: "ALFA", seguridad: "SEG", apoyo: "APO", coordinacion: "ResQval" };
 
 /* Puntos de base de cada unidad en el plano (posiciones de presentacion). */
 const BASES = {
@@ -1433,7 +1391,7 @@ function derivarUnidades(board) {
   const unidades = [];
   ORDEN_RECURSOS.forEach((kind) => {
     for (let i = 0; i < CAPACIDAD[kind]; i += 1) {
-      const id = kind === "coordinacion" ? "MANDO-1" : (kind === "seguridad" ? "SEG-0" + (i + 1) : SIGLAS_RECURSO[kind] + "-" + (i + 1));
+      const id = kind === "coordinacion" ? "ResQval-1" : (kind === "seguridad" ? "SEG-0" + (i + 1) : SIGLAS_RECURSO[kind] + "-" + (i + 1));
       const bases = BASES[kind];
       unidades.push({ id: id, kind: kind, rol: NOMBRE_RECURSO[kind], ocupada: false, aviso: null, base: bases[i] || bases[0] });
     }
@@ -1775,7 +1733,7 @@ function pintarIntegraciones(board) {
   });
 }
 
-/* Llena «Avisos Pendientes de Firma MANDO» con los avisos REALES que exigen
+/* Llena «Avisos Pendientes de Firma ResQval» con los avisos REALES que exigen
    firma humana (needs_card y no resueltos). */
 const TEXTO_FIRMA_VACIO = "Ningún aviso abierto exige firma.";
 
@@ -2095,7 +2053,7 @@ function pintarPines(board, unidades) {
 
   Object.keys(porZona).forEach((clave) => {
     const grupo = porZona[clave];
-    /* Prioridad MANDO descendente; empate por id para no reordenar. */
+    /* Prioridad ResQval descendente; empate por id para no reordenar. */
     grupo.avisos.sort((a, b) => (b.priority - a.priority) || String(a.correlation_id).localeCompare(String(b.correlation_id)));
     const huecos = posiciones(grupo.zona, grupo.avisos.length);
     const sobran = grupo.avisos.length - huecos.length;
@@ -2313,7 +2271,7 @@ function pintarFicha(aviso, unidades) {
 
   /* Autoridad firmante: `decided_by_default` del tablero (dato real). */
   const firmante = document.getElementById("ficha-firmante");
-  if (firmante) firmante.textContent = (tablero && tablero.decided_by_default) || "Mesa MANDO";
+  if (firmante) firmante.textContent = (tablero && tablero.decided_by_default) || "Mesa ResQval";
 
   /* La nota es por aviso: nunca se arrastra la del anterior. */
   const nota = document.getElementById("ficha-nota");
@@ -2852,13 +2810,13 @@ function htmlSesion() {
     '<div class="flex items-start justify-between gap-3 py-1"><span class="text-slate-500">' + k +
     '</span><span class="font-semibold text-slate-800 text-right">' + v + "</span></div>";
   return '<div class="divide-y divide-slate-100">' +
-    fila("Operador", "Admin User · Mesa MANDO") +
+    fila("Operador", "Admin User · Mesa ResQval") +
     fila("Sondeo del tablero", ritmo) +
     fila("Última sincronización", ultimaSync ? formateaHora(ultimaSync) : "\u2014") +
     fila("Hora del servidor", tablero && tablero.server_time ? formateaHora(tablero.server_time) : "\u2014") +
     fila("HappyRobot", !env ? "\u2014" : (env.hr_mode === "live" ? "en vivo" : "simulado (falta HR_HOOK_TG)")) +
     fila("Telegram", !env ? "\u2014" : (env.telegram_token ? (env.telegram_secret ? "bot activo" : "token sin secreto de webhook") : "sin token")) +
-    fila("Callback MANDO", !env ? "\u2014" : (env.mando_callback_url ? "configurado" : "sin configurar")) +
+    fila("Callback ResQval", !env ? "\u2014" : (env.mando_callback_url ? "configurado" : "sin configurar")) +
     "</div>" +
     '<p class="text-[10px] text-slate-400 mt-3">Solo se muestran booleanos de configuración: nunca tokens ni secretos.</p>';
 }
@@ -2875,12 +2833,12 @@ function htmlCanal() {
     '<div class="flex items-start justify-between gap-3 py-1"><span class="text-slate-500">' + k +
     '</span><span class="font-semibold text-slate-800 text-right">' + v + "</span></div>";
   return '<div class="space-y-3">' +
-    '<p class="text-slate-500">Modo de operación real: la Mesa MANDO recibe los avisos por los canales ' +
+    '<p class="text-slate-500">Modo de operación real: la Mesa ResQval recibe los avisos por los canales ' +
       "que llegan al backend y decide con la asignación de recursos.</p>" +
     '<div class="divide-y divide-slate-100">' +
       fila("HappyRobot", !env ? "\u2014" : (env.hr_mode === "live" ? "en vivo" : "simulado (falta HR_HOOK_TG)")) +
       fila("Bot de Telegram", !env ? "\u2014" : (env.telegram_token ? (env.telegram_secret ? "activo, webhook firmado" : "token sin secreto de webhook") : "sin token")) +
-      fila("Callback MANDO", !env ? "\u2014" : (env.mando_callback_url ? "configurado" : "sin configurar")) +
+      fila("Callback ResQval", !env ? "\u2014" : (env.mando_callback_url ? "configurado" : "sin configurar")) +
       fila("Avisos en el tablero", tablero ? String((tablero.incidents || []).length) : "\u2014") +
     "</div>" +
     "<div><div class='font-bold text-slate-900 mb-1.5'>Reparto por canal de entrada</div>" +
@@ -3037,7 +2995,7 @@ const ETIQUETA_ICONO = {
   medical_services: "Triage",
   directions_run: "Rutas",
   space_dashboard: "Panel",
-  local_shipping: "MANDO",
+  local_shipping: "ResQval",
 };
 
 /* Con la ligadura cargada, «settings» mide ~1em (24 px). Sin la fuente se

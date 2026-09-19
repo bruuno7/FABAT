@@ -180,6 +180,62 @@ Con HappyRobot de verdad (opcional): variables `HR_API_KEY`, `HR_API_BASE`, `HR_
 `HR_WORKFLOW_WEBCALL`, `MANDO_VOICE_MODE=phone|web_call`, `HR_SECRET` y `--comms happyrobot`; detalle en
 `motor/server/README.md`. Ningún secreto ni número de teléfono está en el repo.
 
+## Cómo ejecutar las interfaces (todas)
+
+Un solo servidor sirve todas las pantallas. Requisitos: Python 3.14 y [`uv`](https://docs.astral.sh/uv/); nada más.
+Sin claves todo funciona en simulado y la pantalla lo rotula.
+
+**1. Arrancar** (elige una):
+
+```sh
+./mvp.sh demo     # escena de presentación: caso demo-1, pausada, lista para enseñar      → http://127.0.0.1:8000
+./mvp.sh          # todo en local y simulado, con el reloj corriendo
+./mvp.sh lan      # igual, pero accesible desde los móviles de la misma wifi (QR en pantalla)
+./mvp.sh real     # con HappyRobot y Telegram reales (antes: copiar .env.example a .env y rellenarlo)
+# sin el guion:  uv run --project motor/server python -m motor.server demo --case demo-1 --port 8000
+# otro caso:     MANDO_DEMO_CASE=demo-gates ./mvp.sh demo     (puertas saturadas: aquí se ven las PREVISIONES)
+```
+
+**2. Abrir la pantalla que toque:**
+
+| Ruta | Para quién | Qué es |
+|---|---|---|
+| `/` o `/sala` | Responsable del evento / centro de control | **Sala de control** (la interfaz principal): cola de incidentes por gravedad, plano en vivo, recursos, banda «el plan ha dejado de valer», ficha con plan y supuestos, tarjeta de decisión (Aprobar / Vetar), mesa de inyección, columna «Agente HR» |
+| `/centro` | Centro de control (alternativa) | Misma información en otra disposición, con los avisos **PREVISTOS** del gemelo y su cuenta atrás, y la franja de servicios |
+| `/clasico` | Vista técnica / plan B del vídeo | Pantalla oscura original; `E` = modo escena |
+| `/asistente` | Público (móvil) | Chat que guía a quien avisa, pregunta lo que falta y da la instrucción de seguridad; cada pestaña es una sesión distinta |
+| `/jurado` | Jurado (móvil) | Avisar y «romper el plan» con golpes predefinidos (presupuesto limitado) |
+| `/caos` | Operador | Mesa de imprevistos completa (exige operador) |
+| `/duelo` | Vídeo / sala | Pantalla partida: lista fija contra MANDO, mismo caso y misma semilla |
+| `/memoria` | Operador | Día 1 → día 2: lo observado, lo que se propone cambiar y su aprobación |
+| `/informe` | Después del evento | Informe posterior, con los errores propios |
+| `/historial` | Operador | Historial guardado en SQLite (`motor/server/BASE-DE-DATOS.md`): incidentes, decisiones, equipos, export |
+| `/curva` | Pitch | Curva de degradación con la carga |
+| `/llamada/<id>` | Quien recibe una orden | Llamada web de HappyRobot (o simulada) |
+
+**3. Teclas** (en `/`, `/centro` y `/clasico`): `espacio` arranca o pausa · `S` avanza un minuto · `K` salta al momento
+clave (justo antes de que se rompa un supuesto) · `R` reinicia la escena · `A` / `V` aprueba o veta la tarjeta de
+decisión · `E` modo pantalla grande · `Esc` cierra la ficha.
+
+**4. Operador.** En local no pide nada. Si el servidor se expone (túnel o wifi), define `MANDO_OPERATOR_TOKEN` (o varios
+operadores con `MANDO_OPERATORS=nombre:papel:token,…`) y entra por `/acceso`; el token nunca va en la URL.
+
+**5. Editar la interfaz.** La Sala de control son cuatro ficheros estáticos, sin build: `motor/server/static/sala.html`,
+`sala.css` (colores y tipografía: variables al principio), `sala.js` y `sala-plano.js` (el plano). Se guarda y se recarga
+el navegador. Los datos salen de `GET /api/state` y del SSE `/api/stream`; las acciones, de `/api/approve`,
+`/api/control`, `/api/strike`, `/api/whatif` y `/api/chat`. Contrato completo, con ejemplos reales, en
+`motor/server/CONTRATO-INTERFAZ.md` (sirve también para montar otra interfaz, p. ej. Next.js, contra el mismo backend:
+lista blanca de orígenes en `MANDO_CORS_ORIGINS`).
+
+**6. Probar sin plataforma.** `POST /api/demo/telegram` (operador) reproduce en la Sala un despacho de staff por Telegram
+(aviso → asignaciones → acepta / rechaza → reasignación → escalada por voz). Evals locales: `python3 -m motor.evals`
+(informe en `motor/evals/out/informe.md`). Diagnóstico de configuración: `uv run --project motor/server python -m
+motor.server doctor`. Tests: `./mvp.sh check`.
+
+**7. El puente de Telegram** (`puente/`, Node, desplegado en Vercel) va aparte: `npm --prefix puente install &&
+npm --prefix puente run dev`; variables en `puente/.env.example`. Un bot de Telegram solo admite un consumidor: si el
+webhook lo tiene Vercel, el servidor de MANDO va con `TELEGRAM_MODE=send_only` (o `off`), nunca `poll`.
+
 ## Cómo se ha medido
 
 Todo lo de esta sección es **simulación, no dato de campo**, y cada cifra lleva su N.

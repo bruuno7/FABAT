@@ -50,13 +50,24 @@ credibilidad y, si el sistema llegara a usarse de verdad, de seguridad.
 
 Revisado sobre este fichero con `grep` (`verificado`):
 
-- `::-webkit-scrollbar { display: none }`: **oculta el scroll**. No replicar en la app; rompe la
-  orientación del usuario.
-- Animación decorativa infinita (`animation: dash-flow 1.2s linear infinite`). Este fichero **sí**
-  incluye un guard (`@media (prefers-reduced-motion: reduce) { animation: none }` y un chequeo en
-  JS), pero al portar hay que revisar **todas** las animaciones, no solo esa.
-- `user-select: none` global: **no aparece** en este fichero (grep de `user-select`/`userSelect`
-  sin resultados). Si apareciera al portar, no debe replicarse.
+- `::-webkit-scrollbar{display:none;}` (línea 4, dentro del `<style>` del `<head>`): **oculta el
+  scroll**. No replicar en la app; rompe la orientación del usuario.
+- Desactivación global de la selección de texto: **no** por la propiedad CSS `user-select` (que no
+  aparece en el fichero: grep de `user-select`/`userSelect` sin resultados) sino por la **clase
+  Tailwind `select-none`**, con el mismo efecto (no se puede seleccionar texto). Se aplica en tres
+  sitios: el `<body>` (línea 20), el contenedor principal
+  (`<div class="flex flex-col w-full h-[calc(100vh-52px)] overflow-hidden … select-none">`, línea 20)
+  y el SVG del recinto (`<svg class="w-full h-full object-contain select-none" id="festival-map-svg" …>`,
+  línea 67). No replicar en la app.
+- Animaciones decorativas infinitas: el fichero protege **solo** la animación del flujo de los
+  trayectos (`.route-active-stream`, `animation: dash-flow 1.2s linear infinite`, línea 12) con
+  un guard de `@media (prefers-reduced-motion: reduce) { .route-active-stream { animation: none;
+  stroke-dasharray: none } }` (líneas 14–19) y con el chequeo de JS del bucle de simulación
+  (`prefersReducedMotion` en la línea 1050, usado en la línea 1061 para no mover las balizas). **No
+  están protegidas** las animaciones de Tailwind `animate-pulse` (líneas 20, 46, 550 y 643; además
+  el JS añade/quita la clase en las líneas ~1023/~1030) ni `animate-ping` (líneas 33, 243, 261, 279,
+  407 y 908): siguen animándose en bucle aunque el usuario pida movimiento reducido. Al portar hay
+  que revisar **todas** las animaciones, no solo la que sí tiene guard.
 - Dependencias externas en runtime: Tailwind por CDN (`cdn.tailwindcss.com`), Material Symbols y
   fuentes de `fonts.googleapis.com` / `fonts.gstatic.com`. La app no debe depender de un CDN para
   la interfaz.

@@ -199,7 +199,8 @@ class SecurityGuard:
         if origin:
             actual = urlsplit(origin)
             allowed = urlsplit(os.environ.get('MANDO_PUBLIC_URL') or str(request.base_url))
-            if (actual.scheme, actual.netloc) != (allowed.scheme, allowed.netloc):
+            local = actual.hostname in ('127.0.0.1', 'localhost', '::1')
+            if (actual.scheme, actual.netloc) != (allowed.scheme, allowed.netloc) and not local:
                 return await self._deny(scope, receive, send, 403, 'Origen no autorizado')
         expected = os.environ.get('MANDO_OPERATOR_TOKEN', '')
         if not expected:
@@ -209,7 +210,9 @@ class SecurityGuard:
             return await self._deny(scope, receive, send, 403, 'Token incorrecto')
         issued = str(int(time.time()))
         response = JSONResponse({'ok': True}, headers={'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer'})
-        secure = scope.get('scheme') == 'https' or os.environ.get('MANDO_PUBLIC_URL', '').startswith('https://')
+        # Secure solo si el origen del navegador es https (vía túnel). En http://127.0.0.1 la cookie Secure no se guarda.
+        via_https = (origin or '').startswith('https://') or (
+            not origin and (scope.get('scheme') == 'https' or os.environ.get('MANDO_PUBLIC_URL', '').startswith('https://')))
         response.set_cookie(COOKIE_NAME, issued + '.' + _signature(issued, expected), max_age=COOKIE_TTL,
-                            httponly=True, secure=secure, samesite='strict', path='/')
+                            httponly=True, secure=via_https, samesite='strict', path='/')
         await response(scope, receive, send)

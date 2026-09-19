@@ -3,10 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from motor.contracts import ActionKind
-
 from . import confianza, enjambre, forecast as forecast_mod, privacy
-from .cerebro import mode as cerebro_mode
 
 
 def zona(session: Any, body: dict[str, Any]) -> dict[str, Any]:
@@ -183,9 +180,8 @@ def protocolo(session: Any, body: dict[str, Any]) -> dict[str, Any]:
     label = (found.get("label") or {}).get("es") or found.get("id")
     slots = []
     for s in (found.get("slots") or [])[:4]:
-        q = s.get("es") or (s.get("ask") or {}).get("es") if isinstance(s, dict) else None
         if isinstance(s, dict):
-            q = s.get("es") or ((s.get("ask") or {}).get("es") if isinstance(s.get("ask"), dict) else s.get("ask"))
+            q = (s.get("question") or {}).get("es") if isinstance(s.get("question"), dict) else s.get("es")
             slots.append({"id": s.get("id"), "pregunta": q})
     aviso = (data.get("disclaimer") or {}).get("es") or ""
     return {

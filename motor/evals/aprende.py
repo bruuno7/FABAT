@@ -55,6 +55,8 @@ def _fmt_recs(recs: list[str]) -> str:
 
 def demo() -> dict[str, Any]:
     """Fallo día 1 → lección con evidencia → aprobada → día 2 distinta y mejor."""
+    from .equipo import isolate_eval_db
+    isolate_eval_db()
     esc = por_id("d-incendio-restauracion")
     d1 = dia([esc], fake=True, etiqueta="dia1")
     rec1 = d1["corridas"][0]["recursos_agente"]

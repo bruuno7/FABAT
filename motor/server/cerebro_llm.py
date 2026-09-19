@@ -322,10 +322,14 @@ def cycle(session: Any, aviso: dict[str, Any] | None = None, *, client: Callable
             "agente": str((aviso or {}).get("agente") or "prioridad"),
             "incidente": str((aviso or {}).get("incident_id") or ""),
         })
-        ctx["pizarra"] = piz.get("mensajes") or []
+        ctx.setdefault("pizarra", piz.get("mensajes") or [])
         ctx.setdefault("memoria", {})
-        if piz.get("lecciones"):
-            ctx["memoria"]["lecciones_aprobadas"] = piz["lecciones"]
+        have = list(ctx["memoria"].get("lecciones_aprobadas") or [])
+        seen = {x.get("id") for x in have if isinstance(x, dict)}
+        for x in piz.get("lecciones") or []:
+            if isinstance(x, dict) and x.get("id") not in seen:
+                have.append(x)
+        ctx["memoria"]["lecciones_aprobadas"] = have
     except ValueError:
         ctx.setdefault("pizarra", [])
     t_ctx = time.monotonic()

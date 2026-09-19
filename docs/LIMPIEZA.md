@@ -57,6 +57,6 @@ Se quedan en `static/`: `sala*`, `asistente*`, `jurado*`, `llamada*`, `ui.js`, `
 - `app.py`: solo sirve `/`, `/sala`, `/jurado`, `/asistente`, `/llamada`. `/centro` `/clasico` `/curva` `/caos` `/memoria` `/informe` `/duelo` (este llama `D()` para la API) contestan un aviso HTML 200 generado en código, sin leer `archivo/`.
 - `team_routes.py` `/personal`, `historial_routes.py` `/historial` (sigue exigiendo operador), `evidence_routes.py` `/simulacro`: igual, aviso 200; las APIs no se tocan.
 - Tests de páginas: comprueban el aviso, no el HTML viejo.
-- `./mvp.sh check` no lee `.env` (túnel, tokens y `MANDO_DB` de la demo contaminaban la batería).
+- `./mvp.sh check` no lee `.env` (túnel, tokens y `MANDO_DB` de la demo contaminaban la batería). El núcleo (154 tests) pasa. En el servidor quedan fallos ajenos a esta limpieza: `test_enrutado` (NOTIFY por teléfono → `None` a propósito en `comms_happyrobot`) y un MCP/`hay_cambio` de timing; no se han tocado esos módulos.
 
 `archivo/README.md` resume el porqué.

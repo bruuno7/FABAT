@@ -46,7 +46,7 @@ def fila(agente: str, familia: str, aciertos: float = 0, n: int = 0,
     score, etiqueta = puntuacion(aciertos, n)
     return {
         "agente": agente, "familia": familia or "todas", "puntuacion": score,
-        "n": int(n), "etiqueta": etiqueta, "tendencia": tendencia or "estable",
+        "n": int(n), "aciertos": float(aciertos), "etiqueta": etiqueta, "tendencia": tendencia or "estable",
         "sin_evidencia": etiqueta == SIN_EVIDENCIA,
     }
 
@@ -95,8 +95,8 @@ def aplicar(session: Any, agente: str, familia: str, resultado: Any) -> dict[str
     ag = str(agente or "equipo")[:40]
     prev = de(session, ag, fam)
     n = int(prev["n"]) + 1
-    aciertos = (prev["puntuacion"] * (PRIOR_A + PRIOR_B + prev["n"]) - PRIOR_A) + (1.0 if hit else 0.0)
-    aciertos = max(0.0, aciertos)
+    prev_ac = float(prev.get("aciertos") or 0)
+    aciertos = prev_ac + (1.0 if hit else 0.0)
     score, etiqueta = puntuacion(aciertos, n)
     old = prev["puntuacion"]
     tendencia = "sube" if score > old + 0.01 else ("baja" if score < old - 0.01 else "estable")

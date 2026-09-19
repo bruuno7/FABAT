@@ -11,7 +11,7 @@ acotada; si el disco falla, el reloj continúa.
 - Ruta predeterminada: `motor/server/data/mando.db`.
 - Ruta: `MANDO_DB=/ruta/mando.db`. Si no está, se acepta `MANDO_LEDGER_PATH` (alias, no otra base).
 - Historial desactivado: `MANDO_DB=off` (el ledger puede seguir si hay `MANDO_LEDGER_PATH`).
-- SQLite usa WAL, claves foráneas en cada conexión de escritura y migraciones con `PRAGMA user_version` (ahora 2).
+- SQLite usa WAL, claves foráneas en cada conexión de escritura y migraciones con `PRAGMA user_version` (ahora 3).
 
 ```sh
 sqlite3 motor/server/data/mando.db
@@ -45,7 +45,13 @@ sessions                   (una partida / un harness)
   ├── events               (append-only; claves aviso→incidente→plan→acción→llamada)
   ├── episodes             (cierre de una llamada / despacho)
   ├── cerebro_episodes     (un episodio por agente: entrada, contexto, razonamiento, decisión…)
-  └── cerebro_lecciones    (propuesta / aprobada / rechazada + evidencia + quién)
+  └── cerebro_lecciones    (propuesta / aprobada / rechazada / revocada + para_agente + evidencia)
+
+pizarra                    (mensajes del enjambre; enlaza + gravedad)
+agente_confianza           (aciertos, N, puntuación bayesiana por agente y familia)
+adaptacion_eventos         (modo, ritmo, activación)
+prompt_versiones           (cuerpo, diff, evidencia, activa, reversible)
+especialista_aporte        (n y cambios de la decisión por agente y familia)
 ```
 
 Todas las tablas de historial llevan `escena_id`. `events` del ledger lleva `session_id` y

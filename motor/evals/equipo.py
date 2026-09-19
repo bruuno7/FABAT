@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import time
 import unicodedata
 from datetime import datetime, timezone
@@ -18,6 +19,18 @@ from .escenarios_diversos import todos
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "out"
 USD_POR_MTOK = 0.20  # aproximación; no es factura
+
+
+def isolate_eval_db() -> str | None:
+    """No pisa la SQLite de la demo. Los tests que ya fijan MANDO_DB se respetan."""
+    import sys
+    current = (os.environ.get("MANDO_DB") or "").strip()
+    if current and "unittest" in sys.modules:
+        return None
+    tmp = tempfile.mkdtemp(prefix="mando-eval-")
+    os.environ["MANDO_DB"] = str(Path(tmp) / "eval.db")
+    os.environ.setdefault("TELEGRAM_MODE", "off")
+    return tmp
 
 
 def _plain(text: str) -> str:
@@ -397,6 +410,7 @@ def escribir(payload: dict[str, Any], *, out_dir: Path | None = None) -> Path:
 
 def run(*, n: int = 40, reps: int = 1, fake: bool = False, juez: bool = True,
         out_dir: Path | None = None) -> dict[str, Any]:
+    isolate_eval_db()
     from motor.server.llm_parser_factory import make_client, llm_configured
     bank = todos(n)
     ok_llm, why = llm_configured()
@@ -409,12 +423,20 @@ def run(*, n: int = 40, reps: int = 1, fake: bool = False, juez: bool = True,
         for esc in bank:
             runs.append(correr_uno(esc, fake=use_fake, client=client))
     summary = evaluar(runs, fake=use_fake, client=client, juez=bool(juez and client))
+    from .aprende import demo as demo_aprende
+    import io
+    from contextlib import redirect_stdout
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        aprendizaje = demo_aprende()
+    aprendizaje["log"] = buf.getvalue()
     summary.update({
         "cuando": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "reps": reps, "n_pedidos": n, "n_banco": len(bank),
         "llm_configurado": ok_llm, "llm_porque": why,
         "wall_s": round(time.monotonic() - t0, 2),
         "rotulo": "simulación, no dato de campo. Toda cifra lleva su N.",
+        "aprendizaje": aprendizaje,
     })
     return summary
 

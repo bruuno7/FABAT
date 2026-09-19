@@ -153,7 +153,7 @@ def objeciones_abiertas(session: Any, incidente: str, *, gravedad: str = "alta")
     to = timeout_objecion_s()
     out = []
     for m in rows:
-        if m.get("tipo") not in ("objecion", "correccion"):
+        if m.get("tipo") != "objecion":
             continue
         if m.get("resuelta"):
             continue

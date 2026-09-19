@@ -16,6 +16,6 @@ Principios:
 
 Devuelve SOLO JSON de decisión, con `"agente":"equipo"`:
 ```json
-{"agente":"equipo","incident_id":"M-001","prioridad":7,"porque":"…","confianza":0.6,"requiere_persona":false,"recursos":[],"avisar":[],"acciones":[],"supuestos":[],"vigilar":[]}
+{"agente":"equipo","incident_id":"nuevo","prioridad":7,"porque":"…","confianza":0.6,"requiere_persona":false,"recursos":[],"avisar":[],"acciones":[],"supuestos":[],"vigilar":[]}
 ```
 

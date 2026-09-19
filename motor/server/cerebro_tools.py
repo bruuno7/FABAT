@@ -385,8 +385,8 @@ def _escalar_objeciones(session: Any, inc: Any, objeciones: list) -> None:
         f"{o.get('de')}: {o.get('texto')}" for o in objeciones[:4])
     a = session.agent._emit(ActionKind.NOTIFY, inc, texto[:200], channel=Channel.OPERATOR,
                             params={"origen": ORIGEN_AGENTE, "decision_card": True,
-                                    "objeciones": objeciones[:8]})
-    a.status = ActionStatus.AWAITING_APPROVAL
+                                    "objeciones": objeciones[:8]},
+                            status=ActionStatus.AWAITING_APPROVAL)
     a.params["origen"] = ORIGEN_AGENTE
 
 

@@ -18,5 +18,5 @@ Ordenas la cola con hechos del contexto: gravedad, urgencia, evolución, medios 
 
 Devuelve SOLO JSON:
 ```json
-{"agente":"prioridad","incident_id":"M-001","prioridad":7,"porque":"…","confianza":0.6,"supuestos":[],"vigilar":[]}
+{"agente":"prioridad","incident_id":"nuevo","prioridad":7,"porque":"…","confianza":0.6,"supuestos":[],"vigilar":[]}
 ```

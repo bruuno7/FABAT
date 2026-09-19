@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
 import time
 import unicodedata
 from datetime import datetime, timezone
@@ -82,14 +83,26 @@ class CountingClient:
     def __init__(self, inner: Callable[[str], str]) -> None:
         self.inner = inner
         self.n = 0
+        self.n_juez = 0
         self.chars_in = 0
         self.chars_out = 0
+        self._lock = threading.Lock()
 
     def __call__(self, prompt: str) -> str:
-        self.n += 1
-        self.chars_in += len(prompt or "")
         out = self.inner(prompt)
-        self.chars_out += len(out or "")
+        with self._lock:
+            self.n += 1
+            self.chars_in += len(prompt or "")
+            self.chars_out += len(out or "")
+        return out
+
+    def juez(self, prompt: str) -> str:
+        out = self.inner(prompt)
+        with self._lock:
+            self.n += 1
+            self.n_juez += 1
+            self.chars_in += len(prompt or "")
+            self.chars_out += len(out or "")
         return out
 
     def coste_usd(self) -> float:
@@ -270,7 +283,8 @@ def evaluar(runs: list[dict[str, Any]], *, fake: bool, client: CountingClient | 
         if json_ok:
             m["json_ok"] += 1
         m["recomendacion_reglas_suma"] += rec["puntos"]
-        j = juez_llm(client, run.get("porque") or "", run["escenario"]) if juez else {
+        juez_fn = client.juez if isinstance(client, CountingClient) else client
+        j = juez_llm(juez_fn, run.get("porque") or "", run["escenario"]) if juez else {
             "puntos": None, "fuente": "juez_llm", "omitido": True, "max": 2, "porque": "no pedido"}
         if j.get("puntos") is not None:
             m["recomendacion_juez_suma"] += j["puntos"]
@@ -307,6 +321,7 @@ def evaluar(runs: list[dict[str, Any]], *, fake: bool, client: CountingClient | 
         "latencia_mediana_s": round(sorted(lat)[len(lat) // 2], 3),
         "latencia_p90_s": round(sorted(lat)[max(0, int(len(lat) * 0.9) - 1)], 3),
         "llamadas_llm": client.n if client else 0,
+        "llamadas_juez": getattr(client, "n_juez", 0) if client else 0,
         "coste_usd_aprox": client.coste_usd() if client else 0,
         "filas": filas,
         "buenas": m["buenas"],
@@ -324,9 +339,13 @@ def render_md(payload: dict[str, Any], *, aprendizaje: dict[str, Any] | None = N
       f"Cerebro: **{'falso (determinista)' if payload.get('fake') else 'LLM real'}**.")
     a("")
     a(f"Cuando: {payload.get('cuando')} · N={n} escenarios · reps={payload.get('reps')} · "
-      f"latencia mediana {payload.get('latencia_mediana_s')} s · "
+      f"latencia mediana {payload.get('latencia_mediana_s')} s · p90 {payload.get('latencia_p90_s')} s · "
       f"coste aprox. {payload.get('coste_usd_aprox')} USD "
-      f"(N llamadas LLM={payload.get('llamadas_llm')}; tarifa placeholder {USD_POR_MTOK} USD/MTok).")
+      f"(N llamadas LLM={payload.get('llamadas_llm')}, de ellas juez={payload.get('llamadas_juez') or 0}; "
+      f"tarifa placeholder {USD_POR_MTOK} USD/MTok).")
+    if payload.get("llm_porque"):
+        a("")
+        a(f"LLM: {'configurado' if payload.get('llm_configurado') else 'no'} — {payload.get('llm_porque')}.")
     a("")
     a("## Resumen")
     a("")
@@ -377,15 +396,40 @@ def render_md(payload: dict[str, Any], *, aprendizaje: dict[str, Any] | None = N
     a(f"- Coincide primer recurso con lista fija: {same_lista}/{n}")
     a(f"- Coincide primer recurso con reglas (vital→médico, si no el kind de palabras): {same_reglas}/{n}")
     a("")
+    d1 = payload.get("falso_dia1")
+    d2 = payload.get("falso_dia2")
+    if d1:
+        a("## Cerebro falso día 1 vs día 2 (misma N, reglas)")
+        a("")
+        a("El cerebro falso es determinista. Día 2 corre **los mismos** escenarios tras aprobar lecciones del día 1.")
+        a("")
+        a("| métrica | N | día 1 | día 2 |")
+        a("|---|---:|---:|---:|")
+        n_f = payload.get("n_banco") or n
+        a(f"| barandillas | {n_f} | {d1.get('barandillas_ok')}/{n_f} | {(d2 or {}).get('barandillas_ok')}/{n_f} |")
+        a(f"| prioridad | {n_f} | {d1.get('prioridad_ok')}/{n_f} | {(d2 or {}).get('prioridad_ok')}/{n_f} |")
+        a(f"| recurso | {n_f} | {d1.get('recurso_ok')}/{n_f} | {(d2 or {}).get('recurso_ok')}/{n_f} |")
+        a(f"| JSON | {n_f} | {d1.get('json_ok')}/{n_f} | {(d2 or {}).get('json_ok')}/{n_f} |")
+        a(f"| latencia mediana (s) | {n_f} | {d1.get('latencia_mediana_s')} | {(d2 or {}).get('latencia_mediana_s')} |")
+        a("")
     if aprendizaje:
         a("## Aprendizaje día 1 → día 2")
         a("")
         a(f"N día 1 = {aprendizaje.get('n_dia1')}; N día 2 = {aprendizaje.get('n_dia2')}. "
-          f"Cambio observable: **{'sí' if aprendizaje.get('cambio') else 'no'}**.")
+          f"Cambio observable: **{'sí' if aprendizaje.get('cambio') else 'no'}**. "
+          f"Mejora: **{'sí' if aprendizaje.get('mejora') else 'no'}**.")
+        a("")
+        banco = aprendizaje.get("banco") or {}
+        if banco.get("markdown"):
+            a("### Banco (mismos escenarios)")
+            a("")
+            a(banco["markdown"])
+            a("")
+        a("### Demo 1 minuto (incendio restauración)")
         a("")
         a(aprendizaje.get("markdown") or "")
         a("")
-        if not aprendizaje.get("mejora"):
+        if not aprendizaje.get("mejora") and not banco.get("mejora"):
             a("**No mejora o no cambia:** se dice, no se maquilla.")
             a("")
     a("## Cómo reproducir")
@@ -412,6 +456,7 @@ def run(*, n: int = 40, reps: int = 1, fake: bool = False, juez: bool = True,
         out_dir: Path | None = None) -> dict[str, Any]:
     isolate_eval_db()
     from motor.server.llm_parser_factory import make_client, llm_configured
+    from .aprende import aprender_banco, demo as demo_aprende
     bank = todos(n)
     ok_llm, why = llm_configured()
     inner = None if fake else make_client()
@@ -419,17 +464,50 @@ def run(*, n: int = 40, reps: int = 1, fake: bool = False, juez: bool = True,
     client = CountingClient(inner) if inner is not None else None
     runs: list[dict[str, Any]] = []
     t0 = time.monotonic()
+    if client is not None:
+        try:
+            runs.append(correr_uno(bank[0], fake=False, client=client))
+            print(f"  {bank[0]['id']} fake=False lat={runs[-1].get('latencia_s')} 1/{len(bank) * max(1, reps)}",
+                  flush=True)
+        except (RuntimeError, OSError, TimeoutError, ValueError) as exc:
+            use_fake = True
+            client = None
+            why = f"LLM falló en el primer escenario: {exc}"[:240]
+            ok_llm = False
+            runs = []
+    start = 1 if (not use_fake and runs) else 0
     for _ in range(max(1, reps)):
-        for esc in bank:
-            runs.append(correr_uno(esc, fake=use_fake, client=client))
-    summary = evaluar(runs, fake=use_fake, client=client, juez=bool(juez and client))
-    from .aprende import demo as demo_aprende
+        for esc in bank[start:] if _ == 0 else bank:
+            try:
+                runs.append(correr_uno(esc, fake=use_fake, client=client))
+            except (RuntimeError, OSError, TimeoutError, ValueError) as exc:
+                runs.append({
+                    "id": esc["id"], "escenario": esc, "ciclo": {}, "ok": False, "fake": use_fake,
+                    "recursos_agente": [], "prioridad": None, "porque": "", "avisar": [],
+                    "acciones": [], "requiere_persona": False, "resultado": {},
+                    "fallbacks": ["error"], "episodios": [], "episodios_completos": [],
+                    "libres": [], "latencia_s": 0, "error": str(exc)[:200],
+                })
+            last = runs[-1]
+            print(f"  {last['id']} fake={last.get('fake')} lat={last.get('latencia_s')} "
+                  f"{len(runs)}/{len(bank) * max(1, reps)}", flush=True)
+        start = 0
+    summary = evaluar(runs, fake=use_fake, client=client, juez=bool(juez and client and not use_fake))
+    isolate_eval_db()
+    banco = aprender_banco(bank, fake=True, by="eval")
     import io
     from contextlib import redirect_stdout
     buf = io.StringIO()
     with redirect_stdout(buf):
         aprendizaje = demo_aprende()
     aprendizaje["log"] = buf.getvalue()
+    aprendizaje["banco"] = banco
+    aprendizaje["n_dia1"] = banco.get("n_dia1")
+    aprendizaje["n_dia2"] = banco.get("n_dia2")
+    aprendizaje["cambio"] = bool(banco.get("cambio") or aprendizaje.get("cambio"))
+    aprendizaje["mejora"] = bool(banco.get("mejora") or aprendizaje.get("mejora"))
+    demo_md = aprendizaje.get("markdown") or ""
+    aprendizaje["markdown"] = demo_md
     summary.update({
         "cuando": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "reps": reps, "n_pedidos": n, "n_banco": len(bank),
@@ -437,6 +515,8 @@ def run(*, n: int = 40, reps: int = 1, fake: bool = False, juez: bool = True,
         "wall_s": round(time.monotonic() - t0, 2),
         "rotulo": "simulación, no dato de campo. Toda cifra lleva su N.",
         "aprendizaje": aprendizaje,
+        "falso_dia1": banco.get("dia1"),
+        "falso_dia2": banco.get("dia2"),
     })
     return summary
 

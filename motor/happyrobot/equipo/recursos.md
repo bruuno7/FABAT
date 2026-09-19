@@ -18,5 +18,5 @@ Elige el equipo más cercano del tipo que hace falta. Si el staff no contesta, n
 
 Devuelve SOLO JSON:
 ```json
-{"agente":"recursos","incident_id":"M-001","recursos":["med_1"],"porque":"…","confianza":0.6,"supuestos":["El equipo acepta en 3 min"]}
+{"agente":"recursos","incident_id":"nuevo","recursos":["med_1"],"porque":"…","confianza":0.6,"supuestos":["El equipo acepta en 3 min"]}
 ```

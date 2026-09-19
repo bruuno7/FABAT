@@ -131,8 +131,14 @@ def leer(session: Any, body: dict[str, Any]) -> dict[str, Any]:
                 continue
         out.append(privacy.scrub(dict(m)))
     if agente and agente != "todos":
-        out.sort(key=lambda m: (0 if str(m.get("para") or "").lower() in (agente, "todos") else 1,
-                                -float(m.get("ts") or 0)))
+        def _rank(m: dict[str, Any]) -> int:
+            dest = str(m.get("para") or "").lower()
+            if dest == agente:
+                return 0
+            if dest in ("todos", ""):
+                return 1
+            return 2
+        out.sort(key=lambda m: (_rank(m), -float(m.get("ts") or 0)))
     lecciones = []
     if led is not None and agente:
         lecciones = led.list_lecciones(estado="aprobada", para_agente=agente, limit=8)
@@ -217,7 +223,8 @@ def public_view(session: Any, state: dict[str, Any]) -> dict[str, Any]:
     led = getattr(session, "ledger", None)
     msgs = led.leer_pizarra(limit=80) if led is not None else list(_box(session)["mensajes"])
     msgs = [m for m in msgs if m.get("incidente") not in hidden]
-    msgs = privacy.scrub(msgs[-50:] if len(msgs) > 50 else msgs)
+    msgs = sorted(msgs, key=lambda m: float(m.get("ts") or 0))
+    msgs = privacy.scrub(msgs[-50:])
     confs = {row["agente"]: row for row in confianza.resumen(session)}
     last: dict[str, dict[str, Any]] = {}
     for m in msgs:

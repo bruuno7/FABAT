@@ -134,6 +134,26 @@ class TestAprendizajeVisible(unittest.TestCase):
         self.assertGreaterEqual(out["n_dia1"], 1)
         self.assertGreaterEqual(out["n_dia2"], 1)
 
+    def test_banco_dia1_dia2_cambia_con_n(self) -> None:
+        from motor.evals.aprende import aprender_banco
+        from motor.evals.escenarios_diversos import todos
+
+        bank = todos(40)
+        out = aprender_banco(bank, fake=True, by="test")
+        self.assertEqual(out["n"], 40)
+        self.assertTrue(out["cambio"], out)
+        self.assertTrue(any(c["id"] == "d-incendio-restauracion" for c in out["cambios"]), out["cambios"])
+        self.assertTrue(out["aprobadas"], out["propuestas"])
+        for p in out["propuestas"]:
+            self.assertTrue((p.get("evidencia") or {}).get("ids"))
+            self.assertGreaterEqual((p.get("evidencia") or {}).get("n") or 0, 1)
+        incendio = next(c for c in out["cambios"] if c["id"] == "d-incendio-restauracion")
+        self.assertTrue(any(str(r).startswith("tech") for r in incendio["rec1"]), incendio)
+        self.assertFalse(any(str(r).startswith("sec") for r in incendio["rec1"]), incendio)
+        self.assertTrue(any(str(r).startswith("sec") for r in incendio["rec2"]), incendio)
+        if out["empeora"]:
+            self.assertTrue(out["regresiones"] or not out["mejora"])
+
 
 class TestCliDispatch(unittest.TestCase):
     def test_main_reconoce_subcomandos(self) -> None:

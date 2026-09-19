@@ -184,7 +184,9 @@ def fake_team(ctx: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
     return {
         "triaje": {**base, "agente": "triaje", "fusionar_con": None,
-                   "porque": ("Recomiendo tratarlo como aviso nuevo: no hay ID de duplicado. "
+                   "porque": (f"Recomiendo tratarlo como "
+                              f"{'riesgo vital' if vital else ('incendio' if fuego else (tipo or 'aviso'))} "
+                              f"nuevo en {zona or 'zona desconocida'}: no hay ID de duplicado. "
                               "Alternativa: fusionar a ciegas.")[:400],
                    "confianza": 0.7},
         "prioridad": {**base, "agente": "prioridad", "prioridad": prio,
@@ -223,8 +225,12 @@ def _un_agente(agente: str, ctx: dict[str, Any], client: Callable[[str], str] | 
               + "\" y un «porque» que sea la recomendación al operador (qué, porqué, alternativa).")
     last = None
     for _ in range(2):
-        raw = client(prompt if last is None else prompt + "\nEl JSON anterior no validó: " + str(last)[:200]
-                     + "\nCorrígelo. Solo JSON.")
+        try:
+            raw = client(prompt if last is None else prompt + "\nEl JSON anterior no validó: " + str(last)[:200]
+                         + "\nCorrígelo. Solo JSON.")
+        except (RuntimeError, OSError, TimeoutError) as exc:
+            last = exc
+            continue
         try:
             data = parse_decision_json(raw)
             data["agente"] = agente
@@ -350,6 +356,14 @@ def cycle(session: Any, aviso: dict[str, Any] | None = None, *, client: Callable
     iid = str((aviso or {}).get("incident_id") or "")
     if not iid or iid.lower() == "nuevo":
         iid = str((ctx.get("incidentes") or [{}])[0].get("id") or "nuevo")
+    known = set(getattr(getattr(session, "agent", None), "incidents", {}) or {})
+    for vote in votos.values():
+        vid = str(vote.get("incident_id") or "")
+        if vid and vid.lower() != "nuevo" and vid not in known:
+            vote["incident_id"] = "nuevo"
+        fuse = str(vote.get("fusionar_con") or "")
+        if fuse and fuse not in known:
+            vote["fusionar_con"] = None
     try:
         enjambre.revisar_dependencias(session, votos, iid)
     except ValueError:
@@ -357,12 +371,22 @@ def cycle(session: Any, aviso: dict[str, Any] | None = None, *, client: Callable
     from . import confianza as conf_mod
     pesos = conf_mod.pesos_para(session, list(votos.values()))
     decision, conflictos = equipo.compose(list(votos.values()), pesos=pesos)
+    did = str(decision.get("incident_id") or "")
+    if did and did.lower() != "nuevo" and did not in known:
+        decision["incident_id"] = "nuevo"
+    fuse = str(decision.get("fusionar_con") or "")
+    if fuse and fuse not in known:
+        decision["fusionar_con"] = None
     t_think = time.monotonic()
     if conflictos:
         out = {"ok": False, "conflicto": conflictos, "texto": "conflicto entre agentes; no se ejecuta",
                "aceptadas": [], "bloqueadas": []}
     else:
-        out = cerebro_tools.decidir(session, dict(decision, agente="equipo"))
+        try:
+            out = cerebro_tools.decidir(session, dict(decision, agente="equipo"))
+        except ValueError as exc:
+            out = {"ok": False, "texto": str(exc)[:200], "aceptadas": [], "bloqueadas": [],
+                   "conflicto": str(exc)[:120]}
     t_end = time.monotonic()
     tiempos = {"contexto_s": round(t_ctx - t0, 3), "razonar_s": round(t_think - t_ctx, 3),
                "decidir_s": round(t_end - t_think, 3), "total_s": round(t_end - t0, 3)}

@@ -66,7 +66,7 @@ Cuerpo:
 {"opciones": ["desviar puerta B → A y C", "mandar M2 al foso"], "minutos": 12}
 ```
 
-Una o dos opciones, horizonte 10–15 min. Reutiliza el gemelo (`whatif` / `rehearsal`) y, en despacho, el recibo contrafactual (`recibo`, N=1). **No cambia el recinto.** Hasta **5** opciones. Las que el gemelo no sepa interpretar vuelven como `no_ensayable` (el agente elige, no el backend).
+Entre 1 y 5 opciones, horizonte 10–15 min. Reutiliza el gemelo (`whatif` / `rehearsal`) y, en despacho, el recibo contrafactual (`recibo`, N=1). **No cambia el recinto.** Las que el gemelo no sepa interpretar vuelven como `no_ensayable` (el agente elige, no el backend).
 
 Respuesta de ejemplo:
 

@@ -438,8 +438,14 @@ class Ledger:
             out.append(item)
         dest = (para or "").strip().lower()
         if dest and dest != "todos":
-            out.sort(key=lambda m: (0 if str(m.get("para") or "").lower() in (dest, "todos") else 1,
-                                    -float(m.get("ts") or 0)))
+            def _rank(m: dict[str, Any]) -> int:
+                d = str(m.get("para") or "").lower()
+                if d == dest:
+                    return 0
+                if d in ("todos", ""):
+                    return 1
+                return 2
+            out.sort(key=lambda m: (_rank(m), -float(m.get("ts") or 0)))
         return out
 
     def resolver_pizarra(self, mid: str) -> None:

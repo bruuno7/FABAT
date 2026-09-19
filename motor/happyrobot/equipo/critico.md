@@ -16,5 +16,5 @@ Principios:
 
 Devuelve SOLO JSON:
 ```json
-{"agente":"critico","incident_id":"M-001","requiere_persona":true,"acciones":[],"porque":"…","confianza":0.8}
+{"agente":"critico","incident_id":"nuevo","requiere_persona":true,"acciones":[],"porque":"…","confianza":0.8}
 ```

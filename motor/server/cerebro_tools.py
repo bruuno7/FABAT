@@ -291,14 +291,51 @@ def ensayar(session: Any, body: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _unwrap_body(body: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(body.get("decision"), dict):
+        return body
+    if body.get("porque") or body.get("why"):
+        return body
+    inner = dict(body["decision"])
+    for k, v in body.items():
+        if k != "decision" and inner.get(k) in (None, "", [], {}):
+            inner[k] = v
+    return inner
+
+
+def _incidente_vital(session: Any, iid: Any) -> bool:
+    if not iid or iid not in getattr(session.agent, "incidents", {}):
+        return False
+    meta = session.agent.meta.get(iid)
+    return bool(meta and meta.life_threat)
+
+
+def _respuesta_bloqueada(session: Any, blocked: dict[str, Any], iid: Any,
+                         **extra: Any) -> dict[str, Any]:
+    if blocked.get("escalada") and iid and iid in session.agent.incidents:
+        _escalar_objeciones(session, session.agent.incidents[iid], blocked.get("objeciones") or [])
+    with session.lock:
+        session._rebuild()
+    blocked["incident_id"] = iid
+    blocked["origen"] = ORIGEN_AGENTE
+    blocked.update(extra)
+    return blocked
+
+
 def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
     from . import adaptativo, confianza as conf_mod, enjambre
     sync_agent(session)
-    if isinstance(body.get("decision"), dict) and not (body.get("porque") or body.get("why")):
-        body = dict(body["decision"])
+    body = _unwrap_body(dict(body or {}))
+    papeles = equipo.extraer_por_papel(body)
+    body = equipo.peel_decision_fields(body)
     agente = equipo.parse_agente(body.get("agente"))
+    fase = equipo.parse_fase(body.get("fase"), agente)
     d = validate_decision(body)
     d["agente"] = agente
+    if fase == "revision":
+        return _decidir_revision(session, body, d, papeles, agente)
+    if fase == "rapida":
+        return _decidir_rapida(session, body, d, papeles, agente)
     key = _vote_key(session, d)
     if key:
         equipo.store_raw(session, key, d)
@@ -310,6 +347,7 @@ def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
         session._equipo_pesos[key] = joint.get("_pesos") or []
         if conflicts:
             equipo.record_result(session, key, {}, conflicto=conflicts)
+            equipo.record_papeles(session, key, papeles)
             with session.lock:
                 session._rebuild()
             return {
@@ -318,6 +356,7 @@ def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
                 "aceptadas": [], "bloqueadas": [], "origen": ORIGEN_AGENTE,
             }
         if not (joint.get("porque") or "").strip():
+            equipo.record_papeles(session, key, papeles)
             with session.lock:
                 session._rebuild()
             return {
@@ -330,6 +369,7 @@ def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
         meta = session.agent.meta.get(key)
         vital_now = bool(meta and meta.life_threat)
         if (not vital_now) and adaptativo.exige_revision(session, agente, str(d.get("tipo") or "")) and agente != "equipo":
+            equipo.record_papeles(session, key, papeles)
             with session.lock:
                 session._rebuild()
             return {
@@ -357,9 +397,193 @@ def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
         equipo.store_raw(session, real_id, stored)
         equipo.record_vote(session, real_id, stored)
     equipo.record_result(session, real_id, out)
+    equipo.record_papeles(session, real_id, papeles)
     with session.lock:
         session._rebuild()
     return out
+
+
+def _decidir_rapida(session: Any, body: dict[str, Any], d: dict[str, Any],
+                    papeles: dict, agente: str) -> dict[str, Any]:
+    from . import enjambre
+    iid_probe = d.get("incident_id")
+    vital = False
+    if iid_probe and iid_probe in getattr(session.agent, "incidents", {}):
+        meta = session.agent.meta.get(iid_probe)
+        vital = bool(meta and meta.life_threat)
+    blocked = enjambre.gate_decidir(session, dict(d, incident_id=iid_probe), vital=vital)
+    if blocked:
+        if blocked.get("escalada") and iid_probe and iid_probe in session.agent.incidents:
+            _escalar_objeciones(session, session.agent.incidents[iid_probe], blocked.get("objeciones") or [])
+        with session.lock:
+            session._rebuild()
+        blocked["incident_id"] = iid_probe
+        blocked["origen"] = ORIGEN_AGENTE
+        blocked["fase"] = "rapida"
+        return blocked
+    out = _aplicar_decision(session, d)
+    real_id = out["incident_id"]
+    stored = dict(d, agente="rapido", incident_id=real_id)
+    equipo.store_raw(session, real_id, stored)
+    equipo.record_result(session, real_id, out)
+    equipo.record_papeles(session, real_id, papeles)
+    s = equipo.latencia_s(session, real_id, body)
+    equipo.record_fase(session, real_id, "rapida", s=s, agente=agente or "rapido",
+                       porque=d.get("porque") or "")
+    equipo.card(session, real_id)["decision_rapida"] = stored
+    inc = session.agent.incidents[real_id]
+    _asegurar_plan(session, inc, d, out, motivo="decisión rápida")
+    with session.lock:
+        session._rebuild()
+    out["fase"] = "rapida"
+    return out
+
+
+def _decidir_revision(session: Any, body: dict[str, Any], d: dict[str, Any],
+                      papeles: dict, agente: str) -> dict[str, Any]:
+    from . import enjambre
+    iid = str(d.get("incident_id") or "").strip()
+    if not iid or iid.lower() == "nuevo" or iid not in session.agent.incidents:
+        raise ValueError("la revisión necesita un incident_id existente")
+    box = equipo.card(session, iid)
+    s = equipo.latencia_s(session, iid, body)
+    equipo.record_papeles(session, iid, papeles)
+    tardia = equipo.revision_tardia(session, iid)
+    old = dict(box.get("decision_rapida") or {})
+    veredicto = equipo.parse_veredicto(body)
+    if veredicto is None:
+        delta_probe = _delta_decision(old, d)
+        veredicto = "corrige" if _tiene_cambio(delta_probe) else "confirma"
+
+    if tardia:
+        equipo.record_fase(session, iid, "revision", s=s, agente=agente or "equipo",
+                           porque=d.get("porque") or "", veredicto=veredicto, tardia=True)
+        with session.lock:
+            session._rebuild()
+        return {
+            "ok": True, "texto": f"revisión tardía: {tardia}; se anota sin ejecutar",
+            "fase": "revision", "revision": veredicto, "tardia": True,
+            "incident_id": iid, "aceptadas": [], "bloqueadas": [],
+            "origen": ORIGEN_AGENTE,
+        }
+
+    if veredicto == "confirma":
+        equipo.record_fase(session, iid, "revision", s=s, agente=agente or "equipo",
+                           porque=d.get("porque") or "", veredicto="confirma")
+        with session.lock:
+            session._rebuild()
+        return {
+            "ok": True, "texto": "revisión: confirma; se anota, sin cambios",
+            "fase": "revision", "revision": "confirma",
+            "incident_id": iid, "aceptadas": [], "bloqueadas": [],
+            "origen": ORIGEN_AGENTE,
+        }
+
+    delta = _delta_decision(old, d)
+    delta["agente"] = "vigia"
+    meta = session.agent.meta.get(iid)
+    vital = bool(meta and meta.life_threat)
+    blocked = enjambre.gate_decidir(session, dict(delta, incident_id=iid), vital=vital)
+    if blocked:
+        if blocked.get("escalada"):
+            _escalar_objeciones(session, session.agent.incidents[iid], blocked.get("objeciones") or [])
+        with session.lock:
+            session._rebuild()
+        blocked["incident_id"] = iid
+        blocked["origen"] = ORIGEN_AGENTE
+        blocked["fase"] = "revision"
+        blocked["revision"] = "corrige"
+        return blocked
+    out = _aplicar_decision(session, delta)
+    inc = session.agent.incidents[iid]
+    agent = session.agent
+    old_plan = agent.plans.get(meta.plan) if meta and meta.plan else None
+    if old_plan is not None:
+        old_plan.invalidated_by = "vigia-revision"
+        agent.live_plans.pop(old_plan.id, None)
+        meta.replans = int(getattr(meta, "replans", 0) or 0) + 1
+        agent.counters["replans"] = agent.counters.get("replans", 0) + 1
+    new_plan = _asegurar_plan(session, inc, d, out,
+                              supersedes=old_plan.id if old_plan else None,
+                              motivo=f"revisión del enjambre corrige: {d.get('porque') or ''}")
+    box = equipo.card(session, iid)
+    box["plan_cambio"] = {
+        "viejo_id": old_plan.id if old_plan else None,
+        "nuevo_id": new_plan.id,
+        "objetivo": new_plan.objective,
+        "porque": d.get("porque") or "",
+        "viejo": old_plan.objective if old_plan else None,
+        "nuevo": new_plan.objective,
+    }
+    equipo.record_result(session, iid, out)
+    equipo.record_fase(session, iid, "revision", s=s, agente=agente or "vigia",
+                       porque=d.get("porque") or "", veredicto="corrige")
+    with session.lock:
+        session._rebuild()
+    out["fase"] = "revision"
+    out["revision"] = "corrige"
+    return out
+
+
+def _delta_decision(old: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
+    delta = {
+        "incident_id": new.get("incident_id") or old.get("incident_id"),
+        "fusionar_con": new.get("fusionar_con") or "",
+        "prioridad": new.get("prioridad") if new.get("prioridad") != old.get("prioridad") else None,
+        "porque": new.get("porque") or old.get("porque") or "",
+        "avisar": [], "recursos": [], "acciones": [],
+        "supuestos": list(new.get("supuestos") or []),
+        "vigilar": list(new.get("vigilar") or []),
+        "confianza": new.get("confianza"),
+        "requiere_persona": bool(new.get("requiere_persona")),
+        "texto": new.get("texto") or "",
+        "zona": new.get("zona") or old.get("zona"),
+        "tipo": str(new.get("tipo") or old.get("tipo") or "")[:40],
+        "agente": "vigia",
+    }
+    old_r = {equipo._recurso_id(x)[0] for x in (old.get("recursos") or [])}
+    for rec in new.get("recursos") or []:
+        rid = equipo._recurso_id(rec)[0]
+        if rid and rid not in old_r:
+            delta["recursos"].append(rec)
+    old_a = {equipo._canon(a) for a in (old.get("acciones") or [])}
+    for act in new.get("acciones") or []:
+        if equipo._canon(act) not in old_a:
+            delta["acciones"].append(act)
+    old_v = {equipo._canon(a) for a in (old.get("avisar") or [])}
+    for av in new.get("avisar") or []:
+        if equipo._canon(av) not in old_v:
+            delta["avisar"].append(av)
+    return delta
+
+
+def _tiene_cambio(delta: dict[str, Any]) -> bool:
+    if delta.get("prioridad") is not None:
+        return True
+    return bool(delta.get("recursos") or delta.get("acciones") or delta.get("avisar"))
+
+
+def _asegurar_plan(session: Any, inc: Any, d: dict[str, Any], out: dict[str, Any],
+                   *, supersedes: str | None = None, motivo: str = "") -> Any:
+    from motor.contracts import Plan
+    agent = session.agent
+    meta = agent.meta[inc.id]
+    if supersedes is None and meta.plan and meta.plan in agent.plans:
+        return agent.plans[meta.plan]
+    pid = agent.new_id("P")
+    steps = [x["action_id"] for x in (out.get("aceptadas") or []) if x.get("action_id")]
+    objective = (d.get("porque") or motivo or "Decisión del agente")[:120]
+    why = (motivo or d.get("porque") or "")[:400]
+    plan = Plan(id=pid, t=agent.t, objective=objective, steps=steps,
+                assumptions=[], supersedes=supersedes, why=why)
+    agent.plans[pid] = plan
+    agent.plan_incident[pid] = inc.id
+    agent.live_plans[pid] = plan
+    meta.plan = pid
+    meta.dirty = None
+    agent._log("plan", f"Plan {pid} para {inc.id}: {objective}. Porque: {why}"[:240], pid,
+               incident=inc.id, supersedes=supersedes)
+    return plan
 
 
 def _escalar_objeciones(session: Any, inc: Any, objeciones: list) -> None:

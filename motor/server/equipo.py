@@ -5,20 +5,76 @@ import json
 import time
 from typing import Any
 
-AGENTES = ("triaje", "prioridad", "recursos", "avisos", "vigia", "critico", "equipo")
+PAPELES = ("triaje", "prioridad", "recursos", "avisos", "vigia", "critico")
+AGENTES = PAPELES + ("equipo",)
+AGENTES_OK = AGENTES + ("rapido",)
 TIPOS_CAMBIO = ("rechazo", "silencio", "dato_nuevo", "sensor", "prevision", "golpe")
 _CAMBIO_ALIAS = {
     "dato nuevo": "dato_nuevo", "dato_nuevo": "dato_nuevo",
     "previsión": "prevision", "previsiones": "prevision", "prevision": "prevision",
     "golpe del jurado": "golpe",
 }
+_CERRADOS = {"resolved", "false_alarm", "failed"}
+_REVISION_TOKEN = {"confirma", "corrige", "confirmar", "corregir", "aprobar", "confirm"}
+_CONFIRMA = {"confirma", "confirmar", "confirm", "aprobar", "aprueba", "ok", "acuerdo"}
+_CORRIGE = {"corrige", "corregir", "correct", "objecion"}
+
+
+def _sin_acento(raw: Any) -> str:
+    return str(raw or "").strip().lower().replace("á", "a").replace("ó", "o")
+
+
+def _es_numero(v: Any) -> bool:
+    return isinstance(v, (int, float)) and type(v) is not bool
 
 
 def parse_agente(raw: Any) -> str:
     name = str(raw or "equipo").strip().lower()
-    if name not in AGENTES:
-        raise ValueError("agente debe ser triaje | prioridad | recursos | avisos | vigia | critico | equipo")
+    if name not in AGENTES_OK:
+        raise ValueError("agente debe ser triaje | prioridad | recursos | avisos | vigia | critico | equipo | rapido")
     return name
+
+
+def parse_fase(raw: Any, agente: str = "") -> str | None:
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        return "rapida" if agente == "rapido" else None
+    name = _sin_acento(raw)
+    if name in ("rapida", "fast"):
+        return "rapida"
+    if name == "revision":
+        return "revision"
+    raise ValueError("fase debe ser rapida o revision")
+
+
+_REVISION_TOKEN = {"confirma", "corrige", "confirmar", "corregir", "aprobar", "confirm"}
+_CONFIRMA = {"confirma", "confirmar", "confirm", "aprobar", "aprueba", "ok", "acuerdo"}
+_CORRIGE = {"corrige", "corregir", "correct", "objecion"}
+
+
+def parse_veredicto(body: dict[str, Any]) -> str | None:
+    raw = body.get("veredicto")
+    if raw is None and isinstance(body.get("revision"), str):
+        cand = _sin_acento(body["revision"])
+        if cand in _REVISION_TOKEN:
+            raw = cand
+    if raw is None:
+        cr = body.get("critico")
+        if isinstance(cr, dict):
+            raw = cr.get("veredicto") or cr.get("verdict") or cr.get("resultado")
+        elif isinstance(cr, str) and cr.strip():
+            raw = cr
+    if raw is None:
+        return None
+    t = _sin_acento(raw)
+    if t in _CONFIRMA:
+        return "confirma"
+    if t in _CORRIGE:
+        return "corrige"
+    if "confirm" in t or "aprob" in t:
+        return "confirma"
+    if "corrig" in t or "correct" in t:
+        return "corrige"
+    return None
 
 
 def parse_cambio(raw: Any) -> str:
@@ -166,12 +222,160 @@ def compose(votes: list[dict[str, Any]], pesos: dict[str, dict[str, Any]] | None
 def card(session: Any, incident_id: str) -> dict[str, Any]:
     box = getattr(session, "_equipo", {}).setdefault(incident_id, {
         "agentes": {}, "ejecutado": [], "bloqueado": [], "espera_persona": [], "conflicto": None,
+        "fases": {}, "velocidad": None, "plan_cambio": None,
     })
     return box
 
 
+def _linea_papel(raw: Any) -> dict[str, Any] | None:
+    if raw is None or raw == "":
+        return None
+    if isinstance(raw, str):
+        return {"razonamiento": raw[:400]}
+    if isinstance(raw, dict):
+        texto = (raw.get("razonamiento") or raw.get("porque") or raw.get("texto")
+                 or raw.get("veredicto") or raw.get("linea") or "")
+        if not texto:
+            skip = {"agente", "papel", "confianza", "supuestos", "hora", "valor",
+                    "prioridad", "priority"}
+            bits = [str(v) for k, v in raw.items() if k not in skip and v not in (None, "", [], {})]
+            texto = "; ".join(bits)[:400]
+        if not str(texto).strip():
+            return None
+        conf = raw.get("confianza") if _es_numero(raw.get("confianza")) else None
+        sup = raw.get("supuestos") if isinstance(raw.get("supuestos"), list) else []
+        return {"razonamiento": str(texto)[:400], "confianza": conf,
+                "supuestos": [str(x)[:200] for x in sup[:8]]}
+    return {"razonamiento": str(raw)[:400]}
+
+
+def extraer_por_papel(body: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    out: dict[str, dict[str, Any]] = {}
+
+    def put(name: str, raw: Any) -> None:
+        key = str(name or "").strip().lower()
+        if key not in PAPELES:
+            return
+        row = _linea_papel(raw)
+        if row:
+            out[key] = row
+
+    raw = body.get("por_papel")
+    if isinstance(raw, dict):
+        for name in PAPELES:
+            if name in raw:
+                put(name, raw[name])
+    elif isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, dict):
+                put(str(item.get("agente") or item.get("papel") or ""), item)
+    for name in PAPELES:
+        if name in out:
+            continue
+        v = body.get(name)
+        if name == "prioridad" and _es_numero(v):
+            continue
+        if name in ("recursos", "avisos") and isinstance(v, list):
+            continue
+        put(name, v)
+    for item in body.get("especialistas") or []:
+        if isinstance(item, dict):
+            put(str(item.get("agente") or item.get("papel") or ""), item)
+    return out
+
+
+def peel_decision_fields(body: dict[str, Any]) -> dict[str, Any]:
+    out = dict(body)
+    p = out.get("prioridad")
+    if isinstance(p, dict):
+        valor = p.get("valor")
+        if valor is None:
+            for k in ("prioridad", "priority"):
+                if _es_numero(p.get(k)):
+                    valor = p.get(k)
+                    break
+        out["prioridad"] = valor
+    if isinstance(out.get("recursos"), str):
+        out.pop("recursos", None)
+    return out
+
+
+def stamp_aviso(session: Any, incident_id: str, body: dict[str, Any]) -> float:
+    box = card(session, incident_id)
+    if "aviso_at" in box:
+        return float(box["aviso_at"])
+    raw = body.get("aviso_at", body.get("t_aviso"))
+    ts: float | None = None
+    if raw is not None:
+        try:
+            ts = float(raw)
+            if ts > 1e12:
+                ts /= 1000.0
+        except (TypeError, ValueError):
+            ts = None
+    box["aviso_at"] = time.time() if ts is None else ts
+    return float(box["aviso_at"])
+
+
+def latencia_s(session: Any, incident_id: str, body: dict[str, Any]) -> int:
+    t0 = stamp_aviso(session, incident_id, body)
+    return int(max(0, round(time.time() - t0)))
+
+
+def record_papeles(session: Any, incident_id: str, papeles: dict[str, dict[str, Any]]) -> None:
+    if not papeles:
+        return
+    box = card(session, incident_id)
+    clock = (session.world.observe().clock or {}).get("hhmm") or time.strftime("%H:%M")
+    for name, row in papeles.items():
+        if name not in PAPELES:
+            continue
+        box["agentes"][name] = {
+            "agente": name,
+            "razonamiento": str(row.get("razonamiento") or "")[:240],
+            "confianza": row.get("confianza"),
+            "supuestos": list(row.get("supuestos") or [])[:8],
+            "hora": clock,
+        }
+
+
+def record_fase(session: Any, incident_id: str, fase: str, *, s: int, agente: str = "",
+                porque: str = "", veredicto: str | None = None, tardia: bool = False) -> dict[str, Any]:
+    box = card(session, incident_id)
+    fases = box.setdefault("fases", {})
+    row: dict[str, Any] = {"s": s, "agente": agente, "hora": time.strftime("%H:%M"),
+                           "porque": str(porque or "")[:400]}
+    if veredicto:
+        row["veredicto"] = veredicto
+    if tardia:
+        row["tardia"] = True
+    fases[fase] = row
+    rev = fases.get("revision") or {}
+    box["velocidad"] = {
+        "rapida_s": (fases.get("rapida") or {}).get("s"),
+        "revision_s": rev.get("s"),
+        "revision": rev.get("veredicto") or "pendiente",
+    }
+    return box["velocidad"]
+
+
+def revision_tardia(session: Any, incident_id: str) -> str | None:
+    inc = session.agent.incidents.get(incident_id)
+    if inc is None:
+        return "incidente desconocido"
+    if str(inc.status) in _CERRADOS:
+        return "incidente cerrado"
+    box = getattr(session, "_equipo", {}).get(incident_id) or {}
+    vel = box.get("velocidad") or {}
+    if vel.get("revision") == "corrige":
+        return "ya corregido"
+    return None
+
+
 def record_vote(session: Any, incident_id: str, decision: dict[str, Any]) -> None:
     agente = parse_agente(decision.get("agente"))
+    if agente == "rapido":
+        return
     box = card(session, incident_id)
     clock = (session.world.observe().clock or {}).get("hhmm") or ""
     box["agentes"][agente] = {
@@ -238,13 +442,33 @@ def public_view(session: Any, state: dict[str, Any]) -> dict[str, Any]:
                 }
             else:
                 agentes[name] = {k: row.get(k) for k in ("agente", "razonamiento", "confianza", "supuestos", "hora")}
-        out[iid] = {
+        rec: dict[str, Any] = {
             "agentes": agentes,
             "ejecutado": [] if reserved else list(box.get("ejecutado") or []),
             "bloqueado": [] if reserved else list(box.get("bloqueado") or []),
             "espera_persona": [] if reserved else list(box.get("espera_persona") or []),
             "conflicto": None if reserved else box.get("conflicto"),
         }
+        vel = box.get("velocidad")
+        if vel:
+            rec["velocidad"] = {
+                "rapida_s": vel.get("rapida_s"),
+                "revision_s": vel.get("revision_s"),
+                "revision": vel.get("revision") or "pendiente",
+            }
+        fases = box.get("fases") or {}
+        if fases:
+            keys = ("s", "agente", "hora", "veredicto", "tardia")
+            if not reserved:
+                keys = ("s", "agente", "hora", "porque", "veredicto", "tardia")
+            rec["fases"] = {fname: {k: row.get(k) for k in keys} for fname, row in fases.items()}
+        cambio = box.get("plan_cambio")
+        if cambio:
+            if reserved:
+                rec["plan_cambio"] = {k: cambio.get(k) for k in ("viejo_id", "nuevo_id")}
+            else:
+                rec["plan_cambio"] = dict(cambio)
+        out[iid] = rec
     return out
 
 

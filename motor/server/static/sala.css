@@ -223,6 +223,12 @@ input::placeholder{color:var(--unclass)}
 .agent-card .conf{font-variant-numeric:tabular-nums;color:var(--muted)}
 .agent-card .blocked{color:var(--emerg);font-weight:700;margin-top:6px}
 .agent-card ul{margin:4px 0 0;padding-left:16px}
+.agent-card.empty{opacity:.65}
+.velocidad-line{font-size:var(--size-sm);font-weight:750;color:var(--brand-deep);
+  background:var(--brand-bg);border:1px solid var(--brand);border-radius:var(--radius);
+  padding:8px 12px;margin:0 0 10px}
+.velocidad-line.confirma{border-color:var(--mild);background:var(--mild-bg)}
+.velocidad-line.corrige{border-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
 .enjambre-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(220px,1fr);gap:12px;align-items:start}
 @media(max-width:1330px){.enjambre-grid{grid-template-columns:1fr}}
 #enjambre-svg{width:100%;height:min(360px,42vh);background:var(--map-bg);border:1px solid var(--line);

@@ -714,9 +714,40 @@
     if (tr && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); pick({ incident: tr.dataset.incident, zone: tr.dataset.zone || null }); }
   });
 
+  function fmtLatency(s) {
+    if (s == null || !Number.isFinite(Number(s))) return null;
+    const n = Math.max(0, Math.round(Number(s)));
+    if (n < 60) return n + " s";
+    const m = Math.floor(n / 60), r = n % 60;
+    return r ? m + " min " + r + " s" : m + " min";
+  }
+
+  function velocidadLine(card) {
+    const v = (card && card.velocidad) || {};
+    const rap = fmtLatency(v.rapida_s);
+    if (rap == null && !v.revision && !(card && card.fases)) return "";
+    const revS = fmtLatency(v.revision_s);
+    const ver = String(v.revision || "pendiente").toUpperCase();
+    let line = "Decisión rápida en " + (rap || "—");
+    if (ver === "PENDIENTE" && revS == null) line += " · revisión del enjambre: PENDIENTE";
+    else line += " · revisión del enjambre en " + (revS || "—") + ": " + ver;
+    const cls = ver === "CORRIGE" ? " corrige" : ver === "CONFIRMA" ? " confirma" : "";
+    let extra = "";
+    if (ver === "CORRIGE") {
+      const fase = ((card.fases || {}).revision || {});
+      const cambio = card.plan_cambio || {};
+      const why = fase.porque || cambio.porque || "";
+      const plan = cambio.nuevo || cambio.objetivo || "";
+      extra = `<p class="tiny">${E(why)}${plan ? " · plan nuevo: " + E(plan) : ""}</p>`;
+    }
+    return `<p class="velocidad-line${cls}">${E(line)}</p>${extra}`;
+  }
+
   function agentCardHtml(name, ag, extra) {
-    if (!ag) return "";
     const label = (AGENT_ROLES.find((r) => r.id === name) || {}).label || AGENT_EXTRA[name] || name;
+    if (!ag) {
+      return `<article class="agent-card empty"><h4>${E(label)}</h4><p>—</p></article>`;
+    }
     const conf = ag.confianza != null ? ` · confianza ${num(ag.confianza, 2)}` : "";
     const sup = (ag.supuestos || []).length
       ? `<ul>${ag.supuestos.map((s) => `<li>${E(s)}</li>`).join("")}</ul>` : "";
@@ -732,10 +763,15 @@
       ? `<p class="tiny"><b>Ejecutado:</b> ${E(card.ejecutado.map((x) => x.kind || x.recurso || x.id).join(", "))}</p>` : "";
     const espera = (card.espera_persona || []).length
       ? `<p class="tiny"><b>Espera a una persona:</b> ${E(card.espera_persona.map((x) => x.kind || x.motivo).join(", "))}</p>` : "";
+    const any = AGENT_ROLES.some((r) => (card.agentes || {})[r.id]);
     const agents = AGENT_ROLES.map((r) => agentCardHtml(r.id, (card.agentes || {})[r.id], "")).join("");
+    const vel = velocidadLine(card);
     const planB = cerebroMode() === "reglas" ? '<p class="tiny">Plan B de reglas activo (modo degradado).</p>' : "";
-    return `<div class="box"><h3>CÓMO LO HA DECIDIDO EL EQUIPO</h3>${planB}
-      <div class="agent-grid">${agents || '<p class="tiny">Sin votos de agentes para este incidente.</p>'}</div>
+    const grid = (any || vel)
+      ? `<div class="agent-grid">${agents}</div>`
+      : '<p class="tiny">Sin votos de agentes para este incidente.</p>';
+    return `<div class="box"><h3>CÓMO LO HA DECIDIDO EL EQUIPO</h3>${vel}${planB}
+      ${grid}
       ${ejec}${bloq}${espera}</div>`;
   }
 

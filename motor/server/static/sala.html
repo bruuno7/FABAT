@@ -22,7 +22,7 @@
     <span class="pax" id="pax" title="Aforo del recinto según motor/world/festival.json">—</span>
   </div>
   <p class="nav-state" id="event-state">CARGANDO…</p>
-  <p class="sim-ribbon">Simulación · recinto ficticio · N = este caso</p>
+  <p class="sim-ribbon">Simulación · N = este caso</p>
 
   <h2 id="filters-title">Filtros de control</h2>
   <div class="filters" role="group" aria-labelledby="filters-title">
@@ -45,8 +45,7 @@
     <div class="hr-link" id="hr-link"><span class="dot" aria-hidden="true"></span>
       <span><b>Agente HR</b><br><span id="hr-link-text">Enlace directo</span></span></div>
     <p class="tiny">Entorno de demo · Ficticio. Ningún número de emergencias real se marca nunca.</p>
-    <p class="tiny nav-more"><a href="/centro">Centro</a> · <a href="/clasico">Vista técnica</a> · <a href="/informe">Informe</a>
-      · <button id="theme" class="help" aria-pressed="false" title="Cambiar a modo oscuro">◐</button></p>
+    <p class="tiny nav-more"><a href="/centro">Centro</a> · <a href="/clasico">Vista técnica</a> · <a href="/informe">Informe</a></p>
   </div>
 </nav>
 
@@ -61,13 +60,14 @@
       <input id="search" type="search" placeholder="Buscar por zona, tipo o ID…" aria-label="Buscar por zona, tipo o identificador de incidente">
     </div>
     <div class="counts" role="status">
-      <span>Reloj <b id="clock">—:—</b></span>
-      <span>ACTIVOS <b id="c-activos">0</b></span>
-      <span class="crit">CRÍTICOS <b id="c-criticos">0</b></span>
-      <span class="free">LIBRES <b id="c-libres">0/0</b></span>
+      <span>Hora <b id="clock">—:—</b></span>
+      <span>Activos <b id="c-activos">0</b></span>
+      <span class="crit">Críticos <b id="c-criticos">0</b></span>
+      <span class="free">Libres <b id="c-libres">0/0</b></span>
     </div>
     <div class="alarm" id="alarm" hidden><span aria-hidden="true">⚠</span><span id="alarm-text"></span></div>
     <button class="btn-inject" id="btn-inject" aria-haspopup="dialog" aria-controls="inyeccion">Mesa de inyección</button>
+    <button class="btn-theme" id="theme" aria-pressed="false" title="Cambiar a modo oscuro">Oscuro</button>
     <button class="who" id="btn-operator" title="Operador de esta sesión" aria-label="Operador de esta sesión">
       <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21a8 8 0 0 1 16 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>
     </button>

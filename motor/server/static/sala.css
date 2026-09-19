@@ -101,7 +101,7 @@ input::placeholder{color:var(--unclass)}
 .nav-state b{font-weight:800}
 .sim-ribbon{margin:0 14px 12px;padding:5px 8px;border-radius:6px;background:rgba(255,181,150,.12);
   border:1px solid rgba(255,181,150,.28);color:#ffb596;font-size:10px;font-weight:700;
-  letter-spacing:.04em;text-transform:uppercase}
+  letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav h2{padding:10px 14px 6px;font-size:10px;letter-spacing:.12em;color:var(--nav-muted);
   border-top:1px solid var(--nav-line);text-transform:uppercase;font-weight:800}
 .filters{padding:0 8px;display:grid;gap:2px}
@@ -168,6 +168,9 @@ input::placeholder{color:var(--unclass)}
 .btn-inject{background:var(--brand-deep);border-color:var(--brand-deep);color:#fff;font-weight:750;white-space:nowrap;
   height:32px;padding:0 12px;box-shadow:var(--shadow)}
 .btn-inject:hover{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn-theme{height:32px;padding:0 10px;font-size:11px;font-weight:750;letter-spacing:.04em;
+  background:var(--paper-2);color:var(--brand-deep);border-color:var(--line);white-space:nowrap}
+.btn-theme[aria-pressed=true]{background:var(--nav);color:var(--nav-ink);border-color:var(--nav)}
 .who{border-radius:50%;width:32px;height:32px;padding:0;display:grid;place-items:center;flex:none;
   background:var(--brand-deep);border-color:var(--brand-deep);color:#fff}
 .who:hover{background:var(--brand);border-color:var(--brand);color:#fff}
@@ -340,9 +343,10 @@ tbody .hora{font-family:var(--mono);font-variant-numeric:tabular-nums;white-spac
 .res-group h3 span{font-weight:800;color:var(--ink);white-space:nowrap;letter-spacing:.04em}
 .res-group.out h3 span{color:var(--emerg)}
 .res-list{display:flex;flex-wrap:wrap;gap:6px}
-.res{flex:1 1 84px;min-width:0;border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 9px;
-  background:var(--paper-2);text-align:left;font-size:var(--size-xs);display:grid;gap:3px}
-.res b{font-size:var(--size);font-weight:800;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res{flex:1 1 88px;min-width:0;border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 9px;
+  background:var(--paper-2);text-align:left;font-size:var(--size-xs);display:grid;gap:2px}
+.res b{font-size:15px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+.res-name{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .res.free{background:var(--mild-bg);border-color:color-mix(in srgb, var(--mild) 45%, var(--line))}
 .res.free b{color:var(--mild)}
 .res.busy{background:var(--emerg-bg);border-color:color-mix(in srgb, var(--emerg) 40%, var(--line))}

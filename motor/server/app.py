@@ -2094,7 +2094,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         d = await body(request)
         zone = str(d.get("zone") or "front_pit")
         s = S()
-        from . import abanico, cerebro as cerebro_mod
+        from . import abanico
         out = s.report("voice", "Una chica se ha mareado por el calor, está muy roja y casi no habla",
                        zone=zone)
         s.tick()
@@ -2105,9 +2105,8 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
             open_ = [i for i in s.state().get("incidents") or []
                      if i.get("status") not in ("resolved", "false_alarm", "failed")]
             iid = open_[-1]["id"] if open_ else rid or "nuevo"
-        if cerebro_mod.mode() != "abanico":
-            abanico.arrancar(s, iid, {"texto": "Una chica se ha mareado por el calor, está muy roja y casi no habla",
-                                      "zona": zone, "incident_id": iid, "tipo": "crowd"})
+        abanico.arrancar(s, iid, {"texto": "Una chica se ha mareado por el calor, está muy roja y casi no habla",
+                                  "zona": zone, "incident_id": iid, "tipo": "crowd"})
         card = (s.state().get("agentes") or {}).get(iid) or {}
         return {"ok": True, "incident_id": iid, "report_id": rid, "abanico": card.get("abanico")}
 

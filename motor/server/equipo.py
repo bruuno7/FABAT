@@ -373,13 +373,16 @@ def record_vote(session: Any, incident_id: str, decision: dict[str, Any]) -> Non
         return
     box = card(session, incident_id)
     clock = (session.world.observe().clock or {}).get("hhmm") or ""
-    box["agentes"][agente] = {
+    row = {
         "razonamiento": str(decision.get("porque") or "")[:240],
         "confianza": decision.get("confianza"),
         "supuestos": list(decision.get("supuestos") or [])[:8],
         "hora": clock or time.strftime("%H:%M"),
         "agente": agente,
     }
+    if _es_numero(decision.get("s")):
+        row["s"] = int(decision["s"])
+    box["agentes"][agente] = row
     box["conflicto"] = None
 
 

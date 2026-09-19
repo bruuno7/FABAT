@@ -417,15 +417,20 @@
   }
 
   function agentStatusText(role) {
+    const cards = S.agentes || {};
+    let bestS = null, latest = null, latestH = "";
+    Object.keys(cards).forEach((iid) => {
+      const card = cards[iid] || {};
+      const hit = ((card.abanico || {}).llegados || []).find((x) => x && x.papel === role);
+      const ag = (card.agentes || {})[role];
+      const s = (hit && hit.s != null) ? hit.s : (ag && ag.s);
+      if (s != null && (bestS == null || s < bestS)) bestS = s;
+      if (ag && ag.hora && (!latest || ag.hora > latestH)) { latest = ag; latestH = ag.hora; }
+    });
+    const lat = fmtLatency(bestS);
+    if (lat) return lat;
     const ej = S.enjambre;
     if (ej && ej.equipo_vivo && ej.equipo_vivo[role]) return ej.equipo_vivo[role];
-    const cards = S.agentes || {};
-    let latest = null, latestH = "";
-    Object.keys(cards).forEach((iid) => {
-      const ag = (cards[iid].agentes || {})[role];
-      if (!ag || !ag.hora) return;
-      if (!latest || ag.hora > latestH) { latest = ag; latestH = ag.hora; }
-    });
     if (latest) return `decidió · ${latest.hora}`;
     if (cerebroMode() === "reglas") return "plan B de reglas activo";
     return "en espera";

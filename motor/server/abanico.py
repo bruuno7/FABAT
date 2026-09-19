@@ -26,7 +26,7 @@ ENV_KEY = {
 }
 _NODO_OK = ("devolver resultado", "entregar_resultado", "resultado validado")
 _LISTO = {"completed", "succeeded", "success", "ok", "done"}
-_SIGUE = {"running", "queued", "pending", "in_progress", "in-progress", ""}
+_SIGUE = {"running", "queued", "pending", "in_progress", "in-progress"}
 _GRAVE = {"evacuate", "stop_show", "request_external", "evacuar", "parar", "ayuda_externa"}
 
 
@@ -119,16 +119,15 @@ def lanzar_si_aviso(session: Any) -> None:
         if inc.id in session._abanico_started:
             continue
         recs = set(inc.reports or [])
-        if not (recs & ids) and not str(getattr(inc, "id", "")).startswith("jx"):
+        if not (recs & ids):
             continue
-        session._abanico_started.add(inc.id)
         arrancar(session, inc.id)
 
 
 def arrancar(session: Any, incident_id: str, aviso: dict[str, Any] | None = None) -> None:
     hook(session)
     iid = str(incident_id or "").strip()
-    if not iid:
+    if not iid or iid in session._abanico_started:
         return
     session._abanico_started.add(iid)
     aviso = dict(aviso or aviso_de(session, iid), incident_id=iid)
@@ -238,59 +237,70 @@ def ciclo_local(session: Any, aviso: dict[str, Any], **kwargs: Any) -> dict[str,
         return None
 
 
-def lanzar_run(wid: str, payload: dict[str, Any]) -> str:
-    resp = httpx.post(
-        f"{api_base()}/workflows/{wid}/runs",
-        json={"environment": os.environ.get("HR_ENV") or "development", "payload": payload},
-        headers={"Authorization": f"Bearer {api_key()}"},
-        timeout=8.0,
-    )
-    if resp.status_code >= 300:
-        raise RuntimeError(f"HTTP {resp.status_code}")
-    data = resp.json() if resp.content else {}
-    queued = data.get("queued_run_ids") if isinstance(data, dict) else None
-    rid = data.get("run_id") or (queued[0] if isinstance(queued, list) and queued else "")
-    if not rid:
-        raise RuntimeError("sin run_id")
-    return str(rid)
+def lanzar_run(wid: str, payload: dict[str, Any], http: httpx.Client | None = None) -> str:
+    client = http or httpx.Client(timeout=8.0)
+    own = http is None
+    try:
+        resp = client.post(
+            f"{api_base()}/workflows/{wid}/runs",
+            json={"environment": os.environ.get("HR_ENV") or "development", "payload": payload},
+            headers={"Authorization": f"Bearer {api_key()}"},
+            timeout=8.0,
+        )
+        if resp.status_code >= 300:
+            raise RuntimeError(f"HTTP {resp.status_code}")
+        data = resp.json() if resp.content else {}
+        queued = data.get("queued_run_ids") if isinstance(data, dict) else None
+        rid = data.get("run_id") or (queued[0] if isinstance(queued, list) and queued else "")
+        if not rid:
+            raise RuntimeError("sin run_id")
+        return str(rid)
+    finally:
+        if own:
+            client.close()
 
 
-def leer_run(run_id: str) -> dict[str, Any] | None:
+def leer_run(run_id: str, http: httpx.Client | None = None) -> dict[str, Any] | None:
+    client = http or httpx.Client(timeout=6.0)
+    own = http is None
     headers = {"Authorization": f"Bearer {api_key()}"}
     base = api_base()
     try:
-        resp = httpx.get(f"{base}/runs/{run_id}", headers=headers, timeout=6.0)
-    except httpx.HTTPError:
-        return None
-    body = resp.json() if resp.content and resp.status_code < 300 else {}
-    status = str(body.get("status") or "").lower()
-    vote = extraer_voto(body)
-    if vote:
-        return vote
-    try:
-        nodes = httpx.get(f"{base}/runs/{run_id}/nodes", headers=headers, timeout=6.0)
-        data = (nodes.json() or {}).get("data") if nodes.status_code < 300 and nodes.content else []
-    except httpx.HTTPError:
-        data = []
-    if not isinstance(data, list):
-        data = []
-    node = _elegir_nodo(data)
-    if node and node.get("output_id"):
         try:
-            out = httpx.get(f"{base}/runs/{run_id}/outputs/{node['output_id']}",
-                            headers=headers, timeout=6.0)
-            if out.status_code < 300 and out.content:
-                vote = extraer_voto(out.json())
-                if vote:
-                    return vote
+            resp = client.get(f"{base}/runs/{run_id}", headers=headers, timeout=6.0)
         except httpx.HTTPError:
-            pass
-        vote = extraer_voto(node)
-        if vote:
-            return vote
-    if status in _SIGUE or not status:
+            return None
+        body = resp.json() if resp.content and resp.status_code < 300 else {}
+        status = str(body.get("status") or "").lower()
+        if status not in _SIGUE:
+            vote = extraer_voto(body)
+            if vote:
+                return vote
+        try:
+            nodes = client.get(f"{base}/runs/{run_id}/nodes", headers=headers, timeout=6.0)
+            data = (nodes.json() or {}).get("data") if nodes.status_code < 300 and nodes.content else []
+        except httpx.HTTPError:
+            data = []
+        if not isinstance(data, list):
+            data = []
+        node = _elegir_nodo(data)
+        if node and node.get("output_id"):
+            try:
+                out = client.get(f"{base}/runs/{run_id}/outputs/{node['output_id']}",
+                                 headers=headers, timeout=6.0)
+                if out.status_code < 300 and out.content:
+                    vote = extraer_voto(out.json())
+                    if vote:
+                        return vote
+            except httpx.HTTPError:
+                pass
+            vote = extraer_voto(node)
+            if vote:
+                return vote
         return None
-    return None
+    finally:
+        if own:
+            client.close()
 
 
 def _correr(session: Any, iid: str, aviso: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -300,72 +310,74 @@ def _correr(session: Any, iid: str, aviso: dict[str, Any], payload: dict[str, An
     if not plataforma_lista() or _stopped(session):
         _fallback(session, iid, aviso, t0)
         return
-    with ThreadPoolExecutor(max_workers=5) as pool:
-        futs = {}
-        for papel in OLA1:
-            wid = workflow_id(papel)
-            if not wid:
-                continue
-            futs[pool.submit(_safe_lanzar, wid, payload)] = papel
-        for fut in as_completed(futs):
-            papel = futs[fut]
-            rid = fut.result()
-            if rid:
-                run_ids[papel] = rid
-    if not run_ids:
-        _fallback(session, iid, aviso, t0)
-        return
-    decided = False
-    critico_on = False
-    timeouts: list[str] = []
-    deadline = t0 + timeout_s()
-    while not _stopped(session) and time.monotonic() < deadline:
-        _recolectar(session, iid, run_ids, votes, t0)
-        if not decided and all(p in votes for p in NUCLEO):
-            _componer_y_ejecutar(session, iid, votes, t0)
-            decided = True
-        if decided and not critico_on:
-            critico_on = _lanzar_critico(session, iid, aviso, payload, votes, run_ids)
-        if critico_on:
-            _recolectar(session, iid, run_ids, votes, t0)
-            if "critico" in votes:
-                _tratar_critico(session, iid, aviso, payload, votes, run_ids, t0)
-        _marcar_timeouts(session, iid, run_ids, votes, timeouts, t0, deadline)
-        if _enjambre_completo(votes, timeouts, critico_on):
-            break
-        time.sleep(poll_s())
-    _marcar_timeouts(session, iid, run_ids, votes, timeouts, t0, time.monotonic())
-    if not decided:
-        if all(p in votes for p in NUCLEO):
-            _componer_y_ejecutar(session, iid, votes, t0)
-            decided = True
-        else:
+    with httpx.Client(timeout=8.0) as http:
+        with ThreadPoolExecutor(max_workers=5) as pool:
+            futs = {}
+            for papel in OLA1:
+                wid = workflow_id(papel)
+                if not wid:
+                    continue
+                futs[pool.submit(_safe_lanzar, wid, payload, http)] = papel
+            for fut in as_completed(futs):
+                papel = futs[fut]
+                rid = fut.result()
+                if rid:
+                    run_ids[papel] = rid
+        if not run_ids:
             _fallback(session, iid, aviso, t0)
             return
-    if decided and not critico_on:
-        _lanzar_critico(session, iid, aviso, payload, votes, run_ids)
-        fin = time.monotonic() + min(8.0, timeout_s())
-        while not _stopped(session) and time.monotonic() < fin and "critico" not in votes:
-            _recolectar(session, iid, run_ids, votes, t0)
+        decided = False
+        critico_on = False
+        timeouts: list[str] = []
+        deadline = t0 + timeout_s()
+        while not _stopped(session) and time.monotonic() < deadline:
+            _recolectar(session, iid, run_ids, votes, t0, http)
+            if not decided and all(p in votes for p in NUCLEO):
+                _componer_y_ejecutar(session, iid, votes, t0)
+                decided = True
+            if decided and not critico_on:
+                critico_on = _lanzar_critico(session, iid, aviso, payload, votes, run_ids, http)
+            if critico_on:
+                _recolectar(session, iid, run_ids, votes, t0, http)
+                if "critico" in votes:
+                    _tratar_critico(session, iid, aviso, payload, votes, run_ids, t0, http)
+            _marcar_timeouts(session, iid, run_ids, votes, timeouts, t0, deadline)
+            if _enjambre_completo(votes, timeouts, critico_on):
+                break
             time.sleep(poll_s())
-        if "critico" in votes:
-            _tratar_critico(session, iid, aviso, payload, votes, run_ids, t0)
-    _cerrar(session, iid, t0, "plataforma")
+        _marcar_timeouts(session, iid, run_ids, votes, timeouts, t0, time.monotonic())
+        if not decided:
+            if all(p in votes for p in NUCLEO):
+                _componer_y_ejecutar(session, iid, votes, t0)
+                decided = True
+            else:
+                _fallback(session, iid, aviso, t0)
+                return
+        if decided and not critico_on:
+            _lanzar_critico(session, iid, aviso, payload, votes, run_ids, http)
+            fin = time.monotonic() + min(8.0, timeout_s())
+            while not _stopped(session) and time.monotonic() < fin and "critico" not in votes:
+                _recolectar(session, iid, run_ids, votes, t0, http)
+                time.sleep(poll_s())
+            if "critico" in votes:
+                _tratar_critico(session, iid, aviso, payload, votes, run_ids, t0, http)
+        _cerrar(session, iid, t0, "plataforma")
 
 
-def _safe_lanzar(wid: str, payload: dict[str, Any]) -> str | None:
+def _safe_lanzar(wid: str, payload: dict[str, Any], http: httpx.Client | None = None) -> str | None:
     try:
-        return lanzar_run(wid, payload)
+        return lanzar_run(wid, payload, http)
     except (RuntimeError, httpx.HTTPError, ValueError, TypeError):
         return None
 
 
 def _recolectar(session: Any, iid: str, run_ids: dict[str, str],
-                votes: dict[str, dict[str, Any]], t0: float) -> None:
+                votes: dict[str, dict[str, Any]], t0: float,
+                http: httpx.Client | None = None) -> None:
     for papel, rid in list(run_ids.items()):
         if papel in votes:
             continue
-        raw = leer_run(rid)
+        raw = leer_run(rid, http)
         if not raw:
             continue
         vote = voto_desde(papel, raw, iid)
@@ -374,7 +386,8 @@ def _recolectar(session: Any, iid: str, run_ids: dict[str, str],
 
 
 def _lanzar_critico(session: Any, iid: str, aviso: dict[str, Any], payload: dict[str, Any],
-                    votes: dict[str, dict[str, Any]], run_ids: dict[str, str]) -> bool:
+                    votes: dict[str, dict[str, Any]], run_ids: dict[str, str],
+                    http: httpx.Client | None = None) -> bool:
     wid = workflow_id("critico")
     if not wid:
         return False
@@ -384,7 +397,7 @@ def _lanzar_critico(session: Any, iid: str, aviso: dict[str, Any], payload: dict
         "decision": {k: v for k, v in votes.items() if k != "critico"},
     }
     extra["entrada_json"] = json.dumps(entrada, ensure_ascii=False, default=str)[:12000]
-    rid = _safe_lanzar(wid, extra)
+    rid = _safe_lanzar(wid, extra, http)
     if not rid:
         return False
     run_ids["critico"] = rid
@@ -398,7 +411,8 @@ def _lanzar_critico(session: Any, iid: str, aviso: dict[str, Any], payload: dict
 
 
 def _tratar_critico(session: Any, iid: str, aviso: dict[str, Any], payload: dict[str, Any],
-                    votes: dict[str, dict[str, Any]], run_ids: dict[str, str], t0: float) -> None:
+                    votes: dict[str, dict[str, Any]], run_ids: dict[str, str], t0: float,
+                    http: httpx.Client | None = None) -> None:
     cr = votes.get("critico") or {}
     if cr.get("_tratado"):
         return
@@ -409,6 +423,22 @@ def _tratar_critico(session: Any, iid: str, aviso: dict[str, Any], payload: dict
     objeta = grave or cr.get("requiere_persona") is True or "CORREG" in ver or "ESCALAR" in ver or "OBJE" in ver
     if not objeta:
         return
+    if grave or "ESCALAR" in ver or cr.get("requiere_persona"):
+        body = {
+            "agente": "critico", "incident_id": iid,
+            "porque": str(cr.get("porque") or "objeción alta: una persona decide lo grave")[:400],
+            "requiere_persona": True,
+            "acciones": [a for a in acciones if str(a.get("kind") or a.get("tipo") or "").lower() in _GRAVE],
+            "prioridad": cr.get("prioridad"),
+            "zona": aviso.get("zona"),
+        }
+        try:
+            d = cerebro_tools.validate_decision(body)
+            d["agente"] = "critico"
+            out = cerebro_tools._aplicar_decision(session, d)
+            equipo.record_result(session, iid, out)
+        except (ValueError, TypeError) as exc:
+            session.log("cerebro", f"abanico: crítico no pudo escalar ({type(exc).__name__})", iid)
     afectados = []
     for item in cr.get("correcciones") or []:
         if isinstance(item, dict):
@@ -429,22 +459,19 @@ def _tratar_critico(session: Any, iid: str, aviso: dict[str, Any], payload: dict
         wid = workflow_id(papel)
         if not wid:
             continue
-        rid = _safe_lanzar(wid, extra)
+        rid = _safe_lanzar(wid, extra, http)
         if rid:
             run_ids[papel] = rid
             votes.pop(papel, None)
-    if grave or "ESCALAR" in ver or cr.get("requiere_persona"):
-        body = {
-            "agente": "critico", "incident_id": iid,
-            "porque": str(cr.get("porque") or "objeción alta: una persona decide lo grave")[:400],
-            "requiere_persona": True,
-            "acciones": [a for a in acciones if str(a.get("kind") or a.get("tipo") or "").lower() in _GRAVE],
-            "prioridad": cr.get("prioridad"),
-        }
-        try:
-            cerebro_tools.decidir(session, body)
-        except (ValueError, TypeError):
-            pass
+    enlaza = (getattr(session, "_abanico_prop", {}).get(iid) or {}).get("recursos") or "decision"
+    try:
+        enjambre.publicar(session, {
+            "de": "critico", "para": "recursos", "incidente": iid,
+            "tipo": "objecion", "gravedad": "alta", "enlaza": enlaza,
+            "texto": str(cr.get("porque") or "objeción alta del crítico")[:400],
+        })
+    except ValueError:
+        pass
 
 
 def _componer_y_ejecutar(session: Any, iid: str, votes: dict[str, dict[str, Any]], t0: float) -> None:
@@ -470,13 +497,9 @@ def _componer_y_ejecutar(session: Any, iid: str, votes: dict[str, dict[str, Any]
 
 
 def _llegada(session: Any, iid: str, papel: str, vote: dict[str, Any], s: int) -> None:
-    vote = dict(vote, agente=papel, incident_id=iid)
+    vote = dict(vote, agente=papel, incident_id=iid, s=s)
     equipo.store_raw(session, iid, vote)
     equipo.record_vote(session, iid, vote)
-    box = equipo.card(session, iid)
-    row = (box.get("agentes") or {}).get(papel)
-    if isinstance(row, dict):
-        row["s"] = s
     ab = _ab(session, iid)
     llegados = list(ab.get("llegados") or [])
     if not any(x.get("papel") == papel for x in llegados):
@@ -518,6 +541,9 @@ def _fallback(session: Any, iid: str, aviso: dict[str, Any], t0: float) -> None:
     session._cerebro_cadena = "reglas"
     session._abanico_allow_reglas.add(iid)
     session.log("cerebro", f"{cerebro.ETIQUETA_DEGRADADO}: abanico sin plataforma ni LLM local", iid)
+    wake = getattr(session, "_wake", None)
+    if wake is not None:
+        wake.set()
     box = _ab(session, iid)
     box["fuente"] = "reglas"
     box["primera_decision_s"] = box.get("primera_decision_s") or int(max(0, round(time.monotonic() - t0)))

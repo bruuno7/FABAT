@@ -248,7 +248,10 @@ class AbanicoTest(unittest.TestCase):
             self.hr.delays[p] = 0.35
         t0 = time.monotonic()
         iid = self.aviso()
-        card = self.wait_card(iid, lambda c: len((c.get("abanico") or {}).get("llegados") or []) >= 3)
+        card = self.wait_card(
+            iid,
+            lambda c: {"triaje", "prioridad", "recursos"} <= {x["papel"] for x in (c.get("abanico") or {}).get("llegados") or []},
+        )
         elapsed = time.monotonic() - t0
         self.assertLess(elapsed, 1.1, f"parece serie: {elapsed:.2f}s")
         self.assertGreaterEqual(elapsed, 0.30)
@@ -329,9 +332,10 @@ class AbanicoTest(unittest.TestCase):
         self.wait_card(iid, lambda c: (c.get("agentes") or {}).get("critico"), seconds=4)
         self.assertTrue(wait_for(lambda: len(self.hr.launches_of("vigia")) >= 2, 3),
                         self.hr.launches_of("vigia"))
-        st = self.s.state()
-        self.assertTrue(st.get("approvals") or (self.card(iid).get("espera_persona")),
-                        {"ap": st.get("approvals"), "card": self.card(iid)})
+        self.assertTrue(wait_for(lambda: bool(self.s.state().get("approvals")
+                                              or (self.s.state().get("agentes") or {}).get(iid, {}).get("espera_persona")),
+                                 3),
+                        {"ap": self.s.state().get("approvals"), "card": self.card(iid)})
 
     def test_nada_reservado_en_claro_ni_secretos(self) -> None:
         iid = self.aviso("Agresión sexual en los aseos, la han tocado y no la dejan irse.", zone="toilets")

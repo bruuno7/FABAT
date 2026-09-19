@@ -23,10 +23,10 @@ Se ejecuta siempre desde la raíz del proyecto: `python3 -m motor.<paquete>...`.
 
 ## El escenario: «Festival Abierto»
 
-40.000 asistentes, 30.000 m², un escenario, tres días (día 1: incidencias menores; día 2: una
+40.000 asistentes, 30.000 m², dos escenarios, tres días (día 1: incidencias menores; día 2: una
 incidencia mayor; día 3: salida). Zonas (ids fijos, los usa todo el mundo):
 
-`gate_a`, `gate_b`, `gate_c` (accesos) · `front_pit` (frente de escenario) · `general` · `vip` ·
+`gate_a`, `gate_b`, `gate_c` (accesos) · `front_pit` (escenario 1, frente) · `stage_2` (escenario 2) · `general` · `vip` ·
 `pmr` (plataforma de movilidad reducida) · `food` (restauración) · `toilets` · `water_n`, `water_s`
 (puntos de agua) · `medical_1`, `medical_2` (puestos médicos) · `corridor_n`, `corridor_s` (pasillos,
 `corridor_s` es además la ruta de ambulancia) · `backstage` · `exit_transport` (salida a lanzaderas y

@@ -33,8 +33,8 @@ class TestFestival(unittest.TestCase):
     def test_layout(self):
         fest = load_festival()
         ids = {z["id"] for z in fest["zones"]}
-        self.assertEqual(len(ids), 17)
-        self.assertAlmostEqual(sum(z["area_m2"] for z in fest["zones"]), 30000, delta=500)
+        self.assertEqual(len(ids), 18)
+        self.assertAlmostEqual(sum(z["area_m2"] for z in fest["zones"]), 31000, delta=500)
         seen, todo = set(), ["gate_a"]  # grafo conexo
         while todo:
             z = todo.pop()
@@ -278,6 +278,16 @@ class TestActionsAndEffects(unittest.TestCase):
         self.assertLess(w.occ[w.L.idx["front_pit"]], pit0 * 0.7)
         changed = {a.id for a in w.observe().action_results}
         self.assertTrue(changed <= {"rs", "ev", "ex", "ss"})
+
+    def test_stop_show_one_stage_leaves_the_other(self):
+        w = World.from_case(case(start_hhmm="19:10"), 1)
+        s1, s2 = w.L.idx["front_pit"], w.L.idx["stage_2"]
+        a = w.apply(Action("ss2", ActionKind.STOP_SHOW, w.t, zone="stage_2"))
+        self.assertEqual(a.status, ActionStatus.DONE)
+        self.assertIn(s2, w.stopped_stages)
+        self.assertNotIn(s1, w.stopped_stages)
+        self.assertFalse(w.show_stopped)
+        self.assertEqual(w.observe().clock["show_phase"], "concerts")
 
     def test_inject_accepts_every_world_effect(self):
         w = World.from_case(case(), 1)

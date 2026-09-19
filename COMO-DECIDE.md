@@ -1,5 +1,7 @@
 # Cómo decide MANDO
 
+> **Nota (diseño 19-sep).** Lo que sigue (parser, triaje, fórmula de prioridad, gemelo, supuestos, autonomía) es el **plan B de reglas** (`motor/mando`) y la API `/api/explica`. En el diseño actual **decide un equipo de agentes en HappyRobot** (triaje, prioridad, recursos, avisos, vigía, crítico); las reglas solo actúan si la plataforma no contesta a tiempo, rotulado en la Sala. Barandillas (evacuar/parar/ayuda externa → persona; vital no espera) son fijas. Ver `README.md`, `docs/PLAN-GIRO.md` y `motor/happyrobot/cerebro/HERRAMIENTAS.md`.
+
 MANDO coordina los incidentes de un evento masivo. No es un chatbot: en cada minuto mira el recinto, ordena lo abierto, manda equipos, escribe un plan con supuestos y tira ese plan cuando un supuesto deja de ser cierto. El núcleo que decide es un planificador de reglas, determinista (misma entrada → misma salida). Los modelos de lenguaje, si están, entienden texto libre y hablan; no puntúan la cola.
 
 Pantalla donde se ve el «por qué» de ahora: `/porque` (API: `GET /api/explica` y `GET /api/explica/{id}`).

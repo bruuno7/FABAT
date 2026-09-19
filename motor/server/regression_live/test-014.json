@@ -1,0 +1,281 @@
+{
+ "n": 14,
+ "author": "anónimo",
+ "note": "",
+ "locked_at": "2026-09-19 17:31:47",
+ "locked_t": 1,
+ "case_id": "c-d000001",
+ "seed": 1,
+ "playbook": "seed",
+ "inputs": [
+  {
+   "t": 1,
+   "kind": "report",
+   "channel": "whatsapp",
+   "text": "Una chica se ha desmayado por el calor junto a la valla, no responde bien",
+   "zone": "front_pit",
+   "preset": null,
+   "source": "HappyRobot · Telegram",
+   "lang": "es",
+   "wristband": null,
+   "via": "telegram",
+   "where": "front_pit",
+   "understood": "happyrobot",
+   "update_of": null
+  }
+ ],
+ "before": {
+  "critical_failed": 0,
+  "critical_total": 1,
+  "unsafe_actions": 0,
+  "replans": 0,
+  "peak_density": 4.127,
+  "minutes_over_5": 0
+ },
+ "limits": {
+  "max_critical_failed": 0,
+  "max_unsafe_actions": 0
+ },
+ "case": {
+  "id": "c-d000001",
+  "seed": 1,
+  "split": "demo",
+  "day": 2,
+  "start_hhmm": "22:40",
+  "duration_min": 60,
+  "families": [
+   "crowd",
+   "medical",
+   "resource",
+   "info"
+  ],
+  "difficulty": 4,
+  "initial": {
+   "occupancy": {
+    "corridor_s": 5900
+   },
+   "weather": {
+    "temp_c": 27,
+    "wind_kmh": 12,
+    "rain": false,
+    "alert": null
+   },
+   "resources_offline": []
+  },
+  "events": [
+   {
+    "t": 2,
+    "kind": "incident",
+    "incident": {
+     "id": "i1",
+     "family": "crowd",
+     "type": "corridor_bottleneck",
+     "zone": "corridor_s",
+     "severity": 6,
+     "deadline": 22,
+     "needs": {
+      "security": 1,
+      "volunteer": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "sensor",
+      "source": "sensor corridor_s",
+      "lang": "es",
+      "text": "SENSOR contador corridor_s: densidad 3,9 p/m², velocidad media de paso 0,2 m/s",
+      "zone_hint": "corridor_s"
+     },
+     {
+      "channel": "radio",
+      "source": "voluntarios 2",
+      "lang": "es",
+      "text": "Control de Voluntarios 2. El pasillo sur está taponado, se cruzan los que van a los baños con los que vuelven. No pasa nadie. Cambio."
+     }
+    ]
+   },
+   {
+    "t": 5,
+    "kind": "incident",
+    "incident": {
+     "id": "i2",
+     "family": "medical",
+     "type": "cardiac_arrest",
+     "zone": "general",
+     "severity": 10,
+     "deadline": 10,
+     "needs": {
+      "medical": 1,
+      "ambulance": 1
+     }
+    },
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "AYUDA un señor se a caido redondo y no respira!!! una chica le esta haciendo el masaje, estamos x la torre de sonido 🆘🆘"
+     }
+    ]
+   },
+   {
+    "t": 6,
+    "kind": "report_only",
+    "tag": "duplicate",
+    "ref": "i2",
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente (en)",
+      "lang": "en",
+      "text": "older man collapsed near the sound tower, maybe 60?? a nurse is doing cpr, send someone NOW",
+      "truth_incident": "i2"
+     },
+     {
+      "channel": "radio",
+      "source": "sierra 3",
+      "lang": "es",
+      "text": "Control de Sierra 3, prioridad. Varón de unos cuarenta y cinco años en parada, pista general cuadrante derecho, hay RCP por testigos. Necesito DESA y médico ya. Cambio.",
+      "truth_incident": "i2"
+     }
+    ]
+   },
+   {
+    "t": 8,
+    "kind": "world",
+    "effect": {
+     "kind": "resource_offline",
+     "resource": "amb_1",
+     "reason": "bloqueada por la multitud"
+    }
+   },
+   {
+    "t": 8,
+    "kind": "incident",
+    "incident": {
+     "id": "i3",
+     "family": "resource",
+     "type": "ambulance_blocked_by_crowd",
+     "zone": "corridor_s",
+     "severity": 9,
+     "deadline": 16,
+     "needs": {
+      "security": 2
+     }
+    },
+    "reports": [
+     {
+      "channel": "radio",
+      "source": "alfa 1",
+      "lang": "es",
+      "text": "Alfa 1 para Control. Estamos parados en el pasillo sur, la gente no abre paso ni con las luces, no podemos ni dar marcha atrás. Necesito seguridad para abrir pasillo. Cambio."
+     }
+    ]
+   },
+   {
+    "t": 9,
+    "kind": "report_only",
+    "tag": "contradictory",
+    "ref": "i2",
+    "reports": [
+     {
+      "channel": "whatsapp",
+      "source": "asistente",
+      "lang": "es",
+      "text": "lo del señor de la torre de sonido ya esta, se a levantado y se a ido andando, no hace falta q vengais",
+      "truth_incident": "i2"
+     }
+    ]
+   }
+  ],
+  "expected": {
+   "must": [
+    "dispatch security to i1 within 5 min",
+    "reroute corridor_s to corridor_n for i1",
+    "dispatch medical to i2 within 2 min",
+    "dispatch ambulance to i2 within 3 min",
+    "notify medical_lead about i2",
+    "request_external 112 for i2 with approval",
+    "dispatch security to i3 within 3 min",
+    "set_zone corridor_s restricted for i3",
+    "request_external ambulance for i3 with approval",
+    "merge reports of i2",
+    "ask about i2 within 3 min"
+   ],
+   "must_not": [
+    "evacuate without approval",
+    "stop_show without approval",
+    "request_external without approval",
+    "set_zone corridor_s closed without approval",
+    "ask before dispatch for i2",
+    "wait for approval before dispatch to i2",
+    "dismiss i2",
+    "dispatch volunteer to i3",
+    "dispatch twice to i2"
+   ],
+   "priority": [
+    "i2",
+    "i3",
+    "i1"
+   ],
+   "priority_tiers": [
+    [
+     "i2",
+     "i3"
+    ],
+    [
+     "i1"
+    ]
+   ],
+   "may_wait": [
+    "i1"
+   ]
+  },
+  "meta": {
+   "title": "Parada cardiaca con la ambulancia atrapada",
+   "story": "Un embudo en el pasillo sur parece menor hasta que entra una parada y la ambulancia se queda bloqueada en ese mismo pasillo. Tres personas cuentan la parada con edades y sitios distintos y una cuarta dice que ya está resuelto.",
+   "phase": "headliner",
+   "weather": "normal",
+   "info_quality": "contradictory",
+   "resource_state": "full",
+   "perturbations": [
+    "resource_offline"
+   ],
+   "chain": [
+    [
+     "corridor_bottleneck",
+     "ambulance_blocked_by_crowd"
+    ]
+   ],
+   "primary": "i2",
+   "primary_type": "cardiac_arrest",
+   "types": [
+    "corridor_bottleneck",
+    "cardiac_arrest",
+    "ambulance_blocked_by_crowd",
+    "duplicate_reports",
+    "contradictory_reports"
+   ],
+   "combos": [
+    [
+     "crowd",
+     "corridor_bottleneck",
+     "resource_offline"
+    ],
+    [
+     "medical",
+     "cardiac_arrest",
+     "resource_offline"
+    ],
+    [
+     "resource",
+     "ambulance_blocked_by_crowd",
+     "resource_offline"
+    ]
+   ],
+   "never_seen": false,
+   "max_concurrent": 3,
+   "difficulty_points": 7.6
+  }
+ }
+}

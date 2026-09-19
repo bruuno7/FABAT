@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from fastapi import HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from .security import require_operator
 from .evidence_runtime import evidence
 from .simulacro import SimulacroService
@@ -14,7 +14,10 @@ def register(app, session, static):
 
     @app.get('/simulacro', include_in_schema=False)
     def page():
-        return FileResponse(static / 'simulacro.html', headers={'Cache-Control': 'no-store'})
+        return HTMLResponse(
+            '<!doctype html><meta charset="utf-8"><title>MANDO</title>'
+            '<p>Pantalla archivada. <a href="/">Sala de control</a>.</p>',
+            headers={'Cache-Control': 'no-store'})
 
     @app.get('/api/evidence')
     def read_evidence(call_minutes: float = 3, message_minutes: float = 1, report_minutes: float = 1):

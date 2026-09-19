@@ -585,10 +585,11 @@
  },
  "runs": 400,
  "source": {
-  "case_signature": "c938adc4c06e",
-  "code": "cc17622e1b13",
-  "festival_seed": 2026,
-  "n_cases": 400
+  "from": "ledger",
+  "ledger_path": "/var/folders/bt/jj8rzfds2wl1ldnxyz_t6dr40000gn/T/tmp1t0yeg03.sqlite",
+  "merge": true,
+  "n_episodes": 0,
+  "real_only": false
  },
  "stockouts": {
   "water_n": {

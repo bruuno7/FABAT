@@ -7,12 +7,14 @@ from pathlib import Path
 
 # Cargar .env ANTES de importar .app: HappyRobotComms lee MANDO_VOICE_MODE / HR_* al construirse.
 # No pisa variables ya presentes en el entorno (override=False).
-try:
-    from dotenv import load_dotenv
-    _env_path = Path(__file__).resolve().parents[2] / ".env"
-    load_dotenv(_env_path, override=False)
-except ImportError:
-    pass
+# El ensayo es el guion semilla: no hereda cerebro/LLM/Telegram de la demo local.
+if sys.argv[1:2] != ["ensayo"]:
+    try:
+        from dotenv import load_dotenv
+        _env_path = Path(__file__).resolve().parents[2] / ".env"
+        load_dotenv(_env_path, override=False)
+    except ImportError:
+        pass
 
 import uvicorn
 
@@ -23,6 +25,9 @@ def main() -> None:
     if sys.argv[1:2] == ["doctor"]:   # python -m motor.server doctor
         from .doctor import main as doctor
         raise SystemExit(doctor(sys.argv[2:]))
+    if sys.argv[1:2] == ["cerebro"]:
+        from .cerebro_llm import main as cerebro
+        raise SystemExit(cerebro(sys.argv[2:]))
     if sys.argv[1:2] == ['ensayo']:
         from .ensayo import main as ensayo
         raise SystemExit(ensayo(sys.argv[2:]))

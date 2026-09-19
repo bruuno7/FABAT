@@ -138,6 +138,36 @@ export async function forwardToMando(
   secret: string | undefined,
   report: MandoPublicReport,
 ): Promise<{ ok: boolean; status: number; body: string; skipped?: boolean }> {
+  return mandoRequest(backendUrl, secret, "/hr/events", {
+    method: "POST",
+    body: JSON.stringify(report),
+  });
+}
+
+function mandoUrl(
+  backendUrl: string,
+  path: string,
+): string {
+  const base = backendUrl.replace(/\/+$/, "").replace(/\/hr\/events$/i, "");
+  return `${base}${path}`;
+}
+
+/** POST/GET autenticado a una ruta de MANDO (`/hr/tg/dispatch`, `/hr/tg/staff-response`, …). */
+export async function forwardMandoPath(
+  backendUrl: string | undefined,
+  secret: string | undefined,
+  path: string,
+  init: { method: string; body?: string } = { method: "GET" },
+): Promise<ForwardResult> {
+  return mandoRequest(backendUrl, secret, path, init);
+}
+
+async function mandoRequest(
+  backendUrl: string | undefined,
+  secret: string | undefined,
+  path: string,
+  init: { method: string; body?: string },
+): Promise<ForwardResult> {
   if (!backendUrl) {
     return {
       ok: false,
@@ -146,23 +176,87 @@ export async function forwardToMando(
       skipped: true,
     };
   }
-
-  const url = backendUrl.endsWith("/hr/events")
-    ? backendUrl
-    : `${backendUrl.replace(/\/+$/, "")}/hr/events`;
   const headers: Record<string, string> = {
     "content-type": "application/json",
   };
-  if (secret) headers["x-hr-secret"] = secret;
-
-  const res = await fetch(url, {
-    method: "POST",
+  if (secret) {
+    headers["x-hr-secret"] = secret;
+    headers["x-mando-token"] = secret;
+  }
+  const res = await fetch(mandoUrl(backendUrl, path), {
+    method: init.method,
     headers,
-    body: JSON.stringify(report),
+    body: init.body,
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   const body = await res.text();
   return { ok: res.ok, status: res.status, body };
+}
+
+export type RosterSeat = {
+  rol: string;
+  label?: string;
+  claimed: boolean;
+  chat_id?: string | null;
+  alias?: string;
+  claimed_at?: string | null;
+  busy?: boolean;
+};
+
+export type RosterView = {
+  ok?: boolean;
+  reason?: string;
+  seats: RosterSeat[];
+  total: number;
+  claimed: number;
+  disponibles: number;
+  previous?: {
+    role?: string;
+    alias?: string;
+    chat_id?: string;
+  } | null;
+  holder?: { rol?: string; alias?: string; chat_id?: string };
+};
+
+function parseRoster(body: string): RosterView | null {
+  try {
+    const parsed = JSON.parse(body) as Partial<RosterView>;
+    if (!parsed || !Array.isArray(parsed.seats)) return null;
+    return {
+      ok: parsed.ok,
+      reason: parsed.reason,
+      seats: parsed.seats,
+      total: Number(parsed.total ?? parsed.seats.length),
+      claimed: Number(parsed.claimed ?? 0),
+      disponibles: Number(parsed.disponibles ?? 0),
+      previous: parsed.previous,
+      holder: parsed.holder,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchMandoRoster(
+  backendUrl: string | undefined,
+  secret: string | undefined,
+): Promise<{ result: ForwardResult; view: RosterView | null }> {
+  const result = await mandoRequest(backendUrl, secret, "/hr/tg/roster", {
+    method: "GET",
+  });
+  return { result, view: result.ok ? parseRoster(result.body) : null };
+}
+
+export async function postMandoRoster(
+  backendUrl: string | undefined,
+  secret: string | undefined,
+  payload: Record<string, unknown>,
+): Promise<{ result: ForwardResult; view: RosterView | null }> {
+  const result = await mandoRequest(backendUrl, secret, "/hr/tg/roster", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return { result, view: parseRoster(result.body) };
 }
 
 export async function telegramSendMessage(

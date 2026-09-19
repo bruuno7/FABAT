@@ -1,8 +1,10 @@
 """Espejo del despacho por Telegram: lo que decide HappyRobot, a la vista en la Sala de control.
 
 Quién decide qué: el bucle vivo es Telegram → HappyRobot (`fa-entrada-tg`, `fa-despacho-tg`,
-`fa-respuesta-tg`) con memoria en Twin. **Ahí decide un LLM.** Este módulo NO decide nada: recibe por
-`POST /hr/events` lo que ya ha pasado allí y expone `S.telegram` con el contrato compartido.
+`fa-respuesta-tg`). El directorio rol↔chat_id y el cerrojo primer-acc-gana viven en MANDO
+(`tg_roster`, Twin no está provisionado). **Ahí decide un LLM + el cerrojo.** Este módulo NO decide
+nada: recibe por `POST /hr/events` lo que ya ha pasado allí y expone `S.telegram` con el contrato
+compartido.
 
 Tipos (detalle en ESPEJO-TELEGRAM.md): `tg_incident`, `tg_assignment`, `tg_staff`, `tg_approval`.
 
@@ -32,12 +34,14 @@ GRAVEDADES = ('vital', 'emergencia', 'urgente', 'leve', 'sin_clasificar')
 ESTADOS = ('pending', 'accepted', 'declined', 'timeout', 'covered')
 DECISIONES = {'apr': 'aprobada', 'vet': 'vetada'}
 ROLES = ('medico', 'enfermero', 'sanitario', 'ambulancia', 'seguridad', 'tecnico',
-         'logistica', 'voluntario', 'jefe_zona', 'organizador')
+         'logistica', 'voluntario', 'jefe_zona', 'organizador',
+         'staff_entradas', 'bomberos', 'policia')
 ROLES_QUE_APRUEBAN = ('organizador', 'director', 'coordinador')
 AUTOR_TG = 'organizador por Telegram'
 ROL_ES = {'medico': 'médico', 'enfermero': 'enfermero', 'sanitario': 'sanitario', 'ambulancia': 'ambulancia',
           'seguridad': 'seguridad', 'tecnico': 'técnico', 'logistica': 'logística', 'voluntario': 'voluntario',
-          'jefe_zona': 'jefe de zona', 'organizador': 'organizador'}
+          'jefe_zona': 'jefe de zona', 'organizador': 'organizador',
+          'staff_entradas': 'staff entradas', 'bomberos': 'bomberos', 'policia': 'policía'}
 PRESET_DE_TIPO = {'medica': 'heat', 'aglomeracion': 'surge', 'seguridad': 'fight', 'incendio': 'smoke',
                   'infraestructura': 'barrier', 'menor': 'child'}
 INTENTOS_MAX = 3
@@ -248,6 +252,12 @@ class TelegramMirror:
 
         fila = next((a for a in item['asignaciones'] if a['rol'] == rol and a['alias'] == alias
                      and a['intento'] == intento), None)
+        if estado == 'accepted':
+            rival = next((a for a in item['asignaciones']
+                          if a['rol'] == rol and a['estado'] == 'accepted'
+                          and (a.get('alias') or '') != (alias or '')), None)
+            if rival is not None:
+                estado = 'covered'
         if fila is None:
             fila = {'rol': rol, 'alias': alias, 'intento': intento, 'estado': estado,
                     'eta_min': None, 'from_zone': None, 'motivo': '', 't': self.s.world.t}

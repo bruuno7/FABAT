@@ -3,6 +3,7 @@ import type { Env } from "../lib/hr-client.js";
 import {
   checkSecret,
   forwardToMando,
+  forwardMandoPath,
   telegramSendMessage,
   forwardToHappyRobot,
   executeTelegramOutbound,
@@ -123,6 +124,14 @@ export function hrRouter(env: Env, store: IncidentStore): Router {
     });
   });
 
+  // HappyRobot no alcanza el túnel de MANDO: estas rutas reenvían el cerrojo.
+  router.post("/tg/dispatch", (req, res) =>
+    proxyMando(env, req, res, "/hr/tg/dispatch"),
+  );
+  router.post("/tg/staff-response", (req, res) =>
+    proxyMando(env, req, res, "/hr/tg/staff-response"),
+  );
+
   // Contiene texto de los avisos de personas: mismo secreto que /events.
   router.get("/incidents", (req, res) => {
     const auth = checkSecret(env, env.hrSecret, req.header("x-hr-secret"));
@@ -134,6 +143,44 @@ export function hrRouter(env: Env, store: IncidentStore): Router {
   });
 
   return router;
+}
+
+async function proxyMando(
+  env: Env,
+  req: { method: string; header: (name: string) => string | undefined; body: unknown },
+  res: {
+    status: (code: number) => { json: (body: unknown) => void };
+    json: (body: unknown) => void;
+  },
+  path: string,
+): Promise<void> {
+  const auth = checkSecret(env, env.hrSecret, req.header("x-hr-secret"));
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
+    return;
+  }
+  const method = req.method.toUpperCase();
+  const result = await forwardMandoPath(env.mandoBackendUrl, env.hrSecret, path, {
+    method,
+    body: method === "GET" ? undefined : JSON.stringify(req.body ?? {}),
+  });
+  if (result.skipped) {
+    res.status(503).json({
+      ok: false,
+      dispatched: false,
+      reason: "mando_unconfigured",
+      outbound: null,
+      next_outbound: null,
+    });
+    return;
+  }
+  let payload: unknown = { ok: result.ok, body: result.body };
+  try {
+    payload = JSON.parse(result.body);
+  } catch {
+    // MANDO a veces responde texto; lo envolvemos para que HR no reciba un string crudo.
+  }
+  res.status(result.status || (result.ok ? 200 : 502)).json(payload);
 }
 
 export function demoRouter(env: Env, store: IncidentStore): Router {

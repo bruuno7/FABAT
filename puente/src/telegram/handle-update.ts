@@ -10,10 +10,12 @@ import {
 import { STAFF_ROLES, STAFF_ROLE_LABELS, type StaffRole } from "../lib/contract.js";
 import {
   BOT_HELP,
+  buildAck,
   parseCommand,
   parseCommandLine,
   parseStaffRole,
   displayNameFromUser,
+  guessLocationHint,
   staffOccupancyText,
   telegramUpdateToPublicReport,
   telegramUpdateToStaffResponse,
@@ -24,6 +26,7 @@ import {
   createStaffStore,
   type StaffStore,
 } from "./staff-store.js";
+import { globalRateLimiter } from "../lib/rate-limit.js";
 
 export type HandleResult = {
   ok: boolean;
@@ -50,15 +53,52 @@ export async function handleTelegramUpdate(
   }
 
   const msg = update.message;
-  if (!msg?.text?.trim()) {
+  if (!msg) {
     return { ok: true, ignored: true, replies: [] };
   }
 
   const chatId = String(msg.chat.id);
-  const text = msg.text.trim();
-  const command = parseCommand(text);
   const fromId = msg.from?.id != null ? String(msg.from.id) : chatId;
   const display = displayNameFromUser(msg.from, fromId);
+
+  // ── Photo ──────────────────────────────────────────────────────────────
+  if (msg.photo && msg.photo.length > 0) {
+    if (!globalRateLimiter.allow(chatId)) {
+      const wait = globalRateLimiter.secondsUntilReset(chatId);
+      const reply = `⏳ Tu aviso anterior aún está siendo procesado. Espera ${wait}s antes de enviar otro. Si es una emergencia grave llama al 112.`;
+      await telegramSendMessage(env.telegramBotToken, chatId, reply);
+      return { ok: true, replies: [reply] };
+    }
+    const caption = msg.caption?.trim();
+    const hint = caption ? guessLocationHint(caption) : undefined;
+    const ref = `tg-${chatId}-${update.update_id}`.slice(-6).toUpperCase();
+    const zoneNote = hint ? ` · Zona: ${hint}` : "";
+    const reply = `📷 Ref ${ref}${zoneNote}\nFoto recibida. Si puedes, añade también un texto describiendo la situación.`;
+    await telegramSendMessage(env.telegramBotToken, chatId, reply);
+    return { ok: true, replies: [reply] };
+  }
+
+  // ── Location (GPS) ─────────────────────────────────────────────────────
+  if (msg.location) {
+    if (!globalRateLimiter.allow(chatId)) {
+      const wait = globalRateLimiter.secondsUntilReset(chatId);
+      const reply = `⏳ Tu aviso anterior aún está siendo procesado. Espera ${wait}s antes de enviar otro. Si es una emergencia grave llama al 112.`;
+      await telegramSendMessage(env.telegramBotToken, chatId, reply);
+      return { ok: true, replies: [reply] };
+    }
+    const { latitude, longitude } = msg.location;
+    const ref = `tg-${chatId}-${update.update_id}`.slice(-6).toUpperCase();
+    const reply = `📍 Ref ${ref} · Ubicación GPS recibida (${latitude.toFixed(5)}, ${longitude.toFixed(5)}).\nCoordinación está en camino. Permanece donde estás si es seguro.`;
+    await telegramSendMessage(env.telegramBotToken, chatId, reply);
+    return { ok: true, replies: [reply] };
+  }
+
+  if (!msg.text?.trim()) {
+    return { ok: true, ignored: true, replies: [] };
+  }
+
+  const text = msg.text.trim();
+  const command = parseCommand(text);
 
   if (command === "start" || command === "ayuda" || command === "help") {
     const reply = BOT_HELP;
@@ -98,8 +138,8 @@ export async function handleTelegramUpdate(
       // MANDO caído: el puesto queda suelto en esta instancia.
     }
     const reply = previous
-      ? `Dejas el puesto ${STAFF_ROLE_LABELS[previous.role]} (simulación).`
-      : "No tenías ningún puesto. /rol para tomar uno.";
+      ? `Dejas el puesto ${STAFF_ROLE_LABELS[previous.role]}. Puesto liberado.`
+      : "No tenías ningún puesto registrado. Usa /rol para registrarte.";
     await telegramSendMessage(env.telegramBotToken, chatId, reply);
     return { ok: true, command, replies: [reply] };
   }
@@ -110,14 +150,20 @@ export async function handleTelegramUpdate(
     return { ok: true, command, replies: [reply] };
   }
 
+  // ── Rate limiting (only for incident reports, not commands) ───────────────
+  if (!globalRateLimiter.allow(chatId)) {
+    const wait = globalRateLimiter.secondsUntilReset(chatId);
+    const reply = `⏳ Tu aviso anterior aún está siendo procesado. Espera ${wait}s antes de enviar otro. Si es una emergencia grave llama al 112.`;
+    await telegramSendMessage(env.telegramBotToken, chatId, reply);
+    return { ok: true, replies: [reply] };
+  }
+
   const report = telegramUpdateToPublicReport(update);
   if (!report) {
     return { ok: true, ignored: true, replies: [] };
   }
 
-  const ack = report.location_hint
-    ? `Recibido (sector ~${report.location_hint}). Lo paso a MANDO…`
-    : "Recibido. Lo paso a MANDO…";
+  const ack = buildAck(report.correlation_id!, report.location_hint, report.text);
   await telegramSendMessage(env.telegramBotToken, chatId, ack);
 
   store?.upsert({
@@ -135,12 +181,13 @@ export async function handleTelegramUpdate(
 
   const replies = [ack];
 
-  // Sin HR configurado: respuesta local para poder probar el bot solo
+  // Sin HR configurado: respuesta local útil
   if (fwd.skipped) {
     const local =
-      "HappyRobot aún no está enlazado (falta HR_HOOK_TG). " +
-      "Tu aviso quedó registrado en el puente. Ref: " +
-      report.correlation_id;
+      "⚠️ El sistema de coordinación no está disponible en este momento. " +
+      "Tu aviso ha quedado registrado. Ref: " +
+      report.correlation_id +
+      ". Si es urgente llama al 112.";
     await telegramSendMessage(env.telegramBotToken, chatId, local);
     replies.push(local);
   }
@@ -240,7 +287,7 @@ async function claimRole(
   if (!roleArg) {
     return [
       "Uso: /rol <puesto> [pin]",
-      "Esto es una simulación. Puestos: medico, staff_entradas, organizador, bomberos, policia.",
+      "Puestos válidos: medico, staff_entradas, organizador, bomberos, policia.",
       "",
       occupancy(),
     ].join("\n");
@@ -266,7 +313,7 @@ async function claimRole(
 
   const already = staff.getByChat(chatId);
   if (already?.role === role) {
-    return `Ya eres ${STAFF_ROLE_LABELS[role]} (simulación).`;
+    return `Ya tienes el puesto ${STAFF_ROLE_LABELS[role]}.`;
   }
 
   let remote;
@@ -316,11 +363,11 @@ async function claimRole(
   }
 
   const switched = already && already.role !== role
-    ? `Dejas ${STAFF_ROLE_LABELS[already.role]} y tomas ${STAFF_ROLE_LABELS[role]} (simulación).`
-    : `Puesto ${STAFF_ROLE_LABELS[role]} tomado (simulación).`;
+    ? `Dejas ${STAFF_ROLE_LABELS[already.role]} y tomas ${STAFF_ROLE_LABELS[role]}.`
+    : `Puesto ${STAFF_ROLE_LABELS[role]} tomado.`;
   const pinNote =
     !env.staffPin && !env.requireSecrets
-      ? "\nSin PIN en local."
+      ? "\nSin PIN en local: cualquier miembro del equipo puede registrar puestos."
       : "";
   return switched + pinNote;
 }

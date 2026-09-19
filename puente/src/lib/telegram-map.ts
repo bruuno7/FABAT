@@ -10,13 +10,33 @@ export const TELEGRAM_ALLOWED_UPDATES = ["message", "callback_query"] as const;
 
 export type TelegramUser = {
   id: number;
+  is_bot?: boolean;
   first_name?: string;
+  last_name?: string;
   username?: string;
+};
+
+export type TelegramPhoto = {
+  file_id: string;
+  file_unique_id: string;
+  width: number;
+  height: number;
+  file_size?: number;
+};
+
+export type TelegramLocation = {
+  latitude: number;
+  longitude: number;
+  horizontal_accuracy?: number;
 };
 
 export type TelegramChatMessage = {
   message_id: number;
+  date?: number;
   text?: string;
+  caption?: string;
+  photo?: TelegramPhoto[];
+  location?: TelegramLocation;
   chat: { id: number; type: string };
   from?: TelegramUser;
 };
@@ -181,7 +201,26 @@ export function telegramUpdateToStaffResponse(
   return response;
 }
 
+const NUMBERED_ZONES: Array<{ re: RegExp; label: (m: RegExpMatchArray) => string }> = [
+  // Escenario 1 / stage 2
+  { re: /\b(escenario|stage)\s*([1-9][0-9]*|[a-z]\b)/i, label: (m) => `Escenario ${m[2].toUpperCase()}` },
+  // Sector A / sector 3
+  { re: /\bsector\s*([a-z0-9]+)/i, label: (m) => `Sector ${m[1].toUpperCase()}` },
+  // Zona 4 / zone 4
+  { re: /\b(zona|zone)\s*([1-9][0-9]*)/i, label: (m) => `Zona ${m[2]}` },
+  // Barra 3 / bar 3
+  { re: /\b(barra|bar)\s*([1-9][0-9]*)/i, label: (m) => `Barra ${m[2]}` },
+  // Puerta / gate 3
+  { re: /\b(puerta|gate)\s*([1-9][0-9]*|[a-z]\b)/i, label: (m) => `Puerta ${m[2].toUpperCase()}` },
+  // Salida de emergencia / emergency exit
+  { re: /\b(salida|exit)\s*(de\s*emergencia|[0-9a-z]+)/i, label: (m) => `Salida ${m[2].replace(/de\s*emergencia/i, "emergencia").trim()}` },
+];
+
 export function guessLocationHint(text: string): string | undefined {
+  for (const { re, label } of NUMBERED_ZONES) {
+    const m = text.match(re);
+    if (m) return label(m);
+  }
   const lower = text.toLowerCase();
   const sectors = [
     "escenario",
@@ -195,6 +234,46 @@ export function guessLocationHint(text: string): string | undefined {
     "campamento",
   ];
   return sectors.find((s) => lower.includes(s));
+}
+
+/** Returns an urgency emoji based on keywords in the incident text. */
+export function guessSeverityEmoji(text: string): string {
+  const lower = text.toLowerCase();
+  // Critical — immediate life threat
+  const critical = [
+    'inconsciente', 'no responde', 'sin pulso', 'parada cardiaca', 'cardiac arrest',
+    'no respira', 'not breathing', 'aplastamiento', 'derrumbe', 'incendio', 'fuego',
+    'fire', 'arma', 'cuchillo', 'disparo', 'ataque', 'attack', 'terrorista',
+    'desmay', 'convulsi', 'epilepsi',
+  ];
+  // High — urgent but stable
+  const high = [
+    'herido', 'injured', 'sangr', 'fractura', 'caida', 'caído', 'fell', 'fallen',
+    'borracho', 'drunk', 'sobredosis', 'overdose', 'aglomeración', 'aglomeracion',
+    'stampede', 'empujones', 'pelea', 'fight', 'agresion', 'agresión',
+    'perdido', 'lost child', 'niño perdido', 'robo', 'theft', 'pickpocket',
+  ];
+  if (critical.some((k) => lower.includes(k))) return '🔴';
+  if (high.some((k) => lower.includes(k))) return '🟡';
+  return '🟢';
+}
+
+/** Builds a production-ready ACK message for a public report. */
+export function buildAck(
+  correlationId: string,
+  locationHint: string | undefined,
+  text: string,
+): string {
+  const emoji = guessSeverityEmoji(text);
+  const ref = correlationId.slice(-6).toUpperCase();
+  const now = new Date();
+  const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  const zone = locationHint ? ` · Zona: ${locationHint}` : '';
+  return [
+    `${emoji} Ref ${ref}${zone}`,
+    `Aviso recibido a las ${time}. Lo trasladamos a coordinación.`,
+    'Te confirmamos en cuanto haya respuesta.',
+  ].join('\n');
 }
 
 export function staffOccupancyText(
@@ -216,24 +295,29 @@ export function staffOccupancyText(
 }
 
 export const BOT_HELP = [
-  "MANDO · Festival Abierto",
-  "Esto es una simulación de hackathon, no un servicio de emergencias.",
-  "",
-  "Envía un aviso en texto libre, por ejemplo:",
-  "«Persona caída cerca del escenario»",
-  "«Aglomeración en la entrada VIP»",
-  "",
-  "Comandos:",
-  "/start — presentación",
-  "/ayuda — esta ayuda",
-  "/ping — comprueba que el bot responde",
-  "",
-  "Personal del recinto (simulación):",
-  "/rol <puesto> [pin] — tomar un puesto",
-  "/estado — tu puesto y los ocupados",
-  "/baja — dejar el puesto",
-  `Puestos: ${STAFF_ROLES.join(", ")}`,
-].join("\n");
+  '🎪 MANDO · Festival Abierto',
+  'Sistema de coordinación de emergencias del recinto.',
+  '',
+  '📢 Si ves una emergencia, escribe un mensaje en texto libre:',
+  '  «Persona caída cerca del escenario principal»',
+  '  «Aglomeración peligrosa en la entrada VIP»',
+  '  «Niño perdido en zona de food court»',
+  '',
+  'Incluye la zona si la conoces para agilizar la respuesta.',
+  '',
+  'Comandos disponibles:',
+  '/start — bienvenida',
+  '/ayuda — esta ayuda',
+  '/ping — comprobar conexión',
+  '',
+  '🔒 Personal acreditado:',
+  '/rol <puesto> [pin] — registrar tu puesto',
+  '/estado — ver ocupación de puestos',
+  '/baja — liberar tu puesto',
+  `Puestos: ${STAFF_ROLES.join(', ')}`,
+  '',
+  '🚨 En caso de emergencia grave llama al 112.',
+].join('\n');
 
 function emptyToUndef(v: string | undefined): string | undefined {
   if (v == null || v.trim() === "") return undefined;

@@ -142,6 +142,65 @@ export function hrRouter(env: Env, store: IncidentStore): Router {
     res.json({ incidents: store.list() });
   });
 
+  /**
+   * POST /hr/tg-reply
+   * Permite a MANDO cerrar el loop con el ciudadano que reportó un incidente.
+   * Body: { chat_id: string, text: string, correlation_id?: string }
+   * Header: x-hr-secret
+   *
+   * Ejemplo de uso desde MANDO:
+   *   POST /hr/tg-reply
+   *   { "chat_id": "-1001234567890", "text": "Hemos enviado un equipo médico. Ref: INC-041.", "correlation_id": "tg-..." }
+   */
+  router.post("/tg-reply", async (req, res) => {
+    const auth = checkSecret(env, env.hrSecret, req.header("x-hr-secret"));
+    if (!auth.ok) {
+      res.status(auth.status).json({ error: auth.error });
+      return;
+    }
+
+    const body = req.body as {
+      chat_id?: unknown;
+      text?: unknown;
+      correlation_id?: unknown;
+    };
+
+    const rawChatId = body.chat_id;
+    const chat_id = rawChatId != null ? String(rawChatId).trim() : "";
+    const text = typeof body.text === "string" ? body.text.trim() : "";
+    const correlation_id =
+      typeof body.correlation_id === "string"
+        ? body.correlation_id.trim()
+        : undefined;
+
+    if (!chat_id) {
+      res.status(400).json({ error: "chat_id requerido (string o número)" });
+      return;
+    }
+    if (!text) {
+      res.status(400).json({ error: "text requerido (string)" });
+      return;
+    }
+
+    const sent = await telegramSendMessage(
+      env.telegramBotToken,
+      chat_id.trim(),
+      text.trim(),
+    );
+
+    console.info("[hr] tg-reply", {
+      chat_id,
+      correlation_id: correlation_id ?? null,
+      tg: { ok: sent.ok, skipped: sent.skipped ?? false, status: sent.status },
+    });
+
+    res.status(sent.ok || sent.skipped ? 200 : 502).json({
+      ok: sent.ok,
+      skipped: sent.skipped ?? false,
+      status: sent.status,
+    });
+  });
+
   return router;
 }
 

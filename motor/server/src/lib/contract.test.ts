@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it, mock } from "node:test";
 import { isHrToMando, isPublicReport } from "./contract.js";
 import {
   guessLocationHint,
+  parseCommand,
   telegramUpdateToPublicReport,
 } from "./telegram-map.js";
 import { loadEnv } from "./hr-client.js";
+import { handleTelegramUpdate } from "../telegram/handle-update.js";
+import { createIncidentStore } from "../hr/store.js";
 
 describe("contract guards", () => {
   it("accepts public_report", () => {
@@ -65,6 +68,22 @@ describe("telegram map", () => {
     assert.equal(report.location_hint, "entrada");
   });
 
+  it("does not map slash commands as reports", () => {
+    assert.equal(
+      telegramUpdateToPublicReport({
+        update_id: 1,
+        message: {
+          message_id: 1,
+          text: "/start",
+          chat: { id: 1, type: "private" },
+        },
+      }),
+      null,
+    );
+    assert.equal(parseCommand("/start@MyBot"), "start");
+    assert.equal(parseCommand("/Ayuda"), "ayuda");
+  });
+
   it("ignores non-text updates", () => {
     assert.equal(
       telegramUpdateToPublicReport({
@@ -92,5 +111,68 @@ describe("loadEnv", () => {
     assert.equal(e.hrHookTg, undefined);
     assert.equal(e.telegramMode, "poll");
     assert.equal(e.port, 9000);
+  });
+});
+
+describe("handleTelegramUpdate", () => {
+  it("answers /ping without calling HR", async () => {
+    const fetches: string[] = [];
+    mock.method(globalThis, "fetch", async (input: RequestInfo | URL) => {
+      fetches.push(String(input));
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+
+    const env = loadEnv({
+      TELEGRAM_BOT_TOKEN: "test-token",
+      HR_HOOK_TG: "https://example.invalid/hook",
+    });
+    const result = await handleTelegramUpdate(
+      env,
+      {
+        update_id: 1,
+        message: {
+          message_id: 1,
+          text: "/ping",
+          chat: { id: 42, type: "private" },
+        },
+      },
+      createIncidentStore(),
+    );
+
+    assert.equal(result.command, "ping");
+    assert.match(result.replies[0] ?? "", /pong/);
+    assert.equal(fetches.length, 1);
+    assert.match(fetches[0], /sendMessage/);
+    mock.restoreAll();
+  });
+
+  it("ACKs a report and skips HR when hook missing", async () => {
+    const bodies: string[] = [];
+    mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, init?: RequestInit) => {
+      bodies.push(String(init?.body ?? ""));
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+
+    const env = loadEnv({ TELEGRAM_BOT_TOKEN: "test-token" });
+    const store = createIncidentStore();
+    const result = await handleTelegramUpdate(
+      env,
+      {
+        update_id: 7,
+        message: {
+          message_id: 1,
+          text: "persona caída en escenario",
+          chat: { id: 9, type: "private" },
+          from: { id: 9, first_name: "Test" },
+        },
+      },
+      store,
+    );
+
+    assert.equal(result.correlation_id, "tg-9-7");
+    assert.equal(result.hr?.skipped, true);
+    assert.equal(result.replies.length, 2);
+    assert.equal(store.list().length, 1);
+    mock.restoreAll();
   });
 });

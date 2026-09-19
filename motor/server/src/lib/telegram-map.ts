@@ -10,12 +10,22 @@ export type TelegramUpdate = {
   };
 };
 
+const COMMAND_RE = /^\/([a-zA-Z0-9_]+)(?:@\w+)?(?:\s|$)/;
+
+export function parseCommand(text: string): string | null {
+  const m = text.trim().match(COMMAND_RE);
+  return m ? m[1].toLowerCase() : null;
+}
+
 export function telegramUpdateToPublicReport(
   update: TelegramUpdate,
   opts?: { perfil_color?: PerfilColor },
 ): PublicReport | null {
   const msg = update.message;
   if (!msg?.text?.trim()) return null;
+
+  // Commands are not incident reports
+  if (parseCommand(msg.text)) return null;
 
   const chatId = String(msg.chat.id);
   const fromId = msg.from?.id != null ? String(msg.from.id) : chatId;
@@ -56,3 +66,16 @@ export function guessLocationHint(text: string): string | undefined {
   ];
   return sectors.find((s) => lower.includes(s));
 }
+
+export const BOT_HELP = [
+  "MANDO · Festival Abierto",
+  "",
+  "Envía un aviso en texto libre, por ejemplo:",
+  "«Persona caída cerca del escenario»",
+  "«Aglomeración en la entrada VIP»",
+  "",
+  "Comandos:",
+  "/start — presentación",
+  "/ayuda — esta ayuda",
+  "/ping — comprueba que el bot responde",
+].join("\n");

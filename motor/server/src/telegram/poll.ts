@@ -2,11 +2,11 @@
  * Long-poll Telegram getUpdates when no HTTPS webhook is available.
  * Mutually exclusive with setWebhook — delete webhook first if needed.
  */
-import { loadEnv, forwardToHappyRobot } from "../lib/hr-client.js";
-import {
-  telegramUpdateToPublicReport,
-  type TelegramUpdate,
-} from "../lib/telegram-map.js";
+import "dotenv/config";
+import { loadEnv } from "../lib/hr-client.js";
+import { createIncidentStore } from "../hr/store.js";
+import { handleTelegramUpdate } from "./handle-update.js";
+import type { TelegramUpdate } from "../lib/telegram-map.js";
 
 const env = loadEnv();
 
@@ -16,6 +16,7 @@ if (!env.telegramBotToken) {
 }
 
 const token = env.telegramBotToken;
+const store = createIncidentStore();
 let offset = 0;
 
 async function loop() {
@@ -38,19 +39,14 @@ async function loop() {
       }
       for (const update of data.result ?? []) {
         offset = update.update_id + 1;
-        const report = telegramUpdateToPublicReport(update);
-        if (!report) continue;
-        const fwd = await forwardToHappyRobot(
-          env.hrHookTg,
-          report,
-          env.hrHookApiKey,
-        );
-        console.info("[poll] forwarded", {
-          correlation_id: report.correlation_id,
-          text: report.text.slice(0, 80),
-          hr_ok: fwd.ok,
-          hr_skipped: fwd.skipped ?? false,
-        });
+        const result = await handleTelegramUpdate(env, update, store);
+        if (!result.ignored) {
+          console.info("[poll] handled", {
+            command: result.command,
+            correlation_id: result.correlation_id,
+            hr: result.hr,
+          });
+        }
       }
     } catch (err) {
       console.error("[poll] exception", err);

@@ -1,10 +1,18 @@
-# PENDIENTE DEL USUARIO (bloquea live)
+# PENDIENTE DEL USUARIO — bot Telegram
 
-Para completar el puente Telegram → HappyRobot hace falta **una respuesta** con:
+Para probar **solo el bot** en local (ya listo en working tree, sin push):
 
-1. **Token BotFather** + nombre del bot (pegar solo en chat privado / `.env`, nunca en PR).
-2. HappyRobot: **(A)** API key org rol Editor + OK crear `fa-entrada-tg`, **o (B)** solo seguir receta UI en `motor/happyrobot/recipes/fa-entrada-tg.md`.
-3. **HTTPS** (túnel Cloudflare recomendado con crédito sponsor) **o** polling local (`npm run poll`).
-4. Confirmación workspace EU (`hackspainteam6`?).
+1. Token BotFather → `motor/server/.env` como `TELEGRAM_BOT_TOKEN`
+2. `cd motor/server && npm install && npm run poll`
+3. En Telegram: `/start`, `/ping`, aviso libre
 
-Hasta entonces: scaffold + tests OK; sin llamadas reales a TG/HR.
+Para **HTTPS con Vercel** (repo ya conectado):
+
+1. Preset **Other**, vars de entorno en el dashboard (ver `motor/server/SETUP-TELEGRAM.md`)
+2. Aceptar push/deploy de estos cambios
+3. `MANDO_CALLBACK_URL=https://….vercel.app` + `npm run telegram:set-webhook`
+
+Para enlazar **HappyRobot**:
+
+- (A) API key Editor, o (B) crear `fa-entrada-tg` con la receta UI
+- Pegar URL Incoming Hook en `HR_HOOK_TG`

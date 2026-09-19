@@ -951,7 +951,7 @@ class Session:
                         "chaos": self.chaos is not None, "duration_min": self.case.get("duration_min"),
                         "agent_kind": self.agent_kind, "twin": self.twin, "cerebro": cerebro.mode(),
                         "cerebro_cadena": getattr(self, "_cerebro_cadena", None) or (
-                            "plataforma" if cerebro.mode() == "agente" else cerebro.mode()),
+                            "plataforma" if cerebro.mode() in ("agente", "abanico") else cerebro.mode()),
                         "modo_degradado": cerebro.ETIQUETA_DEGRADADO if getattr(self, "_cerebro_degradado", False) else None,
                         "replay": dict({k: self.replay[k] for k in ("n", "author", "before")}, result=self.replay_result) if self.replay else None},
             "engine_error": self.engine_error,
@@ -2086,6 +2086,30 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         mirror = s.tg_mirror.view() or {}
         return {"ok": True, "n": len(events), "events": events, "results": salidas,
                 "telegram": mirror, "escaladas": mirror.get("escaladas", [])}
+
+    @app.post("/api/demo/abanico")
+    async def demo_abanico(request: Request) -> dict[str, Any]:
+        """Lanza un aviso de prueba por el enjambre en abanico (operador). No espera a los especialistas."""
+        operator(request)
+        d = await body(request)
+        zone = str(d.get("zone") or "front_pit")
+        s = S()
+        from . import abanico, cerebro as cerebro_mod
+        out = s.report("voice", "Una chica se ha mareado por el calor, está muy roja y casi no habla",
+                       zone=zone)
+        s.tick()
+        s.tick()
+        rid = str(out.get("report_id") or "")
+        iid = next((i["id"] for i in s.state().get("incidents") or [] if rid in (i.get("reports") or [])), None)
+        if iid is None:
+            open_ = [i for i in s.state().get("incidents") or []
+                     if i.get("status") not in ("resolved", "false_alarm", "failed")]
+            iid = open_[-1]["id"] if open_ else rid or "nuevo"
+        if cerebro_mod.mode() != "abanico":
+            abanico.arrancar(s, iid, {"texto": "Una chica se ha mareado por el calor, está muy roja y casi no habla",
+                                      "zona": zone, "incident_id": iid, "tipo": "crowd"})
+        card = (s.state().get("agentes") or {}).get(iid) or {}
+        return {"ok": True, "incident_id": iid, "report_id": rid, "abanico": card.get("abanico")}
 
     @app.post("/api/approve")
     async def approve(request: Request) -> dict[str, Any]:

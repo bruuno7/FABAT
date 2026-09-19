@@ -723,6 +723,18 @@
   }
 
   function velocidadLine(card) {
+    const ab = card && card.abanico;
+    if (ab && (ab.lanzados || ab.llegados || ab.primera_decision_s != null || ab.fuente)) {
+      const first = fmtLatency(ab.primera_decision_s);
+      const fin = fmtLatency(ab.final_s);
+      let line = first ? ("Primera decisión en " + first) : "Enjambre en curso";
+      line += " · enjambre completo " + (fin ? ("en " + fin) : "pendiente");
+      let cls = "";
+      if (ab.fuente === "reglas") cls = " corrige";
+      else if (ab.fuente === "local") cls = " confirma";
+      const to = (ab.timeouts || []).length ? `<p class="tiny">Sin respuesta a tiempo: ${E(ab.timeouts.join(", "))}</p>` : "";
+      return `<p class="velocidad-line${cls}">${E(line)}</p>${to}`;
+    }
     const v = (card && card.velocidad) || {};
     const rap = fmtLatency(v.rapida_s);
     if (rap == null && !v.revision && !(card && card.fases)) return "";
@@ -750,13 +762,13 @@
 
   function agentCardHtml(name, ag, extra) {
     const label = (AGENT_ROLES.find((r) => r.id === name) || {}).label || AGENT_EXTRA[name] || name;
-    if (!ag) {
-      return `<article class="agent-card empty"><h4>${E(label)}</h4><p>—</p></article>`;
-    }
+    if (!ag) return "";
+    const lat = fmtLatency(ag.s);
+    const title = lat ? (label + " · " + lat) : label;
     const conf = ag.confianza != null ? ` · confianza ${num(ag.confianza, 2)}` : "";
     const sup = (ag.supuestos || []).length
       ? `<ul>${ag.supuestos.map((s) => `<li>${E(s)}</li>`).join("")}</ul>` : "";
-    return `<article class="agent-card"><h4>${E(label)}${E(conf)}</h4>
+    return `<article class="agent-card"><h4>${E(title)}${E(conf)}</h4>
       <p>${E(ag.razonamiento || "—")}</p>
       ${ag.hora ? `<p class="tiny">Hora ${E(ag.hora)}</p>` : ""}${sup}${extra || ""}</article>`;
   }

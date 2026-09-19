@@ -432,11 +432,11 @@ def public_view(session: Any, state: dict[str, Any]) -> dict[str, Any]:
             if reserved:
                 agentes[name] = {
                     "agente": name, "razonamiento": None, "supuestos": [],
-                    "confianza": row.get("confianza"), "hora": row.get("hora"),
+                    "confianza": row.get("confianza"), "hora": row.get("hora"), "s": row.get("s"),
                     "categoria": inc.get("family") or inc.get("type"), "zona": inc.get("zone"),
                 }
             else:
-                agentes[name] = {k: row.get(k) for k in ("agente", "razonamiento", "confianza", "supuestos", "hora")}
+                agentes[name] = {k: row.get(k) for k in ("agente", "razonamiento", "confianza", "supuestos", "hora", "s")}
         rec: dict[str, Any] = {
             "agentes": agentes,
             "ejecutado": [] if reserved else list(box.get("ejecutado") or []),
@@ -444,6 +444,16 @@ def public_view(session: Any, state: dict[str, Any]) -> dict[str, Any]:
             "espera_persona": [] if reserved else list(box.get("espera_persona") or []),
             "conflicto": None if reserved else box.get("conflicto"),
         }
+        ab = box.get("abanico")
+        if isinstance(ab, dict):
+            rec["abanico"] = {
+                "lanzados": list(ab.get("lanzados") or []),
+                "llegados": list(ab.get("llegados") or []),
+                "timeouts": list(ab.get("timeouts") or []),
+                "primera_decision_s": ab.get("primera_decision_s"),
+                "final_s": ab.get("final_s"),
+                "fuente": ab.get("fuente"),
+            }
         vel = box.get("velocidad")
         if vel:
             rec["velocidad"] = {

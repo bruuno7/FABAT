@@ -1,6 +1,13 @@
 {
-  "installCommand": "npm install && npm --prefix puente install",
-  "buildCommand": "npm --prefix puente run typecheck",
   "framework": null,
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+  "installCommand": "npm install && npm --prefix puente install",
+  "buildCommand": "npm --prefix puente run build",
+  "outputDirectory": "public",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "puente/dist/**",
+      "maxDuration": 30
+    }
+  }
 }

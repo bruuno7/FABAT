@@ -728,6 +728,26 @@
   }
 
   function velocidadLine(card) {
+    const parts = [];
+    const v = (card && card.velocidad) || {};
+    const rap = fmtLatency(v.rapida_s);
+    if (rap != null || v.revision || (card && card.fases && (card.fases.rapida || card.fases.revision))) {
+      const ver = String(v.revision || "pendiente");
+      const verShow = ver.toUpperCase() === "PENDIENTE" ? "pendiente" : ver.toUpperCase();
+      const line = "Decisión rápida en " + (rap || "—") + " · enjambre: " + verShow;
+      let cls = "";
+      if (ver.toUpperCase() === "CORRIGE") cls = " corrige";
+      else if (ver.toUpperCase() === "CONFIRMA") cls = " confirma";
+      let extra = "";
+      if (ver.toUpperCase() === "CORRIGE") {
+        const fase = (card.fases || {}).revision || {};
+        const cambio = card.plan_cambio || {};
+        const why = fase.porque || cambio.porque || "";
+        const plan = cambio.nuevo || cambio.objetivo || "";
+        extra = `<p class="tiny">${E(why)}${plan ? " · plan nuevo: " + E(plan) : ""}</p>`;
+      }
+      parts.push(`<p class="velocidad-line${cls}">${E(line)}</p>${extra}`);
+    }
     const ab = card && card.abanico;
     if (ab && (ab.lanzados || ab.llegados || ab.primera_decision_s != null || ab.fuente)) {
       const first = fmtLatency(ab.primera_decision_s);
@@ -738,44 +758,22 @@
       if (ab.fuente === "reglas") cls = " corrige";
       else if (ab.fuente === "local") cls = " confirma";
       const to = (ab.timeouts || []).length ? `<p class="tiny">Sin respuesta a tiempo: ${E(ab.timeouts.join(", "))}</p>` : "";
-      return `<p class="velocidad-line${cls}">${E(line)}</p>${to}`;
+      parts.push(`<p class="velocidad-line${cls}">${E(line)}</p>${to}`);
     }
-    const v = (card && card.velocidad) || {};
-    const rap = fmtLatency(v.rapida_s);
-    if (rap == null && !v.revision && !(card && card.fases)) return "";
-    const revS = fmtLatency(v.revision_s);
-    const ver = String(v.revision || "pendiente").toUpperCase();
-    let line = "Decisión rápida en " + (rap || "—");
-    if (ver === "PENDIENTE" && revS == null) {
-      line += " · revisión del enjambre: PENDIENTE";
-    } else {
-      line += " · revisión del enjambre en " + (revS || "—") + ": " + ver;
-    }
-    let cls = "";
-    if (ver === "CORRIGE") cls = " corrige";
-    else if (ver === "CONFIRMA") cls = " confirma";
-    let extra = "";
-    if (ver === "CORRIGE") {
-      const fase = (card.fases || {}).revision || {};
-      const cambio = card.plan_cambio || {};
-      const why = fase.porque || cambio.porque || "";
-      const plan = cambio.nuevo || cambio.objetivo || "";
-      extra = `<p class="tiny">${E(why)}${plan ? " · plan nuevo: " + E(plan) : ""}</p>`;
-    }
-    return `<p class="velocidad-line${cls}">${E(line)}</p>${extra}`;
+    return parts.join("");
   }
 
   function agentCardHtml(name, ag, extra) {
     const label = (AGENT_ROLES.find((r) => r.id === name) || {}).label || AGENT_EXTRA[name] || name;
-    if (!ag) return "";
-    const lat = fmtLatency(ag.s);
+    const row = ag || {};
+    const lat = fmtLatency(row.s);
     const title = lat ? (label + " · " + lat) : label;
-    const conf = ag.confianza != null ? ` · confianza ${num(ag.confianza, 2)}` : "";
-    const sup = (ag.supuestos || []).length
-      ? `<ul>${ag.supuestos.map((s) => `<li>${E(s)}</li>`).join("")}</ul>` : "";
+    const conf = row.confianza != null ? ` · confianza ${num(row.confianza, 2)}` : "";
+    const sup = (row.supuestos || []).length
+      ? `<ul>${row.supuestos.map((s) => `<li>${E(s)}</li>`).join("")}</ul>` : "";
     return `<article class="agent-card"><h4>${E(title)}${E(conf)}</h4>
-      <p>${E(ag.razonamiento || "—")}</p>
-      ${ag.hora ? `<p class="tiny">Hora ${E(ag.hora)}</p>` : ""}${sup}${extra || ""}</article>`;
+      <p>${E(row.razonamiento || "—")}</p>
+      ${row.hora ? `<p class="tiny">Hora ${E(row.hora)}</p>` : ""}${sup}${extra || ""}</article>`;
   }
 
   function agentDetailBox(iid, card) {
@@ -785,15 +783,18 @@
       ? `<p class="tiny"><b>Ejecutado:</b> ${E(card.ejecutado.map((x) => x.kind || x.recurso || x.id).join(", "))}</p>` : "";
     const espera = (card.espera_persona || []).length
       ? `<p class="tiny"><b>Espera a una persona:</b> ${E(card.espera_persona.map((x) => x.kind || x.motivo).join(", "))}</p>` : "";
-    const any = AGENT_ROLES.some((r) => (card.agentes || {})[r.id]);
-    const agents = AGENT_ROLES.map((r) => agentCardHtml(r.id, (card.agentes || {})[r.id], "")).join("");
+    const latBy = {};
+    ((card.abanico || {}).llegados || []).forEach((x) => { if (x && x.papel != null) latBy[x.papel] = x.s; });
+    const agents = AGENT_ROLES.map((r) => {
+      const ag = Object.assign({}, (card.agentes || {})[r.id] || {});
+      if (ag.s == null && latBy[r.id] != null) ag.s = latBy[r.id];
+      if (!ag.razonamiento) ag.razonamiento = "—";
+      return agentCardHtml(r.id, ag, "");
+    }).join("");
     const vel = velocidadLine(card);
     const planB = cerebroMode() === "reglas" ? '<p class="tiny">Plan B de reglas activo (modo degradado).</p>' : "";
-    const grid = (any || vel)
-      ? `<div class="agent-grid">${agents}</div>`
-      : '<p class="tiny">Sin votos de agentes para este incidente.</p>';
     return `<div class="box"><h3>CÓMO LO HA DECIDIDO EL EQUIPO</h3>${vel}${planB}
-      ${grid}
+      <div class="agent-grid">${agents}</div>
       ${ejec}${bloq}${espera}</div>`;
   }
 

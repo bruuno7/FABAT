@@ -1033,6 +1033,13 @@ def _dispatch(session: Any, inc: Any, rid: str, zona: str | None, porque: str,
     if r is None:
         bloqueadas.append({"que": "recurso", "id": rid, "motivo": "recurso inexistente"})
         return
+    prev = getattr(agent, "assign", {}).get(rid)
+    if (prev and prev[0] == inc.id) or rid in (inc.assigned or []):
+        dest = zona or inc.zone
+        aceptadas.append({"ok": True, "kind": "dispatch", "recurso": rid, "zona": dest,
+                          "ya_cumplido": True, "origen": origen,
+                          "motivo": "ya asignado a este incidente"})
+        return
     if str(r.status) != "available" or rid in getattr(agent, "assign", {}):
         bloqueadas.append({"que": "recurso", "id": rid, "motivo": "recurso ocupado"})
         return

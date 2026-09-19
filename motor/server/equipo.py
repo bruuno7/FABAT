@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any
 
@@ -21,7 +22,25 @@ _CORRIGE = {"corrige", "corregir", "correct", "objecion"}
 
 
 def _sin_acento(raw: Any) -> str:
-    return str(raw or "").strip().lower().replace("á", "a").replace("ó", "o")
+    return (str(raw or "").strip().lower()
+            .replace("á", "a").replace("é", "e").replace("í", "i")
+            .replace("ó", "o").replace("ú", "u").replace("ü", "u"))
+
+
+_PAPEL_CANON = {
+    "triaje": "triaje", "prioridad": "prioridad",
+    "recurso": "recursos", "recursos": "recursos",
+    "aviso": "avisos", "avisos": "avisos",
+    "vigia": "vigia", "critico": "critico", "critica": "critico",
+}
+_LABEL_RE = re.compile(
+    r"(?i)(?:\*\*|__)?(triaje|prioridad|recursos?|avisos?|vig[ií]a|cr[ií]tic[oa])(?:\*\*|__)?\s*[:.\-–—]\s*"
+)
+_RECURSO_ID_RE = re.compile(r"^[a-z]{2,8}_\d+$")
+
+
+def _canon_papel(raw: Any) -> str:
+    return _PAPEL_CANON.get(_sin_acento(raw), "")
 
 
 def _es_numero(v: Any) -> bool:
@@ -244,11 +263,64 @@ def _linea_papel(raw: Any) -> dict[str, Any] | None:
     return {"razonamiento": str(raw)[:400]}
 
 
+def _mezclar_papeles(out: dict[str, dict[str, Any]], extra: dict[str, dict[str, Any]]) -> None:
+    for name, row in extra.items():
+        if name in PAPELES and name not in out and row:
+            out[name] = row
+
+
+def desglosar_texto(texto: str) -> dict[str, dict[str, Any]]:
+    """Parte un bloque «Triaje: … Prioridad: …» en una línea por papel."""
+    raw = str(texto or "").strip()
+    if not raw:
+        return {}
+    matches = list(_LABEL_RE.finditer(raw))
+    if not matches:
+        return {}
+    out: dict[str, dict[str, Any]] = {}
+    for i, m in enumerate(matches):
+        key = _canon_papel(m.group(1))
+        if key not in PAPELES:
+            continue
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(raw)
+        chunk = raw[m.end():end].strip().strip(";,").strip()
+        row = _linea_papel(chunk)
+        if row:
+            out[key] = row
+    return out
+
+
+def _menciona_seis(texto: str) -> bool:
+    t = _sin_acento(texto)
+    return all(tok in t for tok in ("triaje", "prioridad", "recurso", "aviso", "vigia", "critico"))
+
+
+def _absorber_textos(out: dict[str, dict[str, Any]], textos: list[str]) -> None:
+    unlabeled: list[str] = []
+    for s in textos:
+        parsed = desglosar_texto(s)
+        if parsed:
+            _mezclar_papeles(out, parsed)
+        elif str(s).strip():
+            unlabeled.append(str(s).strip())
+    if not unlabeled:
+        return
+    parsed = desglosar_texto("\n".join(unlabeled))
+    if parsed:
+        _mezclar_papeles(out, parsed)
+        return
+    missing = [p for p in PAPELES if p not in out]
+    for name, s in zip(missing, unlabeled):
+        row = _linea_papel(s)
+        if row:
+            out[name] = row
+
+
 def extraer_por_papel(body: dict[str, Any]) -> dict[str, dict[str, Any]]:
     out: dict[str, dict[str, Any]] = {}
 
     def put(name: str, raw: Any) -> None:
-        key = str(name or "").strip().lower()
+        key = _canon_papel(name) or str(name or "").strip().lower()
         if key not in PAPELES:
             return
         row = _linea_papel(raw)
@@ -256,14 +328,36 @@ def extraer_por_papel(body: dict[str, Any]) -> dict[str, dict[str, Any]]:
             out[key] = row
 
     raw = body.get("por_papel")
+    if isinstance(raw, str) and raw.strip()[:1] in "{[":
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, (dict, list)):
+                raw = parsed
+        except ValueError:
+            pass
     if isinstance(raw, dict):
-        for name in PAPELES:
-            if name in raw:
-                put(name, raw[name])
+        for name, val in raw.items():
+            put(name, val)
     elif isinstance(raw, list):
+        leftover: list[str] = []
         for item in raw:
             if isinstance(item, dict):
-                put(str(item.get("agente") or item.get("papel") or ""), item)
+                etiqueta = str(item.get("agente") or item.get("papel") or "")
+                if _canon_papel(etiqueta) in PAPELES:
+                    put(etiqueta, item)
+                else:
+                    texto = (item.get("razonamiento") or item.get("porque")
+                             or item.get("texto") or item.get("linea") or "")
+                    parsed = desglosar_texto(str(texto))
+                    if parsed:
+                        _mezclar_papeles(out, parsed)
+                    elif str(texto).strip():
+                        leftover.append(str(texto).strip())
+            elif isinstance(item, str):
+                leftover.append(item)
+        _absorber_textos(out, leftover)
+    elif isinstance(raw, str):
+        _mezclar_papeles(out, desglosar_texto(raw))
     for name in PAPELES:
         if name in out:
             continue
@@ -276,6 +370,11 @@ def extraer_por_papel(body: dict[str, Any]) -> dict[str, dict[str, Any]]:
     for item in body.get("especialistas") or []:
         if isinstance(item, dict):
             put(str(item.get("agente") or item.get("papel") or ""), item)
+    if len(out) < len(PAPELES):
+        blob = " ".join(str(body.get(k) or "") for k in
+                        ("porque", "why", "razonamiento", "recomendacion"))
+        if _menciona_seis(blob):
+            _mezclar_papeles(out, desglosar_texto(blob))
     return out
 
 
@@ -290,8 +389,13 @@ def peel_decision_fields(body: dict[str, Any]) -> dict[str, Any]:
                     valor = p.get(k)
                     break
         out["prioridad"] = valor
-    if isinstance(out.get("recursos"), str):
-        out.pop("recursos", None)
+    rec = out.get("recursos")
+    if isinstance(rec, str):
+        tok = rec.strip().lower()
+        if _RECURSO_ID_RE.fullmatch(tok):
+            out["recursos"] = [tok]
+        else:
+            out.pop("recursos", None)
     return out
 
 
@@ -431,6 +535,8 @@ def public_view(session: Any, state: dict[str, Any]) -> dict[str, Any]:
         agentes = {}
         reserved = iid in hidden
         inc = by_inc.get(iid) or {}
+        ab_lat = {x.get("papel"): x.get("s") for x in ((box.get("abanico") or {}).get("llegados") or [])
+                  if isinstance(x, dict) and x.get("papel")}
         for name, row in (box.get("agentes") or {}).items():
             if reserved:
                 agentes[name] = {
@@ -440,6 +546,8 @@ def public_view(session: Any, state: dict[str, Any]) -> dict[str, Any]:
                 }
             else:
                 agentes[name] = {k: row.get(k) for k in ("agente", "razonamiento", "confianza", "supuestos", "hora", "s")}
+            if agentes[name].get("s") is None and name in ab_lat:
+                agentes[name]["s"] = ab_lat[name]
         rec: dict[str, Any] = {
             "agentes": agentes,
             "ejecutado": [] if reserved else list(box.get("ejecutado") or []),

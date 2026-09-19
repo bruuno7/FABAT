@@ -100,6 +100,7 @@ class SecurityTests(unittest.TestCase):
         self.assertEqual(self.client.post('/mcp').status_code, 503)
 
     def test_rate_budget_is_by_connection_ip_across_routes(self):
+        os.environ['MANDO_PUBLIC_URL'] = ''  # sin proxy configurado ni peer loopback
         os.environ['MANDO_PUBLIC_RATE_MAX'] = '2'
         c = TestClient(make_app(), client=('192.0.2.3', 1))
         self.assertEqual(c.post('/api/chat', json={'text': 'hola', 'client_id': 'a'}).status_code, 200)

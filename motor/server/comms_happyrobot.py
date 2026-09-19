@@ -41,6 +41,7 @@ import httpx
 from .validation import webhook
 from . import privacy
 from . import hr_config
+from . import hr_routing
 
 from motor.contracts import ALWAYS_APPROVE, Action, ActionKind, Resource
 
@@ -78,6 +79,7 @@ def hook_urls() -> dict[str, str]:
     env = hr_config.environment().upper()
     dispatch = hr_config.workflow_urls()["dispatch"]
     return {
+        **hr_config.workflow_urls(),
         "dispatch": dispatch,
         "ask": _env("HR_HOOK_ASK", "HR_HOOK_CLARIFY", default=dispatch),
         "notify": _env("HR_HOOK_NOTIFY", default=dispatch),
@@ -136,9 +138,9 @@ def normalize_platform_event(ev: dict[str, Any]) -> dict[str, Any]:
     if kind not in ("dispatch_result", "dispatch_progress"):
         return ev
     out = dict(ev)
-    raw = str(ev.get("result") or ev.get("resultado") or "").strip().lower()
+    raw = str(ev.get("result") or ev.get("resultado") or ev.get("outcome") or "").strip().lower()
     result = _PLATFORM_RESULT.get(raw)
-    out["platform_result"] = raw or None
+    out["platform_result"] = result or raw or None
     out["eta_min"] = _minutes(ev.get("eta_min"))
     reason = ev.get("reason") if not _blank(ev.get("reason")) else ev.get("motivo")
     out["reason_text"] = None if _blank(reason) else str(reason)[:200]
@@ -209,6 +211,8 @@ class HappyRobotComms:
         self.is_approved = is_approved or (lambda _id: None)
         self.on_log = on_log or (lambda *a, **k: None)
         self.fallback_s = max(0.1, min(75.0, float(fallback_s if fallback_s is not None else _env("HR_FALLBACK_S", default="12"))))
+        self.webcall_pickup_s = 75.0
+        self.webcall_result_s = 45.0
         self.http_timeout_s = max(0.1, min(10.0, float(http_timeout_s if http_timeout_s is not None else _env("HR_TIMEOUT_S", default="5"))))
         self.retries = max(0, min(3, int(_env("HR_RETRIES", default="1"))))
         self.callback_url = public_base("http://127.0.0.1:8000")
@@ -237,6 +241,7 @@ class HappyRobotComms:
         self._closed: set[str] = set()                    # acciones con resultado final (o caídas a simulación)
         self.calls: dict[str, dict[str, Any]] = {}        # lo que pinta la pantalla, reales y simuladas
         self.payloads: dict[str, dict[str, Any]] = {}     # último cuerpo enviado por acción
+        self.text_receipts: dict[str, dict[str, Any]] = {}
         self.webcalls: dict[str, dict[str, Any]] = {}     # call_id (secreto del enlace) -> llamada web pendiente
         self._nonce = secrets.token_hex(8)
         self._wire_to_action: dict[str, str] = {}
@@ -281,19 +286,26 @@ class HappyRobotComms:
                 "t": self.world.t, "t_end": None, "fell_back": False, "started": time.monotonic()}
         with self._lock:
             self.calls[action.id] = call
+        if action.params.get('decision_for'):
+            call.update(decision_for=action.params['decision_for'], decision_role=action.params.get('to'))
         if action.kind == ActionKind.ASK and self.external_ask is not None and self._ask_outside(action, call):
             return
         route = self._real_route(action, resource)
         if route is None:
             with self._lock:
-                self.sim.send(action, resource)
+                if action.params.get('decision_for') or action.kind == ActionKind.BROADCAST:
+                    call.update(stage='pendiente: comunicación no configurada', result='no_answer')
+                else:
+                    self.sim.send(action, resource)
             return
         hook, payload = route
         call["real"] = True
         call["title"] = payload.get("contact_title") or name
+        call.update(workflow=payload.get('workflow', 'webcall' if hook == 'webcall' else 'dispatch'))
+        call['workflow_history'] = [call['workflow']]
         with self._lock:
             self._inflight[action.id] = {"action": action, "resource": resource, "started": time.monotonic(),
-                                         "deadline": time.monotonic() + self.fallback_s}
+                                         "deadline": time.monotonic() + (self.webcall_pickup_s if hook == "webcall" else self.fallback_s)}
             self.payloads[action.id] = payload
             self.stats["real_sent"] += 1
         if hook == "webcall":
@@ -350,6 +362,12 @@ class HappyRobotComms:
                 "priority": p.get("priority_label") or "amarilla",
                 "callback_url": self.callback_url.rstrip("/") + EVENTS_PATH, "callback_token": shared_secret()}
         assert tuple(wire) == DISPATCH_PARAMS
+        call = self.calls.get(action_id) or {}
+        if call.get('decision_for'):
+            wire['role'] = call['decision_role']
+        if call.get('workflow') == 'difusion':
+            wire = {k: wire[k] for k in ('action_id', 'callback_url', 'callback_token')}
+            wire.update({k: p.get(k, '') for k in ('message_text', 'audience', 'approved_by')})
         if (self.calls.get(action_id) or {}).get("web_call"):
             del wire["to_number"]   # el trigger Web call declara las otras siete: si sobra o falta una clave, /voice/tokens/ da 400
         with self._lock:
@@ -373,6 +391,20 @@ class HappyRobotComms:
         if self.mode != "happyrobot":
             return None
         kind = action.kind
+        if kind == ActionKind.BROADCAST:
+            approval = self.is_approved(action.id)
+            hook = hr_routing.endpoint(self, 'difusion')
+            audience = action.params.get('audience')
+            if not approval or not hook or audience not in self.contacts.get('audiences', {}):
+                return None
+            payload = self._envelope(action, 'diffusion_request')
+            payload.update(workflow='difusion', audience=audience, approved_by=approval['by'],
+                           message_text=str(action.params.get('message_text') or action.params.get('message') or ''))
+            return hook, payload
+        if hr_routing.workflow_slot(action, resource) == 'difusion':
+            # Una respuesta individual al público sigue su canal de texto de origen.
+            # No convertirla en llamada ni en difusión sin autorización humana.
+            return None
         entry: dict[str, Any] | None = None
         if resource is not None:
             entry = self.contacts["resources"].get(resource.id)
@@ -417,11 +449,14 @@ class HappyRobotComms:
             hook, build = self.hooks["external"], self._external_payload
         else:
             return None
-        if self.launch_mode == "runs":
-            slot = {self._dispatch_payload: "dispatch", self._clarify_payload: "ask", self._followup_payload: "followup",
-                    self._notify_payload: "notify", self._external_payload: "external"}[build]
-            wf = self.workflows.get(slot)
-            hook = f"{self.api_base}/workflows/{wf}/runs" if (wf and self.api_base and _env("HR_API_KEY")) else ""
+        slot = hr_routing.workflow_slot(action, resource)
+        specific = hr_routing.endpoint(self, slot)
+        if specific:
+            hook = specific
+        elif slot in hr_routing.WORKFLOW_NAMES:
+            slot, hook = 'dispatch', hr_routing.endpoint(self, 'dispatch')
+        elif self.launch_mode == 'runs':
+            hook = hr_routing.endpoint(self, slot)
         if not hook:
             return None
         if kind in ALWAYS_APPROVE and not self.is_approved(action.id):
@@ -429,6 +464,7 @@ class HappyRobotComms:
             self.on_log("approval", f"BLOQUEADO: {action.id} ({kind}) sin aprobación registrada. No se envía", action.id)
             return None
         payload = build(action, resource, entry, number)
+        payload['workflow'] = slot if slot in self.workflow_status.rows else 'dispatch'
         return hook, payload
 
     def _envelope(self, action: Action, message: str, kind: str | None = None) -> dict[str, Any]:
@@ -455,6 +491,8 @@ class HappyRobotComms:
         zone = a.zone or inc.get("zone")
         zname = self._zone_name(zone)
         what = str(inc.get("label") or inc.get("type") or "incidente").replace("_", " ")
+        if inc.get('reserved'):
+            what = 'incidente reservado; detalles en pantalla segura'
         recall = a.kind == ActionKind.RECALL
         if recall:
             order = f"Deja lo que estás haciendo: te necesitamos en otro incidente. Prioridad {label}."
@@ -462,6 +500,11 @@ class HappyRobotComms:
             order = f"Lleva agua a {zname}. Prioridad {label}."
         else:
             order = f"{what.capitalize()} en {zname}. Prioridad {label}. Acude ya."
+        details = {'zone_detail': 'Punto exacto', 'access_hint': 'Entrada', 'alternative_route': 'Ruta alternativa',
+                   'quantity': 'Cantidad', 'unit': 'Unidad', 'delivery_point': 'Entrega', 'deadline': 'Hora límite',
+                   'position': 'Puesto', 'start_time': 'Hora', 'duration': 'Duración'}
+        order += ''.join(f' {label}: {privacy.scrub(a.params[key])}.' for key, label in details.items()
+                         if a.params.get(key) is not None)
         p = self._envelope(a, "dispatch_request", "recall" if recall else "dispatch")
         p.update({
             "to_number": number, "resource_id": r.id if r else "", "resource_kind": str(r.kind) if r else "",
@@ -534,7 +577,7 @@ class HappyRobotComms:
             "e_exact_location": f"Festival Abierto. {zname.capitalize()}.",
             "t_type": what.capitalize() + ".",
             "h_hazards": str(a.params.get("hazards") or "Sin peligros añadidos confirmados."),
-            "a_access": str(a.params.get("access") or "Entrada de vehículos por pasillo sur desde puerta C."),
+            "a_access": str(a.params.get("access") or "Acceso pendiente de confirmar."),
             "n_casualties": str(a.params.get("casualties") or "Cifra sin cerrar."),
             "e_resources": f"Se pide: {a.params.get('kind', 'apoyo')}. {a.params.get('reason', '')}".strip(),
         }
@@ -545,13 +588,15 @@ class HappyRobotComms:
             "incident_id": a.incident,
             "parte_text": "Parte de Festival Abierto, centro de control. Incidente mayor: no declarado. "
                           f"Lugar: {fields['e_exact_location']} Tipo: {fields['t_type']} Peligros: {fields['h_hazards']} "
-                          f"Acceso: {fields['a_access']} Afectados: {fields['n_casualties']} Recursos: {fields['e_resources']}",
+                          f"Acceso: {fields['a_access']} Afectados: {fields['n_casualties']} Recursos: {fields['e_resources']} "
+                          f"Punto de encuentro: {a.params.get('meeting_point') or 'pendiente de confirmar'}.",
             "callback_number": control, "control_center_number": control,
         })
         return p
 
     def _post(self, action_id: str, hook: str, payload: dict[str, Any]) -> None:
-        self.workflow_status.record('dispatch', 'request')
+        slot = self.calls.get(action_id, {}).get('workflow', 'dispatch')
+        self.workflow_status.record(slot, 'request')
         headers = {"Content-Type": "application/json"}
         key = _env("HR_API_KEY")
         body: dict[str, Any] = payload
@@ -576,7 +621,7 @@ class HappyRobotComms:
                         queued = data.get("queued_run_ids") if isinstance(data, dict) else None
                         run_id = (data.get("run_id") or (queued[0] if isinstance(queued, list) and queued else "")) if isinstance(data, dict) else ""
                         self._bind_run(action_id, str(run_id or ""))
-                        self.workflow_status.record('dispatch', 'response', error='', run_url=data.get('run_url'))
+                        self.workflow_status.record(slot, 'response', error='', run_url=data.get('run_url'))
                     except (ValueError, AttributeError):
                         pass
                     return
@@ -585,8 +630,12 @@ class HappyRobotComms:
                 err = type(e).__name__
             if attempt < self.retries:
                 self._stop.wait(0.4)
-        self._fall_back(action_id, f"el hook no responde ({err})")
-        self.workflow_status.record('dispatch', 'error', error=err)
+        self.workflow_status.record(slot, 'error', error=err)
+        generic = hr_routing.generic_retry(self, action_id, err)
+        if generic:
+            self._post(action_id, generic, payload)
+        else:
+            self._fall_back(action_id, f"el hook no responde ({err})")
 
     # ================================================================ caída a simulación
     def sweep(self) -> None:
@@ -599,6 +648,10 @@ class HappyRobotComms:
             self._fall_back(aid, self._fall_back_reason(aid) or f"sin resultado en {self.fallback_s:.0f} s")
 
     def _fall_back(self, action_id: str, why: str) -> None:
+        generic = hr_routing.generic_retry(self, action_id, why)
+        if generic:
+            threading.Thread(target=self._post, args=(action_id, generic, self.wire_payload(action_id)), daemon=True).start()
+            return
         with self._lock:
             if action_id in self._closed:
                 return
@@ -611,6 +664,11 @@ class HappyRobotComms:
             call = self.calls.get(action_id)
             if call:
                 call.update(real=False, fell_back=True, stage="cae a simulación")
+            if (call or {}).get('decision_for') or (call or {}).get('kind') == 'broadcast':
+                if call:
+                    call.update(real=True, stage='pendiente de intervención humana', result='no_answer')
+                self.on_log('outcome', f'{action_id}: {why}; no se simula aprobación ni entrega', action_id)
+                return
             if flight.get("external"):
                 if call:
                     call.update(real=True, fell_back=False, stage="sin respuesta")
@@ -630,7 +688,9 @@ class HappyRobotComms:
         with self._lock:
             out = self._on_event(ev)
             if not out.get('stale'):
-                self.workflow_status.record('webcall' if ev.get('channel_used') == 'web_call' else 'dispatch', 'event',
+                aid = self._wire_to_action.get(ev.get('action_id'), ev.get('action_id'))
+                slot = self.calls.get(aid, {}).get('workflow', 'webcall' if ev.get('channel_used') == 'web_call' else 'dispatch')
+                self.workflow_status.record(slot, 'event',
                                             run_url=ev.get('run_url'))
             self.revision += 1
             return out
@@ -679,6 +739,9 @@ class HappyRobotComms:
         if action_id and action_id not in self.calls:
             self.on_log("action", f"HappyRobot habla de una acción que no es de esta partida ({message} {action_id}): se ignora", None)
             return {"ok": True, "duplicate": False, "unknown_action": True}
+        if (self.calls.get(action_id) or {}).get('decision_for'):
+            # Un «acepto» del genérico nunca se convierte en firma de una medida grave.
+            return {'ok': True, 'pending': True, 'decision_required': True}
         if message == "progress" and ev.get("early_result"):
             if (self.calls.get(action_id) or {}).get('kind') == 'ask':
                 return {'ok': True, 'awaiting_answer': True}
@@ -977,22 +1040,27 @@ class HappyRobotComms:
             action_id = wc["action_id"]
             if action_id in self._closed:
                 raise RuntimeError("la llamada ya no está en curso")
+            if wc["answered"] or wc.get("answering"):
+                raise RuntimeError("la llamada ya está siendo atendida")
+            wc["answering"] = True
         payload = self.wire_payload(action_id)
         self.workflow_status.record('webcall', 'request')
         try:
             out = self._api("POST", "/voice/tokens/", {"workflow_id": self.workflows["webcall"], "data": payload,
                                                        "env": self.hr_env, "ttl_seconds": 900})
         except (httpx.HTTPError, RuntimeError, ValueError) as exc:
+            with self._lock:
+                wc["answering"] = False
             self.workflow_status.record('webcall', 'error', error=type(exc).__name__)
             self._fall_back(action_id, 'sin conexión con la plataforma')
             raise
         self.workflow_status.record('webcall', 'response', error='', run_url=out.get('run_url'))
         with self._lock:
-            wc["answered"] = True
+            wc.update(answered=True, answering=False)
             flight = self._inflight.get(action_id)
             if flight:
                 flight["answered_at"] = time.monotonic()
-                flight["deadline"] = time.monotonic() + self.fallback_s
+                flight["deadline"] = time.monotonic() + self.webcall_result_s
                 self.stats["answer_ms"].append(round((flight["answered_at"] - flight["started"]) * 1000))
             if action_id in self.calls:
                 self.calls[action_id]["stage"] = "ha descolgado"

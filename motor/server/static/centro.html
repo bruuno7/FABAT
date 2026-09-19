@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MANDO · Centro de control</title><link rel="stylesheet" href="/static/centro.css"><link rel="stylesheet" href="/static/centro-equipo.css"><link rel="stylesheet" href="/static/evidence.css"></head>
+<body>
+<a class="skip" href="#incidents">Ir a los incidentes</a>
+<header class="topbar">
+  <a class="brand" href="/centro" aria-label="MANDO, centro de control"><span class="brand-symbol" aria-hidden="true">M</span>MANDO</a>
+  <div class="event"><strong id="event-name">Centro de control</strong><span id="honesty">Recinto simulado · previsión del gemelo</span></div>
+  <div class="live"><span id="connection">Conectando…</span><strong id="attendance"></strong></div>
+  <button id="notifications" aria-label="Ver incidentes que requieren intervención"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5Zm5 3h4" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="notification-count"></span></button>
+  <a class="operator" href="/acceso">Operador · acceso</a>
+  <button id="theme" aria-pressed="false" aria-label="Activar modo oscuro">Modo oscuro</button>
+  <nav aria-label="Navegación principal"><button data-view="overview" aria-pressed="true">Panel general</button><button data-view="map" aria-pressed="false">Mapa en vivo</button><button data-view="incidents" aria-pressed="false">Incidentes</button><button data-view="resources" aria-pressed="false">Equipos y recursos</button><a href="/historial">Historial</a><a href="/informe">Informes</a><a href="/simulacro">Simulacro</a></nav>
+</header>
+<div class="toolbar"><span><strong id="clock">—</strong> · hora del recinto</span><div><button data-control="toggle" id="play">Iniciar · Espacio</button><button data-control="step">+1 min · S</button><button data-control="key_moment">Momento clave · K</button><button data-control="reset">Reiniciar · R</button><button id="large" aria-pressed="false">Pantalla grande · E</button><button id="sound" aria-pressed="false">Sonido apagado</button></div></div>
+<p id="reconnecting" class="connection-banner" role="status" hidden>↻ Reconectando… Conservamos tu selección y los últimos datos recibidos.</p>
+<p id="feedback" role="status" aria-live="polite"></p>
+<section id="first-visit" class="first-visit" aria-label="Primeros pasos" hidden><p><b>1. Mira los avisos</b> a la izquierda.</p><p><b>2. Decide en la ficha</b> con los dos futuros delante.</p><p><b>3. Revisa los canales</b> en Servicios en vivo, abajo.</p><button id="dismiss-tips" aria-label="Descartar pistas de primeros pasos">Entendido ×</button></section>
+<section id="metrics" class="metrics" aria-label="Indicadores calculados de esta ejecución"></section>
+<main class="workspace">
+<aside class="incident-panel"><div class="section-title"><h1>Atención de incidentes</h1><span id="active-count"></span></div><div class="tabs" role="group" aria-label="Filtrar incidentes"><button data-filter="all" aria-pressed="true">Todos</button><button data-filter="critical" aria-pressed="false">Críticos</button><button data-filter="attention" aria-pressed="false">Atención</button><button data-filter="forecast" aria-pressed="false">Previstos</button></div><button id="clear-zone" class="zone-filter" hidden></button><div id="incidents" tabindex="-1" class="incident-list" aria-label="Avisos por importancia"></div><p id="forecast-count" class="forecast-count"></p></aside>
+<section class="map-panel" aria-label="Plano del recinto"><div class="section-title"><div><h2>Plano general del evento</h2><p>Plano esquemático · simulación</p></div><div class="map-switch" role="group" aria-label="Vista del plano"><button id="general" aria-pressed="true">General</button><button id="flows" aria-pressed="false">Flujos y aforo</button></div></div><div id="anticipation" class="anticipation" aria-live="polite"></div><svg id="map" role="group" tabindex="-1" aria-label="Zonas del recinto, densidad y equipos"></svg><div class="legend"><span class="critical-key">▲ Atención prioritaria</span><span class="attention-key">! En revisión</span><span class="normal-key">✓ Zona normal</span><span class="route-key">⇢ Ruta recomendada</span></div><p id="map-note" class="muted">Selecciona una zona para filtrar sus avisos.</p></section>
+<aside class="detail-panel" aria-label="Ficha del incidente"><div class="section-title"><h2>Ficha del incidente</h2><button id="close-detail" aria-label="Cerrar ficha · Esc">×</button></div><div id="detail" tabindex="-1"></div></aside>
+</main>
+<section id="evidence-coordination" aria-label="Contador de coordinación"></section>
+<details class="services-panel" id="services-panel"><summary><strong>Servicios en vivo</strong><span id="services-summary">◷ Comprobando el estado recibido</span><span class="muted">Ver canales</span></summary><p id="service-note" class="muted"></p><div id="services" class="services"></div></details>
+<footer><a href="/clasico">Vista técnica</a><a href="/duelo">Comparar planes</a><span>Recinto y previsiones simulados · N = 1 ejecución. El gemelo no garantiza lo que ocurrirá.</span></footer>
+<dialog id="confirm-decision" aria-labelledby="confirm-title"><form method="dialog"><h2 id="confirm-title">Confirmar decisión</h2><p id="confirm-consequence"></p><p>Esta orden se ejecutará en el recinto simulado. Revisa la consecuencia antes de confirmarla.</p><div class="dialog-controls"><button value="cancel" autofocus>Volver a la ficha</button><button type="button" class="primary" id="confirm-approve">Confirmar aprobación</button></div></form></dialog>
+<dialog id="resources-dialog" aria-labelledby="resources-title"><form method="dialog"><button class="dialog-close" aria-label="Cerrar equipos y recursos">×</button></form><h2 id="resources-title">Equipos y recursos</h2><div id="resources-list"></div></dialog>
+<script src="/static/ui.js"></script><script src="/static/plano.js"></script><script src="/static/centro-equipo.js"></script><script src="/static/centro.js"></script><script src="/static/evidence.js"></script>
+</body></html>

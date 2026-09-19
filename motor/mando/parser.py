@@ -261,7 +261,12 @@ class HeuristicParser:
         all_clear = bool(_ALL_CLEAR.search(norm)) or (not matched and (bool(negated) or bool(_ALL_CLEAR_WEAK.search(norm))))
         vitals_ok = bool(_VITALS_OK.search(norm)) and not any(s_.type == "cardiac_arrest" for s_ in matched)
 
-        if not matched:   # «cola», «tornos»: a falta de otra cosa, sí describen una saturación
+        # Un atasco de aseos no es una saturación de público.
+        if any(s.type == "toilets_failure" for s in matched):
+            matched = [s for s in matched if s.type != "gate_saturation"]
+        # Las señales de familia preceden a «cola»/«tornos», que también son solo contexto.
+        family, life_sig, threat_sig = generic_family(norm)
+        if not matched and family in (Family.INFO, Family.CROWD) and not (life_sig or threat_sig):
             for spec_, rx in WEAK_RE:
                 m_ = rx.search(norm)
                 if m_ and not _NEGATOR.search(norm[:m_.start()]):

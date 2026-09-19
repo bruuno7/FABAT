@@ -428,7 +428,8 @@ class IntakeSession:
         point = f"{m.group(1)} {m.group(2).strip()}" if m else None
         old = th.val(slot) or {}
         zone = zones[0] if zones else None
-        if old.get("zone") and zone and zone != old["zone"] and not pending:
+        if (old.get("zone") and zone and zone != old["zone"] and not pending
+                and th.slots[slot].source != "channel"):
             zone = None                      # «ha ido al baño» en otra respuesta no mueve el incidente
         if not zone and not point and pending and not nlu.DUNNO.search(norm) and nlu.bare_yes_no(low) is None \
                 and len(norm) >= 3 and not nlu.ORDER.search(norm) and not nlu.ROLE.search(norm):

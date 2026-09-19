@@ -76,12 +76,21 @@ class ServerTest(unittest.TestCase):
         return self.c.get("/api/state").json()
 
     def test_pages(self) -> None:
-        for path in ("/", "/?escena=1", "/jurado", "/caos", "/informe", "/curva", "/duelo", "/llamada/abc", "/static/app.js",
-                     "/static/style.css", "/static/plano.js", "/static/llamada.js"):
+        for path in ("/", "/sala", "/centro", "/clasico", "/?escena=1", "/jurado", "/caos", "/informe", "/curva", "/duelo", "/llamada/abc",
+                     "/static/app.js", "/static/style.css", "/static/plano.js", "/static/llamada.js", "/static/sala.js", "/static/sala.css"):
             r = self.c.get(path)
             self.assertEqual(r.status_code, 200, path)
-        self.assertIn("PLAN ACTUAL", self.c.get("/").text)
-        self.assertIn("break-overlay", self.c.get("/").text)
+        # `/` es la Sala de control; el centro de atención sigue entero en /centro y la vista técnica en /clasico.
+        self.assertIn("Sala de control", self.c.get("/").text)
+        self.assertIn('/static/sala.js', self.c.get("/").text)
+        self.assertIn('href="/clasico"', self.c.get("/").text)
+        self.assertEqual(self.c.get("/").text, self.c.get("/sala").text)
+        self.assertIn("Atención de incidentes", self.c.get("/centro").text)
+        self.assertIn('/static/centro.js', self.c.get("/centro").text)
+        self.assertIn('href="/clasico"', self.c.get("/centro").text)
+        self.assertIn("PLAN ACTUAL", self.c.get("/clasico").text)
+        self.assertIn("break-overlay", self.c.get("/clasico").text)
+        self.assertIn('href="/centro"', self.c.get("/clasico").text)
         self.assertNotIn('id="channel"', self.c.get("/jurado").text, "fuera el selector de canal falso")
         self.assertTrue(self.c.get("/qr?path=/llamada/abc").headers["X-Jurado-Url"].endswith("/llamada/abc"))
         self.assertEqual(self.c.get("/qr?path=http://malo").status_code, 400)

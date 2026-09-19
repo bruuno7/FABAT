@@ -19,19 +19,24 @@ def _phone(match: re.Match) -> str:
 
 
 def scrub(value: Any) -> Any:
-    if isinstance(value, str):
-        for key in ('HR_SECRET', 'MANDO_HR_TOKEN', 'HR_API_KEY', 'HR_CHAT_TOKEN', 'TELEGRAM_BOT_TOKEN',
-                    'MANDO_OPERATOR_TOKEN', 'MANDO_MCP_TOKEN'):
-            secret = os.environ.get(key, '')
-            if len(secret) >= 4:
-                value = value.replace(secret, '(secreto oculto)')
-        return PHONE.sub(_phone, value)
-    if isinstance(value, list):
-        return [scrub(v) for v in value]
-    if isinstance(value, dict):
-        return {k: scrub(v) for k, v in value.items() if k not in
-                ("phone", "to_number", "from_number", "contact", "callback_token", "reply_to", "token", "api_key", "secret", "password", "authorization")}
-    return value
+    # Una lectura de configuración y una pasada por el árbol, también en ráfagas de chat.
+    secrets = [os.environ.get(k, '') for k in ('HR_SECRET', 'MANDO_HR_TOKEN', 'HR_API_KEY', 'HR_CHAT_TOKEN',
+        'TELEGRAM_BOT_TOKEN', 'MANDO_OPERATOR_TOKEN', 'MANDO_MCP_TOKEN', 'MANDO_STAFF_SECRET')]
+    secrets.extend(x.strip().split(':', 2)[-1] for x in re.split(r'[,;\n]', os.environ.get('MANDO_OPERATORS', '')) if x.count(':') >= 2)
+    secrets = [x for x in secrets if len(x) >= 4]
+    hidden_keys = {'phone','to_number','from_number','contact','callback_token','reply_to','token','unit_token',
+                   'api_key','secret','password','authorization'}
+    def clean(v):
+        if isinstance(v, str):
+            for secret in secrets:
+                v = v.replace(secret, '(secreto oculto)')
+            return PHONE.sub(_phone, v)
+        if isinstance(v, list):
+            return [clean(x) for x in v]
+        if isinstance(v, dict):
+            return {k:clean(x) for k,x in v.items() if k not in hidden_keys}
+        return v
+    return clean(value)
 
 
 def sensitive(report: Any, zones: dict) -> bool:
@@ -42,7 +47,15 @@ def sensitive(report: Any, zones: dict) -> bool:
 
 
 def private_reports(reports: list, meta: dict, zones: dict) -> set[str]:
-    hidden = {r.id for r in reports if meta.get(r.id, {}).get("reserved") or sensitive(r, zones)}
+    hidden = set()
+    for r in reports:
+        m = meta.setdefault(r.id, {})
+        fingerprint = (r.text, r.source, str(r.channel), r.zone_hint)
+        if m.get('_privacy_fingerprint') != fingerprint:
+            m['_privacy_sensitive'] = sensitive(r, zones)
+            m['_privacy_fingerprint'] = fingerprint
+        if m.get('reserved') or m['_privacy_sensitive']:
+            hidden.add(r.id)
     # La reserva se comparte entre el aviso raíz y todas sus actualizaciones, incluso si llega más tarde.
     changed = True
     while changed:
@@ -80,7 +93,7 @@ def project(state: dict, reports: list, meta: dict, zones: dict) -> dict:
         if isinstance(value, list):
             return [walk(v, inherited) for v in value]
         if not isinstance(value, dict):
-            return scrub(value)
+            return value
         data = value.get("data") if isinstance(value.get("data"), dict) else {}
         private = inherited or any(isinstance(value.get(k), str) and value[k] in hidden for k in refs)
         private = private or any(isinstance(data.get(k), str) and data[k] in hidden for k in refs)
@@ -90,6 +103,9 @@ def project(state: dict, reports: list, meta: dict, zones: dict) -> dict:
         private = private or (value.get("id") in resources and "task" in value and "status" in value)
         out = {}
         for key, val in value.items():
+            if key == 'operator' and isinstance(val, dict):
+                out[key] = {k:val.get(k) for k in ('id','name','role')}
+                continue
             if private and key not in safe:
                 if key in ("label", "text", "objective", "title"):
                     out[key] = ("Incidente reservado · entendido por HappyRobot" if key == "text" and data.get("understood") == "happyrobot" else "Incidente reservado")
@@ -103,5 +119,5 @@ def project(state: dict, reports: list, meta: dict, zones: dict) -> dict:
                 out[key] = walk(val, (private or key in hidden) if isinstance(val, (dict, list)) else False)
         if private and "reserved" in value:
             out["reserved"] = True
-        return scrub(out)
-    return walk(state)
+        return out
+    return scrub(walk(state))

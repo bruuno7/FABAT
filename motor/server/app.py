@@ -31,8 +31,15 @@ from motor.world import SimComms, World, load_festival
 from . import intake, memoria, regression_live, views, whatif, validation, privacy
 from .comms_happyrobot import HappyRobotComms, load_contacts, public_base, shared_secret
 from . import telegram_bot, hr_config
-from .security import SecurityGuard, require_operator
+from .security import SecurityGuard, require_operator, operator_authenticated
 from .telegram_bot import safety_instruction
+from .forecast import ForecastService
+from .multi import Operators, identity, label, configured
+from .personal import FieldStaff, external_notice
+from . import telegram_espejo
+from .telegram_espejo import TelegramMirror
+from .state_refresh import StateRefresh
+from .evidence_runtime import ReceiptService, action_from_dict, evidence
 
 HERE = Path(__file__).resolve().parent
 MOTOR = HERE.parent
@@ -47,6 +54,16 @@ EFFECT_KINDS = {"resource_offline", "resource_online", "resource_no_answer", "re
 # ---------------------------------------------------------------- agente y adversario (de otras carpetas)
 
 JURY_BUDGET = 3  # golpes del jurado por partida, como el presupuesto de Caos
+
+
+def project_version() -> str:
+    """Versión declarada en `motor/server/pyproject.toml`. Si no se puede leer, se dice, no se inventa."""
+    try:
+        import tomllib
+        with (HERE / "pyproject.toml").open("rb") as fh:
+            return str(tomllib.load(fh)["project"]["version"])
+    except Exception:
+        return "sin declarar"
 
 
 def load_agent_class(kind: str = "mando") -> tuple[Any, str]:
@@ -242,6 +259,8 @@ class Session:
         self._prev_occ: dict[str, int] = {}
         self._report_extra: dict[str, dict[str, Any]] = {}
         self._report_meta: dict[str, dict[str, Any]] = {}   # por report_id: canal real, pulsera, vía de entendimiento, instrucción
+        self._report_caps: dict[str, str] = {}
+        self._report_public_refs: dict[str, str] = {}
         self._followers: dict[str, float] = {}              # report_id -> última vez que su autor miró el estado (página web)
         self.web_asks: dict[str, dict[str, Any]] = {}       # action_id -> {report, question}: pregunta de Mando a un informante web
         self.report_refs: dict[str, str] = {}               # report_ref de la plataforma (una conversación) -> primer report_id
@@ -281,11 +300,18 @@ class Session:
             self.agent, self.agent_name = FallbackAgent(comms=self.comms), "relleno (Mando falló al arrancar)"
         self.chaos = load_chaos(self.seed)
 
+        self.operators = Operators(self)
+        self.staff = FieldStaff(self)
+        self.tg_mirror = TelegramMirror(self)   # espejo del despacho por Telegram (HappyRobot decide, aquí solo se ve)
+        self.refresh = StateRefresh(self)
+        self.receipts = ReceiptService()
         self._stop = threading.Event()
         self._wake = threading.Event()
+        self._forecast: ForecastService | None = None
         self._rebuild()
         self._thread: threading.Thread | None = None
         if threaded:
+            self._forecast = ForecastService(self)
             self._thread = threading.Thread(target=self._loop, name="mando-clock", daemon=True)
             self._thread.start()
 
@@ -323,8 +349,18 @@ class Session:
 
     def close(self) -> None:
         self._stop.set()
+        self.refresh.close()
+        self.receipts.close()
         self._wake.set()
+        if self._forecast is not None:
+            self._forecast.close()
+        thread = getattr(self, "_thread", None)
+        if thread is not None and thread is not threading.current_thread():
+            thread.join(timeout=5)
         self.comms.close()
+        recorder = getattr(self, "recorder", None)
+        if recorder is not None:
+            recorder.close()
 
     def tick(self) -> None:
         """Un minuto simulado, con el ciclo exacto de INTERFACES.md."""
@@ -334,7 +370,7 @@ class Session:
                 return
             self._apply_replay()
             self._auto_approve()
-            obs = self.world.observe()
+            obs = self.staff.observation(self.world.observe())
             self._wait_for_people()
             try:
                 actions = self.agent.tick(obs)
@@ -350,9 +386,11 @@ class Session:
                     self.unsafe_blocked += 1
                     self.log("approval", f"BLOQUEADA {a.id} ({a.kind}): exige aprobación humana y no la tiene", a.id)
                     continue
+                self.receipts.capture(self.world, a, human=a.id in self.approvals)
                 self.world.apply(a)
             self._signal_broken_plans()
             self.world.step()
+            self.receipts.observe(self.world)
             if self.world.done():
                 self.running = False
             self._rebuild()
@@ -496,10 +534,13 @@ class Session:
             pending = {a["id"] for a in self._snapshot.get("actions", []) if a.get("status") == "awaiting_approval"}
             if action_id not in pending:
                 return False
+            proposal = next(a for a in self._snapshot["actions"] if a["id"] == action_id)
             self.agent.approve(action_id, ok, note)
             current = next((a for a in self.agent.snapshot().get("actions", []) if a["id"] == action_id), None)
             if current is None or current.get("status") == "awaiting_approval":
                 return False
+            if not ok:
+                self.receipts.capture(self.world, action_from_dict(proposal), accepted=False, human=True)
             self.approvals[action_id] = {"approval_id": f"ap-{len(self.approvals) + 1:04d}", "ok": bool(ok), "by": by,
                                          "t": self.world.t, "note": note, "used": False}
             asked = next((int(a.get("t") or 0) for a in self._snapshot.get("actions", []) if a["id"] == action_id), self.world.t)
@@ -579,7 +620,10 @@ class Session:
             self.log("report", f"Aviso de {source} por {real}: «{rep['text'][:80]}» · {how}"
                      + (f" · pulsera {prof['access']}" + (f" ({', '.join(prof['tags'])})" if prof["tags"] else "") if prof else ""),
                      rid, origin=source, extracted=extracted or {}, via=real, understood=understood or "local")
-            self._rebuild()
+            if real == "chat":
+                self.refresh.request()
+            else:
+                self._rebuild()
         return {"ok": True, "report_id": rid, "recognized": spec["label"] if spec else None,
                 "safety": safety[1] if safety else None, "understood": understood or "local"}
 
@@ -636,6 +680,7 @@ class Session:
             if not self.replay:
                 self.inputs.append({"t": self.world.t, "kind": "operator_order", "action": dict(d), "by": by, "note": note})
             self.approvals[action.id] = {"approval_id": f"ap-op-{n:03d}", "ok": True, "by": by, "t": self.world.t, "note": note, "used": True}
+            self.receipts.capture(self.world, action, human=True)
             self.world.apply(action)
             h = self._humanizer()
             what = h(f"{str(action.kind).upper()} {action.zone or ''}" + (f" → {action.params['to']} ({round(action.params['fraction'] * 100)} %)"
@@ -737,10 +782,20 @@ class Session:
                 snap = self._snapshot
             self._comms_revision = self.comms.revision
             self._snapshot = snap
-            self._state = privacy.project(self._build_state(copy.deepcopy(snap)), self.world.reports,
+            from .hr_routing import prepare_outputs
+            prepare_outputs(self, snap)
+            self._state = privacy.project(self.operators.enrich(self._build_state(copy.deepcopy(snap))), self.world.reports,
                                           self._report_meta, self.world.observe().zones)
+            if self._forecast is not None:
+                self._forecast.observe()
+            self._state["forecasts"] = self._forecast.view() if self._forecast is not None else []
+            self._state["service_health"] = {"comms_down": dict(self.world.comms_down)}
+            self._state["event_name"] = self.festival.get("name")
             self._state_json = json.dumps(self._state, ensure_ascii=False, default=str)
             self.version += 1
+        recorder = getattr(self, "recorder", None)
+        if recorder is not None:
+            recorder.offer(self._state)
 
     def state(self) -> dict[str, Any]:
         return self._state
@@ -960,7 +1015,19 @@ class Session:
                     "calls": st["calls"]["calls"], "lessons": st["lessons"],
                     "log": [e for e in st["log"] if e.get("kind") in ("assumption_broken", "plan", "approval", "chaos", "lesson")],
                     "peak_density": truth.get("peak_density", {})}
+            result.update(self.operators.report())
+            result.update(evidence(self))
             return privacy.project(result, self.world.reports, self._report_meta, self.world.observe().zones)
+
+    def public_report_ref(self, report_id: str | None) -> str | None:
+        if report_id is None:
+            return None
+        with self.lock:
+            if report_id not in self._report_public_refs:
+                ref = secrets.token_urlsafe(24)
+                self._report_public_refs[report_id] = ref
+                self._report_caps[ref] = report_id
+            return self._report_public_refs[report_id]
 
     def report_status(self, report_id: str, follow: bool = False) -> dict[str, Any]:
         """Todo lo que quien avisó necesita para seguir SU aviso. Si el incidente es reservado, solo lo neutro."""
@@ -972,6 +1039,8 @@ class Session:
                     if w["report"] == report_id and a in self.comms._inflight), None)
         base = {"report_id": report_id, "safety": meta.get("safety"), "via": meta.get("via"), "understood": meta.get("understood"),
                 "wristband": meta.get("wristband"), "ask": ask}
+        if meta.get("reserved"):
+            base.update(safety=None, ask=None, wristband=None)
         inc = next((i for i in st.get("incidents", []) if report_id in i.get("reports", [])), None)
         if inc is None:
             known = report_id in self._report_meta or any(r["id"] == report_id for r in st.get("reports", []))
@@ -979,7 +1048,7 @@ class Session:
                         else "No encuentro ese aviso en esta partida.")
         status = str(inc.get("status"))
         if inc.get("reserved") or inc.get("zone_masked"):
-            return dict(base, found=True, reserved=True, incident=inc["id"], label="Incidente reservado", status=status,
+            return dict(base, safety=None, ask=None, found=True, reserved=True, incident=inc["id"], label="Incidente reservado", status=status,
                         status_text="Tu aviso está en el centro de control y se está atendiendo.", priority=None, priority_why=None,
                         reports_total=None, merged_with=0, doing="", explain="", resource=None, call=None, wristband=None)
         acts = [a for a in st.get("actions", []) if a.get("incident") == inc["id"] and a.get("kind") in ("dispatch", "ask", "request_external")]
@@ -1196,8 +1265,11 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
                 if app.state.telegram is not None:
                     app.state.telegram.stop()
                 app.state.chat.stop()
+                app.state.simulacro.close()
+                app.state.session.close()
 
     app = FastAPI(title="Mando", docs_url=None, redoc_url=None, lifespan=lifespan)
+    configured()  # configuración inválida: fallar al arrancar, no a media operación
     app.add_middleware(SecurityGuard)
     app.state.port = port
     app.state.mcp = app.state.telegram = None
@@ -1206,19 +1278,24 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
                                 autoplay=autoplay, threaded=threaded, playbook=playbook, local_params=local_params)
     app.state.threaded = threaded
     app.state.duel = None
+    from .db import History, Recorder
+    app.state.history = History()
+
+    def record(session: Session) -> None:
+        session.recorder = Recorder(on_warning=lambda message: session.log("database", message))
+        session.recorder.offer(session.state())
+
+    record(app.state.session)
 
     def S() -> Session:
         return app.state.session
 
-    def D(baseline: str | None = None) -> Duel:
-        if baseline is not None and baseline not in ("reroute", "fixed"):
-            raise HTTPException(400, "baseline debe ser reroute o fixed")
+    from .operator_audit import OperatorAudit
+    app.add_middleware(OperatorAudit, get_session=S)
+
+    def D() -> Duel:
         if app.state.duel is None:
-            app.state.duel = Duel(load_case("demo-gates"), threaded=app.state.threaded, playbook=playbook, baseline=baseline or "reroute")
-        elif baseline and app.state.duel.baseline != baseline:
-            old = app.state.duel
-            old.close()
-            app.state.duel = Duel(old.case, seed=old.right.seed, threaded=app.state.threaded, playbook=playbook, baseline=baseline)
+            app.state.duel = Duel(load_case("demo-gates"), threaded=app.state.threaded, playbook=playbook, baseline="reroute")
         return app.state.duel
 
     # ---- entrada común de avisos y golpes: la usan /api/report, el bot de Telegram, el servidor MCP y los workflows
@@ -1288,6 +1365,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         workflows['intake'] = delegated.workflow_status.view()['intake']
         workflows['intake']['configured'] = bool(delegated.hook)
         return {"telegram": tg.view() if tg is not None else {"status": "off"}, "links": links(),
+                "telegram_despacho": S().tg_mirror.view(),
                 "happyrobot": workflows,
                 "presentation": channels(S(), tg, delegated),
                 "intake": {"delegated": bool(delegated.hook), "timeout_s": delegated.timeout_s, **delegated.stats}}
@@ -1298,6 +1376,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         old = S()
         old.close()
         app.state.session = new
+        record(new)
         delegated.reset()
         hub._sync()
         if app.state.telegram is not None:
@@ -1364,22 +1443,36 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
             raise HTTPException(400, "JSON inválido")
         if not isinstance(data, dict):
             raise HTTPException(400, "Se esperaba un objeto JSON")
+        if "text" in data and not isinstance(data["text"], str):
+            raise HTTPException(422, "text debe ser texto")
+        for key in ("zone", "zone_hint", "preset"):
+            if data.get(key) is not None and not isinstance(data[key], str):
+                raise HTTPException(422, f"{key} debe ser texto")
         for key in ("ok", "approve", "autoplay", "takeover"):
             if key in data and type(data[key]) is not bool:
                 raise HTTPException(422, f"{key} debe ser un booleano JSON")
         return data
 
     # ---- páginas
-    pages = {"/": "index.html", "/jurado": "jurado.html", "/caos": "caos.html", "/informe": "informe.html",
-             "/curva": "curva.html", "/memoria": "memoria.html"}
+    # `/` es la Sala de control (el diseño de las compañeras). `/centro` conserva la pantalla anterior
+    # y `/clasico` la técnica oscura; las tres enlazan entre sí.
+    pages = {"/": "sala.html", "/sala": "sala.html", "/jurado": "jurado.html", "/caos": "caos.html",
+             "/informe": "informe.html", "/curva": "curva.html", "/memoria": "memoria.html", "/centro": "centro.html"}
     for route, fname in pages.items():
         app.add_api_route(route, (lambda f=fname: FileResponse(STATIC / f, headers={"Cache-Control": "no-store"})),
                           methods=["GET"], include_in_schema=False)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
+    @app.get("/clasico", include_in_schema=False)
+    def classic_page(request: Request) -> FileResponse:
+        # El alias nuevo conserva la protección de la antigua página principal.
+        if os.environ.get("MANDO_PUBLIC_URL", "").strip():
+            operator(request)
+        return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-store"})
+
     @app.get("/duelo", include_in_schema=False)
-    def duel_page(baseline: str | None = None) -> FileResponse:
-        D(baseline)
+    def duel_page() -> FileResponse:
+        D()
         return FileResponse(STATIC / "duelo.html", headers={"Cache-Control": "no-store"})
 
     @app.get("/asistente", include_in_schema=False)
@@ -1452,6 +1545,11 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
                 "edges": f["edges"], "jury_incidents": {k: v["label"] for k, v in JURY_INCIDENTS.items()},
                 "strike_presets": {k: v["label"] for k, v in STRIKE_PRESETS.items()}}
 
+    @app.get("/api/version")
+    def version() -> dict[str, Any]:
+        """Versión del proyecto (la de `motor/server/pyproject.toml`): la pinta el chip de la Sala de control."""
+        return {"version": project_version()}
+
     @app.post("/api/session")
     async def new_session(request: Request) -> dict[str, Any]:
         operator(request)
@@ -1494,6 +1592,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
                 raise HTTPException(400, str(exc))
             replace_session(new)
             if app.state.threaded:
+                new._forecast = ForecastService(new)
                 new._thread = threading.Thread(target=new._loop, name='mando-clock', daemon=True)
                 new._thread.start()
             return {'ok': True, 'session': new.state()['session'], 'moment': moment}
@@ -1511,26 +1610,46 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         d = await body(request)
         if not (d.get("text") or d.get("preset")):
             raise HTTPException(400, "Falta el texto del aviso")
+        if not operator_authenticated(request):
+            d.update(channel='whatsapp', source='asistente', wristband=None)
         source = str(d.get("source") or "jurado")[:40]
         if source.startswith("telegram:"):
             source = "jurado"   # ese prefijo es del bot: desde la web no se suplanta
         args = (str(d.get("channel") or "whatsapp"), str(d.get("text") or "")[:400], d.get("zone"))
         kw = {"preset": d.get("preset"), "source": source, "lang": str(d.get("lang") or "es"),
               "wristband": str(d.get("wristband") or "")[:16] or None}
-        return await asyncio.to_thread(submit_report, *args, **kw)
+        session = S()
+        out = await asyncio.to_thread(submit_report, *args, **kw)
+        if not operator_authenticated(request):
+            rid = out.get("report_id")
+            out["report_id"] = session.public_report_ref(out.get("report_id"))
+            out["report_refs"] = {out["report_id"]: rid} if rid else {}
+        return out
+
+    def resolve_report(session: Session, ref: str, request: Request) -> str:
+        rid = session._report_caps.get(ref)
+        if rid is None and operator_authenticated(request):
+            rid = ref
+        if rid is None:
+            raise HTTPException(404, "Ese aviso no existe")
+        return rid
 
     @app.get("/api/report/{report_id}")
-    def report_status(report_id: str) -> dict[str, Any]:
-        return S().report_status(report_id, follow=True)
+    def report_status(report_id: str, request: Request) -> dict[str, Any]:
+        session = S()
+        rid = resolve_report(session, report_id, request)
+        return dict(session.report_status(rid, follow=True), report_id=report_id)
 
     @app.post("/api/report/{report_id}/answer")
     async def report_answer(report_id: str, request: Request) -> dict[str, Any]:
         """Quien avisó contesta a la pregunta que le ha hecho Mando: vuelve como respuesta de comunicaciones."""
         d = await body(request)
+        session = S()
+        rid = resolve_report(session, report_id, request)
         text = str(d.get("text") or "").strip()[:400]
         if not text:
             raise HTTPException(400, "Falta la respuesta")
-        if not S().answer_report(report_id, text):
+        if not session.answer_report(rid, text):
             raise HTTPException(409, "Ese aviso no tiene ninguna pregunta pendiente")
         return {"ok": True}
 
@@ -1538,20 +1657,33 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
     @app.post("/api/chat")
     async def chat_turn(request: Request) -> dict[str, Any]:
         d = await body(request)
+        if str(d.get("session_id") or "").startswith("tg-"):
+            raise HTTPException(403, "Sesión reservada para Telegram")
         text = str(d.get("text") or "").strip()
         if not text:
             raise HTTPException(400, "Falta el texto")
+        if not operator_authenticated(request):
+            d.update(channel='web', source=None, pulsera=None)
         zones = {z["id"] for z in S().festival["zones"]}
-        return await asyncio.to_thread(hub.turn, str(d.get("session_id") or "")[:40] or None, text,
+        session = S()
+        out = await asyncio.to_thread(hub.turn, str(d.get("session_id") or "")[:40] or None, text,
                                        channel=str(d.get("channel") or "web")[:20], lang=str(d.get("lang") or "es")[:5],
                                        zone_hint=d.get("zone_hint") if d.get("zone_hint") in zones else None,
                                        pulsera=str(d.get("pulsera") or "")[:16] or None,
                                        source=str(d.get("source") or "")[:40] or None, preset=d.get("preset"),
                                        client_id=str(d.get("client_id") or "")[:80] or None)
+        if not operator_authenticated(request):
+            ids = set(out.get("reports", [])) | ({out["report_id"]} if out.get("report_id") else set())
+            out["report_refs"] = {session.public_report_ref(r): r for r in ids}
+            out["report_id"] = session.public_report_ref(out.get("report_id"))
+            out["reports"] = [session.public_report_ref(r) for r in out.get("reports", [])]
+        return out
 
     @app.get("/api/chat/{session_id}/events")
     async def chat_events(session_id: str, after: int = 0, limit: int = 0) -> StreamingResponse:
         """SSE con lo que Mando le cuenta a ESA persona: preguntas (`ask`) y cambios de estado de su incidente (`status`)."""
+        if session_id.startswith("tg-"):
+            raise HTTPException(403, "Sesión reservada para Telegram")
         if hub.events_after(session_id, after) is None:
             raise HTTPException(404, "Esa conversación no existe")
 
@@ -1571,6 +1703,31 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
                     yield ": vivo\n\n"
         return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
+    @app.get("/api/chats")
+    def chats_overview(request: Request) -> dict[str, Any]:
+        """SOLO LECTURA y solo operador: las conversaciones vivas de los canales, para el panel «CHAT · AGENTE HR»
+        de la Sala de control. No permite escribir ni continuar ninguna conversación. Nunca salen el identificador
+        secreto de la conversación ni el contenido de un aviso reservado (se sustituye por su rótulo)."""
+        operator(request)
+        s = S()
+        texts = {r.id: r.text for r in s.world.reports}
+        with hub._lock:
+            rooms = [c for c in hub.chats.values() if c.get("mando_session") == s.session_id]
+        out = []
+        for c in rooms:
+            ids = list(c.get("reports") or [])
+            reserved = bool(c.get("reserved")) or any((s._report_meta.get(r) or {}).get("reserved") for r in ids)
+            msgs = [{"who": "persona", "text": "(aviso reservado)" if reserved else texts.get(r, "")} for r in ids[-3:]]
+            msgs += [{"who": "mando", "text": "(conversación reservada)" if reserved else str(e.get("text") or "")}
+                     for e in list(c.get("events") or [])[-3:]]
+            instruction = c.get("instruction") if isinstance(c.get("instruction"), dict) else None
+            out.append({"n": c.get("n"), "channel": str(c.get("channel") or "web"), "lang": str(c.get("lang") or "es"),
+                        "reports": len(ids), "done": bool(c.get("done")), "reserved": reserved,
+                        "instruction": None if reserved or not instruction else instruction.get("title"),
+                        "messages": [m for m in msgs if m["text"]]})
+        out.sort(key=lambda x: x["n"] or 0)
+        return privacy.scrub({"chats": out[-8:], "n": len(out)})
+
     @app.get("/api/pulsera/{code}")
     def pulsera(code: str) -> dict[str, Any]:
         prof = intake.wristband(code)
@@ -1582,6 +1739,10 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
     async def strike(request: Request) -> dict[str, Any]:
         d = await body(request)
         preset = STRIKE_PRESETS.get(str(d.get("preset") or ""))
+        gate_choice = d.get("preset") == "close_gate" and d.get("zone") in ("gate_a", "gate_b", "gate_c")
+        if (preset is None or (d.get("zone") is not None and not gate_choice)
+                or any(d.get(k) is not None for k in ("resource", "channel", "n"))):
+            operator(request)  # el público solo lanza el efecto predefinido, sin ampliarlo
         effect = dict(preset["effect"]) if preset else d.get("effect")
         if not isinstance(effect, dict):
             raise HTTPException(400, "Falta «effect» o «preset»")
@@ -1633,11 +1794,10 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         operator(request)
         d = await body(request)
         try:
-            rec = S().operator_order(d.get("action") if isinstance(d.get("action"), dict) else d,
-                                     by=str(d.get("by") or "operador-1")[:40], note=str(d.get("note") or "")[:160])
+            return S().operators.correction(d.get("action") if isinstance(d.get("action"), dict) else d,
+                                            str(d.get("note") or "")[:160], identity(request), d.get("decision_id"))
         except ValueError as e:
             raise HTTPException(400, str(e))
-        return {"ok": True, "order": rec}
 
     # ---- memoria día 1 → día 2
     @app.get("/api/memoria")
@@ -1669,6 +1829,13 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
     async def regression_lock(request: Request) -> dict[str, Any]:
         operator(request)
         d = await body(request)
+        if "simulacro_index" in d:
+            if type(d["simulacro_index"]) is not int:
+                raise HTTPException(422, "simulacro_index debe ser entero")
+            try:
+                return app.state.simulacro.lock_test(d["simulacro_index"], str(d.get("author") or "operador"), str(d.get("note") or ""))
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
         return {"ok": True, "test": S().lock_as_test(str(d.get("author") or ""), str(d.get("note") or ""))}
 
     @app.post("/api/regression/run")
@@ -1679,18 +1846,23 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
             rec = regression_live.load(int(d.get("n", 0)))
         except (KeyError, ValueError, TypeError):
             raise HTTPException(404, "Ese test no existe")
-        old = S()
+        if rec.get("simulacro"):
+            import asyncio
+            from .simulacro import run_locked
+            try:
+                return await asyncio.to_thread(run_locked, rec)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
         new = Session(rec["case"], seed=rec["seed"], speed=float(d.get("speed", 16)), comms_mode="sim", autoplay=True,
                       threaded=app.state.threaded, playbook=str(d.get("playbook") or rec.get("playbook") or "auto"),
                       replay={"n": rec["n"], "author": rec["author"], "inputs": rec["inputs"], "before": rec["before"]})
-        old.close()
-        app.state.session = new
+        replace_session(new)
         return {"ok": True, "n": rec["n"], "session": new.state()["session"]}
 
     # ---- pantalla partida
     @app.get("/api/duel/state")
-    def duel_state(baseline: str | None = None) -> Response:
-        return Response(D(baseline).state_json(), media_type="application/json")
+    def duel_state() -> Response:
+        return Response(D().state_json(), media_type="application/json")
 
     @app.get("/api/duel/stream")
     async def duel_stream(limit: int = 0) -> StreamingResponse:
@@ -1791,7 +1963,17 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         """ESCUCHAR o TOMAR una llamada viva desde el puesto de control (`should_takeover`)."""
         operator(request)
         d = await body(request)
-        return await asyncio.to_thread(_hr, S().comms.takeover_token, action_id, bool(d.get("takeover")))
+        s, who = S(), identity(request)
+        key = s.operators.reserve_call(action_id, who) if d.get("takeover") else None
+        try:
+            return await asyncio.to_thread(_hr, s.comms.takeover_token, action_id, bool(d.get("takeover")))
+        except Exception:
+            if key:
+                with s.lock:
+                    s.operators.decisions.pop(key, None)
+                    s.operators.event(who, 'no se pudo tomar la llamada', action_id)
+                    s._rebuild()
+            raise
 
     @app.post("/api/call/{action_id}/signal")
     async def call_signal(action_id: str, request: Request) -> dict[str, Any]:
@@ -1800,8 +1982,23 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         return {"ok": await asyncio.to_thread(S().comms.change_orders, action_id, str(d.get("text") or "")[:300])}
 
     @app.get("/api/chaos/suggest")
-    def chaos_suggest() -> dict[str, Any]:
+    def chaos_suggest(request: Request) -> dict[str, Any]:
+        operator(request)
         return S().chaos_suggestions()
+
+    @app.post("/api/espejo/demo")
+    async def espejo_demo(request: Request) -> dict[str, Any]:
+        """Reproduce en local la secuencia entera del despacho por Telegram, sin plataforma ni bot:
+        aviso → dos asignaciones → una acepta con ETA y zona, otra rechaza → reasignación → timeout →
+        propuesta de escalada por voz. Solo operador: mete un aviso de verdad en el mundo."""
+        operator(request)
+        d = await body(request)
+        zone = str(d.get("zone") or "front_pit")
+        s = S()
+        events = telegram_espejo.secuencia_demo(s, zone)
+        salidas = [await asyncio.to_thread(s.tg_mirror.handle, ev) for ev in events]
+        return {"ok": True, "n": len(events), "events": events, "results": salidas,
+                "escaladas": s.tg_mirror.view()["escaladas"]}
 
     @app.post("/api/approve")
     async def approve(request: Request) -> dict[str, Any]:
@@ -1810,9 +2007,7 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         ok = d.get("ok", d.get("approve"))
         if not d.get("action_id") or ok is None:
             raise HTTPException(400, "Hacen falta «action_id» y «ok»")
-        if not S().approve(str(d["action_id"]), bool(ok), str(d.get("note") or "")[:200], by=str(d.get("by") or "operador-1")[:40]):
-            raise HTTPException(409, "Esa acción no está esperando aprobación")
-        return {"ok": True}
+        return S().operators.decide(str(d["action_id"]), ok, str(d.get("note") or "")[:200], identity(request))
 
     @app.get("/api/informe")
     def informe() -> dict[str, Any]:
@@ -1836,14 +2031,40 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         kind = str(ev.get("type") or ev.get("message") or "")
         if who == "chat" and kind not in _CHAT_TYPES:
             raise HTTPException(403, "Ese token solo sirve para avisos y consultas de estado")
+        if kind in ('decision', 'decision_pending'):
+            from .hr_routing import apply_decision
+            return await asyncio.to_thread(apply_decision, s, ev if kind == 'decision' else dict(ev, decision=''))
+        if kind == 'text_delivery_request':
+            from .hr_text_delivery import deliver_text
+            return await asyncio.to_thread(deliver_text, s, ev, app.state.telegram)
+        if kind == 'diffusion_result':
+            from .hr_text_delivery import receipt
+            return await asyncio.to_thread(receipt, s, ev)
+        if kind.startswith('tg_'):
+            # Espejo del despacho por Telegram. `tg_*` desconocido es un workflow mal configurado en la
+            # plataforma: 422 y que se vea, en vez del 200 «stale» del resto de eventos correlacionados.
+            return await asyncio.to_thread(s.tg_mirror.handle, ev)
         channel = ev.get('channel') or (ev.get('report') or {}).get('channel')
         if who == 'chat' and channel not in (None, 'web', 'chat', 'chatbot'):
             raise HTTPException(403, 'El token del widget solo admite su canal web')
         if who == 'chat':
-            ev['channel'] = 'web'  # prevalece también sobre extracted.channel en structured_report
+            # El bloque report prevalece también sobre source plano o de extracted.
+            ev['report'] = dict(ev.get('report') or {}, source='asistente')
+            ev['channel'] = 'web'   # prevalece también sobre extracted.channel en structured_report
+        if kind in ('staff_status', 'external_notice'):
+            if ev.get('recovered'):
+                raise HTTPException(422, 'El parte requiere JSON válido completo')
+            if kind == 'staff_status':
+                out = await asyncio.to_thread(s.staff.status, ev, ev.get('unit_token', ''))
+            else:
+                out = await asyncio.to_thread(external_notice, s, ev)
+            s.comms.workflow_status.record('personal' if kind == 'staff_status' else 'avisos_externos', 'event')
+            s._rebuild()
+            return out
         if kind in _CHAT_TYPES:
             channel = ev.get('channel') or (ev.get('report') or {}).get('channel')
-            workflow = 'voice' if channel in ('voice', 'web_call') else 'chat' if channel in ('chat', 'chatbot') else 'intake'
+            workflow = ('voice' if channel in ('voice', 'web_call') else 'chat' if channel in ('chat', 'chatbot')
+                        else channel if channel in ('email', 'sms') else 'intake')
             tracker = delegated.workflow_status if workflow == 'intake' else s.comms.workflow_status
             tracker.record(workflow, 'event', run_url=ev.get('run_url'))
         if kind == "report_status_query":
@@ -2028,5 +2249,11 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         app.state.telegram.on_change = lambda: S()._rebuild()
     else:
         Session.ask_router = None
+    from .team_routes import install as install_team
+    install_team(app, S, lambda: public_base() or f"http://{lan_ip()}:{app.state.port}")
+    from .evidence_routes import register as register_evidence
+    register_evidence(app, S, STATIC)
+    from .historial_routes import install as install_history
+    install_history(app, app.state.history, STATIC)
     S()._rebuild()
     return app

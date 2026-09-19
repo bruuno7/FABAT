@@ -37,6 +37,8 @@ import time
 from typing import Any
 
 import httpx
+from .hr_routing import WORKFLOW_NAMES
+from .hr_config import workflow_ids
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
@@ -53,22 +55,25 @@ def create_mock(delay_s: float = 3.0, secret: str | None = None) -> FastAPI:
     app.state.signals = []
     app.state.sessions = {}          # session_id -> {run_id, status, messages, payload, taken_over}
     app.state.runs = {}              # run_id -> session_id
+    app.state.workflows = {**{k: k for k in workflow_ids()}, **WORKFLOW_NAMES}
     counter = itertools.count(1)
 
     def token() -> str:
         return secret if secret is not None else (os.environ.get("HR_SECRET") or os.environ.get("MANDO_HR_TOKEN") or "")
 
-    def post(base: str, body: dict[str, Any], tok: str | None = None) -> None:
+    def post(base: str, body: dict[str, Any], tok: str | None = None) -> dict:
         if app.state.config.get("omit_action_id"):
             body = dict(body, action_id=None)  # obliga al backend a casar por hr_run_id
         url = base.rstrip("/")
         if not url.endswith("/hr/events"):   # contrato: base; workflows reales: la URL completa
             url += "/hr/events"
         try:
-            httpx.post(url, json=body, headers={"X-Mando-Token": tok if tok is not None else token()}, timeout=5)
+            response = httpx.post(url, json=body, headers={"X-Mando-Token": tok if tok is not None else token()}, timeout=5)
             app.state.posted.append(body)
-        except httpx.HTTPError:
+            return response.json() if response.is_success else {}
+        except (httpx.HTTPError, ValueError):
             pass  # el backend se ha parado: no hay a quién contestar
+        return {}
 
     def is_workflow(payload: dict[str, Any]) -> bool:
         return "message" not in payload and "order_text" in payload
@@ -149,6 +154,27 @@ def create_mock(delay_s: float = 3.0, secret: str | None = None) -> FastAPI:
         cfg = app.state.config
         if cfg.get("silent"):
             return  # imita a la plataforma encolando sin error: recibe y no devuelve nada
+        session = app.state.sessions[app.state.runs[run_id]]
+        slot = session.get('workflow')
+        base, tok = payload.get('callback_url', ''), payload.get('callback_token', '')
+        common = dict(action_id=payload.get('action_id'), hr_run_id=run_id, hr_session_id=app.state.runs[run_id])
+        if slot == 'director':
+            decision = cfg.get('decision', 'unclear')
+            body = dict(common, type='decision' if decision in ('approve', 'veto') else 'decision_pending',
+                        decision=decision, by_role=payload.get('role'), note=cfg.get('decision_note', 'Decisión simulada'))
+            post(base, body, tok)
+            session['status'] = 'completed'
+            return
+        if slot == 'difusion' or 'audience' in payload:
+            if not payload.get('approved_by'):
+                result = dict(delivered=0, failed=0, error='approval_required')
+            else:
+                request = {k: v for k, v in payload.items() if k not in ('callback_token', 'callback_url')}
+                result = post(base, dict(request, **common, type='text_delivery_request'), tok)
+            if 'delivered' in result and 'failed' in result:
+                post(base, dict(result, **common, type='diffusion_result'), tok)
+            session['status'] = 'completed'
+            return
         delay = float(cfg.get("delay_s", 3.0))
         if is_workflow(payload):   # el workflow real no manda «llamando» ni «ha descolgado»: solo el aviso en caliente y el final
             result = next((v for k, v in (cfg.get("by_role") or {}).items() if k.lower() in str(payload.get("role", "")).lower()),
@@ -211,6 +237,15 @@ def create_mock(delay_s: float = 3.0, secret: str | None = None) -> FastAPI:
         app.state.sessions[app.state.runs[run_id]]["status"] = "completed"
 
     # ---------------------------------------------------------------- lanzar
+    def mark_workflow(run_id, slug):
+        ids = workflow_ids()
+        slot = next((k for k, name in app.state.workflows.items() if slug in (k, name, ids.get(k))), slug)
+        app.state.sessions[app.state.runs[run_id]]['workflow'] = slot
+
+    @app.get('/mock/workflows')
+    def inventory():
+        return app.state.workflows
+
     async def hook(slug: str, request: Request) -> dict[str, Any]:
         payload = await request.json()
         if "reply_to" in payload and "text" in payload and "order_text" not in payload:
@@ -219,6 +254,7 @@ def create_mock(delay_s: float = 3.0, secret: str | None = None) -> FastAPI:
             threading.Thread(target=run_intake, args=(payload, run_id), daemon=True).start()
             return {"status": "ok"}
         run_id, _ = new_run(payload)
+        mark_workflow(run_id, slug)
         app.state.received.append({"via": "hook", "hook": slug, "payload": payload, "run_id": run_id,
                                    "x_api_key": request.headers.get("x-api-key")})
         threading.Thread(target=run_outbound, args=(payload, run_id), daemon=True).start()
@@ -226,6 +262,7 @@ def create_mock(delay_s: float = 3.0, secret: str | None = None) -> FastAPI:
 
     app.add_api_route("/hook/{slug}", hook, methods=["POST"])
     app.add_api_route("/hooks/{slug}", hook, methods=["POST"])
+    app.add_api_route("/hooks/development/{slug}", hook, methods=["POST"])
 
     @app.post("/api/v2/workflows/{workflow}/runs")
     async def runs(workflow: str, request: Request) -> dict[str, Any]:
@@ -233,6 +270,7 @@ def create_mock(delay_s: float = 3.0, secret: str | None = None) -> FastAPI:
         body = await request.json()
         payload = body.get("payload") or {}
         run_id, _ = new_run(payload)
+        mark_workflow(run_id, workflow)
         app.state.received.append({"via": "runs", "workflow": workflow, "payload": payload, "run_id": run_id,
                                    "environment": body.get("environment")})
         threading.Thread(target=run_outbound, args=(payload, run_id), daemon=True).start()
@@ -372,6 +410,8 @@ def create_mock(delay_s: float = 3.0, secret: str | None = None) -> FastAPI:
     def received() -> list[dict[str, Any]]:
         return app.state.received
 
+    from .mock_staff import install as install_staff_mock
+    install_staff_mock(app)
     return app
 
 

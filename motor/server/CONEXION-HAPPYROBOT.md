@@ -7,10 +7,6 @@ URLs y payloads: [registro de plataforma](../happyrobot/PLATAFORMA_REAL.md),
    Mantenerla fuera del repo. No reutilizar la clave como token de webhooks.
 2. Abrir los triggers de development y copiar sus URLs. Slugs: teléfono `slug-despacho-telefono`, Web call
    despacho `slug-despacho-webcall`, voz pública `slug-ingesta-voz`, texto `slug-ingesta-texto`, chat `slug-asistente-chat`.
-   Son marcadores neutros: configura los slugs reales en `.env` mediante `HR_WORKFLOW_DISPATCH`,
-   `HR_WORKFLOW_WEBCALL`, `HR_WORKFLOW_VOICE`, `HR_WORKFLOW_INTAKE` y `HR_WORKFLOW_CHAT`, o copia las URLs
-   explícitas en `HR_HOOK_DISPATCH`, `HR_DISPATCH_WEBCALL_URL`, `HR_WEBCALL_PUBLIC_URL`, `HR_HOOK_INTAKE`
-   y `HR_CHAT_PUBLIC_URL`, respectivamente. Las URLs explícitas prevalecen; el chat requiere su URL explícita.
    Los hooks construidos siguen la documentación; confirmar la URL exacta en el editor.
 3. Copiar `.env.example` a `.env` local y rellenar la clave, URLs y tokens distintos de operador,
    MCP y callbacks. `HR_ENV=development`. Un enlace explícito prevalece sobre el construido.
@@ -40,3 +36,32 @@ URLs y payloads: [registro de plataforma](../happyrobot/PLATAFORMA_REAL.md),
 
 No hay dirección de email ni número SMS confirmados en el registro: copiar los reales cuando existan.
 Las pruebas automáticas usan mocks; audio, publicación y llamadas reales requieren la comprobación humana anterior.
+
+## Salida por destinatario (borradores opt-in)
+
+Inventario, URLs de editor copiadas del MCP y pendientes: [MAPA-WORKFLOWS.md](../happyrobot/MAPA-WORKFLOWS.md).
+Los ocho slots son `SANITARIO`, `SEGURIDAD`, `TECNICO`, `LOGISTICA`, `DIRECTOR`, `EXTERNOS`,
+`DIFUSION` y `RELEVO`. Configurar `HR_WORKFLOW_<SLOT>` y copiar la URL real del trigger a
+`HR_HOOK_<SLOT>_DEVELOPMENT` (prevalece sobre `HR_HOOK_<SLOT>`). Los slugs del mapa no activan
+automáticamente borradores. Con `HR_LAUNCH_MODE=runs` se usa el ID/slug y `HR_API_KEY`;
+con `hook`, la URL explícita. Publicación y activación quedan para una persona.
+
+En modo `phone`, `ResourceKind` o cargo seleccionan el oficio. Si falta el específico o falla,
+se conserva la orden y se intenta el despacho genérico; `workflow_history` registra ambos.
+En `web_call` se mantiene el workflow WebRTC. Las respuestas individuales al público siguen
+su canal de texto: nunca se convierten en teléfono ni en una difusión aprobada ficticia.
+
+`decision` exige nonce de solicitud emitida, `by_role` director/suplente y `decision` exactamente
+`approve` o `veto`; aplica la política atómica multioperador con identidad «por teléfono: director»
+o suplente. Una duda o un acuse del genérico deja la tarjeta pendiente. Sin contacto telefónico
+autorizado se conserva el control manual.
+
+`BROADCAST` requiere aprobación registrada, `params.audience` y audiencia en
+`contacts.local.json`: `audiences.<nombre>.telegram` contiene IDs de chats de prueba consentidos.
+El workflow pide `text_delivery_request`; el backend verifica texto, audiencia y aprobador,
+ejecuta el transporte y devuelve contadores reales. El workflow devuelve `diffusion_result`.
+Sin aprobación no hay envío; sin configuración/fallo queda intervención humana, nunca voz ni
+entrega simulada. SMS cuenta como fallido hasta disponer de proveedor. No se probó ningún envío real.
+
+`S.happyrobot`, el mock y «Servicios en vivo» incluyen también PERSONAL, SMS, EMAIL y AVISOS_EXTERNOS.
+La franja distingue configurado de evento recibido: tener URL no demuestra publicación ni entrega.

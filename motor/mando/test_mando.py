@@ -539,6 +539,120 @@ HELDOUT_ONLY = {  # lista que dio el coordinador; si `motor.cases` está, se con
     "bomb_threat_call", "nearby_wildfire_smoke"}
 
 
+class TestColloquialReports(unittest.TestCase):
+    """Frases propias; síntomas y contexto, sin reproducir el corpus sintético."""
+
+    def setUp(self):
+        self.parser, self.zones = HeuristicParser(), real_zones()
+
+    def parse(self, text):
+        return self.parser.parse(Report("r", 0, Channel.WHATSAPP, text), self.zones)
+
+    def test_medical_slang_and_symptoms(self):
+        for text in ("Mi colega va drogado y está fatal junto a la barra grande",
+                     "Una señora diabética tiembla en la primera fila",
+                     "My brother has a fever by the main entrance"):
+            with self.subTest(text=text):
+                self.assertEqual(self.parse(text)["family"], "medical")
+        p = self.parse("Tengo el brazo hinchao y no sé qué ocurre")
+        self.assertEqual(p["type"], "unknown_medical")
+        self.assertIsNone(p["zone"])
+        self.assertIn("type", p["missing"])
+
+    def test_person_falling_is_not_a_structure(self):
+        p = self.parse("Mi hermana está deshidratada y se cae junto a los wc")
+        self.assertEqual((p["family"], p["zone"]), ("medical", "toilets"))
+        self.assertEqual(self.parse("Una señora se ha caído de la valla y está herida")["family"], "medical")
+
+    def test_violence_vocabulary(self):
+        for text in ("Roban carteras cerca de la entrada principal",
+                     "Están dando una paliza detrás de la barra pequeña",
+                     "Someone is groping my friend near the toilets",
+                     "Han apuñalado a una señora en la primera fila"):
+            with self.subTest(text=text):
+                self.assertEqual(self.parse(text)["family"], "aggression")
+
+    def test_crowd_slang_and_falling_people(self):
+        for text in ("El acceso al foso está petado, menudo cuello de botella",
+                     "Se cae gente junto a la barra y los de atrás siguen entrando"):
+            with self.subTest(text=text):
+                self.assertEqual(self.parse(text)["family"], "crowd")
+
+    def test_object_description_can_separate_noun_and_warning(self):
+        for text in ("Una maleta roja junto a la puerta C lleva horas sin dueño",
+                     "A suitcase near the bar looks weird and nobody claims it"):
+            with self.subTest(text=text):
+                p = self.parse(text)
+                self.assertEqual(p["family"], "external")
+                self.assertTrue(p["threat"])
+                self.assertTrue(p["reserved"])
+        self.assertNotEqual(self.parse("La maleta roja es mía, estoy en la cola")["family"], "external")
+
+    def test_electrical_and_fire_vocabulary(self):
+        for text in ("Saltan chispas de un enchufe junto a la puerta B",
+                     "Sparks over the bar, please send someone",
+                     "Avisan de un conato junto a la fuente norte"):
+            with self.subTest(text=text):
+                p = self.parse(text)
+                self.assertEqual(p["family"], "infra")
+                self.assertFalse(p["all_clear"])
+        self.assertTrue(self.parse("No hay chispas aquí, está comprobado")["all_clear"])
+
+    def test_structure_damage_requires_an_object(self):
+        for text in ("El soporte de la pantalla parece doblado",
+                     "Hay riesgo de caída en una estructura junto a la entrada",
+                     "La valla de la zona vip está caída",
+                     "La rampa de acceso está suelta, revisadla",
+                     "Se ha soltado parte del vallado junto a los aseos"):
+            with self.subTest(text=text):
+                self.assertEqual(self.parse(text)["family"], "infra")
+
+    def test_plumbing_and_sound_failures(self):
+        for text in ("Una tubería reventada vierte agua sobre el camino",
+                     "El sonido peta constantemente junto a la pista",
+                     "El sonido ha petado durante el ensayo",
+                     "Los aseos están inundados, hay un atasco"):
+            with self.subTest(text=text):
+                self.assertEqual(self.parse(text)["family"], "infra")
+        self.assertEqual(self.parse("Voy a los wc a buscar a mi colega")["family"], "info")
+        self.assertEqual(self.parse("Los baños están atascados y nos están aplastando")["family"], "crowd")
+
+    def test_shortage_vocabulary_and_context(self):
+        for text in ("No nos queda comida en esta cola de la barra",
+                     "En el botiquín norte ya no hay vendas",
+                     "No hay jabón junto a los lavabos",
+                     "El generador está sin combustible desde antes del concierto",
+                     "Sold out of sandwiches at the food court"):
+            with self.subTest(text=text):
+                self.assertEqual(self.parse(text)["family"], "supply")
+
+    def test_explicit_staff_shortage_not_medical_location(self):
+        for text in ("No hay sanitarios en el puesto médico norte",
+                     "No medics available at the main gate",
+                     "We need more stewards near the north corridor",
+                     "Sin voluntarios en la entrada principal, pedid refuerzos"):
+            with self.subTest(text=text):
+                self.assertEqual(self.parse(text)["family"], "resource")
+        self.assertEqual(self.parse("Necesitamos sanitarios, una señora no respira")["family"], "medical")
+
+    def test_wind_and_flood_vocabulary(self):
+        for text in ("Las sombrillas de la barra salen volando",
+                     "Flooding beside the wheelchair platform",
+                     "Está granizando sobre la puerta A"):
+            with self.subTest(text=text):
+                self.assertEqual(self.parse(text)["family"], "weather")
+
+    def test_explicit_locations_and_no_invented_zone(self):
+        for text, zone in (("Ayuda en puerta b, el acceso está petado", "gate_b"),
+                           ("Help at the south med tent", "medical_1"),
+                           ("Auxilio junto a los bares", "food"),
+                           ("Falta agua en el north refill", "water_n"),
+                           ("Viento en puerta c, venid", "gate_c"),
+                           ("Algo ocurre aquí, no sé dónde estoy", None)):
+            with self.subTest(text=text):
+                self.assertEqual(self.parse(text)["zone"], zone)
+
+
 class TestNoHeldoutLeak(unittest.TestCase):
     """El código de Mando no puede conocer la partición que «nunca ha visto». Este test sí puede leer `motor.cases`."""
 

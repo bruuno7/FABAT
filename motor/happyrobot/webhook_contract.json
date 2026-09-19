@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fabat.local/motor/happyrobot/webhook_contract.json",
+  "title": "MANDO ↔ HappyRobot webhook contract",
+  "description": "Contrato mínimo Festival Abierto. HR habla; MANDO decide.",
+  "definitions": {
+    "perfil_color": {
+      "type": "string",
+      "enum": ["menor", "pmr", "adulto", "personal", "vip"],
+      "description": "Capa estable (QR/pulsera). Modifica protocolo, no la cola médica."
+    },
+    "triage_color": {
+      "type": "string",
+      "enum": ["rojo", "amarillo", "verde", "negro", "desconocido"],
+      "description": "Capa dinámica en incidente. Manda cola médica."
+    },
+    "public_report": {
+      "type": "object",
+      "required": ["event", "channel", "reported_at", "text"],
+      "properties": {
+        "event": { "const": "public_report" },
+        "channel": {
+          "type": "string",
+          "enum": ["telegram", "webcall", "sms", "voice", "whatsapp", "other"]
+        },
+        "reported_at": { "type": "string", "format": "date-time" },
+        "text": { "type": "string", "minLength": 1 },
+        "reporter": {
+          "type": "object",
+          "properties": {
+            "external_id": { "type": "string" },
+            "display_name": { "type": "string" },
+            "perfil_color": { "$ref": "#/definitions/perfil_color" },
+            "chat_id": { "type": "string", "description": "Telegram chat_id para reply" }
+          }
+        },
+        "location_hint": { "type": "string" },
+        "correlation_id": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "hr_to_mando": {
+      "type": "object",
+      "required": ["event", "correlation_id"],
+      "properties": {
+        "event": {
+          "type": "string",
+          "enum": [
+            "extract_ready",
+            "agent_reply",
+            "needs_human",
+            "session_ended"
+          ]
+        },
+        "correlation_id": { "type": "string" },
+        "channel": { "type": "string" },
+        "chat_id": { "type": "string" },
+        "reply_text": { "type": "string" },
+        "extract": {
+          "type": "object",
+          "properties": {
+            "incident_type": { "type": "string" },
+            "sector": { "type": "string" },
+            "severity": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "triage_color": { "$ref": "#/definitions/triage_color" },
+            "perfil_color": { "$ref": "#/definitions/perfil_color" },
+            "summary": { "type": "string" }
+          }
+        },
+        "hr_run_id": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "mando_to_hr_hook": {
+      "description": "Body POSTed al Incoming Hook de fa-entrada-tg / fa-webcall",
+      "allOf": [{ "$ref": "#/definitions/public_report" }]
+    }
+  }
+}

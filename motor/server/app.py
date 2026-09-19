@@ -30,7 +30,8 @@ from motor.world import SimComms, World, load_festival
 
 from . import intake, memoria, regression_live, views, whatif, validation, privacy
 from .comms_happyrobot import HappyRobotComms, load_contacts, public_base, shared_secret
-from . import telegram_bot, hr_config
+from . import telegram_bot, hr_config, llm_parser_factory
+from .ledger import open_ledger
 from .security import SecurityGuard, require_operator
 from .telegram_bot import safety_instruction
 
@@ -250,9 +251,16 @@ class Session:
         self.festival = load_festival()
         self.world = World.from_case(case, self.seed)
         self.sim = SimComms(self.world, self.seed)
+        self.ledger = open_ledger()
         self.comms = HappyRobotComms(self.world, self.sim, session_id=self.session_id, mode=self.comms_mode,
                                      contacts=load_contacts(), incident_lookup=self._incident_for_comms,
-                                     is_approved=self._approval_record, on_log=self.log)
+                                     is_approved=self._approval_record, on_log=self.log, ledger=self.ledger)
+        try:
+            voice = getattr(self.comms, "voice_mode", os.environ.get("MANDO_VOICE_MODE", "web_call"))
+            self.ledger.session_start(self.session_id, case_id=str(case.get("id") or ""),
+                                      voice_mode=str(voice), speed=self.speed, comms_mode=self.comms_mode)
+        except Exception:
+            pass
         if not public_base() and Session.callback_url:
             self.comms.callback_url = Session.callback_url
         self.comms.external_ask = self._route_ask
@@ -265,6 +273,12 @@ class Session:
         kwargs: dict[str, Any] = {"playbook": pb, "comms": self.comms}
         if local_params and agent_kind == "mando" and memoria.LOCAL_APPROVED_PATH.exists():
             kwargs["params"] = str(memoria.LOCAL_APPROVED_PATH)
+        self.llm_parser = False
+        if agent_kind == "mando":
+            cascade = llm_parser_factory.build_cascade_parser()
+            if cascade is not None:
+                kwargs["parser"] = cascade
+                self.llm_parser = True
         self.twin = False
         try:  # el gemelo para ensayar: solo si el mundo ya lo ofrece y el agente lo acepta
             import inspect
@@ -325,6 +339,12 @@ class Session:
         self._stop.set()
         self._wake.set()
         self.comms.close()
+        led = getattr(self, "ledger", None)
+        if led is not None:
+            try:
+                led.close()
+            except Exception:
+                pass
 
     def tick(self) -> None:
         """Un minuto simulado, con el ciclo exacto de INTERFACES.md."""
@@ -1643,6 +1663,28 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
     @app.get("/api/memoria")
     def memoria_view() -> dict[str, Any]:
         return memoria.overview(S().operator_orders)
+
+    @app.get("/api/ledger/stats")
+    def ledger_stats(request: Request) -> dict[str, Any]:
+        """Totales del ledger local (auditoría de llamadas). Solo operador."""
+        operator(request)
+        led = getattr(S(), "ledger", None)
+        if led is None:
+            from .ledger import open_ledger
+            return open_ledger().stats()
+        return led.stats()
+
+    @app.post("/api/ledger/export")
+    def ledger_export(request: Request) -> dict[str, Any]:
+        """Mezcla episodios del ledger en memory.day1.json (contactos). Solo operador."""
+        operator(request)
+        led = getattr(S(), "ledger", None)
+        if led is None:
+            from .ledger import open_ledger
+            led = open_ledger()
+        real_only = request.query_params.get("real_only", "").lower() in ("1", "true", "yes")
+        merge = request.query_params.get("merge", "1").lower() not in ("0", "false", "no")
+        return led.export_to_memory(real_only=real_only, merge=merge)
 
     @app.post("/api/memoria/decide")
     async def memoria_decide(request: Request) -> dict[str, Any]:

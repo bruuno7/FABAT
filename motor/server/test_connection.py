@@ -1,6 +1,8 @@
 """Conexión real por configuración, probada sin servicios externos."""
 import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -10,11 +12,19 @@ from .mock_happyrobot import create_mock
 import httpx
 
 
+def _ledger_env(extra: dict | None = None) -> dict:
+    """Ruta de ledger temporal: evita escribir en motor/server/data/ con clear=True."""
+    env = dict(extra or {})
+    if "MANDO_LEDGER_PATH" not in env:
+        env["MANDO_LEDGER_PATH"] = str(Path(tempfile.mkdtemp()) / "ledger.sqlite")
+    return env
+
+
 class ConfigurationTest(unittest.TestCase):
     def test_ask_waits_for_person_text_in_final_callback(self):
         from .app import Session, load_case
         from motor.contracts import Action, ActionKind
-        with patch.dict(os.environ, {'MANDO_VOICE_MODE': 'web_call', 'HR_API_KEY': 'fake'}, clear=True):
+        with patch.dict(os.environ, _ledger_env({'MANDO_VOICE_MODE': 'web_call', 'HR_API_KEY': 'fake'}), clear=True):
             s = Session(load_case('demo-1'), threaded=False, comms_mode='happyrobot')
             self.addCleanup(s.close)
             r = next(iter(s.world.resources.values()))
@@ -49,9 +59,12 @@ class ConfigurationTest(unittest.TestCase):
         from motor.contracts import Action, ActionKind
         from .comms_happyrobot import DISPATCH_PARAMS
         for mode in ('phone', 'web_call'):
-            with self.subTest(mode=mode), patch.dict(os.environ, {
+            with self.subTest(mode=mode), patch.dict(os.environ, _ledger_env({
                 'MANDO_VOICE_MODE': mode, 'HR_API_KEY': 'fake-key', 'HR_SECRET': SECRET,
-                'HR_HOOK_DISPATCH': 'http://127.0.0.1:1/hook', 'MANDO_ALLOWED_NUMBERS': '+34600000002'}, clear=True):
+                'HR_HOOK_DISPATCH': 'http://127.0.0.1:1/hook', 'MANDO_ALLOWED_NUMBERS': '+34600000002',
+                # ASK/NOTIFY reales solo si se piden: por defecto en phone solo despacho (evita Runs basura).
+                'MANDO_HR_PHONE_KINDS': 'dispatch,ask,notify',
+                'MANDO_HR_MAX_INFLIGHT': '3'}), clear=True):
                 s = Session(load_case('demo-1'), threaded=False, comms_mode='happyrobot')
                 self.addCleanup(s.close)
                 r = next(iter(s.world.resources.values()))
@@ -68,13 +81,41 @@ class ConfigurationTest(unittest.TestCase):
                             self.assertEqual(wire['order_text'], 'Confirma la puerta B')
                         self.assertTrue(wire['callback_url'].endswith('/hr/events'))
 
+    def test_phone_mode_only_dispatch_is_real_by_default_and_caps_inflight(self):
+        from .app import Session, load_case
+        from motor.contracts import Action, ActionKind
+        with patch.dict(os.environ, _ledger_env({
+            'MANDO_VOICE_MODE': 'phone', 'HR_API_KEY': 'fake-key', 'HR_SECRET': SECRET,
+            'HR_HOOK_DISPATCH': 'http://127.0.0.1:1/hook', 'MANDO_ALLOWED_NUMBERS': '+34600000002',
+            'MANDO_HR_MAX_INFLIGHT': '1'}), clear=True):
+            s = Session(load_case('demo-1'), threaded=False, comms_mode='happyrobot')
+            self.addCleanup(s.close)
+            r = next(iter(s.world.resources.values()))
+            s.comms.contacts = {'resources': {r.id: {'to_number': '+34600000002', 'title': 'Responsable'}}, 'roles': {}}
+            with patch.object(s.comms, '_post') as post:
+                ask = Action('ask-1', ActionKind.ASK, s.world.t, resource=r.id, zone='gate_b',
+                             params={'message': '¿Confirmas?'})
+                s.comms.send(ask, r)
+                self.assertFalse(s.comms.calls[ask.id]['real'], 'ASK no debe marcar en phone por defecto')
+                self.assertEqual(post.call_count, 0)
+                d1 = Action('d1', ActionKind.DISPATCH, s.world.t, resource=r.id, zone='gate_b',
+                            params={'message': 'Ve a B'})
+                s.comms.send(d1, r)
+                self.assertTrue(s.comms.calls[d1.id]['real'])
+                self.assertEqual(post.call_count, 1)
+                d2 = Action('d2', ActionKind.DISPATCH, s.world.t, resource=r.id, zone='gate_b',
+                            params={'message': 'Ve a C'})
+                s.comms.send(d2, r)
+                self.assertFalse(s.comms.calls[d2.id]['real'], 'segundo despacho cae a sim con max_inflight=1')
+                self.assertEqual(post.call_count, 1)
+
 
 class TelegramBridgeTest(unittest.TestCase):
     def test_send_only_webhook_continues_poll_chat_without_getupdates(self):
         from .app import create_app
         fake, port = create_mock_telegram(), free_port()
-        with patch.dict(os.environ, {'TELEGRAM_BOT_TOKEN': TOKEN, 'TELEGRAM_MODE': 'send_only',
-                                    'TELEGRAM_API_BASE': f'http://127.0.0.1:{port}', 'HR_HOOK_INTAKE': ''}, clear=True), Served(fake, port):
+        with patch.dict(os.environ, _ledger_env({'TELEGRAM_BOT_TOKEN': TOKEN, 'TELEGRAM_MODE': 'send_only',
+                                    'TELEGRAM_API_BASE': f'http://127.0.0.1:{port}', 'HR_HOOK_INTAKE': ''}), clear=True), Served(fake, port):
             app = create_app(threaded=False, secret=SECRET)
             self.addCleanup(app.state.session.close)
             with TestClient(app) as client:
@@ -118,9 +159,9 @@ class IntakePathsTest(unittest.TestCase):
         from .app import create_app
         port, hr_port, tg_port = free_port(), free_port(), free_port()
         hr, tg = create_mock(delay_s=0.01, secret=SECRET), create_mock_telegram()
-        with patch.dict(os.environ, {'HR_HOOK_INTAKE': f'http://127.0.0.1:{hr_port}/hooks/ingesta-texto',
+        with patch.dict(os.environ, _ledger_env({'HR_HOOK_INTAKE': f'http://127.0.0.1:{hr_port}/hooks/ingesta-texto',
                 'MANDO_CALLBACK_URL': f'http://127.0.0.1:{port}', 'HR_SECRET': SECRET, 'HR_INTAKE_TIMEOUT_S': '1',
-                'TELEGRAM_MODE': 'send_only', 'TELEGRAM_BOT_TOKEN': TOKEN, 'TELEGRAM_API_BASE': f'http://127.0.0.1:{tg_port}'}, clear=True), Served(hr, hr_port), Served(tg, tg_port):
+                'TELEGRAM_MODE': 'send_only', 'TELEGRAM_BOT_TOKEN': TOKEN, 'TELEGRAM_API_BASE': f'http://127.0.0.1:{tg_port}'}), clear=True), Served(hr, hr_port), Served(tg, tg_port):
             app = create_app(threaded=False, secret=SECRET, port=port)
             self.addCleanup(app.state.session.close)
             with Served(app, port):

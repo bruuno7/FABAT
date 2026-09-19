@@ -330,6 +330,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "mcp" },
+    { name = "python-dotenv" },
     { name = "segno" },
     { name = "uvicorn" },
 ]
@@ -339,6 +340,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "mcp", specifier = ">=1.12,<2" },
+    { name = "python-dotenv", specifier = ">=1.0" },
     { name = "segno", specifier = ">=1.6" },
     { name = "uvicorn", specifier = ">=0.30" },
 ]

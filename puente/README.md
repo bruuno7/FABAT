@@ -77,10 +77,10 @@ Puestos: `medico`, `staff_entradas`, `organizador`, `bomberos`, `policia`.
 | `/estado` | Lista ocupados y libres |
 | `/baja` | Suelta el puesto |
 
-Un chat = un puesto. Un puesto = un chat. El mapa se guarda en MANDO (`/hr/tg/roster`) para que
-`fa-despacho-tg` sepa el `chat_id` tras un cold start. HappyRobot llama a este puente
-(`/hr/tg/dispatch` y `/hr/tg/staff-response`); el puente reenvía a MANDO. En local, sin `STAFF_PIN`,
-`/rol` funciona para poder ensayar. En Vercel, sin PIN no se toma ningún puesto.
+Un chat = un puesto. Un puesto = un chat. Con `HR_HOOK_TG_ROSTER`, el mapa se guarda en Redis
+desde `fa-rol-tg`; ese workflow contesta `/rol`, `/estado` y `/baja` por `/hr/events`. Sin el hook,
+el puente usa el directorio legado de MANDO (`/hr/tg/roster`) o memoria local. En local, sin
+`STAFF_PIN`, `/rol` funciona para poder ensayar. En Vercel, sin PIN no se toma ningún puesto.
 
 `callback_data` de los botones: `kind:assignment_id` o `kind|assignment_id|correlation_id`. Kinds: `acc`, `dec`, `eta`, `loc`, `apr`, `vet`.
 

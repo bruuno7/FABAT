@@ -299,9 +299,9 @@ describe("staff commands", () => {
         from: { id: 78, first_name: "Marc" },
       },
     });
-    await handleTelegramUpdate(env, msg("/rol policia", 1), createIncidentStore(), staff);
+    const rol = await handleTelegramUpdate(env, msg("/rol policia", 1), createIncidentStore(), staff);
     const estado = await handleTelegramUpdate(env, msg("/estado", 2), createIncidentStore(), staff);
-    await handleTelegramUpdate(env, msg("/baja", 3), createIncidentStore(), staff);
+    const baja = await handleTelegramUpdate(env, msg("/baja", 3), createIncidentStore(), staff);
 
     const roster = calls.filter((c) => c.url === "https://example.invalid/rol");
     assert.equal(roster.length, 3);
@@ -309,12 +309,129 @@ describe("staff commands", () => {
     assert.deepEqual(actions, ["claim", "list", "release"]);
     const claim = JSON.parse(roster[0].body) as { role: string; chat_id: string; alias: string };
     assert.deepEqual(claim, { action: "claim", role: "policia", chat_id: "78", alias: "Marc" } as unknown);
-    // /estado lo contesta HappyRobot (fa-rol-tg) con la ocupación real; el puente no duplica el mensaje.
+    // fa-rol-tg contesta los tres comandos al chat; el puente no duplica sus mensajes.
+    assert.deepEqual(rol.replies, []);
     assert.deepEqual(estado.replies, []);
+    assert.deepEqual(baja.replies, []);
     mock.restoreAll();
   });
 
-  it("persists /rol to MANDO so HR can read chat_id after a cold start", async () => {
+  it("keeps a MANDO business rejection even when the body has no seats", async () => {
+    mock.method(
+      globalThis,
+      "fetch",
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("api.telegram.org")) {
+          return new Response(JSON.stringify({ ok: true }), { status: 200 });
+        }
+        if (url.includes("/hr/tg/roster") && init?.method === "GET") {
+          return new Response(
+            JSON.stringify({ ok: true, seats: [], total: 5, claimed: 0, disponibles: 5 }),
+            { status: 200 },
+          );
+        }
+        return new Response(
+          JSON.stringify({ ok: false, reason: "taken", holder: { alias: "Luis" } }),
+          { status: 200 },
+        );
+      },
+    );
+    const env = loadEnv({
+      TELEGRAM_BOT_TOKEN: "test-token",
+      MANDO_BACKEND_URL: "https://mando.invalid",
+      HR_SECRET: "s",
+    });
+    const staff = createStaffStore();
+    const result = await handleTelegramUpdate(
+      env,
+      {
+        update_id: 1,
+        message: {
+          message_id: 1,
+          text: "/rol medico",
+          chat: { id: 77, type: "private" },
+          from: { id: 77, first_name: "Marta" },
+        },
+      },
+      createIncidentStore(),
+      staff,
+    );
+    assert.match(result.replies[0] ?? "", /ya lo tiene Luis/);
+    assert.equal(staff.getByChat("77"), undefined);
+    mock.restoreAll();
+  });
+
+  it("does not mutate legacy state when authoritative HappyRobot rejects claim or release", async () => {
+    let mandoCalls = 0;
+    mock.method(
+      globalThis,
+      "fetch",
+      async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("api.telegram.org")) {
+          return new Response(JSON.stringify({ ok: true }), { status: 200 });
+        }
+        if (url === "https://hr.invalid/roster") {
+          return new Response(JSON.stringify({ ok: false }), { status: 500 });
+        }
+        if (url.includes("mando.invalid")) {
+          mandoCalls += 1;
+        }
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      },
+    );
+    const env = loadEnv({
+      TELEGRAM_BOT_TOKEN: "test-token",
+      HR_HOOK_TG_ROSTER: "https://hr.invalid/roster",
+      MANDO_BACKEND_URL: "https://mando.invalid",
+      HR_SECRET: "s",
+    });
+    const staff = createStaffStore();
+    const claim = await handleTelegramUpdate(
+      env,
+      {
+        update_id: 1,
+        message: {
+          message_id: 1,
+          text: "/rol medico",
+          chat: { id: 77, type: "private" },
+          from: { id: 77, first_name: "Marta" },
+        },
+      },
+      createIncidentStore(),
+      staff,
+    );
+    assert.match(claim.replies[0] ?? "", /No pude registrar el puesto/);
+    assert.equal(staff.getByChat("77"), undefined);
+
+    staff.claim({
+      chat_id: "77",
+      user_id: "77",
+      role: "medico",
+      display_name: "Marta",
+      claimed_at: new Date().toISOString(),
+    });
+    const release = await handleTelegramUpdate(
+      env,
+      {
+        update_id: 2,
+        message: {
+          message_id: 2,
+          text: "/baja",
+          chat: { id: 77, type: "private" },
+        },
+      },
+      createIncidentStore(),
+      staff,
+    );
+    assert.match(release.replies[0] ?? "", /No pude liberar el puesto/);
+    assert.equal(staff.getByChat("77")?.role, "medico");
+    assert.equal(mandoCalls, 0);
+    mock.restoreAll();
+  });
+
+  it("falls back to MANDO for /rol when the HappyRobot roster hook is absent", async () => {
     const calls = mockFetch();
     const env = loadEnv({
       TELEGRAM_BOT_TOKEN: "test-token",

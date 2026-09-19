@@ -5,7 +5,7 @@
 Python 3.12 o posterior, `uv` y Node 22 para el puente. Copiar `.env.example` a
 `.env`, definir `MANDO_OPERATOR_TOKEN` y ejecutar `./mvp.sh operational`.
 La raíz sirve la Sala operativa. El enlace «Iniciar sesión» permite introducir
-el token y obtener una cookie HttpOnly. Sin token configurado el acceso se rechaza.
+el token en `/acceso` y obtener una cookie HttpOnly. Sin token configurado el acceso se rechaza.
 
 El modo operativo se activa con `MANDO_OPERATIONAL=1`; no avanza el reloj del
 simulador ni crea víctimas, recursos o confirmaciones ficticias. El simulador
@@ -21,7 +21,7 @@ repositorio. Para una copia consistente utilizar la API de backup de SQLite.
 ## Recorrido de demostración
 
 1. Registrar desde la Sala un coordinador `organizador` y trabajadores disponibles
-   con roles `medico`, `policia`, `bombero`, `tecnico` o `voluntario`.
+   con roles `medico`, `policia`, `bomberos` o `staff_entradas`.
 2. Con canal `web` se puede probar el ciclo sin proveedores. Con Telegram,
    el identificador debe ser `tg:<from.id>` y el contacto el mismo `from.id`
    numérico privado; un chat de grupo no identifica a un trabajador.
@@ -103,6 +103,10 @@ durante la llamada; su ID estable evita duplicarlo en el callback final.
 
 Una propuesta rápida lleva `fase: "rapida"`, `agente: "rapido"`,
 `correlation_id`, `incident_id`, tipo, zona, prioridad y justificación.
+Los avisos genéricos conservan su familia: una solicitud médica sin diagnóstico
+se dirige a un sanitario para evaluación; una aglomeración a seguridad. La falta
+de ubicación sigue bloqueando el despacho, y no se inventa un diagnóstico.
+
 Las acciones graves requieren crítica documentada, especialistas y aprobación
 humana vinculada a versión/hash/plazo. La respuesta distingue `aplicado`,
 `pendiente_persona` y error. No se puede aprobar desde una herramienta del agente.

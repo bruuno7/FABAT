@@ -44,6 +44,11 @@ ROLE_MAP = {
     "medical": "medico", "ambulance": "medico", "security": "policia",
     "tech": "organizador", "logistics": "organizador", "volunteer": "staff_entradas",
 }
+ASSESSMENT_ROLES = {
+    Family.MEDICAL: "medico",
+    Family.CROWD: "policia",
+    Family.AGGRESSION: "policia",
+}
 FIELDS = {
     "register_actor": {"actor_id", "name", "roles", "channel", "address", "zone", "availability"},
     "identify": {"actor_id", "name", "channel", "address", "zone"},
@@ -602,6 +607,10 @@ class OperationalStore:
             needs["bomberos"] = 1
         if life:
             needs["medico"] = max(1, needs.get("medico", 0))
+        if not needs and str(parsed["type"]).startswith("unknown_") and not parsed["all_clear"]:
+            assessment_role = ASSESSMENT_ROLES.get(cast(Family, parsed["family"]))
+            if assessment_role:
+                needs[assessment_role] = 1
         model = ParsedIncident(
             "operational", cast(Family, parsed["family"]), str(parsed["type"]), zone,
             cast(int, parsed["severity"]), 0, confidence=cast(float, parsed["confidence"]),

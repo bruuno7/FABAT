@@ -1,5 +1,7 @@
 # Receta UI — `fa-respuesta-tg`
 
+> **Obsoleta desde el giro «HappyRobot decide» (v9/v6/v5).** El estado vive en Redis, no en MANDO. Ver [`../TELEGRAM-HR.md`](../TELEGRAM-HR.md) y el código de los Sandbox en [`../sandbox/`](../sandbox/).
+
 Respuesta del personal por botones (`acc` / `dec` / `eta` / `loc` / `apr` / `vet`).
 
 El puente POST el `staff_response` a `HR_HOOK_TG_RESPONSE` (este workflow). MANDO aplica el

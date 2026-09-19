@@ -1,5 +1,7 @@
 # Receta UI — `fa-despacho-tg`
 
+> **Obsoleta desde el giro «HappyRobot decide» (v9/v6/v5).** El estado vive en Redis, no en MANDO. Ver [`../TELEGRAM-HR.md`](../TELEGRAM-HR.md) y el código de los Sandbox en [`../sandbox/`](../sandbox/).
+
 Despacho a un puesto de Telegram (simulación). Twin no está provisionado: el directorio
 rol↔`chat_id` y el cerrojo viven en MANDO. HappyRobot no alcanza el túnel, así que llama al
 puente Vercel (`POST /hr/tg/dispatch`), que reenvía a MANDO.

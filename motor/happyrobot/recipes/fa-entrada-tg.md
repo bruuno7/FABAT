@@ -1,5 +1,7 @@
 # Receta UI — `fa-entrada-tg`
 
+> **Obsoleta desde el giro «HappyRobot decide» (v9/v6/v5).** El estado vive en Redis, no en MANDO. Ver [`../TELEGRAM-HR.md`](../TELEGRAM-HR.md) y el código de los Sandbox en [`../sandbox/`](../sandbox/).
+
 Usar si el usuario elige **(B) solo receta UI**. Si elige **(A)** con API key Editor, replicar estos nodos vía API/MCP.
 
 Tras el extract, **Call Workflow `fa-despacho-tg`**: elige un puesto reclamado y manda botones.

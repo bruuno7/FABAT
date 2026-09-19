@@ -10,12 +10,12 @@ type Bucket = {
 };
 
 export type RateLimitConfig = {
-  maxRequests: number; // default 3
+  maxRequests: number; // default 8 (una conversación pregunta-respuesta necesita varios mensajes por minuto)
   windowMs: number;   // default 60_000 (1 min)
 };
 
 const DEFAULT_CONFIG: RateLimitConfig = {
-  maxRequests: 3,
+  maxRequests: 8,
   windowMs: 60_000,
 };
 

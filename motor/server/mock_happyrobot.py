@@ -411,7 +411,7 @@ def create_mock(delay_s: float = 3.0, secret: str | None = None) -> FastAPI:
         return app.state.received
 
     from .mock_staff import install as install_staff_mock
-    install_staff_mock(app)
+    install_staff_mock(app)  # /mock/tg-{incident,assignment,staff,approval} y /mock/tg-secuencia → /hr/events
     return app
 
 

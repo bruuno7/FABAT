@@ -116,11 +116,15 @@ def diagnosticar(sondear_red: bool = True, env: dict[str, str] | None = None) ->
             detalle: str = "", grupo: str = "plataforma") -> None:
         d.anadir(Comprobacion(clave, estado, consecuencia, nivel, detalle, grupo))
 
-    phone = e.get("MANDO_VOICE_MODE", "web_call") == "phone"
+    voice_mode = e.get("MANDO_VOICE_MODE", "web_call").strip()
+    phone = voice_mode == "phone"
     launch = e.get("HR_LAUNCH_MODE", "hook")
     api = hr_config.api_base(e)
     wf, urls = hr_config.workflow_ids(e), hr_config.workflow_urls(e)
-    add("MANDO_VOICE_MODE", "ok", "despacho por teléfono" if phone else "despacho por llamada web", OPCIONAL)
+    if voice_mode not in ("web_call", "phone"):
+        add("MANDO_VOICE_MODE", "falta", f"valor «{voice_mode}» no reconocido: usa web_call o phone", NECESARIO)
+    else:
+        add("MANDO_VOICE_MODE", "ok", "despacho por teléfono" if phone else "despacho por llamada web", OPCIONAL)
     add("HR_ENV", "ok", "entorno resuelto", OPCIONAL, hr_config.environment(e))
     add("HR_PLATFORM_BASE", "ok", "plataforma resuelta", OPCIONAL, _url_segura(hr_config.platform_base(e)))
     try:
@@ -221,6 +225,15 @@ def diagnosticar(sondear_red: bool = True, env: dict[str, str] | None = None) ->
     add("TELEGRAM_MODE", "ok" if mode in ("poll", "send_only", "off") else "falta",
         {"poll": "recepción por polling", "send_only": "solo envía; no recibe mensajes", "off": "Telegram desactivado"}.get(mode, "modo inválido"),
         IMPRESCINDIBLE, grupo="operación")
+    if public_ok and mode == "poll":
+        add("TELEGRAM_MODE espejo", "aviso",
+            "con túnel público y puente Vercel el bot Python no debe hacer poll: usa send_only u off",
+            NECESARIO, grupo="operación")
+    cors = [x.strip() for x in e.get("MANDO_CORS_ORIGINS", "").replace(";", ",").split(",") if x.strip()]
+    if public_ok and not cors:
+        add("MANDO_CORS_ORIGINS", "aviso",
+            "vacío: otra interfaz en otro origen no podrá llamar a la API; define orígenes HTTPS si hace falta",
+            OPCIONAL, grupo="operación")
     if mode != "off":
         valid = bool(token) and (bool(e.get("TELEGRAM_API_BASE")) or bool(re.fullmatch(r"\d{5,}:[\w-]{20,}", token)))
         tg_text = "configurado; identidad pendiente de verificar" if valid else "sin token válido el bot no arranca"

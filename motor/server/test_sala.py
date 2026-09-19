@@ -13,6 +13,7 @@ Cubren cuatro cosas:
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import unittest
@@ -42,6 +43,12 @@ INCIDENT_KEYS = ("id", "family", "type", "zone", "zone_name", "severity", "prior
                  "deadline", "needs", "assigned", "waiting", "label", "explain", "life_threat", "reserved")
 RESOURCE_KEYS = ("id", "name", "kind", "zone", "status", "task", "eta")
 ZONE_KEYS = ("id", "name", "density", "occupancy", "capacity", "ratio", "state", "flags")
+# Lo que la ficha lee de cada previsión cuando el gemelo publica alguna.
+FORECAST_KEYS = ("eta_min", "metric", "status", "current", "predicted", "threshold")
+# Contrato compartido S.telegram (lo produce el espejo; si es null la Sala no pinta nada).
+TELEGRAM_KEYS = ("staff", "asignaciones", "escaladas")
+ASIGNACION_KEYS = ("incident_id", "rol", "estado", "alias", "eta_min", "desde_zona", "intento", "t")
+ESCALADA_KEYS = ("incident_id", "rol", "motivo", "workflow_voz")
 
 
 def interpolaciones(linea: str) -> list[str]:
@@ -108,6 +115,38 @@ class PagesTest(unittest.TestCase):
         version = r.json()["version"]
         self.assertIn(version, (HERE / "pyproject.toml").read_text(encoding="utf-8"))
 
+    def test_layout_tres_columnas_sin_solape(self) -> None:
+        """De 1280×720 a 1920×1080 el panel derecho no puede montar sobre el plano: es una rejilla
+        de tres columnas con `min-width:0` en cada una, y el HUD va encima del mapa, no al lado."""
+        css = (HERE / "static" / "sala.css").read_text(encoding="utf-8")
+        html = (HERE / "static" / "sala.html").read_text(encoding="utf-8")
+        compact = re.sub(r"\s+", "", css)
+        self.assertIn("grid-template-columns:var(--nav-w)minmax(0,1fr)var(--aside-w)", compact)
+        self.assertRegex(css, r"\.nav,\s*\.main,\s*\.aside\{[^}]*min-width:\s*0")
+        self.assertRegex(css, r"\.band\{[^}]*position:\s*absolute")
+        self.assertRegex(css, r"\.map\{[^}]*position:\s*relative")
+        aside = css.split(".aside{", 1)[1].split("}", 1)[0]
+        self.assertNotIn("position:fixed", aside)
+        self.assertNotIn("position:absolute", aside)
+        self.assertIn('class="workspace"', html)
+        self.assertIn('class="map"', html)
+        # El HUD vive dentro del plano, como en el prototipo, no como una fila que empuja el SVG.
+        mapa = html.split('class="map"', 1)[1].split("<!--", 1)[0]
+        self.assertIn('class="band"', mapa)
+        self.assertIn('id="plano"', mapa)
+
+    def test_honestidad_del_prototipo(self) -> None:
+        """Las afirmaciones del mockup que el motor no tiene no se copian como si existieran."""
+        html = (HERE / "static" / "sala.html").read_text(encoding="utf-8")
+        plano = (HERE / "static" / "sala-plano.js").read_text(encoding="utf-8")
+        self.assertNotIn("GPS", html)
+        self.assertIn("posición simulada", html)
+        self.assertIn("estimación del simulador", html.lower())
+        self.assertIn("Entorno de demo", html)
+        self.assertIn("NO marca", html)
+        self.assertIn("const DECOR", plano)
+        self.assertIn("SIN DATOS", plano)
+
     def test_el_texto_del_publico_se_escapa(self) -> None:
         """Ningún dato se cuela crudo en el HTML: dentro de una plantilla con etiquetas, toda interpolación
         que sea directamente un campo del estado (`${i.label}`) es un fallo. Lo válido es `${E(...)}`."""
@@ -158,6 +197,24 @@ class ContratoDelEstadoTest(unittest.TestCase):
             self.assertTrue(s["zones"], f"{case}: sin zonas no hay plano")
             for clave in ZONE_KEYS:
                 self.assertIn(clave, s["zones"][0], f"{case}: falta `zones[].{clave}`")
+            self.assertIn("telegram", s, f"{case}: falta la clave `telegram` (puede ser null)")
+            tg = s["telegram"]
+            if isinstance(tg, dict) and "asignaciones" in tg:
+                for clave in TELEGRAM_KEYS:
+                    self.assertIn(clave, tg, f"{case}: falta `telegram.{clave}`")
+                self.assertIn("disponibles", tg["staff"])
+                self.assertIn("total", tg["staff"])
+                if tg["asignaciones"]:
+                    for clave in ASIGNACION_KEYS:
+                        self.assertIn(clave, tg["asignaciones"][0], f"{case}: falta `telegram.asignaciones[].{clave}`")
+                if tg.get("escaladas"):
+                    for clave in ESCALADA_KEYS:
+                        self.assertIn(clave, tg["escaladas"][0], f"{case}: falta `telegram.escaladas[].{clave}`")
+            if s["forecasts"]:
+                for clave in FORECAST_KEYS:
+                    self.assertIn(clave, s["forecasts"][0], f"{case}: falta `forecasts[].{clave}`")
+            crudo = json.dumps(s)
+            self.assertNotIn("chat_id", crudo)
         finally:
             app.state.session.close()
 
@@ -288,6 +345,52 @@ class ChatPanelTest(unittest.TestCase):
                 os.environ.pop("MANDO_OPERATORS", None)
             else:
                 os.environ["MANDO_OPERATORS"] = previo
+
+
+class TelegramPintadoTest(unittest.TestCase):
+    """La Sala pinta S.telegram si existe; si es null, no inventa despacho."""
+
+    def test_el_js_conoce_el_contrato(self) -> None:
+        js = (HERE / "static" / "sala.js").read_text(encoding="utf-8")
+        for marca in ("function telegramState", "Staff por Telegram", "ESCALADA POR VOZ",
+                      "Telegram →", "ACUDE", "No puede → reasignando", "Cubierto",
+                      "pendiente"):
+            self.assertIn(marca, js, marca)
+        self.assertNotIn("innerHTML = S.telegram", js)
+
+    def test_demo_sin_espejo_no_rompe(self) -> None:
+        app = app_for("demo-1")
+        try:
+            s = TestClient(app).get("/api/state").json()
+            self.assertIn("telegram", s)
+            self.assertTrue(s["telegram"] is None or isinstance(s["telegram"], dict))
+        finally:
+            app.state.session.close()
+
+    def test_tras_el_demo_el_contrato_esta_completo(self) -> None:
+        app = app_for("demo-gates")
+        try:
+            c = TestClient(app)
+            r = c.post("/api/demo/telegram", json={"zone": "front_pit"})
+            self.assertEqual(r.status_code, 200, r.text)
+            tg = c.get("/api/state").json()["telegram"]
+            self.assertIsInstance(tg, dict)
+            for clave in TELEGRAM_KEYS:
+                self.assertIn(clave, tg, clave)
+            self.assertGreaterEqual(tg["staff"]["total"], tg["staff"]["disponibles"])
+            self.assertTrue(tg["asignaciones"])
+            self.assertTrue(tg["escaladas"])
+            for a in tg["asignaciones"]:
+                for clave in ASIGNACION_KEYS:
+                    self.assertIn(clave, a, clave)
+                self.assertIn(a["estado"], ("pending", "accepted", "declined", "timeout", "covered"))
+            for e in tg["escaladas"]:
+                for clave in ESCALADA_KEYS:
+                    self.assertIn(clave, e, clave)
+            crudo = json.dumps(tg)
+            self.assertNotIn("chat_id", crudo)
+        finally:
+            app.state.session.close()
 
 
 if __name__ == "__main__":

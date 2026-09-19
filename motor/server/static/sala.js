@@ -191,6 +191,73 @@
     s.happyrobot = s.happyrobot || {}; s.presentation = s.presentation || {};
     return s;
   }
+
+  const ROL_TG = { medico: "médico", enfermero: "enfermero", sanitario: "sanitario", ambulancia: "ambulancia",
+    seguridad: "seguridad", tecnico: "técnico", logistica: "logística", voluntario: "voluntario",
+    jefe_zona: "jefe de zona", organizador: "organizador" };
+  const tgSince = new Map();
+  function telegramState() {
+    const t = S && S.telegram;
+    if (!t || typeof t !== "object" || Array.isArray(t)) return null;
+    if (!t.staff || !Array.isArray(t.asignaciones)) return null;
+    return t;
+  }
+  function tgRol(r) { return ROL_TG[r] || r || "staff"; }
+  function tgAlias(a) {
+    const s = String((a && a.alias) || "");
+    if (!s || /\+?\d[\d\s().-]{8,}/.test(s)) return "staff";
+    return s;
+  }
+  function tgZoneLabel(id) {
+    if (!id) return "";
+    const n = zoneName(id);
+    return n.replace(/\s*\([^)]*\)\s*/g, "").trim() || n;
+  }
+  function tgPhrase(a) {
+    const rol = tgRol(a.rol), alias = tgAlias(a);
+    if (a.estado === "pending") {
+      const key = [a.incident_id, a.rol, a.intento, a.alias].join("|");
+      if (!tgSince.has(key)) tgSince.set(key, Date.now());
+      const s = Math.max(0, Math.round((Date.now() - tgSince.get(key)) / 1000));
+      return "Telegram → " + rol + ": pendiente " + s + " s";
+    }
+    if (a.estado === "accepted") {
+      const eta = a.eta_min != null ? " · " + a.eta_min + " min" : "";
+      const desde = a.desde_zona ? " · desde " + tgZoneLabel(a.desde_zona) : "";
+      return "ACUDE " + alias + eta + desde;
+    }
+    if (a.estado === "declined" || a.estado === "timeout") {
+      return "No puede → reasignando (intento " + (Number(a.intento || 1) + (a.estado === "declined" ? 1 : 0)) + ")";
+    }
+    if (a.estado === "covered") return "Cubierto";
+    return "";
+  }
+  function tgIdsFor(i) {
+    const ids = new Set([i.id]);
+    (i.reports || []).forEach((r) => ids.add(r));
+    (S.log || []).forEach((e) => {
+      const iid = e.data && e.data.incident;
+      if (iid && (e.ref === i.id || (i.reports || []).includes(e.ref))) ids.add(iid);
+    });
+    return ids;
+  }
+  function tgAsignaciones(i) {
+    const tg = telegramState();
+    if (!tg) return [];
+    const ids = tgIdsFor(i);
+    return tg.asignaciones.filter((a) => ids.has(a.incident_id));
+  }
+  function tgEscaladas(i) {
+    const tg = telegramState();
+    if (!tg) return [];
+    const ids = tgIdsFor(i);
+    return (tg.escaladas || []).filter((e) => ids.has(e.incident_id));
+  }
+  function tgCls(estado) {
+    return estado === "accepted" || estado === "covered" ? "accept" : estado === "pending" ? "call"
+      : estado === "escalada" ? "escalada" : "reject";
+  }
+
   function connect() {
     const poll = () => U.api("/api/state").then((s) => { online(true); S = normalize(s); schedule(); }).catch(() => online(false));
     poll();
@@ -213,6 +280,10 @@
       z.g.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pick({ zone: id }); } });
     });
     connect();
+    setInterval(() => {
+      const tg = telegramState();
+      if (tg && (tg.asignaciones || []).some((a) => a.estado === "pending")) schedule();
+    }, 1000);
   }).catch(() => { online(false); setTimeout(() => location.reload(), 4000); });
 
   // ---------------------------------------------------------------- pintado
@@ -437,9 +508,19 @@
       const res = team
         ? `<span>${E(team)}${E(eta)}</span>`
         : `<span class="deficit">${E(front.why_waiting || "Sin recurso asignado")}</span>`;
-      const hrCell = hr
-        ? `<span class="hrcell ${hr.cls}" title="${E(hr.wf + (hr.configured ? " · configurado" : " · borrador, sale por el genérico") + (hr.real ? " · llamada real" : " · llamada simulada"))}">${E(hr.text)}</span>`
-        : '<span class="hrcell idle">Sin comunicación todavía</span>';
+      const asg = tgAsignaciones(i), esc = tgEscaladas(i);
+      let hrCell;
+      if (esc.length) {
+        const e = esc[esc.length - 1];
+        hrCell = `<span class="hrcell tg escalada" title="${E(e.workflow_voz || "")}">${E("ESCALADA POR VOZ · " + tgRol(e.rol))}</span>`;
+      } else if (asg.length) {
+        const a = asg[asg.length - 1];
+        hrCell = `<span class="hrcell tg ${tgCls(a.estado)}">${E(tgPhrase(a))}</span>`;
+      } else if (hr) {
+        hrCell = `<span class="hrcell ${hr.cls}" title="${E(hr.wf + (hr.configured ? " · configurado" : " · borrador, sale por el genérico") + (hr.real ? " · llamada real" : " · llamada simulada"))}">${E(hr.text)}</span>`;
+      } else {
+        hrCell = '<span class="hrcell idle">Sin comunicación todavía</span>';
+      }
       return `<tr data-incident="${E(i.id)}" data-zone="${E(i.zone || "")}" tabindex="0"
           class="${sel.incident === i.id ? "sel" : linkedIncident(i.id) ? "linked" : ""}">
         <td><span class="g-pill g-${g}" title="${E(i.explain || "Sin explicación de prioridad")}">${E(GRAV[g])}</span></td>
@@ -479,7 +560,7 @@
       return `<section class="res-group${out ? " out" : ""}"><h3>${E(grp.title)}
         <span>${free} / ${list.length} LIBRES${out ? " – AGOTADO" : ""}</span></h3>
         <div class="res-list">${cards}</div></section>`;
-    }).join("") + coordCard();
+    }).join("") + staffTelegramCard() + coordCard();
     setHTML($("res-groups"), html);
 
     // Abiertos por gravedad.
@@ -490,6 +571,21 @@
       <i><b style="width:${Math.round(c.n / max * 100)}%"></b></i></div>`).join(""));
 
     chatPanel();
+  }
+  /* STAFF POR TELEGRAM: solo si el espejo ha publicado S.telegram. */
+  function staffTelegramCard() {
+    const tg = telegramState();
+    if (!tg) return "";
+    const s = tg.staff || {}, d = s.disponibles, n = s.total;
+    const vivas = (tg.asignaciones || []).filter((a) => a.estado === "pending" || a.estado === "accepted");
+    const cards = vivas.length
+      ? vivas.slice(-8).map((a) => `<button class="res ${a.estado === "accepted" ? "free" : "busy"}" data-incident="${E(a.incident_id)}" title="${E(tgPhrase(a))}">
+          <b>${E(tgAlias(a))} · ${E(tgRol(a.rol))}</b><span>${E(tgPhrase(a))}</span></button>`).join("")
+      : '<p class="tiny">Nadie avisado por Telegram en este minuto.</p>';
+    return `<section class="res-group"><h3>STAFF POR TELEGRAM
+      <span>${E(d)}/${E(n)} DISPONIBLES</span></h3>
+      <p class="tiny">Staff por Telegram · ${E(d)}/${E(n)} disponibles</p>
+      <div class="res-list">${cards}</div></section>`;
   }
   /* MESA DE COORDINACIÓN: el enlace con HappyRobot, con su cifra real (llamadas vivas y configuración). */
   function coordCard() {
@@ -503,7 +599,12 @@
   }
   $("res-groups").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-resource]");
-    if (b) pick({ resource: b.dataset.resource, incident: b.dataset.incident || null });
+    if (b) { pick({ resource: b.dataset.resource, incident: b.dataset.incident || null }); return; }
+    const t = ev.target.closest("[data-incident]");
+    if (!t) return;
+    const id = t.dataset.incident;
+    const inc = (S.incidents || []).find((i) => i.id === id || tgIdsFor(i).has(id));
+    if (inc) pick({ incident: inc.id, zone: inc.zone });
   });
 
   // ---------------------------------------------------------------- chat de los canales
@@ -565,7 +666,7 @@
       : zone ? `Sector ${zoneName(zone)} · ${(S.zones.find((z) => z.id === zone) || {}).occupancy || 0} personas` : "";
 
     const parts = [];
-    if (i) parts.push(quePasa(i), fuentes(i), planBox(i), decisionBox(i), hrBox(i), cronologia(i));
+    if (i) parts.push(quePasa(i), fuentes(i), planBox(i), decisionBox(i), tgBox(i), hrBox(i), cronologia(i));
     parts.push(previsiones(zone || (i && i.zone)), whatifBox(zone || (i && i.zone)));
     setHTML($("ficha-body"), parts.filter(Boolean).join(""));
   }
@@ -629,6 +730,20 @@
         <p class="status" id="st-${E(a.id)}"></p></div>`;
     }).join("");
   }
+  function tgBox(i) {
+    const tg = telegramState();
+    if (!tg) return "";
+    const asg = tgAsignaciones(i).slice().sort((a, b) => (a.t || 0) - (b.t || 0));
+    const esc = tgEscaladas(i);
+    if (!asg.length && !esc.length) return "";
+    const rows = asg.map((a) => `<li><time>min ${E(a.t)} · ${E(tgRol(a.rol))} · intento ${E(a.intento)}</time>${E(tgPhrase(a))}</li>`).join("");
+    const voz = esc.map((e) => `<div class="box escalada"><h3>ESCALADA POR VOZ</h3>
+      <p><b>${E(tgRol(e.rol))}</b> · workflow ${E(e.workflow_voz || "mando-despacho-telefono")}</p>
+      <p class="tiny">${E(e.motivo || "Nadie ha contestado por Telegram; se propone llamar por voz.")}</p></div>`).join("");
+    return `${voz}<div class="box"><h3>AGENTE HR · TELEGRAM</h3>
+      <p class="tiny">Staff por Telegram · ${E(tg.staff.disponibles)}/${E(tg.staff.total)} disponibles. Alias, nunca un teléfono.</p>
+      ${rows ? `<ul class="timeline">${rows}</ul>` : '<p class="tiny">Sin asignaciones todavía.</p>'}</div>`;
+  }
   function hrBox(i) {
     const calls = (S.calls.calls || []).filter((c) => c.incident === i.id);
     const pend = (S.approvals || []).find((a) => a.incident === i.id && ["dispatch", "request_external", "notify", "broadcast"].includes(a.kind));
@@ -671,8 +786,10 @@
     const list = (S.forecasts || []).filter((f) => !zone || f.zone === zone || f.resource);
     if (!list.length) return '<div class="box"><h3>PREVISIONES DEL GEMELO</h3><p class="tiny">El gemelo no anticipa ningún cruce de umbral en los próximos 15 minutos.</p></div>';
     return `<div class="box"><h3>PREVISIONES DEL GEMELO (15 min)</h3>
-      ${list.slice(0, 6).map((f) => `<p class="tiny"><b>${E(f.eta_min)} min</b> · ${E(f.metric)} en ${E(f.zone ? zoneName(f.zone) : f.resource)}
-        · ahora ${E(num(f.current, 2))} → previsto ${E(num(f.predicted, 2))} (umbral ${E(num(f.threshold, 1))}) · <b>${E(f.status)}</b></p>`).join("")}
+      ${list.slice(0, 6).map((f) => `<p class="tiny"><span class="countdown">T−${E(f.eta_min)} min</span>
+        · ${E(f.metric)} en ${E(f.zone ? zoneName(f.zone) : f.resource)}
+        · ahora ${E(num(f.current, 2))} → previsto ${E(num(f.predicted, 2))} (umbral ${E(num(f.threshold, 1))})
+        · <b>${E(f.status)}</b>${f.eta_min === 0 ? " · ahora" : " · cuenta atrás"}</p>`).join("")}
       <p class="tiny">Simulación, N = 1 ejecución. El gemelo no conoce los sucesos futuros del caso.</p></div>`;
   }
   function whatifBox(zone) {
@@ -871,6 +988,10 @@
     if (!S) return;
     const k = ev.key.toLowerCase();
     if (k === " ") { ev.preventDefault(); post("/api/control", { cmd: "toggle" }); }
+    else if (k === "enter") {
+      const a = (S.approvals || [])[0];
+      if (a) pick({ incident: a.incident, zone: a.zone });
+    }
     else if (k === "s") post("/api/control", { cmd: "step" });
     else if (k === "r") post("/api/control", { cmd: "reset" });
     else if (k === "k") post("/api/control", { cmd: "key_moment" });

@@ -174,7 +174,7 @@
     const voiceSim=/simulad/.test(pres.voice||'')||S.calls?.mode==='sim';
     add('Canal de voz',down('voice')?'caido':voiceSim?'simulado':S.calls?.real_sent?'operativo':'pendiente',A(S.calls?.calls).at(-1)?.t!=null?'min '+A(S.calls.calls).at(-1).t:null,down('voice')?'Plan B: voz simulada; canal interrumpido':pres.voice,S.calls?.turn_latency_ms!=null?`<small>Turno: ${N(S.calls.turn_latency_ms,0)} ms · N = ${N(S.calls.turn_latency_n,0)}</small>`:'');
     for(const ch of ['web','telegram','email','sms','sensor']){
-      const tg=S.telegram||{}, last=latest(ch), simulated=ch==='sensor'||(ch!=='telegram'&&ch!=='web'&&!workflows[ch]?.configured);
+      const tg=S.telegram_bot||{}, last=latest(ch), simulated=ch==='sensor'||(ch!=='telegram'&&ch!=='web'&&!workflows[ch]?.configured);
       const status=down(ch)?'caido':ch==='telegram'?tg.status==='error'?'caido':tg.status==='on'?'operativo':'pendiente':simulated?'simulado':last||ch==='web'&&connected?'operativo':'pendiente';
       add('Canal '+(U.labels[ch]||ch),status,last,ch==='telegram'&&status==='caido'?'Plan B: avisar por la web':ch==='sensor'?'Sensores del simulador':status==='pendiente'?'Sin prueba de conexión':null);
     }

@@ -22,9 +22,10 @@ def install(app):
 
     @app.post('/mock/tg-incident')
     @app.post('/mock/tg-assignment')
+    @app.post('/mock/tg-staff')
     @app.post('/mock/tg-approval')
     async def tg_event(request: Request):
-        """Los tres tipos del espejo de Telegram, uno a uno: `{callback_url, callback_token, event}`.
+        """Los cuatro tipos del espejo de Telegram, uno a uno: `{callback_url, callback_token, event}`.
         El `type` lo pone la ruta, para que una prueba no pueda equivocarse de tipo sin darse cuenta."""
         data = await request.json()
         event = dict(data.get('event') or {})

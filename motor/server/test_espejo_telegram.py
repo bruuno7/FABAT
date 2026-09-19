@@ -1,4 +1,4 @@
-"""Espejo del despacho por Telegram: entrada por /hr/events, estado de la Sala y validación estricta.
+"""Espejo del despacho por Telegram: entrada por /hr/events, contrato S.telegram y validación estricta.
 
     uv run --project motor/server python -m unittest motor.server.test_espejo_telegram -v
 """
@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from motor.server import telegram_espejo
+from motor.server import espejo_telegram
 from motor.server.app import create_app
 
 SECRET = 'hr-test'
@@ -19,8 +19,6 @@ PHONE = re.compile(r'\+?\d[\d\s().-]{8,}')
 
 class EspejoTelegramTest(unittest.TestCase):
     def setUp(self):
-        # MANDO_PUBLIC_URL: también en localhost hace falta credencial para operar (si no, el TestClient
-        # entraría como operador por venir de 127.0.0.1 y la prueba del 403 no probaría nada).
         self.env = patch.dict(os.environ, {'MANDO_PUBLIC_URL': 'https://test.invalid', 'MANDO_OPERATORS': '',
                                            'MANDO_OPERATOR_TOKEN': 'operator-test',
                                            'TELEGRAM_MODE': 'off', 'MANDO_DB': 'off'})
@@ -37,14 +35,13 @@ class EspejoTelegramTest(unittest.TestCase):
         self.app.state.chat.stop()
         self.env.stop()
 
-    # ------------------------------------------------------------------ utilidades
     def send(self, event, expect=200):
         r = self.c.post('/hr/events', json=event, headers=self.hr)
         self.assertEqual(r.status_code, expect, r.text)
         return r.json() if r.status_code < 400 else r
 
     def espejo(self):
-        return self.c.get('/api/state').json()['telegram_despacho']
+        return self.c.get('/api/state').json()['telegram']
 
     def aviso(self, iid='tg-1', **kw):
         event = dict({'type': 'tg_incident', 'schema': 'mando.hr.v1', 'event_id': iid + '-0', 'id': iid,
@@ -54,7 +51,6 @@ class EspejoTelegramTest(unittest.TestCase):
                       'recursos_requeridos': [{'rol': 'medico', 'cantidad': 1}]}, **kw)
         return self.send(event)
 
-    # ------------------------------------------------------------------ los tres tipos entran y se ven
     def test_tg_incident_entra_por_el_contrato_normal(self):
         out = self.aviso()
         self.assertTrue(out['ok'])
@@ -64,10 +60,10 @@ class EspejoTelegramTest(unittest.TestCase):
         self.assertEqual(report['via'], 'telegram')
         self.assertEqual(report['source'], 'HappyRobot · Telegram')
         self.assertEqual(report['understood'], 'happyrobot')
-        item = state['telegram_despacho']['incidentes'][0]
-        self.assertEqual((item['id'], item['gravedad'], item['prioridad']), ('tg-1', 'vital', 9))
-        self.assertEqual(item['recursos_requeridos'], [{'rol': 'medico', 'cantidad': 1}])
-        self.assertTrue(item['requiere_aprobacion'])
+        tg = state['telegram']
+        self.assertIsNotNone(tg)
+        self.assertEqual(tg['asignaciones'], [])
+        self.assertEqual(tg['escaladas'], [])
 
     def test_el_aviso_se_fusiona_como_cualquier_otro(self):
         rid = self.aviso()['report_id']
@@ -77,96 +73,144 @@ class EspejoTelegramTest(unittest.TestCase):
         self.assertIsNotNone(incident, 'el aviso de Telegram tiene que acabar en un incidente de Mando')
         self.assertEqual(incident['zone'], 'front_pit')
 
-    def test_tg_assignment_se_ve_con_los_rotulos_del_diseno(self):
+    def test_tg_assignment_se_ve_en_el_contrato(self):
         self.aviso()
         self.send({'type': 'tg_assignment', 'event_id': 'a1', 'incident_id': 'tg-1', 'rol': 'medico',
-                   'estado': 'pending', 'alias': 'Marta', 'intento': 1, 'timeout_s': 40})
-        self.assertEqual(self.espejo()['incidentes'][0]['resumen'], 'Telegram → médico: pendiente 40 s')
+                   'estado': 'pending', 'alias': 'Marta', 'intento': 1})
+        row = self.espejo()['asignaciones'][0]
+        self.assertEqual((row['incident_id'], row['rol'], row['estado'], row['alias'], row['intento']),
+                         ('tg-1', 'medico', 'pending', 'Marta', 1))
         self.send({'type': 'tg_assignment', 'event_id': 'a2', 'incident_id': 'tg-1', 'rol': 'medico',
                    'estado': 'accepted', 'alias': 'Marta', 'eta_min': 3, 'from_zone': 'gate_a', 'intento': 1})
-        item = self.espejo()['incidentes'][0]
-        self.assertEqual(item['resumen'], 'ACUDE Marta · 3 min · desde Puerta A (norte)')
-        self.assertEqual(item['clase'], 'acepta')
-        self.assertEqual(item['asignaciones'][0]['from_zone'], 'gate_a')
+        row = self.espejo()['asignaciones'][-1]
+        self.assertEqual((row['estado'], row['eta_min'], row['desde_zona']), ('accepted', 3, 'gate_a'))
+
+    def test_tg_staff(self):
+        self.aviso()
+        self.send({'type': 'tg_staff', 'event_id': 'st1', 'disponibles': 4, 'total': 5})
+        self.assertEqual(self.espejo()['staff'], {'disponibles': 4, 'total': 5})
 
     def test_tg_assignment_rechazo_y_cubierto(self):
         self.aviso()
         self.send({'type': 'tg_assignment', 'event_id': 'a1', 'incident_id': 'tg-1', 'rol': 'medico',
                    'estado': 'declined', 'alias': 'Iván', 'intento': 1})
-        self.assertEqual(self.espejo()['incidentes'][0]['resumen'], 'No puede → reasignando (intento 2)')
         self.send({'type': 'tg_assignment', 'event_id': 'a2', 'incident_id': 'tg-1', 'rol': 'medico',
                    'estado': 'covered', 'alias': 'Nadia', 'intento': 2})
-        self.assertEqual(self.espejo()['incidentes'][0]['resumen'], 'Cubierto')
+        estados = [a['estado'] for a in self.espejo()['asignaciones']]
+        self.assertEqual(estados, ['declined', 'covered'])
 
-    def test_tg_approval(self):
+    def test_tg_approval_solo_log_si_no_hay_tarjeta(self):
         self.aviso()
         self.send({'type': 'tg_approval', 'event_id': 'ap1', 'incident_id': 'tg-1', 'decision': 'apr',
                    'por': 'organizador', 'nota': 'adelante'})
-        approval = self.espejo()['incidentes'][0]['aprobacion']
-        self.assertEqual((approval['decision'], approval['por'], approval['etiqueta']),
-                         ('apr', 'organizador', 'aprobada'))
+        self.assertEqual(self.c.get('/api/state').json()['approvals'], [])
+        logs = [e['text'] for e in self.c.get('/api/state').json()['log'] if e.get('kind') == 'espejo_telegram']
+        self.assertTrue(any('organizador por Telegram' in t and 'APRUEBA' in t for t in logs))
 
-    def test_staff_por_telegram_como_grupo_aparte(self):
-        self.aviso()
-        for n, (alias, estado) in enumerate([('Marta', 'accepted'), ('Iván', 'declined'), ('Nadia', 'declined')]):
-            self.send({'type': 'tg_assignment', 'event_id': f's{n}', 'incident_id': 'tg-1', 'rol': 'medico',
-                       'estado': estado, 'alias': alias, 'intento': 1})
-        staff = self.espejo()['staff']
-        self.assertEqual((staff['total'], staff['libres'], staff['atendiendo']), (3, 2, 1))
-        self.assertEqual(staff['titulo'], 'Staff por Telegram')
+    def _app_demo1(self):
+        self.s.close()
+        self.app.state.session.close()
+        self.app.state.chat.stop()
+        self.app = create_app('demo-1', threaded=False, secret=SECRET, playbook='seed', local_params=False)
+        self.s = self.app.state.session
+        self.c = TestClient(self.app)
 
-    def test_chat_con_los_mensajes(self):
-        self.aviso()
-        self.send({'type': 'tg_assignment', 'event_id': 'a1', 'incident_id': 'tg-1', 'rol': 'medico',
-                   'estado': 'accepted', 'alias': 'Marta', 'eta_min': 2, 'intento': 1})
-        mensajes = self.espejo()['mensajes']
-        self.assertEqual(mensajes[0]['de'], 'informante')
-        self.assertIn('desplomado', mensajes[0]['texto'])
-        self.assertEqual(mensajes[-1]['nombre'], 'Marta')
+    def test_tg_approval_marca_tarjeta_sin_ejecutar(self):
+        self._app_demo1()
+        self.c.post('/api/control', json={'cmd': 'step', 'n': 14}, headers=self.op)
+        state = self.c.get('/api/state').json()
+        pending = state['approvals']
+        self.assertTrue(pending)
+        inc = next(i for i in state['incidents'] if i['id'] == pending[0]['incident'])
+        rid = inc['reports'][0]
+        iid = 'tg-link'
+        self.send({'type': 'tg_incident', 'schema': 'mando.hr.v1', 'event_id': iid + '-0', 'id': iid,
+                   'texto': 'Aviso enlazado para prueba de aprobación', 'tipo': 'medica', 'zona': 'front_pit'})
+        self.s.tg_mirror.incidentes[iid]['report_id'] = rid
+        aid = pending[0]['id']
+        self.send({'type': 'tg_approval', 'event_id': 'ap-link', 'incident_id': iid, 'decision': 'vet',
+                   'por': 'organizador', 'nota': 'espera'})
+        after = self.c.get('/api/state').json()
+        marked = next(a for a in after['approvals'] if a['id'] == aid)
+        self.assertEqual(marked['telegram_decision']['text'],
+                         'Decidido en Telegram por el organizador: VETA')
+        self.assertIn(aid, [a['id'] for a in after['approvals']])
 
-    # ------------------------------------------------------------------ secuencia completa
+    def test_tg_approval_ejecuta_con_trust(self):
+        self._app_demo1()
+        with patch.dict(os.environ, {'MANDO_TRUST_TG_APPROVAL': '1'}):
+            self.c.post('/api/control', json={'cmd': 'step', 'n': 14}, headers=self.op)
+            state = self.c.get('/api/state').json()
+            pending = state['approvals']
+            inc = next(i for i in state['incidents'] if i['id'] == pending[0]['incident'])
+            rid, aid = inc['reports'][0], pending[0]['id']
+            iid = 'tg-trust'
+            self.send({'type': 'tg_incident', 'schema': 'mando.hr.v1', 'event_id': iid + '-0', 'id': iid,
+                       'texto': 'Aviso para ejecutar aprobación', 'tipo': 'medica'})
+            self.s.tg_mirror.incidentes[iid]['report_id'] = rid
+            self.send({'type': 'tg_approval', 'event_id': 'ap-trust', 'incident_id': iid, 'decision': 'apr',
+                       'por': 'organizador'})
+        after = self.c.get('/api/state').json()
+        self.assertNotIn(aid, [a['id'] for a in after['approvals']])
+
     def test_secuencia_completa_hasta_la_escalada_por_voz(self):
-        for event in telegram_espejo.secuencia_demo(self.s):
+        for event in espejo_telegram.secuencia_demo(self.s):
             self.send(event)
-        espejo = self.espejo()
-        self.assertEqual(len(espejo['escaladas']), 1)
-        escalada = espejo['escaladas'][0]
+        tg = self.espejo()
+        self.assertEqual(len(tg['escaladas']), 1)
+        escalada = tg['escaladas'][0]
         self.assertEqual(escalada['rol'], 'seguridad')
-        self.assertEqual(escalada['workflow'], 'mando-despacho-seguridad')
-        self.assertEqual(escalada['intentos'], telegram_espejo.INTENTOS_MAX)
-        item = espejo['incidentes'][0]
-        self.assertEqual(item['clase'], 'escalada')
-        self.assertIn('llamada por voz', item['resumen'])
-        # la parte que SÍ aceptó sigue contada: una escalada no borra a quien va de camino
-        self.assertTrue(any(a['estado'] == 'accepted' for a in item['asignaciones']))
-        self.assertGreaterEqual(len(item['cronologia']), 9)
+        self.assertEqual(escalada['workflow_voz'], 'mando-despacho-seguridad')
+        self.assertIn('Telegram', escalada['motivo'])
+        self.assertTrue(any(a['estado'] == 'accepted' for a in tg['asignaciones']))
 
     def test_demo_de_operador(self):
-        self.assertEqual(self.c.post('/api/espejo/demo', json={}).status_code, 401)
-        out = self.c.post('/api/espejo/demo', json={'zone': 'front_pit'}, headers=self.op).json()
+        self.assertEqual(self.c.post('/api/demo/telegram', json={}).status_code, 401)
+        out = self.c.post('/api/demo/telegram', json={'zone': 'front_pit'}, headers=self.op).json()
         self.assertTrue(out['ok'])
         self.assertEqual(len(out['escaladas']), 1)
-        self.assertEqual(self.espejo()['incidentes'][0]['escalada']['workflow'], 'mando-despacho-seguridad')
+        self.assertEqual(out['telegram']['escaladas'][0]['workflow_voz'], 'mando-despacho-seguridad')
 
-    # ------------------------------------------------------------------ validación estricta
     def test_tipo_desconocido_es_422(self):
         self.send({'type': 'tg_cualquier_cosa', 'id': 'x'}, expect=422)
 
-    def test_campos_desconocidos_y_valores_fuera_de_vocabulario(self):
+    def test_zona_desconocida_no_rechaza_el_evento(self):
+        out = self.aviso(iid='tg-z', zona='zona_que_no_existe')
+        self.assertTrue(out['ok'])
+        item = self.s.tg_mirror.incidentes['tg-z']
+        self.assertIsNone(item['zona'])
+
+    def test_alias_de_zona_en_espanol(self):
+        out = self.aviso(iid='tg-alias', zona='escenario')
+        self.assertEqual(self.s.tg_mirror.incidentes['tg-alias']['zona'], 'front_pit')
+
+    def test_enteros_y_booleanos_como_cadena(self):
+        self.aviso(iid='tg-str', prioridad='8', requiere_aprobacion='true',
+                   recursos_requeridos=[{'rol': 'medico', 'cantidad': '2'}])
+        item = self.s.tg_mirror.incidentes['tg-str']
+        self.assertEqual((item['prioridad'], item['requiere_aprobacion']), (8, True))
+        self.send({'type': 'tg_assignment', 'event_id': 'str-a', 'incident_id': 'tg-str', 'rol': 'medico',
+                   'estado': 'accepted', 'alias': 'Marta', 'eta_min': '3', 'from_zone': 'puerta b', 'intento': '1'})
+        row = self.espejo()['asignaciones'][-1]
+        self.assertEqual((row['eta_min'], row['desde_zona'], row['intento']), (3, 'gate_b', 1))
+        self.send({'type': 'tg_staff', 'event_id': 'str-s', 'disponibles': '4', 'total': '5'})
+        self.assertEqual(self.espejo()['staff'], {'disponibles': 4, 'total': 5})
+
+    def test_coercion_estricta_rechaza_valores_ambiguos(self):
         self.aviso()
         malos = [
             {'type': 'tg_incident', 'id': 'tg-2', 'texto': 'x', 'tipo': 'inventado'},
             {'type': 'tg_incident', 'id': 'tg-2', 'texto': 'x', 'gravedad': 'catastrofica'},
-            {'type': 'tg_incident', 'id': 'tg-2', 'texto': 'x', 'zona': 'zona_que_no_existe'},
             {'type': 'tg_incident', 'id': 'tg-2', 'texto': 'x', 'prioridad': 99},
-            {'type': 'tg_incident', 'id': 'tg-2', 'texto': 'x', 'requiere_aprobacion': 'true'},
+            {'type': 'tg_incident', 'id': 'tg-2', 'texto': 'x', 'prioridad': 'ocho'},
+            {'type': 'tg_incident', 'id': 'tg-2', 'texto': 'x', 'requiere_aprobacion': 'quizas'},
             {'type': 'tg_incident', 'id': 'tg-2', 'texto': 'x', 'recursos_requeridos': [{'rol': 'astronauta'}]},
             {'type': 'tg_incident', 'id': 'tg-2', 'texto': 'x', 'recursos_requeridos': [{'rol': 'medico', 'cantidad': 0}]},
             {'type': 'tg_incident', 'id': 'tg-2'},
             {'type': 'tg_assignment', 'incident_id': 'tg-1', 'rol': 'medico', 'estado': 'quizas'},
             {'type': 'tg_assignment', 'incident_id': 'tg-1', 'rol': 'astronauta', 'estado': 'pending'},
             {'type': 'tg_assignment', 'incident_id': 'tg-1', 'rol': 'medico', 'estado': 'accepted', 'eta_min': 9999},
-            {'type': 'tg_assignment', 'incident_id': 'tg-1', 'rol': 'medico', 'estado': 'accepted', 'from_zone': 'marte'},
+            {'type': 'tg_staff', 'disponibles': 6, 'total': 5},
             {'type': 'tg_approval', 'incident_id': 'tg-1', 'decision': 'quizas', 'por': 'organizador'},
             {'type': 'tg_approval', 'incident_id': 'tg-1', 'decision': 'apr', 'por': 'Marta'},
         ]
@@ -179,17 +223,14 @@ class EspejoTelegramTest(unittest.TestCase):
                    'chat_id': 123456789}, expect=422)
         self.send({'type': 'tg_assignment', 'incident_id': 'tg-1', 'rol': 'medico', 'estado': 'pending',
                    'alias': '+34600111222'}, expect=422)
-        self.send({'type': 'tg_assignment', 'incident_id': 'tg-1', 'rol': 'medico', 'estado': 'pending',
-                   'alias': '987654321'}, expect=422)
         self.send({'type': 'tg_incident', 'id': 'tg-9', 'texto': 'x', 'telefono': '+34600111222'}, expect=422)
 
     def test_sin_chat_id_ni_telefono_en_el_estado(self):
-        for event in telegram_espejo.secuencia_demo(self.s):
+        for event in espejo_telegram.secuencia_demo(self.s):
             self.send(event)
         state = self.c.get('/api/state').json()
         self.assertNotIn('chat_id', json.dumps(state, ensure_ascii=False))
-        # El espejo entero, campo a campo: ni un identificador de Telegram ni nada con pinta de teléfono.
-        espejo = json.dumps(state['telegram_despacho'], ensure_ascii=False)
+        espejo = json.dumps(state['telegram'], ensure_ascii=False)
         self.assertIsNone(PHONE.search(espejo), 'no puede salir nada con pinta de teléfono en el espejo')
         for palabra in ('chat_id', 'telefono', 'teléfono', 'phone', 'message_id'):
             self.assertNotIn(palabra, espejo)
@@ -207,7 +248,7 @@ class EspejoTelegramTest(unittest.TestCase):
         state = self.c.get('/api/state').json()
         self.assertEqual(state['t'], antes + 2)
         self.assertIsNone(state['engine_error'])
-        self.assertEqual(len(state['telegram_despacho']['incidentes'][0]['asignaciones']), 0)
+        self.assertEqual(self.espejo()['asignaciones'], [])
 
     def test_idempotencia_por_event_id(self):
         self.aviso()
@@ -215,7 +256,7 @@ class EspejoTelegramTest(unittest.TestCase):
                  'estado': 'accepted', 'alias': 'Marta', 'eta_min': 4, 'intento': 1}
         self.send(event)
         self.assertTrue(self.send(event)['duplicate'])
-        self.assertEqual(len(self.espejo()['incidentes'][0]['asignaciones']), 1)
+        self.assertEqual(len(self.espejo()['asignaciones']), 1)
 
     def test_token_de_webhooks(self):
         self.assertEqual(self.c.post('/hr/events', json={'type': 'tg_incident'}).status_code, 401)
@@ -227,6 +268,10 @@ class EspejoTelegramTest(unittest.TestCase):
             r = self.c.post('/hr/events', json={'type': 'tg_incident', 'id': 'x', 'texto': 'y'},
                             headers={'X-Mando-Token': 'token-widget'})
         self.assertEqual(r.status_code, 403, r.text)
+
+    def test_espejo_ausente_sin_eventos(self):
+        tg = self.c.get('/api/state').json()['telegram']
+        self.assertNotIn('asignaciones', tg, 'sin espejo no debe publicar el contrato de despacho')
 
 
 if __name__ == '__main__':

@@ -36,8 +36,8 @@ from .telegram_bot import safety_instruction
 from .forecast import ForecastService
 from .multi import Operators, identity, label, configured
 from .personal import FieldStaff, external_notice
-from . import telegram_espejo
-from .telegram_espejo import TelegramMirror
+from . import espejo_telegram
+from .espejo_telegram import TelegramMirror
 from .state_refresh import StateRefresh
 from .evidence_runtime import ReceiptService, action_from_dict, evidence
 
@@ -303,6 +303,7 @@ class Session:
         self.operators = Operators(self)
         self.staff = FieldStaff(self)
         self.tg_mirror = TelegramMirror(self)   # espejo del despacho por Telegram (HappyRobot decide, aquí solo se ve)
+        self._tg_approval_marks: dict[str, dict[str, Any]] = {}  # action_id → sello Telegram (sin ejecutar por defecto)
         self.refresh = StateRefresh(self)
         self.receipts = ReceiptService()
         self._stop = threading.Event()
@@ -879,6 +880,9 @@ class Session:
             self._awaiting_seen.setdefault(a["id"], time.monotonic())
             a = dict(a, why=h(a.get("why", "")), zone_name=zone_names.get(a.get("zone") or ""))
             a["card"] = views.decision_card(a, w.t)
+            mark = self._tg_approval_marks.get(a["id"])
+            if mark:
+                a["telegram_decision"] = mark
             if a["card"] and a["card"]["escalated"] and a["id"] not in self._escalated:
                 self._escalated.add(a["id"])
                 self.log("approval", f"SIN DECISIÓN en {a['card']['window_min'] or '?'} min: {a['id']} ESCALA AL SUPLENTE"
@@ -1364,9 +1368,11 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         workflows = S().comms.workflow_status.view()
         workflows['intake'] = delegated.workflow_status.view()['intake']
         workflows['intake']['configured'] = bool(delegated.hook)
-        return {"telegram": tg.view() if tg is not None else {"status": "off"}, "links": links(),
-                "telegram_despacho": S().tg_mirror.view(),
-                "happyrobot": workflows,
+        mirror = S().tg_mirror.view()
+        bot = tg.view() if tg is not None else {"status": "off"}
+        # Contrato compartido de despacho en `telegram` cuando hay espejo; si no, el bot (centro, /asistente).
+        return {"telegram": mirror if mirror is not None else bot, "telegram_bot": bot,
+                "links": links(), "happyrobot": workflows,
                 "presentation": channels(S(), tg, delegated),
                 "intake": {"delegated": bool(delegated.hook), "timeout_s": delegated.timeout_s, **delegated.stats}}
 
@@ -1986,8 +1992,8 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         operator(request)
         return S().chaos_suggestions()
 
-    @app.post("/api/espejo/demo")
-    async def espejo_demo(request: Request) -> dict[str, Any]:
+    @app.post("/api/demo/telegram")
+    async def demo_telegram(request: Request) -> dict[str, Any]:
         """Reproduce en local la secuencia entera del despacho por Telegram, sin plataforma ni bot:
         aviso → dos asignaciones → una acepta con ETA y zona, otra rechaza → reasignación → timeout →
         propuesta de escalada por voz. Solo operador: mete un aviso de verdad en el mundo."""
@@ -1995,10 +2001,11 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         d = await body(request)
         zone = str(d.get("zone") or "front_pit")
         s = S()
-        events = telegram_espejo.secuencia_demo(s, zone)
+        events = espejo_telegram.secuencia_demo(s, zone)
         salidas = [await asyncio.to_thread(s.tg_mirror.handle, ev) for ev in events]
+        mirror = s.tg_mirror.view() or {}
         return {"ok": True, "n": len(events), "events": events, "results": salidas,
-                "escaladas": s.tg_mirror.view()["escaladas"]}
+                "telegram": mirror, "escaladas": mirror.get("escaladas", [])}
 
     @app.post("/api/approve")
     async def approve(request: Request) -> dict[str, Any]:

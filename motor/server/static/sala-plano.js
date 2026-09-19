@@ -29,10 +29,22 @@
   };
   const ENCLOSURE = { x: 190, y: 30, w: 852, h: 560 };
   const STAGE = { x: 352, y: 48, w: 320, h: 62 };
+  /* Zonas del prototipo que el motor no tiene: geometría copiada, gris, sin densidad ni balizas. */
+  const DECOR = [
+    { x: 14,  y: 32,  w: 172, h: 26, label: "CAMPAMENTO", sub: "DECORADO · SIN DATOS DEL MOTOR" },
+    { x: 1034, y: 184, w: 18,  h: 184, label: "PASILLO ESTE", vertical: true, sub: "SIN DATOS" },
+    { x: 190, y: 8,   w: 70,  h: 16, label: "EVAC-N", badge: true },
+    { x: 1044, y: 390, w: 16,  h: 55, label: "EVAC-E", badge: true, vertical: true },
+    { x: 520, y: 592, w: 70,  h: 16, label: "EVAC-S", badge: true },
+    { x: 172, y: 120, w: 16,  h: 55, label: "EVAC-O", badge: true, vertical: true },
+    { x: 172, y: 500, w: 56,  h: 16, label: "PUERTA D", badge: true },
+    { x: 340, y: 250, w: 36,  h: 36, label: "PE-1", mark: true, sub: "SIN DATOS" },
+    { x: 800, y: 82,  w: 110, h: 22, label: "ACCESO BACKSTAGE", sub: "DECORADO · SIN DATOS" },
+  ];
 
   function el(name, attrs, parent) {
     const e = document.createElementNS(NS, name);
-    for (const k in attrs || {}) e.setAttribute(k, attrs[k]);
+    for (const k in attrs || {}) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
     if (parent) parent.appendChild(e);
     return e;
   }
@@ -144,12 +156,47 @@
       zones[z.id] = { g, heat, label, sub, figure, flag, L, title: g.firstChild };
     });
 
-    // El escenario es decorado: no es una zona del motor y no lleva cifras.
+    // El escenario y las piezas del prototipo que el motor no simula: gris, sin cifras.
     el("rect", Object.assign({ class: "sala-stage", rx: 8 }, rect(STAGE)), gDecor);
     const st = el("text", { class: "sala-stage-label", x: STAGE.x + STAGE.w / 2, y: STAGE.y + 28, "text-anchor": "middle" }, gDecor);
     st.textContent = "ESCENARIO PRINCIPAL";
     const st2 = el("text", { class: "sala-stage-sub", x: STAGE.x + STAGE.w / 2, y: STAGE.y + 46, "text-anchor": "middle" }, gDecor);
     st2.textContent = "DECORADO · EL MOTOR NO SIMULA EL ESCENARIO";
+    el("rect", { class: "sala-decor-badge", x: STAGE.x + 12, y: STAGE.y + 8, width: 22, height: 36, rx: 2 }, gDecor);
+    el("rect", { class: "sala-decor-badge", x: STAGE.x + STAGE.w - 34, y: STAGE.y + 8, width: 22, height: 36, rx: 2 }, gDecor);
+    DECOR.forEach((d) => {
+      const g = el("g", { class: "sala-decor-item", "aria-hidden": "true" }, gDecor);
+      el("title", {}, g).textContent = (d.label || "") + " · decorado, sin datos del motor";
+      if (d.badge) {
+        el("rect", Object.assign({ class: "sala-decor-badge", rx: 3 }, rect(d)), g);
+        const tx = el("text", { class: "sala-decor-badge-text",
+          x: d.vertical ? d.x + d.w / 2 : d.x + d.w / 2,
+          y: d.vertical ? d.y + d.h / 2 : d.y + 12,
+          "text-anchor": "middle",
+          transform: d.vertical ? `rotate(90 ${d.x + d.w / 2} ${d.y + d.h / 2})` : undefined }, g);
+        tx.textContent = d.label;
+      } else if (d.mark) {
+        el("rect", Object.assign({ class: "sala-decor-box", rx: 6 }, rect(d)), g);
+        const t = el("text", { class: "sala-decor-label", x: d.x + d.w / 2, y: d.y + 22, "text-anchor": "middle" }, g);
+        t.textContent = d.label;
+      } else {
+        el("rect", Object.assign({ class: "sala-decor-box", rx: 6 }, rect(d)), g);
+        const t = el("text", { class: "sala-decor-label", x: d.x + d.w / 2, y: d.y + (d.vertical ? d.h / 2 : 16),
+          "text-anchor": "middle",
+          transform: d.vertical ? `rotate(90 ${d.x + d.w / 2} ${d.y + d.h / 2})` : undefined }, g);
+        t.textContent = d.label;
+        if (d.sub && !d.vertical) {
+          const s = el("text", { class: "sala-decor-sub", x: d.x + d.w / 2, y: d.y + 26, "text-anchor": "middle" }, g);
+          s.textContent = d.sub;
+        }
+      }
+    });
+    // Marcas de parking (decoración) sobre la zona real de salida a lanzaderas.
+    const park = ZONES.exit_transport;
+    [0.28, 0.5, 0.72].forEach((f) => {
+      el("line", { class: "sala-enclosure", x1: park.x + 10, y1: park.y + park.h * f,
+        x2: park.x + park.w - 10, y2: park.y + park.h * f }, gDecor);
+    });
 
     return { svg, edges, zones, gRoutes, gBeacons, gPins };
   }

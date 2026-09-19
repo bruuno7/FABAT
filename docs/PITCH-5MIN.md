@@ -55,7 +55,7 @@ The missing layer is **multi-agent coordination with replanning and auditability
 5. **1:00–1:15** — Veto a grave action; show alternative path.  
 6. **1:15–1:30** — `python3 -m motor.evals aprende --demo`: lesson changes day-2 dispatch (simulation, N=1).
 
-Close demo: *“Try `<PUBLIC_URL>` — instructions in `docs/TRY-IT.md`.”*
+Close demo: *“Try `https://mando-fabat.onrender.com` — instructions in `docs/TRY-IT.md`.”*
 
 ---
 
@@ -129,4 +129,4 @@ HappyRobot is the **runtime and channels**. MANDO is the **venue twin, guardrail
 3. It **replans when assumptions break**; the jury can attack the world from a phone.  
 4. **Humans keep evacuate / stop / external help**; guardrails scored **39/40** in simulation (N=40, real LLM).  
 5. **Approved lessons** change later decisions; priority still **28/40** — we report that openly.  
-6. **Try `<PUBLIC_URL>`** or clone the repo — `docs/TRY-IT.md` — Spanish ops guide in `GUIA.md`.
+6. **Try `https://mando-fabat.onrender.com`** or clone the repo — `docs/TRY-IT.md` — Spanish ops guide in `GUIA.md`.

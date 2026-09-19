@@ -11,7 +11,7 @@
 | Time | Visual | On-screen text (large) | Voice-over |
 |---|---|---|---|
 | 0:00–0:03 | Phone: Telegram chat typing | `REAL ALERT` | A real message hits the festival. |
-| 0:03–0:07 | Split: phone + control room `<PUBLIC_URL>/` | `3 SECONDS → CONTROL ROOM` | Three seconds later it is in the control room. |
+| 0:03–0:07 | Split: phone + control room `https://mando-fabat.onrender.com/` | `3 SECONDS → CONTROL ROOM` | Three seconds later it is in the control room. |
 | 0:07–0:11 | HappyRobot Runs tab 🎬 | `SWARM RUNNING` | Six agents are already working. |
 | 0:11–0:15 | Room: resource dispatched | `TEAM DISPATCHED` | A team is on the way — no human typed the playbook. |
 
@@ -86,7 +86,7 @@
 
 | Time | Visual | On-screen text | Voice-over |
 |---|---|---|---|
-| 2:50–2:55 | Montage: Telegram → Room → HR Runs | `TRY IT · README · <PUBLIC_URL>` | Try it yourself. |
+| 2:50–2:55 | Montage: Telegram → Room → HR Runs | `TRY IT · README · https://mando-fabat.onrender.com` | Try it yourself. |
 | 2:55–3:00 | End card | `MANDO` `HappyRobot swarm · human guardrails · learns when you let it` `github.com/…/FABAT-ana` | MANDO — coordination that knows when its plan broke. |
 
 ---
@@ -107,4 +107,4 @@ Everything else can be screen capture from `./mvp.sh demo` with *Simulation* ban
 - Keep **Simulation · fictional venue** visible at least once.
 - Never imply Astroworld numbers beyond the sourced 65-minute timeline.
 - If audio is on, keep VO short; captions carry the story.
-- End QR: `<PUBLIC_URL>/asistente` + repo link.
+- End QR: `https://mando-fabat.onrender.com/asistente` + repo link.

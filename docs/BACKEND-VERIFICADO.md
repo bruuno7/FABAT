@@ -88,3 +88,18 @@ Estado público (`GET /api/state`): `agentes` incluye el incidente, `enjambre` t
 | `node --check` de `sala.js`, `ui.js`, `sala-plano.js`, `plano.js`, `llamada.js`, `jurado.js`, `chat-tab.js`, `asistente.js` | OK |
 | `uv run --project motor/server python -m motor.server ensayo --case demo-1` ×3 | `ok: true`, N=1, seed=1, `calls_total=19`, SHA-256 `9c566153…` las tres, stderr vacío. Antes del aislamiento: 3 vs 9 llamadas (`.env` cerebro/LLM) |
 | Servidores `:8861` y `:8862` | apagados (puertos libres) |
+
+## Ronda final (coherencia dos velocidades + abanico, 19-sep-2026)
+
+Tras dos agentes en paralelo sobre los mismos ficheros: una sola ficha por incidente en `S.agentes[inc]` (`agentes` por papel, `velocidad`, `abanico` si aplica). `decidir` con `fase: rapida` / `agente: rapido` acepta `por_papel` como objeto, lista de líneas o texto «Triaje: … Prioridad: …»; si solo llega un razonamiento largo con los seis papeles, se desglosa. Un recurso ya asignado al mismo incidente (barandilla o fase rápida) entra en `aceptadas` con `ya_cumplido`, no como «recurso ocupado». La Sala pinta siempre seis tarjetas y la línea «Decisión rápida en N s · enjambre: CONFIRMA/CORRIGE/pendiente» (y, en `abanico`, «Primera decisión en N s · enjambre completo en N s»). Qué valor de `MANDO_CEREBRO` usar en cada demo: `docs/ESTADO.md`.
+
+| Corrida | Comando | Resultado |
+|---|---|---|
+| Batería 1 | `uv run --project motor/server python -m unittest discover -s motor/server -p 'test_*.py' -t .` | **584 tests, 0 fallos, 0 errores** (95,4 s) |
+| Batería 2 | la misma | **584 tests, 0 fallos, 0 errores** (104,9 s) |
+| Núcleo | `python3 -m unittest motor.world.test_world motor.mando.test_mando` | **95 tests, OK** (0,9 s) |
+| JS | `node --check` de `sala.js`, `ui.js`, `sala-plano.js`, `plano.js`, `llamada.js`, `jurado.js`, `chat-tab.js`, `asistente.js` | OK |
+| Puente | `npm --prefix puente test` | **40 tests, 0 fallos** |
+| Ensayo demo-1 ×3 | `uv run --project motor/server python -m motor.server ensayo --case demo-1` | `ok: true`, N=1, seed=1, `calls_total=19`, SHA-256 `9c566153b7e3335e529de0ba17b90cdd3c6e768678f1d6243f62f4642a154d55` las tres, stderr vacío |
+
+Causa de los +23 tests respecto a la fase 3 (561): `test_dos_velocidades` + `test_abanico` de los dos agentes, más desglose lista/texto, `ya_cumplido` y contrato de la Sala.

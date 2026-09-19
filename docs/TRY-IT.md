@@ -6,11 +6,11 @@ For judges and mentors. Everything below uses a **simulated** 40,000-person fest
 
 ## 1. Open the control room
 
-**Public URL (team will deploy):** `<PUBLIC_URL>/`
+**Public URL (team will deploy):** `https://mando-fabat.onrender.com/`
 
 You should see **MANDO · Control room** — live map, incident queue, resource panel, and an **Agent HR** strip. A banner marks *Simulation · fictional venue*.
 
-Optional operator login: `<PUBLIC_URL>/acceso` if the team set tokens.
+Optional operator login: `https://mando-fabat.onrender.com/acceso` if the team set tokens.
 
 ---
 
@@ -24,7 +24,7 @@ Optional operator login: `<PUBLIC_URL>/acceso` if the team set tokens.
 
 ### B — Web (always works on the public URL)
 
-1. Open **`<PUBLIC_URL>/asistente`**
+1. Open **`https://mando-fabat.onrender.com/asistente`**
 2. Tap a zone on the map (or type one).
 3. Submit the same kind of message.
 
@@ -52,7 +52,7 @@ In **HappyRobot** (if the team shares access): workflow **`prueba-ana-equipo`** 
 
 The jury does **not** use a separate app — `/jurado` redirects to the public assistant.
 
-1. On your phone: **`<PUBLIC_URL>/asistente`**
+1. On your phone: **`https://mando-fabat.onrender.com/asistente`**
 2. Tab **“Test the system”** / **“Poner a prueba”**
 3. Spend one strike — e.g. **Close a gate**, **Storm**, or **Team stops answering**
 4. Back on the control room: purple **JURY STRIKE** flash → assumption broken → **new plan** with a written *why*
@@ -87,8 +87,8 @@ Full bank: `python3 -m motor.evals equipo --n 40` → see `motor/evals/out/equip
 
 | URL | Who |
 |---|---|
-| `<PUBLIC_URL>/` | Control room |
-| `<PUBLIC_URL>/asistente` | Public / jury strikes |
+| `https://mando-fabat.onrender.com/` | Control room |
+| `https://mando-fabat.onrender.com/asistente` | Public / jury strikes |
 | `https://t.me/fabat_happy_bot` | Telegram bot |
 | HappyRobot EU editor | `prueba-ana-equipo` runs |
 

@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install && npm --prefix puente install",
+  "installCommand": "npm install --include=dev && npm --prefix puente install --include=dev",
   "buildCommand": "npm --prefix puente run typecheck",
   "framework": null,
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }]

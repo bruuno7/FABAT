@@ -1,20 +1,3 @@
-<!--
-  BORRADOR PRIVADO del README que irá al repo PÚBLICO bruuno7/FABAT **al final, no antes**.
-  Antes de publicarlo:
-  1. Sustituir TODOS los marcadores {{…}} (cifras con su N, estados, enlaces). Buscar "{{" y que no quede ninguno.
-  2. Borrar este comentario.
-  3. Comprobar que las rutas de «Cómo se ejecuta» coinciden con la estructura real del volcado.
-  4. Confirmar licencia y apellidos con el equipo.
-  Las cifras salen SOLO de `motor/harness/out/report.md` con el código congelado (una sola huella).
-  5. Las cifras del banco que ya están puestas son de la huella 3b6e1c0ecdf4 (sáb 19-sep, madrugada). Si el núcleo
-     cambia antes de la congelación, se vuelve a medir y se sustituyen TODAS a la vez (nunca mezclar huellas).
-  6. Canal de voz: el texto dice «llamada telefónica» (número de EE. UU. por Telnyx). Si a la entrega la única llamada
-     real es Web Call, cambiar «telefónica» por «de voz (Web Call)» en todo el fichero y borrar las filas del número.
-  7. Telegram y la memoria operativa solo se quedan si están hechos y, la memoria, medida (H4). Si no, se borran sus
-     frases enteras; no se deja «en construcción».
-  8. Ningún número de teléfono, token de bot ni nombre de usuario del bot hasta el volcado final.
--->
-
 # MANDO
 
 **Sabe cuándo su plan ha dejado de valer.**

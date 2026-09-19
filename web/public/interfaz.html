@@ -1,0 +1,3425 @@
+<!DOCTYPE html><html lang="es" style=""><svg class="inline-defs-container" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></svg><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MANDO Ops — Logistics &amp; Emergency Fleet Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "navy-sidebar": "#0d192e",
+            "navy-dark": "#071120",
+            "navy-hover": "#162544",
+            "navy-active": "#1d3258",
+            "primary": "#0058be",
+            "primary-dark": "#004191",
+            "secondary-container": "#2170e4",
+            "surface-dim": "#cbdbf6",
+            "surface-container-low": "#eff4ff",
+            "surface-container": "#e6eeff",
+            "surface-container-high": "#dde9ff",
+            "surface-container-highest": "#d3e3ff",
+            "surface": "#f4f6fa",
+            "on-surface": "#0b1c30",
+            "on-surface-variant": "#424753",
+            "outline": "#727784",
+            "outline-variant": "#c2c6d5",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "success": "#10b981",
+            "warning": "#f59e0b"
+          },
+          fontFamily: {
+            sans: ["Plus Jakarta Sans", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #c2c6d5; border-radius: 9999px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    @keyframes dash-flow {
+      to { stroke-dashoffset: -24; }
+    }
+    .route-active-stream {
+      stroke-dasharray: 6 3;
+      animation: dash-flow 1.2s linear infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .route-active-stream { animation: none; stroke-dasharray: none; }
+    }
+    /* Reserva si la fuente de iconos (Google) no carga: en vez de un nombre
+       raro o un cuadro vacío, se muestra el nombre del control en texto. */
+    .texto-icono {
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .boton-icono-texto {
+      width: auto !important;
+      min-width: 2rem;
+      padding-left: 0.55rem !important;
+      padding-right: 0.55rem !important;
+    }
+  </style>
+</head>
+<body class="bg-[#eef2f8] font-sans text-on-surface antialiased select-none flex h-screen overflow-hidden">
+<!-- ========================================================= -->
+<!-- 1. BARRA LATERAL (Sidebar izquierdo idéntico a plantilla) -->
+<!-- ========================================================= -->
+<aside class="w-[240px] bg-navy-sidebar text-white flex flex-col justify-between shrink-0 h-full border-r border-[#15233e] z-30 shadow-2xl">
+<div class="flex flex-col">
+<!-- Brand Logo Header -->
+<div class="p-5 pb-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+<span class="material-symbols-outlined text-[24px]">local_shipping</span>
+</div>
+<div class="flex flex-col">
+<span class="font-extrabold text-[17px] tracking-tight leading-tight text-white flex items-center gap-1">
+            MANDO<span class="text-blue-400 font-semibold text-sm">Ops</span>
+</span>
+<span class="text-[10.5px] text-slate-400 font-medium tracking-wide uppercase">Command Admin · 40K</span>
+</div>
+</div>
+<!-- Navigation Tabs / Pills -->
+<div class="px-3 py-2">
+<nav class="flex flex-col gap-1.5" id="sidebar-nav"><!-- Tab 1: Dashboard (Default Active) -->
+<button class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white bg-blue-600 shadow-md shadow-blue-600/30 font-semibold text-[13.5px] transition-all text-left" id="nav-btn-dashboard" onclick="switchTab('dashboard')">
+<span class="material-symbols-outlined text-[20px]">space_dashboard</span>
+<span class="">Dashboard</span>
+</button>
+<!-- Tab 2: Fleet / Recursos -->
+<button class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-navy-hover font-medium text-[13.5px] transition-all text-left" id="nav-btn-fleet" onclick="switchTab('fleet')">
+<span class="material-symbols-outlined text-[20px]">ambulance</span>
+<div class="flex items-center justify-between flex-1">
+<span class="">Fleet / Recursos</span>
+<span class="px-1.5 py-0.5 text-[10px] bg-navy-hover text-blue-300 rounded-md font-bold" id="badge-fleet-unidades">14 U</span>
+</div>
+</button>
+<!-- Tab 3: Incidentes / Triage -->
+<button class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-navy-hover font-medium text-[13.5px] transition-all text-left" id="nav-btn-incidents" onclick="switchTab('incidents')">
+<span class="material-symbols-outlined text-[20px]">medical_services</span>
+<div class="flex items-center justify-between flex-1">
+<span class="">Incidentes / Triage</span>
+<span class="px-1.5 py-0.5 text-[10px] bg-red-500/20 text-red-300 rounded-md font-bold" id="badge-incidentes-criticos">3 Crit</span>
+</div>
+</button>
+<!-- Tab 4: Rutas & Evac -->
+<button class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-navy-hover font-medium text-[13.5px] transition-all text-left" id="nav-btn-routes" onclick="switchTab('routes')">
+<span class="material-symbols-outlined text-[20px]">directions_run</span>
+<span class="">Rutas &amp; Evac</span>
+</button>
+<!-- Tab 5: Analítica & Tiempos -->
+<button class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-navy-hover font-medium text-[13.5px] transition-all text-left" id="nav-btn-analytics" onclick="switchTab('analytics')">
+<span class="material-symbols-outlined text-[20px]">timer</span>
+<span class="">Analítica &amp; Tiempos</span>
+</button></nav>
+</div>
+</div>
+<!-- Bottom Operator Card / Status -->
+<div class="p-3 border-t border-[#162544] bg-[#091222]/80">
+<div class="flex items-center justify-between p-2.5 rounded-xl bg-navy-hover/60 border border-slate-700/50">
+<div class="flex items-center gap-2.5">
+<div class="relative">
+<div class="w-9 h-9 rounded-full bg-slate-700 border border-blue-400 flex items-center justify-center text-white font-bold text-xs">
+              AD
+            </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-navy-sidebar"></span>
+</div>
+<div class="flex flex-col">
+<span class="text-[12.5px] font-bold text-white tracking-tight">Admin User</span>
+<span class="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> MANDO 112 ACTIVO
+            </span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-white" id="btn-perfil" onclick="abrirPanelCabecera('sesion')" data-panel-trigger="1" title="Sesión y estado del sistema">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- ========================================================= -->
+<!-- MAIN WORKSPACE CONTAINER -->
+<!-- ========================================================= -->
+<div class="flex-1 flex flex-col h-full overflow-hidden bg-[#eef2f8]">
+<!-- 2. BARRA SUPERIOR (Header Logistics Pro Style) -->
+<header class="h-[60px] bg-white border-b border-slate-200/80 px-6 flex items-center justify-between shrink-0 z-20">
+<!-- Search Input -->
+<div class="relative w-[380px]">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[19px]">search</span>
+<input class="w-full h-9 pl-10 pr-4 bg-slate-100 hover:bg-slate-100/80 border border-slate-200 rounded-full font-medium text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" id="buscador-manifest" autocomplete="off" title="Filtra la tabla por id, tipo, sector o resumen (tecla /)" placeholder="Buscar envíos, incidentes, zonas o recursos..." type="text">
+</div>
+<!-- Right Header Actions -->
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-full text-slate-600 border border-slate-200 text-xs font-medium hover:bg-slate-100 transition-colors cursor-pointer" id="modo-operacion" onclick="abrirPanelCabecera('canal')" data-panel-trigger="1" title="Ver el modo de operación real y los canales de entrada"><span class="w-1.5 h-1.5 rounded-full bg-blue-500" id="modo-punto"></span><span class="" id="modo-texto">Delivery / Sala de Control</span></button>
+<div class="h-5 w-[1px] bg-slate-200"></div>
+<!-- Quick actions buttons -->
+<button class="relative w-8 h-8 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors" id="btn-notificaciones" onclick="abrirPanelCabecera('notificaciones')" data-panel-trigger="1" title="Avisos críticos abiertos">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" id="punto-notificaciones"></span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors" onclick="openInjectionDrawer()" title="Inyectar incidente de prueba">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors" id="btn-ayuda" onclick="abrirPanelCabecera('ayuda')" data-panel-trigger="1" title="Manual de Operaciones y atajos">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+</button>
+<div class="h-7 w-7 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+          OP
+        </div>
+</div>
+</header>
+<!-- ========================================================= -->
+<!-- PANEL FLOTANTE DE CABECERA (campana / ayuda / sesión).       -->
+<!-- Se abre bajo la barra superior. Lo rellena el script de      -->
+<!-- cableado con datos reales; mismo estilo que el resto.        -->
+<!-- ========================================================= -->
+<div class="hidden fixed top-[68px] right-6 w-[380px] max-w-[calc(100vw-3rem)] bg-white rounded-2xl border border-slate-200 shadow-2xl z-40 overflow-hidden" id="panel-cabecera">
+<div class="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-blue-600" id="panel-icono">info</span>
+<span class="font-bold text-slate-900 text-sm" id="panel-titulo">Panel</span>
+</div>
+<button class="w-7 h-7 rounded-lg hover:bg-slate-200 flex items-center justify-center text-slate-500" onclick="cerrarPanelCabecera()" title="Cerrar panel">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="p-4 max-h-[440px] overflow-y-auto" id="panel-cuerpo"></div>
+</div>
+<!-- TAB VIEW CONTAINER (Tabs switchable via sidebar) -->
+<div class="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6" id="main-content-scroll">
+<!-- ESTADO REAL DE LA CONEXION CON EL TABLERO (lo gestiona el cableado):
+     si /api/board falla, aquí se dice; nunca se dejan datos de ejemplo. -->
+<div class="hidden" id="aviso-tablero">
+<span class="material-symbols-outlined text-[22px]" id="aviso-tablero-icono">sync</span>
+<div class="text-xs">
+<div class="font-bold uppercase tracking-wide" id="aviso-tablero-titulo"></div>
+<p class="mt-0.5" id="aviso-tablero-texto"></p>
+</div>
+</div>
+<!-- ================================================================= -->
+<!-- VIEW 1: MAIN DASHBOARD VIEW (Map + Circular Charts + Manifest Table) -->
+<!-- ================================================================= -->
+<div class="space-y-6" id="view-dashboard">
+<!-- TOP ROW: MAP CONTAINER (LEFT ~68%) + CIRCULAR KPI CARDS (RIGHT ~32%) -->
+<div class="grid grid-cols-12 gap-6">
+<!-- 3. MAPA CENTRAL (Tarjeta suave redondeada con controles flotantes) -->
+<div class="col-span-12 lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-200/90 p-4 relative flex flex-col min-h-[460px] overflow-hidden">
+<!-- Top Map Header bar -->
+<div class="flex items-center justify-between mb-3 z-10">
+<!-- Live Units Pill (Exact from Image 2) -->
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="font-mono tracking-tight text-[11px] text-slate-600" id="live-units-pill">LIVE: 142 UNIDADES / 14 ACTIVOS</span></div>
+<!-- Map Utility buttons -->
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors" id="sim-speed-btn" onclick="cycleSimSpeed()">
+<span class="material-symbols-outlined text-[15px] text-blue-600" id="sim-speed-icon">play_arrow</span>
+<span id="sim-speed-text" class="">1x</span>
+</button>
+<button class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold hover:bg-blue-100 transition-colors" id="routes-btn" onclick="toggleRoutesLayer()">
+                  Trayectos
+                </button>
+<button class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold hover:bg-slate-200 transition-colors" id="density-btn" onclick="toggleDensityLayer()" title="Resalta los sectores con avisos abiertos (no es una medición de aforo)">
+                  Densidad
+                </button>
+</div>
+</div>
+<!-- Map Vector Canvas Frame -->
+<div class="relative flex-1 w-full bg-[#f8fafc] rounded-xl border border-slate-200/70 overflow-hidden flex items-center justify-center">
+
+<!-- Real Interactive SVG Map with Festival Venues & Real-time Beacons -->
+<svg class="w-full h-full object-contain select-none" id="festival-map-svg" viewBox="0 0 1000 520">
+<defs>
+<radialGradient cx="50%" cy="50%" id="heat-north" r="50%">
+<stop offset="0%" stop-color="#ba1a1a" stop-opacity="0.45"></stop>
+<stop offset="70%" stop-color="#f59e0b" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#f59e0b" stop-opacity="0"></stop>
+</radialGradient>
+<radialGradient cx="50%" cy="50%" id="heat-food" r="50%">
+<stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#f59e0b" stop-opacity="0"></stop>
+</radialGradient>
+<marker id="arrowhead" markerHeight="6" markerUnits="userSpaceOnUse" markerWidth="8" orient="auto" refX="7" refY="3">
+<path d="M0,0 L8,3 L0,6 Z" fill="#334155"></path>
+</marker>
+</defs>
+<!-- Festival Perimeter outline -->
+<rect fill="#ffffff" height="480" rx="14" stroke="#cbd5e1" stroke-dasharray="4,4" stroke-width="1.5" width="950" x="25" y="20"></rect>
+<!-- Campamento / West Area -->
+<g id="sec-campamento">
+<rect fill="#eff6ff" height="230" rx="8" stroke="#bfdbfe" stroke-width="1" width="130" x="40" y="35"></rect>
+<text class="tracking-wider" fill="#1e3a8a" font-size="10" font-weight="700" text-anchor="middle" x="105" y="60">CAMPAMENTO</text>
+<text fill="#64748b" font-size="9" text-anchor="middle" x="105" y="75">4.500 TIENDAS</text>
+</g>
+<!-- Parking Logistics / South-West -->
+<g id="sec-parking">
+<rect fill="#f1f5f9" height="200" rx="8" stroke="#cbd5e1" stroke-width="1" width="160" x="40" y="285"></rect>
+<text class="tracking-wider" fill="#334155" font-size="10" font-weight="700" text-anchor="middle" x="120" y="315">PARKING LOGÍSTICA P1</text>
+<line stroke="#cbd5e1" stroke-dasharray="2,2" x1="55" x2="185" y1="345" y2="345"></line>
+<line stroke="#cbd5e1" stroke-dasharray="2,2" x1="55" x2="185" y1="380" y2="380"></line>
+<line stroke="#cbd5e1" stroke-dasharray="2,2" x1="55" x2="185" y1="415" y2="415"></line>
+<text fill="#64748b" font-size="8.5" text-anchor="middle" x="120" y="460">VIAL EXCLUSIVO SERVICIOS</text>
+</g>
+<!-- Central Zone Container -->
+<rect fill="#f8fafc" height="450" rx="10" stroke="#94a3b8" stroke-width="1.2" width="735" x="220" y="35"></rect>
+<!-- Escenario Principal & Soundstage -->
+<!-- VIP & Backstage -->
+<rect fill="#e0e7ff" height="110" rx="8" stroke="#c7d2fe" stroke-width="1" width="225" x="715" y="45"></rect>
+<text fill="#3730a3" font-size="10" font-weight="700" text-anchor="middle" x="827" y="70">ZONA VIP &amp; PRODUCTION</text>
+<!-- Foso de Seguridad -->
+<rect fill="#fee2e2" height="40" rx="4" stroke="#fca5a5" stroke-width="1" width="270" x="385" y="145"></rect>
+<text fill="#991b1b" font-size="9.5" font-weight="700" text-anchor="middle" x="520" y="170">FOSO DE SEGURIDAD (FRONT STAGE)</text>
+<!-- Pista Central -->
+<rect fill="#ffffff" height="145" rx="6" stroke="#cbd5e1" stroke-dasharray="3,3" stroke-width="1.2" width="380" x="330" y="195"></rect>
+<text fill="#334155" font-size="13" font-weight="700" text-anchor="middle" x="520" y="260">PISTA CENTRAL · ZONA NORTE</text>
+<text fill="#64748b" font-size="9" text-anchor="middle" x="520" y="278">AFORO MÁXIMO 18.000 PAX</text>
+<!-- Food Trucks Zone -->
+<g id="sec-food">
+<rect fill="#fffbeb" height="170" rx="8" stroke="#fde68a" stroke-width="1" width="205" x="735" y="180"></rect>
+<text fill="#92400e" font-size="11" font-weight="700" text-anchor="middle" x="837" y="205">FOOD TRUCKS &amp; BARRAS</text>
+<!-- stalls -->
+<rect fill="#fef3c7" height="20" rx="3" width="35" x="745" y="220"></rect>
+<rect fill="#fef3c7" height="20" rx="3" width="35" x="790" y="220"></rect>
+<rect fill="#fef3c7" height="20" rx="3" width="35" x="835" y="220"></rect>
+<rect fill="#fef3c7" height="20" rx="3" width="35" x="880" y="220"></rect>
+</g><g id="sec-stage-2"><rect x="735" y="375" width="205" height="105" rx="8" fill="#f3e8ff" stroke="#d8b4fe" stroke-width="1.2"></rect><rect x="745" y="385" width="185" height="28" rx="4" fill="#e9d5ff" stroke="#c084fc" stroke-width="1"></rect><text x="837" y="403" text-anchor="middle" font-size="10" font-weight="800" fill="#6b21a8" class="tracking-wider">ESCENARIO 2 · TECH TENT</text><text x="837" y="432" text-anchor="middle" font-size="9" font-weight="700" fill="#7e22ce">SONIDO ENVOLVENTE &amp; VISUALES</text><text x="837" y="447" text-anchor="middle" font-size="8.5" fill="#64748b">AFORO: 6.500 PAX · PA-02</text><rect x="755" y="458" width="165" height="14" rx="3" fill="#fae8ff" stroke="#f0abfc" stroke-width="0.8"></rect><text x="837" y="468" text-anchor="middle" font-size="7.5" font-weight="700" fill="#a21caf">FOSO DE SEGURIDAD TECH</text></g>
+<!-- Baños Oeste -->
+<rect fill="#f1f5f9" height="150" rx="6" stroke="#cbd5e1" stroke-width="1" width="75" x="235" y="200"></rect>
+<text fill="#475569" font-size="9.5" font-weight="700" text-anchor="middle" transform="rotate(-90 272 265)" x="272" y="265">ZONA BAÑOS WC</text>
+<!-- Plaza Central & Torniquetes Entrada -->
+<rect fill="#f8fafc" height="70" rx="6" stroke="#cbd5e1" stroke-width="1" width="380" x="330" y="355"></rect>
+<text fill="#334155" font-size="10" font-weight="700" text-anchor="middle" x="520" y="395">PLAZA CENTRAL &amp; CONEXIÓN SUR</text>
+<rect fill="#e2e8f0" height="40" rx="4" stroke="#94a3b8" stroke-width="1" width="380" x="330" y="435"></rect>
+<text fill="#0f172a" font-size="10" font-weight="700" text-anchor="middle" x="520" y="460">ENTRADA GENERAL · TORNOS ACCESO</text>
+<!-- Puertas y Puestos Médicos (PMA 1 & 2) -->
+<!-- PMA 1 -->
+<!-- PMA 2 -->
+<g transform="translate(870, 390)">
+<rect fill="#fef2f2" height="36" rx="5" stroke="#ef4444" stroke-width="1.2" width="60"></rect>
+<text fill="#991b1b" font-size="9.5" font-weight="bold" text-anchor="middle" x="30" y="16">PMA 2</text>
+<text fill="#ef4444" font-size="7.5" font-weight="bold" text-anchor="middle" x="30" y="29">OCUPADO</text>
+</g>
+<!-- Capa de SECTORES CON AVISOS ABIERTOS (no es aforo): la pinta el script
+     de cableado a partir de los reportes y se enciende con «Densidad». -->
+<g class="pointer-events-none" id="density-heatmap-layer" style="display:none"></g>
+<!-- Moving Routes Layer with Dynamic Beacons -->
+<g class="transition-opacity duration-300" id="resource-routes-layer">
+<!-- Route ALFA-2 -->
+<g class="cursor-default">
+<path class="route-active-stream" d="M 875 400 Q 840 330 775 292" fill="none" id="path-alfa-2" marker-end="url(#arrowhead)" stroke="#ba1a1a" stroke-width="2.5"></path>
+<g id="unit-marker-alfa-2" transform="translate(780.429931640625, 295.2632751464844)">
+<circle class="animate-ping" cx="0" cy="0" fill="#ba1a1a" opacity="0.25" r="9"></circle>
+<circle cx="0" cy="0" fill="#ba1a1a" r="6" stroke="#ffffff" stroke-width="2"></circle>
+<!-- Live Tag -->
+<g transform="translate(10, -16)">
+<rect fill="#ffffff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))" height="20" rx="4" stroke="#ba1a1a" stroke-width="1" width="130" x="0" y="0"></rect>
+<text fill="#0f172a" font-size="9" font-weight="bold" x="6" y="14">ALFA-2 · <tspan fill="#ba1a1a" id="eta-text-alfa-2">ETA 5s</tspan></text>
+</g>
+</g>
+</g>
+<!-- Route SEG-01 -->
+<g class="cursor-default">
+<path class="route-active-stream" d="M 920 170 Q 660 190 295 285" fill="none" id="path-seg-01" marker-end="url(#arrowhead)" stroke="#2563eb" stroke-width="2.5"></path>
+<g id="unit-marker-seg-01" transform="translate(653.8782348632812, 205.105224609375)">
+<circle class="animate-ping" cx="0" cy="0" fill="#2563eb" opacity="0.25" r="9"></circle>
+<circle cx="0" cy="0" fill="#2563eb" r="6" stroke="#ffffff" stroke-width="2"></circle>
+<g transform="translate(10, -16)">
+<rect fill="#ffffff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))" height="20" rx="4" stroke="#2563eb" stroke-width="1" width="130" x="0" y="0"></rect>
+<text fill="#0f172a" font-size="9" font-weight="bold" x="6" y="14">SEG-01 · <tspan fill="#2563eb" id="eta-text-seg-01">ETA 1m 44s</tspan></text>
+</g>
+</g>
+</g>
+<!-- Route APO-1 -->
+<g class="cursor-default">
+<path class="route-active-stream" d="M 190 390 Q 360 420 520 380" fill="none" id="path-apo-1" marker-end="url(#arrowhead)" stroke="#d97706" stroke-width="2.5"></path>
+<g id="unit-marker-apo-1" transform="translate(403.09625244140625, 399.76397705078125)">
+<circle class="animate-ping" cx="0" cy="0" fill="#d97706" opacity="0.25" r="9"></circle>
+<circle cx="0" cy="0" fill="#d97706" r="6" stroke="#ffffff" stroke-width="2"></circle>
+<g transform="translate(10, -16)">
+<rect fill="#ffffff" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.1))" height="20" rx="4" stroke="#d97706" stroke-width="1" width="125" x="0" y="0"></rect>
+<text fill="#0f172a" font-size="9" font-weight="bold" x="6" y="14">APO-1 · <tspan fill="#d97706" id="eta-text-apo-1">ETA 32s</tspan></text>
+</g>
+</g>
+</g>
+</g>
+<!-- Pines de los avisos REALES (los pinta el script de cableado) -->
+<g id="interfaz-pines"></g>
+</svg>
+<!-- Floating Network Pulse Widget (Lower Left - Exact Template Recreation) -->
+<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md text-slate-800 p-3 rounded-xl border border-slate-200/80 shadow-sm w-[220px] z-10"><div class="flex items-center justify-between mb-2"><span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Network Pulse</span><span class="w-2 h-2 rounded-full bg-emerald-500"></span></div><div class="space-y-2"><div><div class="flex items-center justify-between text-[11px] text-slate-600 mb-1"><span class="font-medium">On schedule</span><span class="text-slate-800 font-semibold" id="pulse-onschedule">88%</span></div><div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden"><div class="bg-slate-700 h-full rounded-full transition-all duration-500" id="pulse-onschedule-bar" style="width: 88%"></div></div></div><div><div class="flex items-center justify-between text-[11px] text-slate-600 mb-1"><span class="font-medium">Idle capacity</span><span class="text-slate-600 font-semibold" id="pulse-idle">12%</span></div><div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden"><div class="bg-slate-300 h-full rounded-full transition-all duration-500" id="pulse-idle-bar" style="width: 12%"></div></div></div></div><div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400"><span class="" title="Derivado del tablero real: avisos con recursos asignados y capacidad libre">Estado plan:</span><span class="text-slate-700 font-semibold cursor-pointer hover:underline" id="plan-status" onclick="togglePlanStatus()">Saturado (déficit)</span></div><div class="mt-2 pt-2 border-t border-slate-100 text-[10px] text-slate-500 space-y-1" id="plan-detalle" style="display:none"></div></div>
+</div>
+</div>
+<!-- 4. COLUMNA DERECHA (GRÁFICAS CIRCULARES / DONUTS SOLICITADAS) -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-4">
+<!-- TARJETA 1: AVG. RESPONSE TIME CON GRÁFICA CIRCULAR / GAUGE DONUT -->
+<div class="bg-white text-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200/90 flex flex-col justify-between"><div class="flex items-center justify-between"><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Avg. Response Time</span><span class="material-symbols-outlined text-slate-400 text-[18px]">schedule</span></div><div class="flex items-center justify-between mt-2"><div><div class="flex items-baseline gap-1"><span class="text-3xl font-extrabold text-slate-900 tracking-tight" id="kpi-avg-time">3.8</span><span class="text-slate-400 font-medium text-xs">min</span></div><span class="text-[11px] text-slate-600 font-medium flex items-center gap-1 mt-0.5" title="Valor de referencia del diseño: el backend no publica SLA. La cifra grande sí es real (mediana hasta la firma)."><span class="material-symbols-outlined text-[13px] text-emerald-600">trending_down</span> -45s vs SLA (5m)</span><p class="text-[10px] text-slate-400 mt-1.5" title="Valor de referencia del diseño: el backend no publica cumplimiento global.">Cumplimiento global al 94.2%</p></div><div class="relative w-20 h-20 flex items-center justify-center"><svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100"><circle cx="50" cy="50" fill="none" r="38" stroke="#f1f5f9" stroke-width="6"></circle><circle cx="50" cy="50" fill="none" r="38" stroke="#475569" stroke-dasharray="238.76" stroke-dashoffset="38" stroke-linecap="round" stroke-width="6"></circle></svg><div class="absolute inset-0 flex flex-col items-center justify-center text-center"><span class="text-xs font-bold text-slate-800">84%</span><span class="text-[7.5px] font-medium text-slate-400 uppercase tracking-wider">SLA</span></div></div></div></div>
+<!-- TARJETA 2: DISPONIBILIDAD / RESOURCE EFFICIENCY CON DONUT CONCÉNTRICO -->
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/90 flex flex-col"><div class="flex items-center justify-between"><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Resource Efficiency</span><span class="material-symbols-outlined text-slate-400 text-[18px]">verified</span></div><div class="flex items-center justify-between mt-1"><div><div class="flex items-baseline gap-1"><span class="text-3xl font-extrabold text-slate-900 tracking-tight">92%</span><span class="text-slate-400 font-normal text-xs">cap. activa</span></div><span class="text-[11px] text-slate-600 font-medium flex items-center gap-1 mt-0.5" title="Valor de referencia del diseño: el backend no publica variación horaria. La cifra grande y los libres por tipo sí son reales."><span class="material-symbols-outlined text-[13px] text-emerald-600">arrow_upward</span> +4.2% última hora</span></div><div class="relative w-20 h-20 flex items-center justify-center"><svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100"><circle cx="50" cy="50" fill="none" r="38" stroke="#f87171" stroke-dasharray="60 178" stroke-dashoffset="0" stroke-width="6"></circle><circle cx="50" cy="50" fill="none" r="38" stroke="#64748b" stroke-dasharray="80 158" stroke-dashoffset="-65" stroke-width="6"></circle><circle cx="50" cy="50" fill="none" r="38" stroke="#cbd5e1" stroke-dasharray="50 188" stroke-dashoffset="-150" stroke-width="6"></circle><circle cx="50" cy="50" fill="none" r="38" stroke="#94a3b8" stroke-dasharray="35 203" stroke-dashoffset="-205" stroke-width="6"></circle></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-xs font-bold text-slate-700" id="eff-center">14/16</span><span class="text-[7.5px] font-medium text-slate-400 uppercase tracking-wider">DOT</span></div></div></div><div class="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-slate-100 text-[11px]"><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-400"></span><span class="text-slate-500 font-medium">Médicos (0 libres)</span></div><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-600"></span><span class="text-slate-500 font-medium">Seguridad (2 libres)</span></div><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-300"></span><span class="text-slate-500 font-medium">Apoyo (1 libre)</span></div><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span><span class="text-slate-500 font-medium">Mando HR Link</span></div></div></div>
+<!-- TARJETA 3: INCIDENTES POR GRAVEDAD (GRÁFICA CIRCULAR DE PASTEL / PIE DONUT) -->
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/90 flex flex-col flex-1"><div class="flex items-center justify-between mb-2"><span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Incidentes por Gravedad</span><span class="text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md" id="grav-badge">10 Activos</span></div><div class="flex items-center gap-4 my-auto"><div class="relative w-20 h-20 shrink-0 flex items-center justify-center"><svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100"><circle cx="50" cy="50" fill="none" r="36" stroke="#334155" stroke-dasharray="23 203" stroke-dashoffset="0" stroke-width="8"></circle><circle cx="50" cy="50" fill="none" r="36" stroke="#f87171" stroke-dasharray="68 158" stroke-dashoffset="-25" stroke-width="8"></circle><circle cx="50" cy="50" fill="none" r="36" stroke="#fbbf24" stroke-dasharray="90 136" stroke-dashoffset="-95" stroke-width="8"></circle><circle cx="50" cy="50" fill="none" r="36" stroke="#94a3b8" stroke-dasharray="45 181" stroke-dashoffset="-188" stroke-width="8"></circle></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-sm font-bold text-slate-800" id="grav-center">10</span><span class="text-[7.5px] font-medium text-slate-400 uppercase tracking-wider">Casos</span></div></div><div class="flex-1 space-y-1.5 text-[11px]"><div class="flex items-center justify-between"><span class="flex items-center gap-1.5 text-slate-600 font-medium"><span class="w-2 h-2 rounded-full bg-slate-700"></span> Vital (P1)</span><span class="font-semibold text-slate-800">1 (10%)</span></div><div class="flex items-center justify-between"><span class="flex items-center gap-1.5 text-slate-600 font-medium"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Emergencia</span><span class="font-semibold text-slate-800">3 (30%)</span></div><div class="flex items-center justify-between"><span class="flex items-center gap-1.5 text-slate-600 font-medium"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Urgente</span><span class="font-semibold text-slate-800">4 (40%)</span></div><div class="flex items-center justify-between"><span class="flex items-center gap-1.5 text-slate-600 font-medium"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Leve</span><span class="font-semibold text-slate-800">2 (20%)</span></div></div></div></div>
+</div>
+</div>
+<!-- 5. TABLA INFERIOR ("Fleet Driver Manifest" -> "MANDO Incident & Fleet Manifest") -->
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-5">
+<!-- Manifest Header matching Image 2 -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+<div>
+<h2 class="text-base font-extrabold text-slate-900 tracking-tight">Incident &amp; Fleet Manifest</h2>
+<p class="text-xs text-slate-500 font-medium mt-0.5">Real-time shift tracking and incident response metrics</p>
+</div>
+<div class="flex items-center gap-2.5">
+<button class="px-4 py-2 bg-navy-sidebar hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5" onclick="openInjectionDrawer()">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span class="">Add Incident</span>
+</button>
+<button class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors" onclick="exportCSV()">
+                Export CSV
+              </button>
+</div>
+</div>
+<!-- Manifest Table Content -->
+<div class="overflow-x-auto mt-2">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+<th class="py-3 px-3">DRIVER / INC ID</th>
+<th class="py-3 px-3">OPERATOR / RECURSO</th>
+<th class="py-3 px-3">VEHICLE / SECTOR</th>
+<th class="py-3 px-3">STATUS</th>
+<th class="py-3 px-3">ROUTE PROGRESS</th>
+<th class="py-3 px-3 text-right">EFFICIENCY / ETA</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-xs">
+<!-- Row 1: INC-104 (CRITICAL VITAL) -->
+<tr class="hover:bg-slate-50 cursor-pointer transition-colors group" onclick="openIncidentDrawer('INC-104')"><td class="py-3.5 px-3 font-mono font-medium text-slate-700">#INC-104</td><td class="py-3.5 px-3"><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M10.5 4.5h3v6h6v3h-6v6h-3v-6h-6v-3h6v-6z"></path></svg></div><div><div class="font-semibold text-slate-800 group-hover:text-blue-600">Parada cardio / Foso</div><div class="text-[10px] text-slate-400">Triage N5 · Menor de edad</div></div></div></td><td class="py-3.5 px-3"><div class="font-medium text-slate-700">Foso Escenario (Norte)</div><div class="text-[10px] text-slate-400">Déficit: 0 médicas libres</div></td><td class="py-3.5 px-3"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Alert / Critical</span></td><td class="py-3.5 px-3 w-48"><div class="flex items-center gap-2"><div class="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden"><div class="bg-rose-400 h-full rounded-full" style="width: 15%"></div></div><span class="font-mono text-[11px] font-medium text-slate-600">15%</span></div></td><td class="py-3.5 px-3 text-right"><div class="font-mono font-semibold text-slate-700">REQ. HUMANO</div><div class="text-[10px] text-slate-400">SLA Excedido</div></td></tr>
+<!-- Row 2: INC-102 (Food trucks - ALFA-2) -->
+<tr class="hover:bg-slate-50 cursor-pointer transition-colors group" onclick="openIncidentDrawer('INC-102')">
+<td class="py-3.5 px-3 font-mono font-bold text-slate-600">
+#INC-102
+</td>
+<td class="py-3.5 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center border border-blue-200">
+<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M10.5 4.5h3v6h6v3h-6v6h-3v-6h-6v-3h6v-6z"></path></svg>
+</div>
+<div>
+<div class="font-bold text-slate-900 group-hover:text-blue-600">ALFA-2 (Dr. Aranda)</div>
+<div class="text-[10px] text-slate-400">Lipotimia y asfixia</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-700">UVI Móvil · Food Trucks Este</div>
+<div class="text-[10px] text-slate-400">PMA 2 Link</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700 uppercase tracking-wide">
+ACTIVE
+</span>
+</td>
+<td class="py-3.5 px-3 w-48">
+<div class="flex items-center gap-2">
+<div class="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+<div class="bg-blue-600 h-full rounded-full" id="table-progress-alfa2" style="width: 96%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-slate-700" id="table-percent-alfa2">96%</span>
+</div>
+</td>
+<td class="py-3.5 px-3 text-right">
+<div class="font-mono font-bold text-slate-800" id="table-eta-alfa2">ETA 5s</div>
+<div class="text-[10px] text-emerald-600 font-semibold">98.4% On Time</div>
+</td>
+</tr>
+<!-- Row 3: INC-101 (Baños - SEG-01) -->
+<tr class="hover:bg-slate-50 cursor-pointer transition-colors group" onclick="openIncidentDrawer('INC-101')">
+<td class="py-3.5 px-3 font-mono font-bold text-slate-600">
+#INC-101
+</td>
+<td class="py-3.5 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center border border-slate-200">
+<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"></path></svg>
+</div>
+<div>
+<div class="font-bold text-slate-900 group-hover:text-blue-600">SEG-01 (Patrulla Bravo)</div>
+<div class="text-[10px] text-slate-400">Conato riña y botellas</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-700">Patrulla Rápida · Baños Oeste</div>
+<div class="text-[10px] text-slate-400">Canal Telegram Cerrado</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-700 uppercase tracking-wide">
+INTERVINIENDO
+</span>
+</td>
+<td class="py-3.5 px-3 w-48">
+<div class="flex items-center gap-2">
+<div class="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+<div class="bg-blue-600 h-full rounded-full" id="table-progress-seg01" style="width: 42%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-slate-700" id="table-percent-seg01">42%</span>
+</div>
+</td>
+<td class="py-3.5 px-3 text-right">
+<div class="font-mono font-bold text-slate-800" id="table-eta-seg01">ETA 1m 44s</div>
+<div class="text-[10px] text-slate-500 font-medium">94.1% Resp</div>
+</td>
+</tr>
+<!-- Row 4: INC-098 (Plaza - APO-1) -->
+<tr class="hover:bg-slate-50 cursor-pointer transition-colors group" onclick="openIncidentDrawer('INC-098')">
+<td class="py-3.5 px-3 font-mono font-bold text-slate-600">
+#INC-098
+</td>
+<td class="py-3.5 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center border border-amber-200">
+<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"></path></svg>
+</div>
+<div>
+<div class="font-bold text-slate-900 group-hover:text-amber-600">APO-1 (Cuadros Eléctricos)</div>
+<div class="text-[10px] text-slate-400">Chispas en cuadro secundario</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-700">Buggy Técnico · Plaza Central Sur</div>
+<div class="text-[10px] text-slate-400">Aviso verificado</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 uppercase tracking-wide">
+IN ROUTE
+</span>
+</td>
+<td class="py-3.5 px-3 w-48">
+<div class="flex items-center gap-2">
+<div class="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full" id="table-progress-apo1" style="width: 64%;"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-slate-700" id="table-percent-apo1">64%</span>
+</div>
+</td>
+<td class="py-3.5 px-3 text-right">
+<div class="font-mono font-bold text-slate-800" id="table-eta-apo1">ETA 32s</div>
+<div class="text-[10px] text-emerald-600 font-semibold">96.8% Resp</div>
+</td>
+</tr>
+<!-- Row 5: INC-095 (VIP - Resuelto) -->
+<tr class="hover:bg-slate-50 cursor-pointer transition-colors group" onclick="openIncidentDrawer('INC-095')">
+<td class="py-3.5 px-3 font-mono font-bold text-slate-400">
+                    #INC-095
+                  </td>
+<td class="py-3.5 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center text-[11px]">
+                        ✓
+                      </div>
+<div>
+<div class="font-bold text-slate-600">PMA 1 (Enfermería)</div>
+<div class="text-[10px] text-slate-400">Torcedura de tobillo</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-medium text-slate-500">Puesto Fijo · Acceso VIP</div>
+<div class="text-[10px] text-slate-400">Autotratado</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 uppercase tracking-wide">
+                      DONE
+                    </span>
+</td>
+<td class="py-3.5 px-3 w-48">
+<div class="flex items-center gap-2">
+<div class="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 100%"></div>
+</div>
+<span class="font-mono text-[11px] font-bold text-emerald-600">Done</span>
+</div>
+</td>
+<td class="py-3.5 px-3 text-right">
+<div class="font-mono font-bold text-slate-600">CERRADO</div>
+<div class="text-[10px] text-slate-400">100% OK</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- ================================================================= -->
+<!-- VIEW 2: FLEET / RECURSOS TAB (Focalizada en dotaciones y cuadrantes) -->
+<!-- ================================================================= -->
+<div class="hidden space-y-6" id="view-fleet">
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+<div>
+<h2 class="text-lg font-bold text-slate-900">Cuadrante Operativo de Flota y Recursos</h2>
+<p class="text-xs text-slate-500">Telemetría de unidades móviles, sanitarias y de seguridad activa</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs" id="fleet-pill-unidades">14 Unidades Conectadas</span>
+<span class="px-3 py-1 bg-red-100 text-red-800 rounded-full font-bold text-xs" id="fleet-pill-saturadas">2 Saturadas</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Equipos Médicos SVA -->
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4" id="fleet-card-medico">
+<div class="flex items-center justify-between pb-3 border-b border-slate-100">
+<span class="font-bold text-sm text-slate-900">Dotaciones Sanitarias SVA</span>
+<span class="px-2 py-0.5 bg-red-100 text-red-700 rounded-md font-bold text-xs" id="fleet-badge-medico">0/2 LIBRES</span>
+</div>
+<div class="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center justify-between">
+<div>
+<div class="font-bold text-slate-900 text-xs">ALFA-1 (UVI 1)</div>
+<div class="text-[11px] text-red-700 font-medium">Intervención en Foso</div>
+</div>
+<span class="font-mono text-xs font-bold text-red-600">OCUPADA</span>
+</div>
+<div class="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center justify-between">
+<div>
+<div class="font-bold text-slate-900 text-xs">ALFA-2 (UVI 2)</div>
+<div class="text-[11px] text-red-700 font-medium">En ruta a Food Trucks</div>
+</div>
+<span class="font-mono text-xs font-bold text-red-600" id="fleet-alfa2-eta">ETA 5s</span>
+</div>
+</div>
+<!-- Seguridad y Control -->
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4" id="fleet-card-seguridad">
+<div class="flex items-center justify-between pb-3 border-b border-slate-100">
+<span class="font-bold text-sm text-slate-900">Seguridad y Control</span>
+<span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md font-bold text-xs" id="fleet-badge-seguridad">2/3 LIBRES</span>
+</div>
+<div class="p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between">
+<div>
+<div class="font-bold text-slate-900 text-xs">SEG-01 (Patrulla)</div>
+<div class="text-[11px] text-blue-700 font-medium">En ruta a Baños Oeste</div>
+</div>
+<span class="font-mono text-xs font-bold text-blue-600">EN RUTA</span>
+</div>
+<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+<div>
+<div class="font-bold text-slate-900 text-xs">SEG-02 / SEG-03</div>
+<div class="text-[11px] text-emerald-700 font-medium">Puesto Fijo Puerta A y C</div>
+</div>
+<span class="font-mono text-xs font-bold text-emerald-600">DISPONIBLE</span>
+</div>
+</div>
+<!-- Apoyo e Infraestructura -->
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4" id="fleet-card-apoyo">
+<div class="flex items-center justify-between pb-3 border-b border-slate-100">
+<span class="font-bold text-sm text-slate-900">Apoyo &amp; Logística</span>
+<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md font-bold text-xs" id="fleet-badge-apoyo">1/2 LIBRES</span>
+</div>
+<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+<div>
+<div class="font-bold text-slate-900 text-xs">APO-1 (Técnicos Cuadros)</div>
+<div class="text-[11px] text-amber-800 font-medium">En ruta a Plaza Central</div>
+</div>
+<span class="font-mono text-xs font-bold text-amber-700">ACTIVO</span>
+</div>
+<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+<div>
+<div class="font-bold text-slate-900 text-xs">APO-2 (Logística Viales)</div>
+<div class="text-[11px] text-emerald-700 font-medium">En espera Parking P1</div>
+</div>
+<span class="font-mono text-xs font-bold text-emerald-600">DISPONIBLE</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ================================================================= -->
+<!-- VIEW 3: INCIDENTES / TRIAGE TAB (Foco en cola operativa de avisos) -->
+<!-- ================================================================= -->
+<div class="hidden space-y-6" id="view-incidents">
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+<div>
+<h2 class="text-lg font-bold text-slate-900">Mando Triage — Cola Unificada</h2>
+<p class="text-xs text-slate-500">Integración en tiempo real con 112 y Agente HR de Telegram</p>
+</div>
+<button class="px-3.5 py-1.5 bg-red-600 text-white font-bold text-xs rounded-xl hover:bg-red-700 transition-colors flex items-center gap-1" onclick="openInjectionDrawer()">
+<span class="material-symbols-outlined text-[16px]">add_alert</span> Inyectar Triage
+          </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+<div class="font-bold text-sm text-slate-900 flex items-center justify-between">
+<span class="">Avisos Pendientes de Firma MANDO</span>
+<span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+</div>
+<!-- Avisos REALES que exigen firma humana (needs_card y no resueltos). El
+     cableado clona esta plantilla oculta y rellena sus campos; si no hay
+     ninguno, se muestra el texto neutro de abajo. -->
+<div class="space-y-2" id="firma-lista">
+<div class="p-4 rounded-xl bg-red-50 border border-red-200 space-y-2 cursor-pointer" id="firma-molde" hidden>
+<div class="flex items-center justify-between">
+<span class="font-bold text-red-700 text-xs" data-campo="id"></span>
+<span class="px-2 py-0.5 bg-red-600 text-white rounded text-[10px] font-bold" data-campo="gravedad"></span>
+</div>
+<p class="text-xs text-slate-700 font-medium" data-campo="resumen"></p>
+<div class="text-[11px] text-red-600 font-bold" data-campo="pie"></div>
+</div>
+</div>
+<p class="text-xs text-slate-500" id="firma-vacio">Ningún aviso abierto exige firma.</p>
+</div>
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+<div class="font-bold text-sm text-slate-900">Integración Agente HR (Telegram Directo)</div>
+<!-- Estado REAL de las integraciones: solo los booleanos de `env` en
+     /api/board. Nunca se muestran valores ni secretos. -->
+<p class="text-[10px] font-mono text-slate-500" id="hr-estado-linea">Comprobando integraciones…</p>
+<!-- Avisos REALES entrados por el bot (channel === "telegram"). El cableado
+     clona esta plantilla oculta; si no hay ninguno, se muestra el texto neutro
+     de abajo y NO se inventa ninguna conversacion. -->
+<div class="space-y-2" id="hr-telegram-lista">
+<div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2" id="hr-molde" hidden>
+<div class="text-slate-500 font-mono text-[10px]" data-campo="chat"></div>
+<p class="italic text-slate-800" data-campo="texto"></p>
+<p class="text-slate-600 leading-snug" data-campo="respuesta"></p>
+<div class="flex items-center justify-between pt-2 border-t border-slate-200">
+<span class="text-emerald-700 font-bold" data-campo="estado"></span>
+<button class="text-blue-600 hover:underline font-bold" type="button" data-campo="abrir">Abrir Ficha</button>
+</div>
+</div>
+</div>
+<p class="text-xs text-slate-500" id="hr-telegram-vacio">Sin mensajes reales del bot de Telegram todavía. Los avisos inyectados desde la Mesa de Inyección no cuentan como mensajes del bot: aparecen en la tabla, con su canal.</p>
+</div>
+</div>
+</div>
+<!-- ================================================================= -->
+<!-- VIEW 4: RUTAS & EVAC TAB -->
+<!-- ================================================================= -->
+<div class="hidden space-y-6" id="view-routes">
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+<h2 class="text-lg font-bold text-slate-900">Planes de Evacuación y Viales de Emergencia</h2>
+<p class="text-xs text-slate-500 mt-1">Puertas de escape masivo y pasillos despejados</p>
+<div class="grid grid-cols-4 gap-4 mt-4">
+<div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+<div class="font-bold text-xs text-emerald-800">EVAC-N (Norte)</div>
+<div class="text-[11px] text-emerald-600 font-semibold">Despejada · 100%</div>
+</div>
+<div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+<div class="font-bold text-xs text-emerald-800">EVAC-E (Este)</div>
+<div class="text-[11px] text-emerald-600 font-semibold">Despejada · 100%</div>
+</div>
+<div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center">
+<div class="font-bold text-xs text-amber-800">PUERTA C (Sur)</div>
+<div class="text-[11px] text-amber-600 font-semibold">Desvío por tapón</div>
+</div>
+<div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+<div class="font-bold text-xs text-emerald-800">EVAC-O (Oeste)</div>
+<div class="text-[11px] text-emerald-600 font-semibold">Despejada · 100%</div>
+</div>
+</div>
+<!-- Dato REAL derivable del tablero: avisos abiertos por banda del recinto. -->
+<div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600" id="rutas-dato-real">Avisos abiertos por banda: consultando el tablero…</div>
+<!-- Honestidad: el backend no publica estado de viales ni aforos de evacuacion. -->
+<p class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3 mt-3" id="rutas-nota">Valores de referencia del diseño: el backend no publica estado de viales ni aforos de evacuación, así que las cifras de arriba no son medición.</p>
+</div>
+</div>
+<!-- ================================================================= -->
+<!-- VIEW 5: ANALÍTICA & TIEMPOS TAB -->
+<!-- ================================================================= -->
+<div class="hidden space-y-6" id="view-analytics">
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+<h2 class="text-lg font-bold text-slate-900">Analítica de Tiempos y Rendimiento Global</h2>
+<p class="text-xs text-slate-500 mt-1">Consolidado de turnos de respuesta y dispersión de avisos</p>
+<div class="grid grid-cols-3 gap-6 mt-4">
+<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+<span class="text-xs text-slate-500 font-bold uppercase">Tiempo hasta la firma (mediana)</span>
+<div class="text-2xl font-black text-slate-900 mt-1" id="analytics-firma">—</div>
+<span class="text-[11px] text-slate-500 font-medium" id="analytics-firma-pie">Sin datos.</span>
+</div>
+<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+<span class="text-xs text-slate-500 font-bold uppercase">Avisos resueltos</span>
+<div class="text-2xl font-black text-slate-900 mt-1" id="analytics-resueltos">42</div>
+<span class="text-[11px] text-blue-600 font-bold" id="analytics-resueltos-pie">Turno actual de noche</span>
+</div>
+<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+<span class="text-xs text-slate-500 font-bold uppercase">Tasa de derivación hospitalaria</span>
+<div class="text-2xl font-black text-slate-900 mt-1" id="analytics-derivacion">—</div>
+<span class="text-[11px] text-slate-500 font-medium" id="analytics-derivacion-pie">El backend no publica este dato (referencia de diseño: 4.8 %).</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6 mt-4">
+<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+<span class="text-xs text-slate-500 font-bold uppercase">Despachos activos</span>
+<div class="text-2xl font-black text-slate-900 mt-1" id="analytics-despachos">—</div>
+<span class="text-[11px] text-slate-500 font-medium" id="analytics-despachos-pie">Unidades ocupadas según la asignación real.</span>
+</div>
+<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+<span class="text-xs text-slate-500 font-bold uppercase">Avisos abiertos</span>
+<div class="text-2xl font-black text-slate-900 mt-1" id="analytics-abiertos">—</div>
+<span class="text-[11px] text-slate-500 font-medium" id="analytics-abiertos-pie">Del total recibido en el tablero.</span>
+</div>
+<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+<span class="text-xs text-slate-500 font-bold uppercase">En overflow (sin recursos)</span>
+<div class="text-2xl font-black text-slate-900 mt-1" id="analytics-overflow">—</div>
+<span class="text-[11px] text-slate-500 font-medium" id="analytics-overflow-pie">Avisos que el plan no puede cubrir.</span>
+</div>
+</div>
+<!-- Patrones reales del backend (`lessons`): tipo + sector repetidos. -->
+<div class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+<div class="flex items-center justify-between">
+<span class="text-xs text-slate-500 font-bold uppercase">Patrones detectados (lecciones)</span>
+<span class="text-[10px] text-slate-400" title="Derivado de los avisos ya vistos: tipo + sector repetidos">dato real</span>
+</div>
+<ul class="mt-2 space-y-1.5 text-[11px] text-slate-600" id="analytics-lecciones"></ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ========================================================= -->
+<!-- SLIDING DRAWERS / MODALS (INCIDENT CONFIRMATION & INJECTION) -->
+<!-- ========================================================= -->
+<!-- DRAWER 1: FICHA DE INCIDENTE (~460px Slide Over from Right) -->
+<div class="fixed top-0 right-0 bottom-0 w-[460px] bg-white border-l border-slate-200 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col" id="drawer-incident">
+<div class="p-5 bg-slate-50 border-b border-slate-200 flex items-start justify-between">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-black text-lg shrink-0"><svg class="w-5 h-5 text-red-700" viewBox="0 0 24 24" fill="currentColor"><path d="M10.5 4.5h3v6h6v3h-6v6h-3v-6h-6v-3h6v-6z"></path></svg></div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-extrabold text-slate-900 text-lg" id="ficha-id">INC-104</span>
+<span class="px-2 py-0.5 rounded-full bg-slate-950 text-white font-extrabold text-[10px]" id="ficha-gravedad">VITAL</span>
+<span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-bold text-[10px]" id="ficha-perfil">MENOR EDAD</span>
+</div>
+<p class="text-xs text-slate-600 font-medium mt-0.5" id="ficha-subtitulo">Parada cardio / Desmayo masivo · FOSO ESCENARIO</p>
+<span class="font-mono text-[10px] text-slate-400" id="ficha-notificado">Notificado: 22:14:02 CET · Triage N5</span>
+</div>
+</div>
+<button class="w-8 h-8 rounded-lg hover:bg-slate-200 flex items-center justify-center text-slate-500" onclick="closeIncidentDrawer()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex-1 p-5 overflow-y-auto space-y-4">
+<!-- Mandatory Warning -->
+<div class="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-900">
+<span class="material-symbols-outlined text-red-600 text-[24px]">gavel</span>
+<div class="text-xs">
+<div class="font-bold uppercase tracking-wide">Requiere Confirmación Humana</div>
+<div class="text-red-700 mt-0.5">La máquina propone el protocolo, la Mesa MANDO firma la ejecución legal.</div>
+</div>
+</div>
+<!-- Citizen Quote -->
+<div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+<span class="font-bold uppercase tracking-wide text-slate-400 text-[10px]">Transcripción Denunciante:</span>
+<p class="italic text-slate-800 mt-1 font-medium" id="ficha-transcripcion">"Mi amigo se ha desplomado en primera fila, la gente está empujando y no puede respirar... no contesta, tiene los ojos cerrados y los labios blancos."</p>
+</div>
+<!-- Action checklist -->
+<div class="space-y-2" id="ficha-actuaciones">
+<span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Actuaciones Propuestas:</span>
+<label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer">
+<input checked="" class="mt-0.5 rounded text-blue-600 focus:ring-0" type="checkbox">
+<div class="text-xs">
+<div class="font-bold text-slate-900 flex items-center gap-1.5">
+<span class="">Parar el espectáculo y pedir silencio</span>
+<span class="px-1.5 py-0.2 bg-red-100 text-red-700 rounded text-[9px] font-bold">OBLIGATORIA</span>
+</div>
+<div class="text-slate-500 mt-0.5">Comunica de inmediato con mesa de sonido y dirección artística.</div>
+</div>
+</label>
+<label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer">
+<input checked="" class="mt-0.5 rounded text-blue-600 focus:ring-0" type="checkbox">
+<div class="text-xs">
+<div class="font-bold text-slate-900 flex items-center gap-1.5">
+<span class="">Escalar a 112 / recurso externo (SVA)</span>
+<span class="px-1.5 py-0.2 bg-red-100 text-red-700 rounded text-[9px] font-bold">OBLIGATORIA</span>
+</div>
+<div class="text-slate-500 mt-0.5">Llamada prioritaria automática a centralita SUMMA 112.</div>
+</div>
+</label>
+<label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer">
+<input checked="" class="mt-0.5 rounded text-blue-600 focus:ring-0" type="checkbox">
+<div class="text-xs">
+<div class="font-bold text-slate-900 flex items-center gap-1.5">
+<span class="">Activar protocolo menor de edad</span>
+<span class="px-1.5 py-0.2 bg-blue-100 text-blue-700 rounded text-[9px] font-bold">POR PERFIL</span>
+</div>
+<div class="text-slate-500 mt-0.5">Cruce con base de datos de pulseras RFID tuteladas.</div>
+</div>
+</label>
+</div>
+<!-- Resource deficit Alert -->
+<div class="p-3.5 rounded-xl bg-red-50 border border-red-300 text-xs text-red-800" id="ficha-deficit" style="display:none">
+<span class="font-bold uppercase" id="ficha-deficit-titulo">Recursos no disponibles:</span>
+<p class="mt-0.5" id="ficha-deficit-texto"></p>
+</div>
+<!-- Estado del plan: dato REAL de allocation. Lo rellena el cableado. -->
+<div class="space-y-2 pt-2">
+<span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Propuesta de MANDO:</span>
+<p class="text-[11px] text-slate-600 p-2.5 rounded-xl bg-slate-50 border border-slate-200" id="ficha-propuesta">—</p>
+</div>
+<!-- Traza del aviso (timeline real + feed del backend) -->
+<div class="space-y-2" id="ficha-traza-aviso">
+<span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Traza del Aviso:</span>
+<ul class="space-y-1.5 text-[11px] text-slate-600" id="ficha-traza-lista"></ul>
+</div>
+<!-- Decisión firmada (si existe) -->
+<div class="space-y-1" id="ficha-decision" style="display:none">
+<span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Decisión Registrada:</span>
+<p class="text-[11px] text-slate-600 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200" id="ficha-decision-texto"></p>
+</div>
+<!-- Nota del operador: el backend ya acepta `note` en el POST de decisión. -->
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-slate-800 uppercase tracking-wide" for="ficha-nota">Nota para la firma (opcional):</label>
+<textarea class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none" id="ficha-nota" placeholder="Ej: confirmo parada de escenario y aviso a 112..." rows="2"></textarea>
+</div>
+</div>
+<div class="p-5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+<div>
+<div class="text-[10px] text-slate-400 font-bold uppercase">AUTORIDAD FIRMANTE</div>
+<div class="text-xs font-bold text-slate-800" id="ficha-firmante">—</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3.5 py-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-colors flex items-center gap-1.5" id="ficha-btn-resolver" onclick="resolverIncidente()" title="Cerrar el aviso (estado resuelto) y liberar sus recursos">
+<span class="material-symbols-outlined text-[16px]">done_all</span>
+<span>Resolver</span>
+</button>
+<button class="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition-colors flex items-center gap-1.5 shadow-md" onclick="confirmIncidentAction()">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span class="">Confirmar Decisión</span>
+</button>
+</div>
+</div>
+</div>
+<!-- DRAWER 2: MESA DE INYECCIÓN DE AVISOS -->
+<div class="fixed top-0 right-0 bottom-0 w-[420px] bg-white border-l border-slate-200 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col" id="drawer-injection">
+<div class="p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-600 text-[22px]">playlist_add</span>
+<h3 class="font-bold text-slate-900">Mesa de Inyección</h3>
+</div>
+<button class="w-8 h-8 rounded-lg hover:bg-slate-200 flex items-center justify-center text-slate-500" onclick="closeInjectionDrawer()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex-1 p-5 overflow-y-auto space-y-5 text-xs">
+<div class="space-y-3">
+<span class="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Escenarios de Estrés Preconfigurados:</span>
+<div class="p-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-bold text-slate-900">Día 1 — Operación Normal</span>
+<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-[10px]">CONTROLADO</span>
+</div>
+<p class="text-slate-500 text-[11px]">Incidentes leves, aforos estables, recursos médicos disponibles.</p>
+<button class="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold" id="btn-escenario-normal" onclick="loadScenario('normal')">Cargar Escenario Normal</button>
+</div>
+<div class="p-3.5 rounded-xl border border-red-200 bg-red-50/40 space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-bold text-slate-900">Día 2 — El Plan No Vale</span>
+<span class="px-2 py-0.5 bg-red-600 text-white rounded font-bold text-[10px]">SATURACIÓN</span>
+</div>
+<p class="text-slate-500 text-[11px]">Saturación médica simultánea, paro cardiorrespiratorio en foso.</p>
+<button class="w-full py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold" id="btn-escenario-stress" onclick="loadScenario('stress')">Cargar Escenario Saturado</button>
+</div>
+<!-- Progreso real de la carga del escenario (8 avisos, uno a uno). -->
+<div class="hidden" id="escenario-progreso-wrap">
+<div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden"><div class="bg-blue-600 h-full rounded-full transition-all duration-200" id="escenario-progreso-barra" style="width:0%"></div></div>
+<p class="text-slate-600 text-[11px] mt-1.5" id="escenario-progreso">Preparando…</p>
+</div>
+</div>
+<div class="space-y-2 pt-2 border-t border-slate-100">
+<span class="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Inyectar Aviso Manual:</span>
+<textarea class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none" id="manual-incident-text" placeholder="Ej: Dos intoxicados en carpa este no responden a estímulos..." rows="3"></textarea>
+<!-- Canal del aviso. Las etiquetas y los valores son los del contrato del repo
+     (lib/contract.ts, CHANNEL_LABEL). Por defecto Telegram: es lo que permite
+     demostrar el circuito del bot sin tener el bot conectado. -->
+<label class="flex items-center gap-2 text-[11px] font-bold text-slate-700">
+<span class="whitespace-nowrap">Canal:</span>
+<select class="w-full py-2 px-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" id="canal-inyeccion">
+<option value="telegram" selected>Telegram</option>
+<option value="webcall">Web call</option>
+<option value="sms">SMS</option>
+<option value="voice">Voz</option>
+<option value="whatsapp">WhatsApp</option>
+<option value="other">Otro</option>
+</select>
+</label>
+<button class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-1" onclick="simulateManualInjection()">
+<span class="material-symbols-outlined text-[16px]">bolt</span> Clasificar e Inyectar
+        </button>
+</div>
+<!-- Estado real del tablero (lo rellena el script de cableado) -->
+<div class="space-y-2 pt-2 border-t border-slate-100">
+<span class="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Estado del Tablero:</span>
+<p class="text-slate-500 text-[11px]" id="inyeccion-estado">Consultando /api/board…</p>
+</div>
+</div>
+<div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+<button class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100" onclick="closeInjectionDrawer()">Cerrar</button>
+</div>
+</div>
+<!-- TOAST NOTIFICATION -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#0a1526] text-white px-4 py-2.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-2.5 z-50 transform translate-y-24 opacity-0 transition-all duration-300" id="mando-toast">
+<span class="material-symbols-outlined text-emerald-400 text-[20px]">check_circle</span>
+<span class="text-xs font-semibold" id="toast-message">Acción registrada en MANDO Ops</span>
+</div>
+<!-- ========================================================= -->
+<!-- JAVASCRIPT CONTROLLER (Tabs, Live Telemetry, & Drawers) -->
+<!-- ========================================================= -->
+<script>
+    // 1. Tab Switching Functionality via Sidebar Buttons
+    function switchTab(tabId) {
+      const tabs = ['dashboard', 'fleet', 'incidents', 'routes', 'analytics'];
+      
+      tabs.forEach(tab => {
+        const viewEl = document.getElementById(`view-${tab}`);
+        const btnEl = document.getElementById(`nav-btn-${tab}`);
+        
+        if (tab === tabId) {
+          if (viewEl) viewEl.classList.remove('hidden');
+          if (btnEl) {
+            btnEl.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-navy-hover');
+            btnEl.classList.add('text-white', 'bg-blue-600', 'shadow-md', 'shadow-blue-600/30', 'font-semibold');
+          }
+        } else {
+          if (viewEl) viewEl.classList.add('hidden');
+          if (btnEl) {
+            btnEl.classList.remove('text-white', 'bg-blue-600', 'shadow-md', 'shadow-blue-600/30', 'font-semibold');
+            btnEl.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-navy-hover');
+          }
+        }
+      });
+      
+      showToast(`Pestaña activa: ${tabId.toUpperCase()}`);
+    }
+
+    // 2. Telemetry Simulation Engine for Live Moving Beacons
+    const simUnits = [
+      {
+        id: 'alfa-2',
+        name: 'ALFA-2',
+        pathId: 'path-alfa-2',
+        markerId: 'unit-marker-alfa-2',
+        etaId: 'eta-text-alfa-2',
+        tableProgressId: 'table-progress-alfa2',
+        tablePercentId: 'table-percent-alfa2',
+        tableEtaId: 'table-eta-alfa2',
+        fleetEtaId: 'fleet-alfa2-eta',
+        totalSec: 120,
+        progress: 0.72,
+        speed: 1.0
+      },
+      {
+        id: 'seg-01',
+        name: 'SEG-01',
+        pathId: 'path-seg-01',
+        markerId: 'unit-marker-seg-01',
+        etaId: 'eta-text-seg-01',
+        tableProgressId: 'table-progress-seg01',
+        tablePercentId: 'table-percent-seg01',
+        tableEtaId: 'table-eta-seg01',
+        totalSec: 180,
+        progress: 0.48,
+        speed: 0.9
+      },
+      {
+        id: 'apo-1',
+        name: 'APO-1',
+        pathId: 'path-apo-1',
+        markerId: 'unit-marker-apo-1',
+        etaId: 'eta-text-apo-1',
+        tableProgressId: 'table-progress-apo1',
+        tablePercentId: 'table-percent-apo1',
+        tableEtaId: 'table-eta-apo1',
+        totalSec: 90,
+        progress: 0.68,
+        speed: 1.15
+      }
+    ];
+
+    let simSpeeds = [1, 2, 0];
+    let simSpeedIndex = 0;
+    let currentSimSpeed = simSpeeds[simSpeedIndex];
+    let lastTime = null;
+
+    function cycleSimSpeed() {
+      simSpeedIndex = (simSpeedIndex + 1) % simSpeeds.length;
+      currentSimSpeed = simSpeeds[simSpeedIndex];
+      const text = document.getElementById('sim-speed-text');
+      const icon = document.getElementById('sim-speed-icon');
+      if (currentSimSpeed === 0) {
+        text.innerText = 'PAUSA';
+        icon.innerText = 'pause';
+      } else {
+        text.innerText = currentSimSpeed + 'x';
+        icon.innerText = 'play_arrow';
+      }
+    }
+
+    function formatETA(sec) {
+      if (sec <= 0) return 'EN DESTINO';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      if (m > 0) return `ETA ${m}m ${s.toString().padStart(2, '0')}s`;
+      return `ETA ${s}s`;
+    }
+
+    function updateSimulation(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const delta = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      simUnits.forEach(u => {
+        const pathEl = document.getElementById(u.pathId);
+        const markerEl = document.getElementById(u.markerId);
+        const etaEl = document.getElementById(u.etaId);
+        const tblProg = document.getElementById(u.tableProgressId);
+        const tblPct = document.getElementById(u.tablePercentId);
+        const tblEta = document.getElementById(u.tableEtaId);
+        const fltEta = document.getElementById(u.fleetEtaId);
+
+        if (!pathEl || !markerEl) return;
+
+        if (!prefersReduced && currentSimSpeed > 0) {
+          const totalLength = pathEl.getTotalLength();
+          u.progress += (delta / u.totalSec) * currentSimSpeed * u.speed;
+          if (u.progress > 1) u.progress = 0;
+
+          const pt = pathEl.getPointAtLength(u.progress * totalLength);
+          markerEl.setAttribute('transform', `translate(${pt.x}, ${pt.y})`);
+        }
+
+        const remainingSec = Math.max(0, (1 - u.progress) * u.totalSec);
+        const percent = Math.round(u.progress * 100);
+        const formatted = formatETA(remainingSec);
+
+        if (etaEl) etaEl.textContent = formatted;
+        if (tblProg) tblProg.style.width = percent + '%';
+        if (tblPct) tblPct.textContent = percent + '%';
+        if (tblEta) tblEta.textContent = formatted;
+        if (fltEta) fltEta.textContent = formatted;
+      });
+
+      requestAnimationFrame(updateSimulation);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      requestAnimationFrame(updateSimulation);
+    });
+
+    // 3. Map Layer Toggles
+    let densityVisible = true;
+    function toggleDensityLayer() {
+      const layer = document.getElementById('density-heatmap-layer');
+      const btn = document.getElementById('density-btn');
+      densityVisible = !densityVisible;
+      if (densityVisible) {
+        layer.classList.remove('opacity-0');
+        btn.classList.add('bg-blue-50', 'text-blue-700');
+        btn.classList.remove('bg-slate-100', 'text-slate-700');
+      } else {
+        layer.classList.add('opacity-0');
+        btn.classList.remove('bg-blue-50', 'text-blue-700');
+        btn.classList.add('bg-slate-100', 'text-slate-700');
+      }
+    }
+
+    let routesVisible = true;
+    function toggleRoutesLayer() {
+      const layer = document.getElementById('resource-routes-layer');
+      const btn = document.getElementById('routes-btn');
+      routesVisible = !routesVisible;
+      if (routesVisible) {
+        layer.classList.remove('opacity-0');
+        btn.classList.add('bg-blue-50', 'text-blue-700');
+      } else {
+        layer.classList.add('opacity-0');
+        btn.classList.remove('bg-blue-50', 'text-blue-700');
+      }
+    }
+
+    // 4. Drawers & Toast Control
+    function openIncidentDrawer(id) {
+      closeInjectionDrawer();
+      document.getElementById('drawer-incident').classList.remove('translate-x-full');
+    }
+
+    function closeIncidentDrawer() {
+      document.getElementById('drawer-incident').classList.add('translate-x-full');
+    }
+
+    function openInjectionDrawer() {
+      closeIncidentDrawer();
+      document.getElementById('drawer-injection').classList.remove('translate-x-full');
+    }
+
+    function closeInjectionDrawer() {
+      document.getElementById('drawer-injection').classList.add('translate-x-full');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('mando-toast');
+      const msgEl = document.getElementById('toast-message');
+      msgEl.innerText = msg;
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 2500);
+    }
+
+    function confirmIncidentAction() {
+      closeIncidentDrawer();
+      showToast('Firma validada: Notificación 112 y parada confirmada.');
+    }
+
+    function togglePlanStatus() {
+      showToast('Alternando estado de saturación del festival...');
+    }
+
+    function loadScenario(type) {
+      closeInjectionDrawer();
+      /* El widget «Network Pulse» ya NO se toca a mano aqui: sus cifras salen
+         del tablero real (pintarPulse). Cargar un escenario solo inyecta. */
+      showToast(type === 'normal' ? 'Escenario normal en carga...' : 'Escenario de saturación en carga...');
+    }
+
+    function simulateManualInjection() {
+      const text = document.getElementById('manual-incident-text').value;
+      if (!text.trim()) {
+        showToast('Introduce un aviso válido.');
+        return;
+      }
+      closeInjectionDrawer();
+      showToast('Nuevo aviso inyectado en cola.');
+    }
+
+    function exportCSV() {
+      showToast('Descargando Incident & Fleet Manifest (CSV)...');
+    }
+  </script>
+
+<!-- ============================================================================
+     CABLEADO CON EL BACKEND DEL REPOSITORIO (MANDO — pantalla /interfaz)
+
+     Este bloque NO cambia el diseno: solo rellena con datos reales los sitios
+     que ya existen en el marcado de arriba. Todo lo que se pinta reutiliza las
+     clases y las estructuras de la propia plantilla (se clona la fila de la
+     tabla y el marcado de los pines).
+
+     Endpoints usados (los del repo, sin ningun secreto):
+       GET    /api/board                      -> tablero completo (segun 1x/2x/PAUSA)
+       POST   /api/demo/public-report         -> inyectar aviso
+       POST   /api/incidents/<id>/decision    -> firmar la decision (action + note)
+       PATCH  /api/incidents/<id>             -> resolver (status=resuelto)
+
+     ---------------------------------------------------------------------------
+     VALORES DE INTERFAZ SIN RESPALDO DEL BACKEND (lo que queda, y por que):
+
+       · Las ETA («ETA 5s», «ETA 1m 44s», «ETA 32s») y el ciclo 1x / 2x / PAUSA
+         del motor de simulacion de balizas: son maqueta de movimiento. El ciclo
+         SI manda ya sobre el sondeo real de /api/board (2,5 s / 1,25 s / pausa),
+         asi que tiene efecto visible. Las etiquetas ETA las decidio conservar el
+         usuario: se quedan, pero no se presentan como telemetria medida.
+       · El anillo y los textos de SLA de «Avg. Response Time» («-45s vs SLA
+         (5m)», «Cumplimiento global al 94.2%», «84 % SLA»): no hay SLA en el
+         backend. Solo se sustituye la cifra grande, que es la mediana real de
+         tiempo hasta la firma.
+       · «Tasa de derivacion hospitalaria»: rotulada como no disponible (solo la
+         referencia de diseño), en vez de afirmar un 4.8 %.
+       · «ROUTE PROGRESS»: la columna se mantiene (es del diseño) pero cada fila
+         muestra «N/D» — el backend no publica progreso de ruta.
+       · Los viales de «Rutas & Evac»: rotulados como referencia del plan, no
+         como estado medido; debajo va el dato real de avisos abiertos por banda.
+       · «Network Pulse»: derivado del tablero (avisos abiertos cubiertos y
+         unidades libres). loadScenario ya no lo mueve a mano.
+       · Badges OBLIGATORIA / POR PERFIL y descripcion del molde en la ficha: se
+         ocultan, porque el backend no marca obligatoriedad ni redacta ese texto.
+     ============================================================================ -->
+<script>
+/* ---------------------------------------------------------------------------
+   1. Constantes y estado
+   --------------------------------------------------------------------------- */
+
+/* Dotacion del recinto. ESPEJO de web/src/lib/allocate.ts (DEFAULT_CAPACITY).
+   Si alli cambia, hay que cambiarlo aqui: el HTML no puede importar TypeScript. */
+const CAPACIDAD = { medico: 2, seguridad: 3, apoyo: 2, coordinacion: 1 };
+const ORDEN_RECURSOS = ["medico", "seguridad", "apoyo", "coordinacion"];
+const NOMBRE_RECURSO = {
+  medico: "UVI movil",
+  seguridad: "Patrulla rapida",
+  apoyo: "Apoyo / logistica",
+  coordinacion: "Mesa MANDO",
+};
+const SIGLAS_RECURSO = { medico: "ALFA", seguridad: "SEG", apoyo: "APO", coordinacion: "MANDO" };
+
+/* Puntos de base de cada unidad en el plano (posiciones de presentacion). */
+const BASES = {
+  medico: [{ x: 300, y: 112 }, { x: 872, y: 404 }],
+  seguridad: [{ x: 940, y: 120 }, { x: 940, y: 300 }, { x: 96, y: 150 }],
+  apoyo: [{ x: 120, y: 392 }, { x: 196, y: 452 }],
+  coordinacion: [{ x: 520, y: 470 }],
+};
+
+/* Color del pin por gravedad (mismo criterio de color que ya usa la plantilla
+   para sus pines: rojo = grave, ambar = urgente, azul = seguridad...). */
+const COLOR_TRIAGE = {
+  negro: "#020617",
+  rojo: "#ef4444",
+  amarillo: "#f59e0b",
+  verde: "#10b981",
+  desconocido: "#94a3b8",
+};
+
+const ETIQUETA_TRIAGE = {
+  negro: "VITAL",
+  rojo: "EMERGENCIA",
+  amarillo: "URGENTE",
+  verde: "LEVE",
+  desconocido: "SIN TRIAJE",
+};
+
+/* Glifo por tipo de incidente (se pinta dentro del pin, como en la plantilla). */
+const GLIFO_TIPO = {
+  medica: "+",
+  aglomeracion: "\u224B",
+  agresion: "\u2694",
+  clima: "\u2608",
+  infra: "\u26A1",
+  otro: "\u2022",
+};
+
+const ETIQUETA_TIPO = {
+  medica: "Medica",
+  aglomeracion: "Aglomeracion",
+  agresion: "Agresion",
+  clima: "Clima",
+  infra: "Infraestructura",
+  otro: "Otro",
+};
+
+const ETIQUETA_ESTADO = { nuevo: "NUEVO", asignado: "ASIGNADO", escalado: "ESCALADO", resuelto: "RESUELTO" };
+
+/* Zonas del SVG donde puede caer un pin. Las tres bandas Oeste/Sur/Este se
+   reparten dentro de la «PLAZA CENTRAL & CONEXION SUR» que ya dibuja la
+   plantilla: no se anade ninguna zona ni rotulo nuevo. */
+const ZONAS = {
+  campamento: { x: 40, y: 35, w: 130, h: 230 },
+  parking: { x: 40, y: 285, w: 160, h: 200 },
+  "escenario principal": { x: 330, y: 45, w: 380, h: 95 },
+  "zona vip": { x: 715, y: 45, w: 225, h: 110 },
+  banos: { x: 235, y: 200, w: 75, h: 150 },
+  "zona norte": { x: 330, y: 195, w: 380, h: 145 },
+  "zona de food trucks": { x: 735, y: 180, w: 205, h: 170 },
+  "zona oeste": { x: 330, y: 355, w: 125, h: 70 },
+  "zona sur": { x: 455, y: 355, w: 130, h: 70 },
+  "zona este": { x: 585, y: 355, w: 125, h: 70 },
+  entrada: { x: 330, y: 435, w: 380, h: 40 },
+};
+
+/* Escenarios de demo. ESPEJO de web/src/lib/scenario.ts (ids dia1 y dia2):
+   el HTML no puede importar TypeScript, asi que los textos se duplican aqui.
+   La fuente de verdad sigue siendo ese fichero. */
+const ESCENARIOS = {
+  dia1: {
+    nombre: "Dia 1",
+    items: [
+      { text: "Se ha desmayado una chica en la zona norte, esta consciente pero muy palida", reporter: "Lucia", perfil: "adulto" },
+      { text: "Muchisima gente en la entrada, no se puede pasar, hay empujones", reporter: "Marcos", perfil: "adulto" },
+      { text: "Un chaval se ha caido cerca del escenario principal y se ha hecho dano en el tobillo", reporter: "Aitana", perfil: "menor" },
+      { text: "No hay luz en los banos de la zona oeste y esta todo a oscuras", reporter: "Personal de zona", perfil: "personal" },
+      { text: "Una senora en silla de ruedas no encuentra el acceso adaptado en la entrada", reporter: "Nerea", perfil: "pmr" },
+      { text: "Hay una pelea en la zona de food trucks, dos personas discutiendo muy fuerte", reporter: "Ivan", perfil: "adulto" },
+      { text: "Empieza a llover fuerte y la gente se acumula bajo la carpa de la zona este", reporter: "Paula", perfil: "adulto" },
+      { text: "Un mareo leve en la zona sur, la persona ya esta mejor", reporter: "Sergio", perfil: "adulto" },
+    ],
+  },
+  dia2: {
+    nombre: "Dia 2",
+    items: [
+      { text: "Persona inconsciente y no respira cerca del escenario principal, necesitamos ambulancia ya", reporter: "Rocio", perfil: "adulto" },
+      { text: "Avalancha en la entrada, alguien ha caido al suelo y la gente sigue empujando", reporter: "Anonimo", perfil: "adulto" },
+      { text: "Un nino solo llorando en la zona VIP, no encuentra a sus padres", reporter: "Celia", perfil: "menor" },
+      { text: "Agresion con navaja en el parking, hay una persona herida", reporter: "Vigilante", perfil: "personal" },
+      { text: "Se ha caido una valla y hay gente atrapada en la zona sur", reporter: "Hugo", perfil: "adulto" },
+      { text: "Tormenta fuerte, se ha inundado el campamento y hay barro por todas partes", reporter: "Elena", perfil: "adulto" },
+      { text: "Se ha caido el generador, todo el escenario principal sin luz ni sonido", reporter: "Tecnico de sonido", perfil: "personal" },
+      { text: "Chica con movilidad reducida atrapada en la aglomeracion de la zona este, esta en el suelo", reporter: "Dani", perfil: "pmr" },
+    ],
+  },
+};
+
+const NS_SVG = "http://www.w3.org/2000/svg";
+
+let tablero = null;            // ultimo /api/board recibido
+let avisoAbierto = null;       // aviso que muestra la ficha
+let accionElegida = null;      // actuacion que se va a firmar
+let avisosSinZona = 0;         // avisos que no caben en el plano
+let moldeFila = null;          // fila de tabla clonada como molde
+
+/* ---------------------------------------------------------------------------
+   2. Utilidades
+   --------------------------------------------------------------------------- */
+
+function esc(texto) {
+  return String(texto === null || texto === undefined ? "" : texto)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/* Sin tildes y en minusculas, para casar «Banos» con «Zona Banos WC». */
+function normaliza(texto) {
+  return String(texto || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function zonaDe(sector) {
+  return ZONAS[normaliza(sector)] || null;
+}
+
+function colorDe(triage) {
+  return COLOR_TRIAGE[triage] || COLOR_TRIAGE.desconocido;
+}
+
+function formateaHora(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "--:--:--";
+  return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function minutosDesde(iso) {
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return null;
+  return Math.max(0, Math.round((Date.now() - t) / 60000));
+}
+
+function etiquetaAntiguedad(iso) {
+  const m = minutosDesde(iso);
+  if (m === null) return "--";
+  if (m < 60) return m + " min";
+  return Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") + " m";
+}
+
+function mediana(valores) {
+  if (!valores.length) return null;
+  const o = valores.slice().sort((a, b) => a - b);
+  const medio = Math.floor(o.length / 2);
+  return o.length % 2 === 0 ? (o[medio - 1] + o[medio]) / 2 : o[medio];
+}
+
+/* ---------------------------------------------------------------------------
+   3. Derivacion de unidades (espejo de lib/allocate.ts#allocate)
+   --------------------------------------------------------------------------- */
+
+/* Crea la dotacion completa y la ocupa recorriendo `allocation.assignments`,
+   que es la asignacion que YA decidio el backend, en orden de prioridad. */
+function derivarUnidades(board) {
+  const unidades = [];
+  ORDEN_RECURSOS.forEach((kind) => {
+    for (let i = 0; i < CAPACIDAD[kind]; i += 1) {
+      const id = kind === "coordinacion" ? "MANDO-1" : (kind === "seguridad" ? "SEG-0" + (i + 1) : SIGLAS_RECURSO[kind] + "-" + (i + 1));
+      const bases = BASES[kind];
+      unidades.push({ id: id, kind: kind, rol: NOMBRE_RECURSO[kind], ocupada: false, aviso: null, base: bases[i] || bases[0] });
+    }
+  });
+  if (!board || !board.allocation) return unidades;
+
+  const libres = {};
+  ORDEN_RECURSOS.forEach((k) => { libres[k] = unidades.filter((u) => u.kind === k); });
+
+  (board.allocation.assignments || []).forEach((asig) => {
+    (asig.kinds || []).forEach((kind) => {
+      const u = (libres[kind] || []).shift();
+      if (!u) return;
+      u.ocupada = true;
+      u.aviso = asig.correlation_id;
+    });
+  });
+  return unidades;
+}
+
+function unidadesDe(unidades, id) {
+  return unidades.filter((u) => u.aviso === id);
+}
+
+/* ---------------------------------------------------------------------------
+   4. Contadores de la barra lateral, pildora LIVE y estado del plan
+   --------------------------------------------------------------------------- */
+
+function buscarPorTexto(raiz, patron) {
+  const nodos = raiz.querySelectorAll("span, div");
+  for (let i = 0; i < nodos.length; i += 1) {
+    if (patron.test(nodos[i].textContent.trim()) && nodos[i].children.length === 0) return nodos[i];
+  }
+  return null;
+}
+
+/* Busca por texto ignorando tildes y mayusculas: «Medicos (0 libres)» tiene
+   tilde en el marcado, y no quiero depender de eso. */
+function buscarPorTextoNormalizado(raiz, prefijo) {
+  const nodos = raiz.querySelectorAll("span, div");
+  for (let i = 0; i < nodos.length; i += 1) {
+    if (nodos[i].children.length !== 0) continue;
+    if (normaliza(nodos[i].textContent).startsWith(prefijo)) return nodos[i];
+  }
+  return null;
+}
+
+/* Como el anterior, pero comparando el TEXTO COMPLETO del nodo (incluidos sus
+   descendientes) en vez de exigir que no tenga hijos. Hace falta para sitios
+   como la leyenda de gravedad, donde la etiqueta es un <span> que CONTIENE
+   otro <span> (el punto de color): `children.length === 0` nunca se cumple ahi
+   y la busqueda devolvia null, dejando la leyenda con los valores de maqueta.
+   Se exige coincidencia exacta del texto normalizado, asi que no cuela un
+   contenedor padre. */
+function spanPorTextoExacto(raiz, texto) {
+  const objetivo = normaliza(texto);
+  const nodos = raiz.querySelectorAll("span");
+  for (let i = 0; i < nodos.length; i += 1) {
+    if (normaliza(nodos[i].textContent) === objetivo) return nodos[i];
+  }
+  return null;
+}
+
+function pintarContadores(board, unidades) {
+  const pill = document.getElementById("live-units-pill");
+  const badgeFlota = document.getElementById("badge-fleet-unidades");
+  const badgeCrit = document.getElementById("badge-incidentes-criticos");
+  const plan = document.getElementById("plan-status");
+  const estado = document.getElementById("inyeccion-estado");
+
+  /* Sin tablero (primer sondeo o backend caido): ni una cifra inventada. */
+  if (!board) {
+    if (pill) pill.textContent = "LIVE: \u2014 UNIDADES / \u2014 ACTIVOS";
+    if (badgeFlota) badgeFlota.textContent = "\u2014 U";
+    if (badgeCrit) badgeCrit.textContent = "\u2014 Crit";
+    if (plan) plan.textContent = "Sin datos";
+    if (estado) estado.textContent = "Sin datos del tablero: no se ha podido consultar /api/board.";
+    return;
+  }
+
+  const ocupadas = unidades.filter((u) => u.ocupada).length;
+  const abiertos = (board.incidents || []).filter((i) => i.status !== "resuelto");
+  const criticos = abiertos.filter((i) => i.extract && (i.extract.triage_color === "negro" || i.extract.triage_color === "rojo")).length;
+
+  if (pill) pill.textContent = "LIVE: " + unidades.length + " UNIDADES / " + ocupadas + " ACTIVOS";
+  if (badgeFlota) badgeFlota.textContent = unidades.length + " U";
+  if (badgeCrit) badgeCrit.textContent = criticos + " Crit";
+
+  /* Estado del plan: dato real (allocation.broken). */
+  if (plan) plan.textContent = board.allocation && board.allocation.broken ? "Saturado (déficit)" : "Cubierto";
+
+  /* Estado del tablero dentro de la mesa de inyeccion. */
+  if (estado) {
+    estado.textContent = (board.incidents || []).length + " aviso(s) en el tablero · " + abiertos.length + " abiertos · " +
+      ocupadas + "/" + unidades.length + " unidades ocupadas." +
+      (avisosSinZona > 0 ? " " + avisosSinZona + " aviso(s) sin zona en el plano (solo en la tabla)." : "");
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   5. Indicadores (donuts y cifras derivables)
+   --------------------------------------------------------------------------- */
+
+function tarjetaPorTitulo(titulo) {
+  const tarjetas = document.querySelectorAll("div");
+  for (let i = 0; i < tarjetas.length; i += 1) {
+    const t = tarjetas[i];
+    if (!t.classList.contains("rounded-2xl") || !t.classList.contains("bg-white")) continue;
+    const cabecera = t.querySelector("span.uppercase");
+    if (cabecera && cabecera.textContent.trim().toLowerCase() === titulo.toLowerCase()) return t;
+  }
+  return null;
+}
+
+/* Minutos entre el aviso y su firma (dato real; null si no hay decision). */
+function minutosHastaFirma(aviso) {
+  if (!aviso || !aviso.decision || !aviso.decision.decided_at) return null;
+  const a = new Date(aviso.reported_at).getTime();
+  const b = new Date(aviso.decision.decided_at).getTime();
+  if (isNaN(a) || isNaN(b) || b < a) return null;
+  return (b - a) / 60000;
+}
+
+const GRAVEDAD_ORDEN = [["Vital (P1)", "negro"], ["Emergencia", "rojo"], ["Urgente", "amarillo"], ["Leve", "verde"]];
+
+function pintarIndicadores(board, unidades) {
+  const tarjetaEf = tarjetaPorTitulo("Resource Efficiency");
+  const tarjetaGr = tarjetaPorTitulo("Incidentes por Gravedad");
+  const kpi1 = document.getElementById("kpi-avg-time");
+
+  /* --- Sin tablero: a guiones. Ni una cifra de maqueta. --- */
+  if (!board) {
+    if (kpi1) kpi1.textContent = "\u2014";
+    if (tarjetaEf) {
+      const cifra = tarjetaEf.querySelector("span.text-3xl");
+      if (cifra) cifra.textContent = "\u2014";
+      const centro = document.getElementById("eff-center");
+      if (centro) centro.textContent = "\u2014/\u2014";
+      tarjetaEf.querySelectorAll("svg circle").forEach((c) => c.setAttribute("stroke-dasharray", "0 238.76"));
+      [["Medicos", "medico"], ["Seguridad", "seguridad"], ["Apoyo", "apoyo"]].forEach(([texto]) => {
+        const span = buscarPorTextoNormalizado(tarjetaEf, normaliza(texto) + " (");
+        if (span) span.textContent = texto + " (\u2014 libres)";
+      });
+    }
+    if (tarjetaGr) {
+      const insignia = document.getElementById("grav-badge");
+      if (insignia) insignia.textContent = "\u2014 Activos";
+      const centro = document.getElementById("grav-center");
+      if (centro) centro.textContent = "\u2014";
+      tarjetaGr.querySelectorAll("svg circle").forEach((c) => c.setAttribute("stroke-dasharray", "0 226.19"));
+      GRAVEDAD_ORDEN.forEach(([texto]) => {
+        const etiqueta = spanPorTextoExacto(tarjetaGr, texto);
+        const valor = etiqueta && etiqueta.parentElement ? etiqueta.parentElement.querySelector("span.font-semibold") : null;
+        if (valor) valor.textContent = "\u2014";
+      });
+    }
+    return;
+  }
+
+  const incidentes = board.incidents || [];
+  const abiertos = incidentes.filter((i) => i.status !== "resuelto");
+
+  /* --- Avg. Response Time: solo la cifra grande es medible (mediana real) --- */
+  const firmaMin = incidentes.map(minutosHastaFirma).filter((v) => v !== null);
+  const med = mediana(firmaMin);
+  if (kpi1) kpi1.textContent = med === null ? "\u2014" : med.toFixed(1);
+
+  /* --- Resource Efficiency: ocupacion real de la dotacion --- */
+  if (tarjetaEf) {
+    const ocupadas = unidades.filter((u) => u.ocupada).length;
+    const cifra = tarjetaEf.querySelector("span.text-3xl");
+    if (cifra) cifra.textContent = unidades.length ? Math.round((ocupadas / unidades.length) * 100) + "%" : "\u2014";
+
+    /* Centro del anillo maestro: ocupadas / total. */
+    const centro = document.getElementById("eff-center");
+    if (centro) centro.textContent = ocupadas + "/" + unidades.length;
+
+    /* Anillo concentrico: un arco por tipo de recurso, con el reparto real. */
+    const circulos = tarjetaEf.querySelectorAll("svg circle");
+    const perimetro = 2 * Math.PI * 38;
+    let desfase = 0;
+    ORDEN_RECURSOS.forEach((kind, idx) => {
+      const c = circulos[idx];
+      if (!c) return;
+      const total = CAPACIDAD[kind] || 0;
+      const arco = unidades.length ? perimetro * (total / unidades.length) : 0;
+      c.setAttribute("stroke-dasharray", arco.toFixed(2) + " " + (perimetro - arco).toFixed(2));
+      c.setAttribute("stroke-dashoffset", (-desfase).toFixed(2));
+      desfase += arco;
+    });
+
+    /* «Medicos (0 libres)», etc.: el numero de libres es real. */
+    const libresPorTipo = {};
+    ORDEN_RECURSOS.forEach((k) => {
+      libresPorTipo[k] = unidades.filter((u) => u.kind === k && !u.ocupada).length;
+    });
+    const etiquetas = [["Medicos", "medico"], ["Seguridad", "seguridad"], ["Apoyo", "apoyo"]];
+    etiquetas.forEach(([texto, kind]) => {
+      const span = buscarPorTextoNormalizado(tarjetaEf, normaliza(texto) + " (");
+      if (span) span.textContent = texto + " (" + libresPorTipo[kind] + " libres)";
+    });
+  }
+
+  /* --- Incidentes por gravedad: recuento real por triage --- */
+  if (tarjetaGr) {
+    const cuenta = {};
+    GRAVEDAD_ORDEN.forEach(([, triage]) => {
+      cuenta[triage] = abiertos.filter((i) => (i.extract ? i.extract.triage_color : "desconocido") === triage).length;
+    });
+    const total = GRAVEDAD_ORDEN.reduce((n, [, t]) => n + cuenta[t], 0);
+
+    const insignia = document.getElementById("grav-badge");
+    if (insignia) insignia.textContent = total + " Activos";
+    const centro = document.getElementById("grav-center");
+    if (centro) centro.textContent = String(total);
+
+    /* Anillo: un arco por gravedad, con su recuento real. */
+    const circulos = tarjetaGr.querySelectorAll("svg circle");
+    const perimetro = 2 * Math.PI * 36;
+    let desfase = 0;
+    GRAVEDAD_ORDEN.forEach(([, triage], idx) => {
+      const c = circulos[idx];
+      if (!c) return;
+      const arco = total ? perimetro * (cuenta[triage] / total) : 0;
+      c.setAttribute("stroke-dasharray", arco.toFixed(2) + " " + (perimetro - arco).toFixed(2));
+      c.setAttribute("stroke-dashoffset", (-desfase).toFixed(2));
+      desfase += arco;
+    });
+
+    /* Leyenda: «Vital (P1) -> 1 (10%)», con los numeros reales.
+       La etiqueta contiene el <span> del punto de color, asi que se localiza
+       por texto completo (spanPorTextoExacto), no por nodo sin hijos. */
+    GRAVEDAD_ORDEN.forEach(([texto, triage]) => {
+      const etiqueta = spanPorTextoExacto(tarjetaGr, texto);
+      if (!etiqueta) return;
+      const fila = etiqueta.parentElement;
+      const valor = fila ? fila.querySelector("span.font-semibold") : null;
+      if (valor) {
+        const pct = total ? Math.round((cuenta[triage] / total) * 100) : 0;
+        valor.textContent = cuenta[triage] + " (" + pct + "%)";
+      }
+    });
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   5b. Integraciones (HappyRobot y Telegram) y avisos pendientes de firma
+   --------------------------------------------------------------------------- */
+
+/* Etiqueta de canal, espejo de lib/contract.ts (CHANNEL_LABEL). */
+const ETIQUETA_CANAL = {
+  telegram: "Telegram",
+  webcall: "Web call",
+  sms: "SMS",
+  voice: "Voz",
+  whatsapp: "WhatsApp",
+  other: "Otro",
+};
+
+/* Llena la tarjeta «Integracion Agente HR» (pestana Incidentes / Triage).
+   Dos cosas, ambas reales:
+     · la linea de estado, con los booleanos de `env` (nunca valores);
+     · los avisos que han entrado por el bot (channel === "telegram").
+   Sin avisos de Telegram se muestra el texto neutro: no se inventa ninguna
+   conversacion. */
+const TEXTO_HR_VACIO = "Sin mensajes reales del bot de Telegram todavía. Los avisos inyectados desde la Mesa de Inyección no cuentan como mensajes del bot: aparecen en la tabla, con su canal.";
+
+function pintarIntegraciones(board) {
+  const linea = document.getElementById("hr-estado-linea");
+  const lista = document.getElementById("hr-telegram-lista");
+  const vacio = document.getElementById("hr-telegram-vacio");
+  const molde = document.getElementById("hr-molde");
+  if (!lista || !molde) return;
+
+  if (vacio) vacio.textContent = board ? TEXTO_HR_VACIO : "Sin datos del tablero.";
+  lista.querySelectorAll("[data-clon]").forEach((n) => n.remove());
+
+  if (!board) {
+    if (linea) linea.textContent = "Sin conexión con el backend: no se puede saber el estado de las integraciones.";
+    if (vacio) vacio.style.display = "";
+    return;
+  }
+
+  const env = board.env || {};
+  if (linea) {
+    /* Solo booleanos de `env`. Nunca un token ni un secreto. */
+    const telegram = env.telegram_token
+      ? (env.telegram_secret ? "bot activo (webhook con secreto)" : "bot con token, webhook SIN secreto")
+      : "sin token (simulado)";
+    linea.textContent = "HappyRobot: " + (env.hr_mode === "live" ? "en vivo" : "simulado") +
+      " · Telegram: " + telegram;
+  }
+
+  /* Solo avisos que han entrado DE VERDAD por el bot (source "hr"): los
+     inyectados desde la Mesa llevan source "sim" y no son conversaciones del
+     bot, asi que no se atribuyen a Telegram. */
+  const deTelegram = (board.incidents || []).filter((i) => i.channel === "telegram" && i.source === "hr");
+  const ultimos = deTelegram.slice(-2).reverse();
+  if (vacio) vacio.style.display = ultimos.length ? "none" : "";
+
+  ultimos.forEach((aviso) => {
+    const tarjeta = molde.cloneNode(true);
+    tarjeta.removeAttribute("id");
+    tarjeta.removeAttribute("hidden");
+    tarjeta.setAttribute("data-clon", "1");
+
+    const chat = tarjeta.querySelector('[data-campo="chat"]');
+    if (chat) {
+      const idChat = aviso.reporter && aviso.reporter.chat_id;
+      chat.textContent = aviso.correlation_id + " · " + (idChat ? "chat " + idChat : "chat sin identificar") +
+        " · " + formateaHora(aviso.reported_at);
+    }
+
+    const texto = tarjeta.querySelector('[data-campo="texto"]');
+    if (texto) texto.textContent = '"' + (aviso.text || (aviso.extract && aviso.extract.summary) || "Sin texto") + '"';
+
+    const respuesta = tarjeta.querySelector('[data-campo="respuesta"]');
+    if (respuesta) {
+      if (aviso.reply_text) {
+        respuesta.textContent = "Respuesta que se envio al ciudadano: " + aviso.reply_text;
+      } else {
+        respuesta.style.display = "none";
+      }
+    }
+
+    const estado = tarjeta.querySelector('[data-campo="estado"]');
+    if (estado) {
+      const triage = (aviso.extract && aviso.extract.triage_color) || "desconocido";
+      estado.textContent = "Triage: " + (ETIQUETA_TRIAGE[triage] || "SIN TRIAJE") +
+        " · " + (ETIQUETA_ESTADO[aviso.status] || aviso.status);
+    }
+
+    const abrir = tarjeta.querySelector('[data-campo="abrir"]');
+    if (abrir) {
+      abrir.addEventListener("click", () => { window.openIncidentDrawer(aviso.correlation_id); });
+    }
+
+    lista.appendChild(tarjeta);
+  });
+}
+
+/* Llena «Avisos Pendientes de Firma MANDO» con los avisos REALES que exigen
+   firma humana (needs_card y no resueltos). */
+const TEXTO_FIRMA_VACIO = "Ningún aviso abierto exige firma.";
+
+function pintarFirmas(board) {
+  const lista = document.getElementById("firma-lista");
+  const vacio = document.getElementById("firma-vacio");
+  const molde = document.getElementById("firma-molde");
+  if (!lista || !molde) return;
+
+  lista.querySelectorAll("[data-clon]").forEach((n) => n.remove());
+
+  if (!board) {
+    if (vacio) { vacio.style.display = ""; vacio.textContent = "Sin datos del tablero."; }
+    return;
+  }
+  if (vacio) vacio.textContent = TEXTO_FIRMA_VACIO;
+
+  const pendientes = (board.incidents || []).filter((i) => i.needs_card && i.status !== "resuelto");
+  if (vacio) vacio.style.display = pendientes.length ? "none" : "";
+
+  const unidades = derivarUnidades(board);
+  pendientes.forEach((aviso) => {
+    const tarjeta = molde.cloneNode(true);
+    tarjeta.removeAttribute("id");
+    tarjeta.removeAttribute("hidden");
+    tarjeta.setAttribute("data-clon", "1");
+
+    const triage = (aviso.extract && aviso.extract.triage_color) || "desconocido";
+    const tipo = (aviso.extract && aviso.extract.incident_type) || "otro";
+    const sector = (aviso.extract && aviso.extract.sector) || "Sin sector";
+    const asignadas = unidadesDe(unidades, aviso.correlation_id);
+
+    const id = tarjeta.querySelector('[data-campo="id"]');
+    if (id) id.textContent = "#" + aviso.correlation_id + " · " + (ETIQUETA_TIPO[tipo] || "Otro").toUpperCase();
+
+    const gravedad = tarjeta.querySelector('[data-campo="gravedad"]');
+    if (gravedad) {
+      gravedad.textContent = ETIQUETA_TRIAGE[triage] || "SIN TRIAJE";
+      gravedad.style.background = colorDe(triage);
+    }
+
+    const resumen = tarjeta.querySelector('[data-campo="resumen"]');
+    if (resumen) {
+      resumen.textContent = sector + ". " +
+        (aviso.extract && aviso.extract.summary ? aviso.extract.summary : (aviso.text || "Sin descripcion"));
+    }
+
+    const pie = tarjeta.querySelector('[data-campo="pie"]');
+    if (pie) {
+      pie.textContent = asignadas.length
+        ? "Con recursos asignados (" + asignadas.map((u) => u.id).join(" + ") + "). Requiere decision de firma."
+        : "Sin unidades asignadas. Requiere decision de firma.";
+    }
+
+    tarjeta.addEventListener("click", () => { window.openIncidentDrawer(aviso.correlation_id); });
+    lista.appendChild(tarjeta);
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   5c. Network Pulse y modo de operación (derivados del tablero real)
+   --------------------------------------------------------------------------- */
+
+/* «On schedule» = % de avisos abiertos que el plan SÍ puede cubrir.
+   «Idle capacity» = % de la dotación que sigue libre (allocation.remaining).
+   Las dos cifras salen del tablero; ninguna se mueve a mano. */
+function pintarPulse(board, unidades) {
+  const marcador = document.getElementById("pulse-onschedule");
+  const barra = document.getElementById("pulse-onschedule-bar");
+  const marcadorOcio = document.getElementById("pulse-idle");
+  const barraOcio = document.getElementById("pulse-idle-bar");
+
+  const pon = (m, b, texto, pct, titulo) => {
+    if (m) { m.textContent = texto; m.title = titulo; }
+    if (b) b.style.width = pct + "%";
+  };
+
+  if (!board || !unidades) {
+    pon(marcador, barra, "\u2014", 0, "Sin datos del tablero.");
+    pon(marcadorOcio, barraOcio, "\u2014", 0, "Sin datos del tablero.");
+    return;
+  }
+
+  const abiertos = (board.incidents || []).filter((i) => i.status !== "resuelto");
+  const cubiertos = abiertos.filter((i) => i.covered).length;
+  const pctCubierto = abiertos.length ? Math.round((cubiertos / abiertos.length) * 100) : 0;
+  pon(marcador, barra, abiertos.length ? pctCubierto + "%" : "\u2014", pctCubierto,
+    abiertos.length
+      ? cubiertos + " de " + abiertos.length + " avisos abiertos con recursos asignados."
+      : "No hay avisos abiertos.");
+
+  const total = unidades.length;
+  const libres = unidades.filter((u) => !u.ocupada).length;
+  const pctLibre = total ? Math.round((libres / total) * 100) : 0;
+  pon(marcadorOcio, barraOcio, total ? pctLibre + "%" : "\u2014", pctLibre,
+    libres + " de " + total + " unidades libres en este momento.");
+}
+
+/* La píldora «Delivery / Sala de Control» refleja el modo REAL: si HappyRobot
+   está en vivo o simulado. Es un control de verdad: abre el panel de canales. */
+function pintarModo(board) {
+  const texto = document.getElementById("modo-texto");
+  const punto = document.getElementById("modo-punto");
+  if (!texto || !punto) return;
+  if (!board || !board.env) {
+    texto.textContent = "Sala de Control · sin datos";
+    punto.className = "w-1.5 h-1.5 rounded-full bg-slate-400";
+    return;
+  }
+  const vivo = board.env.hr_mode === "live";
+  texto.textContent = "Sala de Control · " + (vivo ? "HappyRobot en vivo" : "HappyRobot simulado");
+  punto.className = "w-1.5 h-1.5 rounded-full " + (vivo ? "bg-emerald-500" : "bg-blue-500");
+}
+
+/* ---------------------------------------------------------------------------
+   6. Tabla «Incident & Fleet Manifest»
+   --------------------------------------------------------------------------- */
+
+/* La fila se CLONA del propio marcado de la plantilla (la segunda fila real,
+   la del INC-102, que es la que trae celda de progreso y chip). Al clonarla se
+   le quitan los `id` para no duplicarlos. La columna ROUTE PROGRESS se deja
+   literal a proposito: el backend no publica progreso de ruta. */
+function prepararMolde() {
+  if (moldeFila) return moldeFila;
+  const tbody = document.querySelector("table tbody");
+  if (!tbody) return null;
+  const filas = tbody.querySelectorAll("tr");
+  if (filas.length < 2) return null;
+  moldeFila = filas[1].cloneNode(true);
+  moldeFila.removeAttribute("onclick");
+  moldeFila.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
+  return moldeFila;
+}
+
+/* Los chips conservan el vocabulario de la plantilla
+   (ACTIVE / IN ROUTE / INTERVINIENDO / DONE / Alert Critical). */
+function chipEstado(aviso) {
+  const critico = aviso.needs_card || (aviso.extract && (aviso.extract.triage_color === "negro" || aviso.extract.triage_color === "rojo"));
+  if (aviso.status === "resuelto") return { texto: "DONE", clase: "bg-slate-100 text-slate-600" };
+  if (aviso.status === "escalado") return { texto: "INTERVINIENDO", clase: "bg-blue-100 text-blue-700" };
+  if (aviso.status === "asignado") return { texto: "IN ROUTE", clase: "bg-amber-100 text-amber-800" };
+  if (!aviso.covered && critico) return { texto: "Alert / Critical", clase: "bg-red-50 text-red-700 border border-red-200" };
+  return { texto: "ACTIVE", clase: "bg-emerald-100 text-emerald-700" };
+}
+
+/* Filtro del buscador de la cabecera (id, tipo, gravedad, estado, sector,
+   resumen, texto y unidades asignadas). */
+let filtroBusqueda = "";
+
+function textoBuscable(aviso, unidades) {
+  const triage = (aviso.extract && aviso.extract.triage_color) || "desconocido";
+  const tipo = (aviso.extract && aviso.extract.incident_type) || "otro";
+  return normaliza([
+    aviso.correlation_id,
+    aviso.channel,
+    tipo,
+    ETIQUETA_TIPO[tipo],
+    triage,
+    ETIQUETA_TRIAGE[triage],
+    aviso.status,
+    ETIQUETA_ESTADO[aviso.status],
+    aviso.extract && aviso.extract.sector,
+    aviso.extract && aviso.extract.summary,
+    aviso.text,
+    (unidades || []).map((u) => u.id).join(" "),
+  ].filter(Boolean).join(" "));
+}
+
+function filaMensaje(tbody, texto) {
+  const fila = document.createElement("tr");
+  const celda = document.createElement("td");
+  celda.colSpan = 6;
+  celda.className = "py-6 px-3 text-center text-slate-500";
+  celda.textContent = texto;
+  fila.appendChild(celda);
+  tbody.appendChild(fila);
+}
+
+/* Estado vacio honesto: se usa antes del primer sondeo y cuando el backend
+   no responde, para que las filas de ejemplo del diseno no parezcan reales. */
+function pintarTablaVacia(texto) {
+  const tbody = document.querySelector("table tbody");
+  if (!tbody) return;
+  prepararMolde();
+  tbody.textContent = "";
+  filaMensaje(tbody, texto);
+}
+
+function pintarTabla(board, unidades) {
+  const tbody = document.querySelector("table tbody");
+  if (!tbody) return;
+
+  if (!board) { pintarTablaVacia("Sin datos del tablero."); return; }
+
+  const molde = prepararMolde();
+  if (!molde) return;
+
+  const incidentes = board.incidents || [];
+  tbody.textContent = "";
+  let visibles = 0;
+
+  incidentes.forEach((aviso) => {
+    if (filtroBusqueda && textoBuscable(aviso, unidades).indexOf(filtroBusqueda) < 0) return;
+    visibles += 1;
+    const fila = molde.cloneNode(true);
+    const celdas = fila.querySelectorAll("td");
+    if (celdas.length < 6) return;
+
+    const triage = (aviso.extract && aviso.extract.triage_color) || "desconocido";
+    const tipo = (aviso.extract && aviso.extract.incident_type) || "otro";
+    const sector = (aviso.extract && aviso.extract.sector) || "Sin ubicacion precisa";
+    const asignadas = unidadesDe(unidades, aviso.correlation_id);
+    const chip = chipEstado(aviso);
+
+    fila.setAttribute("onclick", "openIncidentDrawer('" + String(aviso.correlation_id).replace(/'/g, "") + "')");
+    if (aviso.status === "resuelto") fila.classList.add("opacity-60");
+
+    /* 1. DRIVER / INC ID */
+    celdas[0].innerHTML = "#" + esc(aviso.correlation_id) +
+      '<div class="text-[10px] text-slate-400 font-normal">' + esc(formateaHora(aviso.reported_at)) + "</div>";
+
+    /* 2. OPERATOR / RECURSO */
+    celdas[1].innerHTML =
+      '<div class="flex items-center gap-2.5">' +
+        '<div class="w-7 h-7 rounded-full font-bold flex items-center justify-center border" style="background:' + colorDe(triage) + '1a;color:' + colorDe(triage) + ';border-color:' + colorDe(triage) + '55">' +
+          esc(GLIFO_TIPO[tipo] || GLIFO_TIPO.otro) +
+        "</div>" +
+        "<div>" +
+          '<div class="font-bold text-slate-900 group-hover:text-blue-600">' + esc(ETIQUETA_TIPO[tipo] || "Otro") + "</div>" +
+          '<div class="text-[10px] text-slate-400">' + esc(asignadas.length ? asignadas.map((u) => u.id).join(" + ") : "Sin recurso asignado") + "</div>" +
+        "</div>" +
+      "</div>";
+
+    /* 3. VEHICLE / SECTOR */
+    celdas[2].innerHTML =
+      '<div class="font-medium text-slate-700">' + esc(sector) + "</div>" +
+      '<div class="text-[10px] text-slate-400">' +
+        esc((aviso.channel ? "Canal: " + aviso.channel : "Canal: --") + " · Antiguedad: " + etiquetaAntiguedad(aviso.reported_at)) +
+      "</div>";
+
+    /* 4. STATUS */
+    celdas[3].innerHTML =
+      '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ' + chip.clase + '">' +
+        esc(chip.texto) +
+      "</span>";
+
+    /* 5. ROUTE PROGRESS: el backend NO publica progreso de ruta. La columna se
+       mantiene (es del diseño) pero rotulada como no disponible: nada de un
+       «15 %» heredado del molde que aparente telemetría. */
+    celdas[4].innerHTML =
+      '<div class="flex items-center gap-2">' +
+        '<div class="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden"><div class="bg-slate-300 h-full rounded-full" style="width:0%"></div></div>' +
+        '<span class="font-mono text-[11px] font-medium text-slate-400" title="El backend no publica progreso de ruta">N/D</span>' +
+      "</div>";
+
+    /* 6. EFFICIENCY / ETA: prioridad real y recursos asignados reales. */
+    const sinRecurso = !aviso.covered;
+    celdas[5].innerHTML =
+      '<div class="font-mono font-bold text-slate-800">P' + esc(aviso.priority) + "</div>" +
+      '<div class="text-[10px] font-semibold ' + (sinRecurso ? "text-red-600" : "text-emerald-600") + '">' +
+        esc(aviso.status === "resuelto" ? "Cerrado" : (sinRecurso ? "Sin recursos" : "Con recursos")) +
+      "</div>";
+
+    tbody.appendChild(fila);
+  });
+
+  if (!incidentes.length) {
+    filaMensaje(tbody, "Sin avisos en el tablero. Usa «Add Incident» para inyectar un escenario de prueba.");
+  } else if (!visibles) {
+    filaMensaje(tbody, "Sin resultados para la búsqueda actual.");
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   7. Pines reales sobre el plano
+   --------------------------------------------------------------------------- */
+
+/* Rejilla determinista dentro de la zona: mismo numero de pines, mismas
+   posiciones (asi el refresco cada 2,5 s no los mueve). */
+function posiciones(zona, n) {
+  const r = 12, hueco = 8, pad = 14;
+  const banda = Math.min(26, zona.h / 3);
+  const ancho = zona.w - pad * 2;
+  const alto = zona.h - banda - pad;
+  const paso = r * 2 + hueco;
+  const cols = Math.max(1, Math.min(4, Math.floor((ancho + hueco) / paso)));
+  const filas = Math.max(1, Math.floor((alto + hueco) / paso));
+  const total = Math.min(n, cols * filas);
+  const salida = [];
+  for (let i = 0; i < total; i += 1) {
+    const fila = Math.floor(i / cols);
+    const col = i % cols;
+    const enFila = Math.min(cols, total - fila * cols);
+    const anchoFila = enFila * r * 2 + (enFila - 1) * hueco;
+    const x0 = zona.x + zona.w / 2 - anchoFila / 2 + r;
+    const y0 = zona.y + banda + r;
+    salida.push({ x: Math.round(x0 + col * paso), y: Math.round(y0 + fila * paso) });
+  }
+  return salida;
+}
+
+function pintarPines(board, unidades) {
+  const capa = document.getElementById("interfaz-pines");
+  if (!capa) return;
+  capa.textContent = "";
+  avisosSinZona = 0;
+
+  const porZona = {};
+  ((board && board.incidents) || []).forEach((aviso) => {
+    const sector = aviso.extract && aviso.extract.sector;
+    const zona = zonaDe(sector);
+    if (!zona) { avisosSinZona += 1; return; }
+    const clave = normaliza(sector);
+    if (!porZona[clave]) porZona[clave] = { zona: zona, avisos: [] };
+    porZona[clave].avisos.push(aviso);
+  });
+
+  Object.keys(porZona).forEach((clave) => {
+    const grupo = porZona[clave];
+    /* Prioridad MANDO descendente; empate por id para no reordenar. */
+    grupo.avisos.sort((a, b) => (b.priority - a.priority) || String(a.correlation_id).localeCompare(String(b.correlation_id)));
+    const huecos = posiciones(grupo.zona, grupo.avisos.length);
+    const sobran = grupo.avisos.length - huecos.length;
+    if (sobran > 0) avisosSinZona += sobran;
+
+    grupo.avisos.forEach((aviso, i) => {
+      const hueco = huecos[i];
+      if (!hueco) return;
+      const triage = (aviso.extract && aviso.extract.triage_color) || "desconocido";
+      const tipo = (aviso.extract && aviso.extract.incident_type) || "otro";
+      const resuelto = aviso.status === "resuelto";
+      const asignadas = unidadesDe(unidades, aviso.correlation_id);
+      const color = colorDe(triage);
+
+      const g = document.createElementNS(NS_SVG, "g");
+      g.setAttribute("class", "cursor-pointer");
+      g.setAttribute("opacity", resuelto ? "0.4" : "1");
+      g.addEventListener("click", () => { window.openIncidentDrawer(aviso.correlation_id); });
+
+      const titulo = document.createElementNS(NS_SVG, "title");
+      titulo.textContent = aviso.correlation_id + " · " + ETIQUETA_TIPO[tipo] + " en " +
+        ((aviso.extract && aviso.extract.sector) || "sin sector") + ". " +
+        (resuelto ? "Resuelto" : (aviso.covered ? "Con recursos" : "Sin recursos")) +
+        (asignadas.length ? ". Asignado a " + asignadas.map((u) => u.id).join(" y ") : "");
+      g.appendChild(titulo);
+
+      /* Aro de aviso para lo vital/emergencia, como el pin INC-104 original. */
+      if ((triage === "negro" || triage === "rojo") && !resuelto) {
+        const aro = document.createElementNS(NS_SVG, "circle");
+        aro.setAttribute("cx", hueco.x);
+        aro.setAttribute("cy", hueco.y);
+        aro.setAttribute("r", "17");
+        aro.setAttribute("fill", "none");
+        aro.setAttribute("stroke", color);
+        aro.setAttribute("stroke-dasharray", "4,2");
+        aro.setAttribute("stroke-width", "2.5");
+        aro.setAttribute("opacity", "0.8");
+        g.appendChild(aro);
+      }
+
+      const cuerpo = document.createElementNS(NS_SVG, "circle");
+      cuerpo.setAttribute("cx", hueco.x);
+      cuerpo.setAttribute("cy", hueco.y);
+      cuerpo.setAttribute("r", "12");
+      cuerpo.setAttribute("fill", color);
+      cuerpo.setAttribute("stroke", "#ffffff");
+      cuerpo.setAttribute("stroke-width", "2");
+      g.appendChild(cuerpo);
+
+      const glifo = document.createElementNS(NS_SVG, "text");
+      glifo.setAttribute("x", hueco.x);
+      glifo.setAttribute("y", hueco.y + 4);
+      glifo.setAttribute("text-anchor", "middle");
+      glifo.setAttribute("font-size", "11");
+      glifo.setAttribute("font-weight", "bold");
+      glifo.setAttribute("fill", "#ffffff");
+      glifo.textContent = GLIFO_TIPO[tipo] || GLIFO_TIPO.otro;
+      g.appendChild(glifo);
+
+      /* Etiqueta flotante con el id real, con el mismo estilo que la
+         etiqueta «ALFA-2 · ETA 5s» de la plantilla. */
+      const ancho = 14 + String(aviso.correlation_id).length * 5.4;
+      const etiqueta = document.createElementNS(NS_SVG, "g");
+      etiqueta.setAttribute("transform", "translate(" + (hueco.x + 12) + ", " + (hueco.y - 26) + ")");
+      const caja = document.createElementNS(NS_SVG, "rect");
+      caja.setAttribute("width", ancho);
+      caja.setAttribute("height", "18");
+      caja.setAttribute("rx", "4");
+      caja.setAttribute("fill", "#ffffff");
+      caja.setAttribute("stroke", color);
+      caja.setAttribute("stroke-width", "1");
+      etiqueta.appendChild(caja);
+      const texto = document.createElementNS(NS_SVG, "text");
+      texto.setAttribute("x", "6");
+      texto.setAttribute("y", "13");
+      texto.setAttribute("font-size", "9");
+      texto.setAttribute("font-weight", "bold");
+      texto.setAttribute("fill", "#0f172a");
+      texto.textContent = aviso.correlation_id;
+      etiqueta.appendChild(texto);
+      g.appendChild(etiqueta);
+
+      capa.appendChild(g);
+    });
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   8. Ficha de incidente
+   --------------------------------------------------------------------------- */
+
+function buscarAviso(id) {
+  if (!tablero) return null;
+  const lista = tablero.incidents || [];
+  for (let i = 0; i < lista.length; i += 1) {
+    if (lista[i].correlation_id === id) return lista[i];
+  }
+  return null;
+}
+
+function pintarFicha(aviso, unidades) {
+  if (!aviso) return;
+  avisoAbierto = aviso;
+  accionElegida = null;
+
+  const triage = (aviso.extract && aviso.extract.triage_color) || "desconocido";
+  const tipo = (aviso.extract && aviso.extract.incident_type) || "otro";
+  const perfil = (aviso.extract && aviso.extract.perfil_color) || null;
+
+  document.getElementById("ficha-id").textContent = aviso.correlation_id;
+  document.getElementById("ficha-gravedad").textContent = ETIQUETA_TRIAGE[triage] || "SIN TRIAJE";
+  document.getElementById("ficha-gravedad").style.background = colorDe(triage);
+  document.getElementById("ficha-gravedad").style.color = triage === "amarillo" ? "#3a2a00" : "#ffffff";
+
+  const perfilEl = document.getElementById("ficha-perfil");
+  if (perfil && perfil !== "adulto") {
+    perfilEl.style.display = "";
+    perfilEl.textContent = perfil === "menor" ? "MENOR EDAD" : perfil.toUpperCase();
+  } else {
+    perfilEl.style.display = "none";
+  }
+
+  document.getElementById("ficha-subtitulo").textContent =
+    ETIQUETA_TIPO[tipo] + " · " + ((aviso.extract && aviso.extract.sector) || "Sin ubicacion precisa");
+
+  const severidad = aviso.extract && aviso.extract.severity ? aviso.extract.severity : "?";
+  document.getElementById("ficha-notificado").textContent =
+    "Notificado: " + formateaHora(aviso.reported_at) + " · Triage N" + severidad +
+    " · " + etiquetaAntiguedad(aviso.reported_at);
+
+  document.getElementById("ficha-transcripcion").textContent =
+    '"' + (aviso.text || (aviso.extract && aviso.extract.summary) || "Sin transcripcion") + '"';
+
+  /* Actuaciones: las que propone el backend (`suggested`), reutilizando el
+     marcado de <label> que ya trae la ficha. */
+  const contenedor = document.getElementById("ficha-actuaciones");
+  const molde = contenedor.querySelector("label");
+  contenedor.querySelectorAll("label").forEach((l) => l.remove());
+  const actuaciones = aviso.suggested || [];
+  if (!actuaciones.length) {
+    const p = document.createElement("p");
+    p.className = "text-[11px] text-slate-500";
+    p.textContent = "El backend no ha propuesto actuaciones para este aviso.";
+    contenedor.appendChild(p);
+  } else {
+    actuaciones.forEach((texto, idx) => {
+      const label = molde.cloneNode(true);
+      const casilla = label.querySelector("input");
+      if (casilla) {
+        casilla.checked = idx === 0;
+        casilla.addEventListener("change", () => elegirAccion(idx));
+      }
+      const tituloAccion = label.querySelector("div.font-bold span");
+      if (tituloAccion) tituloAccion.textContent = texto;
+      /* El badge OBLIGATORIA / POR PERFIL era de maqueta: el backend no marca
+         obligatoriedad, asi que se ELIMINA para no afirmar algo que no consta. */
+      const insignias = label.querySelectorAll("div.font-bold span");
+      if (insignias.length > 1) insignias[1].remove();
+      /* La descripcion larga del molde hablaba de otro incidente («comunica con
+         mesa de sonido») y no tiene dato detras: se elimina. */
+      const descripcion = label.querySelector("div.text-slate-500");
+      if (descripcion) descripcion.remove();
+      label.addEventListener("click", (ev) => { if (ev.target.tagName !== "INPUT") elegirAccion(idx); });
+      if (idx === 0) label.style.borderColor = "#93c5fd";
+      contenedor.appendChild(label);
+    });
+    elegirAccion(0);
+  }
+
+  /* Traza real del aviso: timeline del contrato + feed del backend (que trae
+     eventos de plan y decisiones con su correlation_id). Se deduplica por
+     hora+texto para no repetir la misma linea dos veces. */
+  const lista = document.getElementById("ficha-traza-lista");
+  lista.textContent = "";
+  const vistos = {};
+  const lineas = [];
+  (aviso.timeline || []).forEach((entrada) => {
+    lineas.push({ at: entrada.at, text: entrada.text, propio: true });
+  });
+  (((tablero && tablero.feed) || []).filter((f) => f.correlation_id === aviso.correlation_id))
+    .forEach((f) => { lineas.push({ at: f.at, text: f.text, propio: false }); });
+  lineas.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  lineas.forEach((l) => {
+    const clave = String(l.at) + "|" + String(l.text);
+    if (vistos[clave]) return;
+    vistos[clave] = true;
+    const li = document.createElement("li");
+    li.className = "border-l-2 pl-2 " + (l.propio ? "border-slate-200" : "border-blue-200");
+    li.textContent = formateaHora(l.at) + " · " + l.text;
+    lista.appendChild(li);
+  });
+  if (!lineas.length) {
+    const li = document.createElement("li");
+    li.textContent = "Sin eventos registrados.";
+    lista.appendChild(li);
+  }
+
+  /* Propuesta ya redactada por el backend (dato real, `proposal`). */
+  const propuesta = document.getElementById("ficha-propuesta");
+  if (propuesta) propuesta.textContent = aviso.proposal || "El backend no ha redactado propuesta para este aviso.";
+
+  /* Decisión firmada, si la hay (dato real, `decision`). */
+  const cajaDec = document.getElementById("ficha-decision");
+  const textoDec = document.getElementById("ficha-decision-texto");
+  if (cajaDec && textoDec) {
+    if (aviso.decision) {
+      cajaDec.style.display = "";
+      textoDec.textContent = ETIQUETA_ESTADO[aviso.status] + " · " + aviso.decision.action +
+        " · " + aviso.decision.decided_by + " · " + formateaHora(aviso.decision.decided_at) +
+        (aviso.decision.note ? " — " + aviso.decision.note : "");
+    } else {
+      cajaDec.style.display = "none";
+    }
+  }
+
+  /* Autoridad firmante: `decided_by_default` del tablero (dato real). */
+  const firmante = document.getElementById("ficha-firmante");
+  if (firmante) firmante.textContent = (tablero && tablero.decided_by_default) || "Mesa MANDO";
+
+  /* La nota es por aviso: nunca se arrastra la del anterior. */
+  const nota = document.getElementById("ficha-nota");
+  if (nota) nota.value = "";
+
+  /* El botón «Resolver» solo tiene sentido si el aviso sigue abierto. */
+  const btnResolver = document.getElementById("ficha-btn-resolver");
+  if (btnResolver) {
+    const abierto = aviso.status !== "resuelto";
+    btnResolver.disabled = !abierto;
+    btnResolver.classList.toggle("opacity-50", !abierto);
+    btnResolver.classList.toggle("cursor-not-allowed", !abierto);
+    btnResolver.title = abierto
+      ? "Cerrar el aviso (estado resuelto) y liberar sus recursos"
+      : "El aviso ya está resuelto";
+  }
+
+  /* Bloque de deficit: solo si el aviso NO tiene recursos suficientes. */
+  pintarDeficit(aviso, tablero, unidades);
+}
+
+/* «Sin disponibilidad…» con datos reales (allocation.overflow / incident.missing).
+   Si el aviso esta cubierto, el bloque se oculta: no se afirma un deficit falso. */
+function pintarDeficit(aviso, board, unidades) {
+  const caja = document.getElementById("ficha-deficit");
+  const titulo = document.getElementById("ficha-deficit-titulo");
+  const texto = document.getElementById("ficha-deficit-texto");
+  if (!caja) return;
+  const overflow = board && board.allocation
+    ? (board.allocation.overflow || []).filter((o) => o.correlation_id === aviso.correlation_id)[0]
+    : null;
+  const faltan = (overflow && overflow.missing && overflow.missing.length) ? overflow.missing : (aviso.missing || []);
+  if (!faltan.length) { caja.style.display = "none"; return; }
+  caja.style.display = "";
+  if (titulo) titulo.textContent = "Sin disponibilidad para cubrir este aviso:";
+  const nombres = faltan.map((k) => NOMBRE_RECURSO[k] || k).join(" + ");
+  const ocupadas = (unidades || []).filter((u) => u.ocupada && faltan.indexOf(u.kind) >= 0);
+  let detalle = "Faltan recursos: " + nombres + ".";
+  if (ocupadas.length) {
+    detalle += " Ahora mismo ocupadas: " + ocupadas.map((u) => u.id + " (aviso " + u.aviso + ")").join(", ") + ".";
+  }
+  if (aviso.proposal) detalle += " " + aviso.proposal;
+  if (texto) texto.textContent = detalle;
+}
+
+function elegirAccion(idx) {
+  if (!avisoAbierto) return;
+  const actuaciones = avisoAbierto.suggested || [];
+  if (!actuaciones[idx]) return;
+  accionElegida = actuaciones[idx];
+  const labels = document.getElementById("ficha-actuaciones").querySelectorAll("label");
+  labels.forEach((l, i) => {
+    l.style.borderColor = i === idx ? "#93c5fd" : "";
+    const casilla = l.querySelector("input");
+    if (casilla) casilla.checked = i === idx;
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   8b. Estado de la conexion con el tablero (nada de maqueta si falla)
+   --------------------------------------------------------------------------- */
+
+let intervaloActual = 2500;    // ms entre sondeos (1x = 2500, 2x = 1250)
+let timerSondeo = null;
+let ultimaSync = null;         // server_time del ultimo tablero recibido
+let ultimoErrorTablero = null;
+
+function mostrarAvisoTablero(titulo, texto, tipo) {
+  const caja = document.getElementById("aviso-tablero");
+  const icono = document.getElementById("aviso-tablero-icono");
+  const t = document.getElementById("aviso-tablero-titulo");
+  const p = document.getElementById("aviso-tablero-texto");
+  if (!caja) return;
+  const estilos = {
+    error: ["bg-red-50 border-red-200 text-red-900", "text-red-600", "wifi_off"],
+    aviso: ["bg-amber-50 border-amber-200 text-amber-900", "text-amber-600", "cloud_off"],
+    info: ["bg-blue-50 border-blue-200 text-blue-900", "text-blue-600", "sync"],
+  };
+  const e = estilos[tipo] || estilos.info;
+  caja.className = "flex items-start gap-3 p-4 rounded-2xl border " + e[0];
+  if (icono) { icono.className = "material-symbols-outlined text-[22px] " + e[1]; icono.textContent = e[2]; }
+  if (t) t.textContent = titulo;
+  if (p) p.textContent = texto;
+}
+
+function ocultarAvisoTablero() {
+  const caja = document.getElementById("aviso-tablero");
+  if (caja) caja.className = "hidden";
+}
+
+function textoReintento() {
+  return intervaloActual
+    ? "El sondeo se reintentará automáticamente."
+    : "El sondeo está en pausa (ciclo 1x / 2x / PAUSA).";
+}
+
+/* Programa el sondeo segun la velocidad elegida (1x / 2x / PAUSA). */
+function programarSondeo() {
+  if (timerSondeo) { clearInterval(timerSondeo); timerSondeo = null; }
+  if (intervaloActual) timerSondeo = setInterval(refrescar, intervaloActual);
+}
+
+/* ---------------------------------------------------------------------------
+   9. Peticiones al backend
+   --------------------------------------------------------------------------- */
+
+async function pedirBoard() {
+  const res = await fetch("/api/board", { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+function pintarTodo(board) {
+  tablero = board;
+  const unidades = derivarUnidades(board);
+  /* Los pines primero: dejan contado `avisosSinZona`, que sale en el estado. */
+  pintarPines(board, unidades);
+  pintarContadores(board, unidades);
+  pintarIndicadores(board, unidades);
+  pintarIntegraciones(board);
+  pintarFirmas(board);
+  pintarTabla(board, unidades);
+  pintarDensidad(board);
+  pintarPulse(board, unidades);
+  pintarModo(board);
+  pintarFlota(board, unidades);
+  pintarRutas(board, unidades);
+  pintarAnalitica(board, unidades);
+  pintarPuntoNotificaciones(board);
+  if (panelCabeceraAbierto) abrirPanelCabecera(panelCabeceraAbierto, true);
+}
+
+/* Estado SIN datos reales: todo a guiones y avisos claros. No se deja ni una
+   cifra ni una fila de la maqueta a la vista. */
+function pintarSinDatos(mensaje) {
+  tablero = null;
+  pintarPines(null, null);
+  pintarContadores(null, null);
+  pintarIndicadores(null, null);
+  pintarIntegraciones(null);
+  pintarFirmas(null);
+  pintarTabla(null, null);
+  pintarDensidad(null);
+  pintarPulse(null, null);
+  pintarModo(null);
+  pintarFlota(null, null);
+  pintarRutas(null, null);
+  pintarAnalitica(null, null);
+  pintarPuntoNotificaciones(null);
+  const estado = document.getElementById("inyeccion-estado");
+  if (estado) estado.textContent = mensaje;
+}
+
+async function refrescar() {
+  try {
+    const board = await pedirBoard();
+    ultimaSync = board.server_time || new Date().toISOString();
+    ultimoErrorTablero = null;
+    ocultarAvisoTablero();
+    pintarTodo(board);
+  } catch (err) {
+    ultimoErrorTablero = err;
+    if (tablero) {
+      /* Conservamos los ultimos datos REALES, avisando de que estan desfasados:
+         no es maqueta, es el ultimo sondeo bueno. */
+      mostrarAvisoTablero("Sin conexión con el tablero",
+        "No se pudo consultar /api/board (" + err.message + "). Mostrando los últimos datos reales recibidos a las " +
+        formateaHora(ultimaSync) + ". " + textoReintento(), "aviso");
+      actualizarPanelSesion();
+    } else {
+      mostrarAvisoTablero("Sin conexión con el tablero",
+        "No se pudo consultar /api/board (" + err.message + "). No hay datos reales que mostrar y no se pintan " +
+        "valores de ejemplo. " + textoReintento(), "error");
+      pintarSinDatos("No se pudo consultar el tablero: " + err.message);
+    }
+  }
+}
+
+async function inyectar(texto, canal, perfil, nombre, correlationId) {
+  const cuerpo = {
+    text: texto,
+    channel: canal,
+    perfil_color: perfil,
+    display_name: nombre,
+  };
+  /* Id estable: recargar el mismo escenario actualiza sus avisos en vez de
+     duplicarlos (el backend usa el correlation_id como clave). */
+  if (correlationId) cuerpo.correlation_id = correlationId;
+  const res = await fetch("/api/demo/public-report", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(cuerpo),
+  });
+  const datos = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(datos.error || ("HTTP " + res.status));
+  return datos;
+}
+
+/* ---------------------------------------------------------------------------
+   9c. Pestanas Fleet / Rutas / Analitica, capa de sectores y campana
+   --------------------------------------------------------------------------- */
+
+const ESTILO_RECURSO = {
+  medico: { caja: "bg-red-50 border-red-200", texto: "text-red-700", num: "text-red-600" },
+  seguridad: { caja: "bg-blue-50 border-blue-200", texto: "text-blue-700", num: "text-blue-600" },
+  apoyo: { caja: "bg-amber-50 border-amber-200", texto: "text-amber-800", num: "text-amber-700" },
+  coordinacion: { caja: "bg-slate-50 border-slate-200", texto: "text-slate-700", num: "text-slate-600" },
+};
+
+function filaUnidad(u, board) {
+  const est = ESTILO_RECURSO[u.kind] || ESTILO_RECURSO.coordinacion;
+  const aviso = u.aviso && board
+    ? (board.incidents || []).filter((i) => i.correlation_id === u.aviso)[0]
+    : null;
+  const sector = aviso && aviso.extract && aviso.extract.sector ? aviso.extract.sector : "sin sector";
+  const sub = u.ocupada
+    ? "Asignada a " + (u.aviso || "\u2014") + " · " + sector
+    : "Sin asignación · disponible en base";
+  const caja = u.ocupada ? est.caja : "bg-emerald-50 border-emerald-200";
+  const texto = u.ocupada ? est.texto : "text-emerald-700";
+  const num = u.ocupada ? est.num : "text-emerald-600";
+  return '<div class="p-3 rounded-xl border flex items-center justify-between ' + caja + '">' +
+    "<div>" +
+      '<div class="font-bold text-slate-900 text-xs">' + esc(u.id) + " (" + esc(u.rol) + ")</div>" +
+      '<div class="text-[11px] font-medium ' + texto + '">' + esc(sub) + "</div>" +
+    "</div>" +
+    '<span class="font-mono text-xs font-bold ' + num + '">' + (u.ocupada ? "OCUPADA" : "DISPONIBLE") + "</span>" +
+  "</div>";
+}
+
+/* Rehace las filas de una tarjeta de flota conservando su cabecera (y por
+   tanto el espaciado y el estilo originales). */
+function rellenarTarjetaFlota(cardId, badgeId, kinds, unidades, board) {
+  const card = document.getElementById(cardId);
+  const badge = document.getElementById(badgeId);
+  if (!card || !badge) return;
+  const mias = (unidades || []).filter((u) => kinds.indexOf(u.kind) >= 0);
+  while (card.children.length > 1) card.removeChild(card.lastElementChild);
+  if (!board || !unidades) {
+    badge.textContent = "\u2014 LIBRES";
+    card.insertAdjacentHTML("beforeend", '<div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500">Sin datos del tablero.</div>');
+    return;
+  }
+  badge.textContent = mias.filter((u) => !u.ocupada).length + "/" + mias.length + " LIBRES";
+  mias.forEach((u) => card.insertAdjacentHTML("beforeend", filaUnidad(u, board)));
+}
+
+function pintarFlota(board, unidades) {
+  const pillU = document.getElementById("fleet-pill-unidades");
+  const pillS = document.getElementById("fleet-pill-saturadas");
+  const overflow = board && board.allocation ? (board.allocation.overflow || []).length : null;
+
+  if (pillU) pillU.textContent = board ? unidades.length + " Unidades Conectadas" : "\u2014 Unidades Conectadas";
+  if (pillS) {
+    pillS.textContent = overflow === null ? "\u2014 Saturadas" : overflow + " Saturadas";
+    pillS.className = "px-3 py-1 rounded-full font-bold text-xs " +
+      (overflow ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800");
+  }
+
+  rellenarTarjetaFlota("fleet-card-medico", "fleet-badge-medico", ["medico"], unidades, board);
+  rellenarTarjetaFlota("fleet-card-seguridad", "fleet-badge-seguridad", ["seguridad"], unidades, board);
+  rellenarTarjetaFlota("fleet-card-apoyo", "fleet-badge-apoyo", ["apoyo"], unidades, board);
+
+  /* La dotacion son 8 unidades (2+3+2+1): la de coordinacion se muestra en un
+     bloque rotulado dentro de la tarjeta de apoyo, sin inventar una 4ª tarjeta. */
+  const cardApoyo = document.getElementById("fleet-card-apoyo");
+  if (cardApoyo && board && unidades) {
+    cardApoyo.insertAdjacentHTML("beforeend",
+      '<div class="pt-2 border-t border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">Coordinación</div>');
+    unidades.filter((u) => u.kind === "coordinacion").forEach((u) => {
+      cardApoyo.insertAdjacentHTML("beforeend", filaUnidad(u, board));
+    });
+  }
+}
+
+/* Bandas del recinto, para el dato real de la pestana de rutas. */
+const BANDAS = {
+  Norte: ["zona norte", "escenario principal", "zona vip"],
+  Este: ["zona de food trucks", "zona este"],
+  Oeste: ["zona oeste", "banos", "campamento"],
+  Sur: ["zona sur", "entrada", "parking"],
+};
+
+function bandaDe(sector) {
+  const s = normaliza(sector);
+  const nombres = Object.keys(BANDAS);
+  for (let i = 0; i < nombres.length; i += 1) {
+    if (BANDAS[nombres[i]].indexOf(s) >= 0) return nombres[i];
+  }
+  return null;
+}
+
+function pintarRutas(board) {
+  const el = document.getElementById("rutas-dato-real");
+  if (!el) return;
+  if (!board) { el.textContent = "Avisos abiertos por banda: sin datos del tablero."; return; }
+  const cuenta = { Norte: 0, Este: 0, Oeste: 0, Sur: 0, "sin banda": 0 };
+  (board.incidents || []).filter((i) => i.status !== "resuelto").forEach((i) => {
+    cuenta[bandaDe(i.extract && i.extract.sector) || "sin banda"] += 1;
+  });
+  el.textContent = "Avisos abiertos por banda del recinto: Norte " + cuenta.Norte + " · Este " + cuenta.Este +
+    " · Oeste " + cuenta.Oeste + " · Sur " + cuenta.Sur +
+    (cuenta["sin banda"] ? " · sin banda " + cuenta["sin banda"] : "") + ".";
+}
+
+function pintarAnalitica(board, unidades) {
+  const incidentes = board ? (board.incidents || []) : [];
+  const asignaciones = board && board.allocation ? (board.allocation.assignments || []).length : null;
+  const overflow = board && board.allocation ? (board.allocation.overflow || []) : null;
+
+  /* Tiempo hasta la firma: mediana real (sustituye a la maqueta de llegada). */
+  const firmas = board ? incidentes.map(minutosHastaFirma).filter((v) => v !== null) : [];
+  const med = mediana(firmas);
+  const f = document.getElementById("analytics-firma");
+  const fp = document.getElementById("analytics-firma-pie");
+  if (f) f.textContent = (!board || med === null) ? "\u2014" : (med < 1 ? Math.round(med * 60) + " s" : med.toFixed(1) + " min");
+  if (fp) fp.textContent = !board
+    ? "Sin datos del tablero."
+    : (firmas.length ? firmas.length + " aviso(s) con decisión firmada (dato real)." : "Ningún aviso firmado todavía.");
+
+  const resueltos = board ? incidentes.filter((i) => i.status === "resuelto").length : null;
+  const r = document.getElementById("analytics-resueltos");
+  const rp = document.getElementById("analytics-resueltos-pie");
+  if (r) r.textContent = resueltos === null ? "\u2014" : String(resueltos);
+  if (rp) rp.textContent = board ? "De " + incidentes.length + " avisos recibidos en el tablero." : "Sin datos del tablero.";
+
+  /* Sin dato en el backend: se dice, no se afirma una medicion. */
+  const d = document.getElementById("analytics-derivacion");
+  const dp = document.getElementById("analytics-derivacion-pie");
+  if (d) d.textContent = "\u2014";
+  if (dp) dp.textContent = "El backend no publica derivación hospitalaria (referencia de diseño: 4.8 %).";
+
+  const ocupadas = unidades ? unidades.filter((u) => u.ocupada).length : null;
+  const desp = document.getElementById("analytics-despachos");
+  const despp = document.getElementById("analytics-despachos-pie");
+  if (desp) desp.textContent = asignaciones === null ? "\u2014" : String(asignaciones);
+  if (despp) despp.textContent = asignaciones === null
+    ? "Sin datos del tablero."
+    : "Avisos con recursos asignados · " + ocupadas + "/" + unidades.length + " unidades ocupadas.";
+
+  const abiertos = board ? incidentes.filter((i) => i.status !== "resuelto").length : null;
+  const ab = document.getElementById("analytics-abiertos");
+  const abp = document.getElementById("analytics-abiertos-pie");
+  if (ab) ab.textContent = abiertos === null ? "\u2014" : String(abiertos);
+  if (abp) abp.textContent = board ? "De " + incidentes.length + " avisos totales." : "Sin datos del tablero.";
+
+  const ov = document.getElementById("analytics-overflow");
+  const ovp = document.getElementById("analytics-overflow-pie");
+  if (ov) ov.textContent = overflow === null ? "\u2014" : String(overflow.length);
+  if (ovp) {
+    if (overflow === null) ovp.textContent = "Sin datos del tablero.";
+    else if (overflow.length) {
+      const kinds = {};
+      overflow.forEach((o) => (o.missing || []).forEach((k) => { kinds[k] = (kinds[k] || 0) + 1; }));
+      ovp.textContent = "Falta: " + Object.keys(kinds).map((k) => (NOMBRE_RECURSO[k] || k) + " (" + kinds[k] + ")").join(" · ") + ".";
+    } else ovp.textContent = "Ningún aviso se ha quedado sin recursos.";
+  }
+
+  /* Patrones reales (`lessons`): tipo + sector repetidos en los avisos vistos. */
+  const lecciones = document.getElementById("analytics-lecciones");
+  if (lecciones) {
+    lecciones.textContent = "";
+    const lista = (board && board.lessons) || [];
+    if (!board) {
+      const li = document.createElement("li");
+      li.textContent = "Sin datos del tablero.";
+      lecciones.appendChild(li);
+    } else if (!lista.length) {
+      const li = document.createElement("li");
+      li.textContent = "Sin patrones repetidos todavía (hacen falta 2 avisos del mismo tipo y sector).";
+      lecciones.appendChild(li);
+    } else {
+      lista.forEach((l) => {
+        const li = document.createElement("li");
+        li.className = "border-l-2 border-blue-200 pl-2";
+        li.textContent = l.text;
+        lecciones.appendChild(li);
+      });
+    }
+  }
+}
+
+/* --- Capa «Densidad»: SECTORES CON AVISOS ABIERTOS, no aforo ni medicion --- */
+let capaSectoresVisible = false;
+
+function rangoTriage(t) {
+  return { negro: 4, rojo: 3, amarillo: 2, verde: 1 }[t] || 0;
+}
+
+function pintarDensidad(board) {
+  const capa = document.getElementById("density-heatmap-layer");
+  if (!capa) return;
+  capa.textContent = "";
+  capa.style.display = capaSectoresVisible ? "" : "none";
+  if (!board) return;
+
+  const porZona = {};
+  (board.incidents || []).filter((i) => i.status !== "resuelto").forEach((aviso) => {
+    const sector = aviso.extract && aviso.extract.sector;
+    const zona = zonaDe(sector);
+    if (!zona) return;
+    const clave = normaliza(sector);
+    if (!porZona[clave]) porZona[clave] = { zona: zona, sector: sector, n: 0, triage: "desconocido" };
+    porZona[clave].n += 1;
+    const t = (aviso.extract && aviso.extract.triage_color) || "desconocido";
+    if (rangoTriage(t) > rangoTriage(porZona[clave].triage)) porZona[clave].triage = t;
+  });
+
+  Object.keys(porZona).forEach((clave) => {
+    const g = porZona[clave];
+    const z = g.zona;
+    const color = colorDe(g.triage);
+
+    const rect = document.createElementNS(NS_SVG, "rect");
+    rect.setAttribute("x", z.x + 3);
+    rect.setAttribute("y", z.y + 3);
+    rect.setAttribute("width", z.w - 6);
+    rect.setAttribute("height", z.h - 6);
+    rect.setAttribute("rx", "10");
+    rect.setAttribute("fill", color);
+    rect.setAttribute("fill-opacity", "0.16");
+    rect.setAttribute("stroke", color);
+    rect.setAttribute("stroke-opacity", "0.85");
+    rect.setAttribute("stroke-width", "2");
+    rect.setAttribute("stroke-dasharray", "6,3");
+    const titulo = document.createElementNS(NS_SVG, "title");
+    titulo.textContent = g.n + " aviso(s) abierto(s) en " + g.sector +
+      " — resalte de sectores con avisos, no medición de aforo.";
+    rect.appendChild(titulo);
+    capa.appendChild(rect);
+
+    const texto = g.n + (g.n === 1 ? " aviso abierto" : " avisos abiertos");
+    const ancho = 12 + texto.length * 5.2;
+    const etiqueta = document.createElementNS(NS_SVG, "g");
+    etiqueta.setAttribute("transform", "translate(" + (z.x + 8) + "," + (z.y + 10) + ")");
+    const caja = document.createElementNS(NS_SVG, "rect");
+    caja.setAttribute("width", ancho.toFixed(1));
+    caja.setAttribute("height", "17");
+    caja.setAttribute("rx", "4");
+    caja.setAttribute("fill", "#ffffff");
+    caja.setAttribute("stroke", color);
+    etiqueta.appendChild(caja);
+    const t = document.createElementNS(NS_SVG, "text");
+    t.setAttribute("x", "6");
+    t.setAttribute("y", "12");
+    t.setAttribute("font-size", "9");
+    t.setAttribute("font-weight", "bold");
+    t.setAttribute("fill", "#0f172a");
+    t.textContent = texto;
+    etiqueta.appendChild(t);
+    capa.appendChild(etiqueta);
+  });
+}
+
+/* --- Campana: avisos criticos abiertos (vital / emergencia / firma) --- */
+function avisosCriticos(board) {
+  if (!board) return [];
+  return (board.incidents || [])
+    .filter((i) => i.status !== "resuelto" &&
+      (i.needs_card || (i.extract && (i.extract.triage_color === "negro" || i.extract.triage_color === "rojo"))))
+    .sort((a, b) => b.priority - a.priority);
+}
+
+function pintarPuntoNotificaciones(board) {
+  const punto = document.getElementById("punto-notificaciones");
+  if (!punto) return;
+  const n = avisosCriticos(board).length;
+  punto.style.display = n ? "" : "none";
+  punto.title = n ? n + " aviso(s) crítico(s) abierto(s)" : "Sin avisos críticos abiertos";
+}
+
+/* ---------------------------------------------------------------------------
+   9d. Panel de cabecera (campana, ayuda y sesion)
+   --------------------------------------------------------------------------- */
+
+let panelCabeceraAbierto = null;
+
+function htmlNotificaciones() {
+  if (!tablero) return '<p class="text-slate-500">Sin datos del tablero.</p>';
+  const criticos = avisosCriticos(tablero);
+  if (!criticos.length) {
+    return '<p class="text-slate-500">Sin avisos críticos abiertos (vital o emergencia). El tablero tiene ' +
+      (tablero.incidents || []).length + " aviso(s) en total.</p>";
+  }
+  return criticos.map((a) => {
+    const triage = (a.extract && a.extract.triage_color) || "desconocido";
+    const tipo = (a.extract && a.extract.incident_type) || "otro";
+    const sector = (a.extract && a.extract.sector) || "Sin sector";
+    return '<button type="button" data-abrir-aviso="' + esc(a.correlation_id) + '" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:bg-slate-50 flex items-start gap-2.5 mb-2">' +
+      '<span class="w-2.5 h-2.5 rounded-full mt-1 shrink-0" style="background:' + colorDe(triage) + '"></span>' +
+      '<span class="flex-1 block">' +
+        '<span class="block font-bold text-slate-900 text-xs">#' + esc(a.correlation_id) + " · " + esc(ETIQUETA_TRIAGE[triage] || "SIN TRIAJE") + "</span>" +
+        '<span class="block text-slate-500 text-[11px]">' + esc(ETIQUETA_TIPO[tipo] || "Otro") + " · " + esc(sector) + " · prioridad " + esc(a.priority) + "</span>" +
+        '<span class="block text-slate-600 text-[11px] mt-0.5">' + esc((a.extract && a.extract.summary) || a.text || "Sin resumen") + "</span>" +
+      "</span>" +
+      '<span class="material-symbols-outlined text-slate-400 text-[16px]">chevron_right</span>' +
+    "</button>";
+  }).join("");
+}
+
+function htmlAyuda() {
+  const chip = (texto, clase) =>
+    '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ' + clase + '">' + texto + "</span>";
+  const gravedad = [["VITAL", "#020617"], ["EMERGENCIA", "#ef4444"], ["URGENTE", "#f59e0b"], ["LEVE", "#10b981"]];
+  return '<div class="space-y-4 text-slate-600">' +
+    "<div><div class='font-bold text-slate-900 mb-1.5'>Gravedad del aviso (color del pin)</div><div class='space-y-1'>" +
+      gravedad.map(([t, c]) => '<div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full" style="background:' + c + '"></span><span class="text-[11px]">' + t + "</span></div>").join("") +
+    "</div></div>" +
+    "<div><div class='font-bold text-slate-900 mb-1.5'>Estado en la tabla</div><div class='flex flex-wrap gap-1.5'>" +
+      chip("ACTIVE", "bg-emerald-100 text-emerald-700") +
+      chip("IN ROUTE", "bg-amber-100 text-amber-800") +
+      chip("INTERVINIENDO", "bg-blue-100 text-blue-700") +
+      chip("DONE", "bg-slate-100 text-slate-600") +
+      chip("Alert / Critical", "bg-red-50 text-red-700 border border-red-200") +
+    "</div></div>" +
+    "<div><div class='font-bold text-slate-900 mb-1.5'>Atajos de teclado</div><div class='space-y-1 text-[11px]'>" +
+      "<div><b class='font-mono'>1</b> … <b class='font-mono'>5</b> · cambia de pestaña</div>" +
+      "<div><b class='font-mono'>/</b> · enfoca el buscador del manifest</div>" +
+      "<div><b class='font-mono'>Esc</b> · cierra paneles, fichas y limpia el buscador</div>" +
+    "</div></div>" +
+    "<div><div class='font-bold text-slate-900 mb-1.5'>Otros controles</div><div class='space-y-1 text-[11px]'>" +
+      "<div><b>Trayectos</b> · muestra u oculta las rutas del plano.</div>" +
+      "<div><b>Densidad</b> · resalta los sectores con avisos abiertos (no es aforo).</div>" +
+      "<div><b>1x / 2x / PAUSA</b> · ritmo del sondeo del tablero (2,5 s / 1,25 s / detenido).</div>" +
+      "<div><b>Estado plan</b> · despliega el reparto real de recursos (allocation).</div>" +
+    "</div></div>" +
+  "</div>";
+}
+
+function htmlSesion() {
+  const env = (tablero && tablero.env) || null;
+  const ritmo = intervaloActual === null
+    ? "en pausa"
+    : (intervaloActual === 1250 ? "cada 1,25 s (2x)" : "cada 2,5 s (1x)");
+  const fila = (k, v) =>
+    '<div class="flex items-start justify-between gap-3 py-1"><span class="text-slate-500">' + k +
+    '</span><span class="font-semibold text-slate-800 text-right">' + v + "</span></div>";
+  return '<div class="divide-y divide-slate-100">' +
+    fila("Operador", "Admin User · Mesa MANDO") +
+    fila("Sondeo del tablero", ritmo) +
+    fila("Última sincronización", ultimaSync ? formateaHora(ultimaSync) : "\u2014") +
+    fila("Hora del servidor", tablero && tablero.server_time ? formateaHora(tablero.server_time) : "\u2014") +
+    fila("HappyRobot", !env ? "\u2014" : (env.hr_mode === "live" ? "en vivo" : "simulado (falta HR_HOOK_TG)")) +
+    fila("Telegram", !env ? "\u2014" : (env.telegram_token ? (env.telegram_secret ? "bot activo" : "token sin secreto de webhook") : "sin token")) +
+    fila("Callback MANDO", !env ? "\u2014" : (env.mando_callback_url ? "configurado" : "sin configurar")) +
+    "</div>" +
+    '<p class="text-[10px] text-slate-400 mt-3">Solo se muestran booleanos de configuración: nunca tokens ni secretos.</p>';
+}
+
+function htmlCanal() {
+  const env = (tablero && tablero.env) || null;
+  const canales = {};
+  ((tablero && tablero.incidents) || []).forEach((i) => {
+    const c = i.channel || "other";
+    canales[c] = (canales[c] || 0) + 1;
+  });
+  const nombres = Object.keys(canales);
+  const fila = (k, v) =>
+    '<div class="flex items-start justify-between gap-3 py-1"><span class="text-slate-500">' + k +
+    '</span><span class="font-semibold text-slate-800 text-right">' + v + "</span></div>";
+  return '<div class="space-y-3">' +
+    '<p class="text-slate-500">Modo de operación real: la Mesa MANDO recibe los avisos por los canales ' +
+      "que llegan al backend y decide con la asignación de recursos.</p>" +
+    '<div class="divide-y divide-slate-100">' +
+      fila("HappyRobot", !env ? "\u2014" : (env.hr_mode === "live" ? "en vivo" : "simulado (falta HR_HOOK_TG)")) +
+      fila("Bot de Telegram", !env ? "\u2014" : (env.telegram_token ? (env.telegram_secret ? "activo, webhook firmado" : "token sin secreto de webhook") : "sin token")) +
+      fila("Callback MANDO", !env ? "\u2014" : (env.mando_callback_url ? "configurado" : "sin configurar")) +
+      fila("Avisos en el tablero", tablero ? String((tablero.incidents || []).length) : "\u2014") +
+    "</div>" +
+    "<div><div class='font-bold text-slate-900 mb-1.5'>Reparto por canal de entrada</div>" +
+      (nombres.length
+        ? '<div class="flex flex-wrap gap-1.5">' + nombres.map((c) =>
+            '<span class="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700">' +
+            esc(ETIQUETA_CANAL[c] || c) + " · " + canales[c] + "</span>").join("") + "</div>"
+        : "<p class='text-slate-500'>Todavía no ha entrado ningún aviso.</p>") +
+    "</div>" +
+    '<p class="text-[10px] text-slate-400">Solo se muestran booleanos de configuración: nunca tokens ni secretos.</p>' +
+  "</div>";
+}
+
+function abrirPanelCabecera(tipo, silencioso) {
+  const caja = document.getElementById("panel-cabecera");
+  const cuerpo = document.getElementById("panel-cuerpo");
+  const titulo = document.getElementById("panel-titulo");
+  const icono = document.getElementById("panel-icono");
+  if (!caja || !cuerpo || !titulo || !icono) return;
+
+  if (!silencioso && panelCabeceraAbierto === tipo && !caja.classList.contains("hidden")) {
+    cerrarPanelCabecera();
+    return;
+  }
+  panelCabeceraAbierto = tipo;
+  cuerpo.className = "p-4 max-h-[440px] overflow-y-auto text-xs";
+
+  if (tipo === "notificaciones") {
+    icono.textContent = "notifications";
+    titulo.textContent = "Avisos críticos abiertos";
+    cuerpo.innerHTML = htmlNotificaciones();
+    cuerpo.querySelectorAll("[data-abrir-aviso]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const id = b.getAttribute("data-abrir-aviso");
+        cerrarPanelCabecera();
+        window.openIncidentDrawer(id);
+      });
+    });
+  } else if (tipo === "ayuda") {
+    icono.textContent = "help_outline";
+    titulo.textContent = "Manual rápido y atajos";
+    cuerpo.innerHTML = htmlAyuda();
+  } else if (tipo === "canal") {
+    icono.textContent = "hub";
+    titulo.textContent = "Modo de operación y canales";
+    cuerpo.innerHTML = htmlCanal();
+  } else {
+    icono.textContent = "account_circle";
+    titulo.textContent = "Sesión y estado del sistema";
+    cuerpo.innerHTML = htmlSesion();
+  }
+  caja.classList.remove("hidden");
+}
+
+function cerrarPanelCabecera() {
+  const caja = document.getElementById("panel-cabecera");
+  if (caja) caja.classList.add("hidden");
+  panelCabeceraAbierto = null;
+}
+
+function actualizarPanelSesion() {
+  if (panelCabeceraAbierto === "sesion") abrirPanelCabecera("sesion", true);
+}
+
+/* ---------------------------------------------------------------------------
+   9e. Buscador del manifest y atajos de teclado
+   --------------------------------------------------------------------------- */
+
+function aplicarFiltro() {
+  const caja = document.getElementById("buscador-manifest");
+  filtroBusqueda = normaliza(caja ? caja.value : "");
+  if (!tablero) { pintarTablaVacia("Sin datos del tablero."); return; }
+  /* Si se escribe y el manifest no esta a la vista, se trae la pestana: si no,
+     el buscador no tendria efecto visible. */
+  const dashboard = document.getElementById("view-dashboard");
+  if (filtroBusqueda && dashboard && dashboard.classList.contains("hidden")) {
+    window.switchTab("dashboard");
+    return;
+  }
+  pintarTabla(tablero, derivarUnidades(tablero));
+}
+
+document.addEventListener("input", (ev) => {
+  if (ev.target && ev.target.id === "buscador-manifest") aplicarFiltro();
+});
+
+/* Clic fuera del panel flotante: se cierra (salvo en los botones que lo abren). */
+document.addEventListener("click", (ev) => {
+  const caja = document.getElementById("panel-cabecera");
+  if (!caja || caja.classList.contains("hidden")) return;
+  if (caja.contains(ev.target)) return;
+  if (ev.target && ev.target.closest && ev.target.closest("[data-panel-trigger]")) return;
+  cerrarPanelCabecera();
+});
+
+document.addEventListener("keydown", (ev) => {
+  const t = ev.target;
+  const enCampo = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable);
+
+  if (ev.key === "Escape") {
+    cerrarPanelCabecera();
+    window.closeIncidentDrawer();
+    window.closeInjectionDrawer();
+    if (enCampo && t.tagName !== "SELECT") {
+      if (t.value) { t.value = ""; aplicarFiltro(); }
+      t.blur();
+    }
+    return;
+  }
+  if (enCampo) return;
+
+  if (ev.key === "/") {
+    ev.preventDefault();
+    const caja = document.getElementById("buscador-manifest");
+    if (caja) caja.focus();
+    return;
+  }
+  const idx = ["1", "2", "3", "4", "5"].indexOf(ev.key);
+  if (idx >= 0) window.switchTab(["dashboard", "fleet", "incidents", "routes", "analytics"][idx]);
+});
+
+/* ---------------------------------------------------------------------------
+   9f. Blindaje de los iconos (Material Symbols viene de Google Fonts)
+   ---------------------------------------------------------------------------
+   Si la fuente no carga (sin red, bloqueada, o un traductor que sustituye los
+   nombres de las ligaduras), cada botón que dependa solo de un icono pasa a
+   mostrar su nombre en texto. Ningún control depende de la red para entenderse. */
+
+const ETIQUETA_ICONO = {
+  search: "Buscar",
+  notifications: "Avisos",
+  tune: "Ajustes",
+  help_outline: "Ayuda",
+  more_vert: "Más",
+  close: "Cerrar",
+  add: "Añadir",
+  add_alert: "Inyectar",
+  bolt: "Inyectar",
+  verified: "Firmar",
+  done_all: "Resolver",
+  gavel: "Firma",
+  playlist_add: "Mesa",
+  hub: "Canales",
+  info: "Info",
+  account_circle: "Sesión",
+  sync: "Sincronizando",
+  cloud_off: "Sin conexión",
+  wifi_off: "Sin conexión",
+  check_circle: "Hecho",
+  chevron_right: "Abrir",
+  schedule: "Tiempo",
+  timer: "Analítica",
+  ambulance: "Flota",
+  medical_services: "Triage",
+  directions_run: "Rutas",
+  space_dashboard: "Panel",
+  local_shipping: "MANDO",
+};
+
+/* Con la ligadura cargada, «settings» mide ~1em (24 px). Sin la fuente se
+   dibuja el texto suelto y pasa de 60 px: esa diferencia es la detección. */
+function fuenteIconosDisponible() {
+  try {
+    const prueba = document.createElement("span");
+    prueba.className = "material-symbols-outlined";
+    prueba.style.cssText = "position:absolute;left:-9999px;top:-9999px;font-size:24px;visibility:hidden;white-space:nowrap";
+    prueba.textContent = "settings";
+    document.body.appendChild(prueba);
+    const ancho = prueba.getBoundingClientRect().width;
+    prueba.remove();
+    return ancho > 0 && ancho < 45;
+  } catch (e) {
+    return false;
+  }
+}
+
+function activarEtiquetasDeIconos() {
+  document.documentElement.classList.add("sin-iconos");
+  const iconos = Array.prototype.slice.call(document.querySelectorAll(".material-symbols-outlined"));
+  let etiquetados = 0;
+  iconos.forEach((el) => {
+    const nombre = (el.getAttribute("data-icono") || el.textContent || "").trim();
+    const padre = el.parentElement;
+    const esBoton = padre && (padre.tagName === "BUTTON" || padre.tagName === "A");
+    /* Solo se etiqueta si el icono era TODO el contenido del botón: en los
+       botones que ya llevan texto, el icono es decorativo y se oculta. */
+    const soloIcono = esBoton && padre.textContent.trim() === nombre;
+    const etiqueta = ETIQUETA_ICONO[nombre];
+    if (!soloIcono || !etiqueta) { el.style.display = "none"; return; }
+    el.classList.remove("material-symbols-outlined");
+    el.classList.add("texto-icono");
+    el.textContent = etiqueta;
+    padre.classList.add("boton-icono-texto");
+    padre.setAttribute("title", padre.getAttribute("title") || etiqueta);
+    etiquetados += 1;
+  });
+  console.warn("[interfaz] Material Symbols no disponible: " + etiquetados + " control(es) etiquetado(s) en texto.");
+}
+
+function comprobarIconos() {
+  const listo = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  /* Si la red va lenta no se espera indefinidamente: a los 3 s se decide. */
+  return Promise.race([listo, new Promise((r) => setTimeout(r, 3000))])
+    .catch(() => undefined)
+    .then(() => {
+      if (!fuenteIconosDisponible()) activarEtiquetasDeIconos();
+    });
+}
+
+/* ---------------------------------------------------------------------------
+   10. Ampliacion de las funciones que ya usa el marcado (mismos nombres)
+   --------------------------------------------------------------------------- */
+
+const originalSwitchTab = window.switchTab;
+window.switchTab = function (tabId) {
+  cerrarPanelCabecera();
+  originalSwitchTab(tabId);
+  /* Repinta al vuelo: si el usuario cambia de pestana antes del primer sondeo,
+     la tabla y los pines ya tienen datos. */
+  if (tablero) pintarTodo(tablero);
+};
+
+/* --- 1x / 2x / PAUSA: ahora SI manda sobre el sondeo de /api/board --- */
+const originalCycleSimSpeed = window.cycleSimSpeed;
+window.cycleSimSpeed = function () {
+  originalCycleSimSpeed();          /* texto e icono del boton + balizas */
+  aplicarVelocidadSondeo();         /* efecto real: ritmo del sondeo */
+};
+
+function aplicarVelocidadSondeo() {
+  if (currentSimSpeed === 0) {
+    intervaloActual = null;
+    programarSondeo();
+    showToast("Sondeo del tablero en pausa: la pantalla queda congelada.");
+  } else {
+    intervaloActual = currentSimSpeed === 2 ? 1250 : 2500;
+    programarSondeo();
+    showToast("Sondeo del tablero cada " +
+      (intervaloActual / 1000).toString().replace(".", ",") + " s (" + currentSimSpeed + "x).");
+    refrescar();
+  }
+  actualizarPanelSesion();
+}
+
+/* --- Trayectos: capa de rutas de maqueta del plano, con estado coherente --- */
+let trayectosVisibles = true;
+window.toggleRoutesLayer = function () {
+  trayectosVisibles = !trayectosVisibles;
+  const capa = document.getElementById("resource-routes-layer");
+  const btn = document.getElementById("routes-btn");
+  if (capa) capa.classList.toggle("opacity-0", !trayectosVisibles);
+  if (btn) {
+    btn.className = "px-2.5 py-1 rounded-lg border text-xs font-bold transition-colors " +
+      (trayectosVisibles
+        ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+        : "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200");
+  }
+};
+
+/* --- Densidad: sectores con avisos abiertos (real, no aforo) --- */
+window.toggleDensityLayer = function () {
+  capaSectoresVisible = !capaSectoresVisible;
+  const capa = document.getElementById("density-heatmap-layer");
+  const btn = document.getElementById("density-btn");
+  if (capa) capa.style.display = capaSectoresVisible ? "" : "none";
+  if (btn) {
+    btn.className = "px-2.5 py-1 rounded-lg border text-xs font-bold transition-colors " +
+      (capaSectoresVisible
+        ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+        : "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200");
+  }
+  pintarDensidad(tablero);
+  showToast(capaSectoresVisible
+    ? "Resaltados los sectores con avisos abiertos (no es aforo)."
+    : "Capa de sectores con avisos desactivada.");
+};
+
+const originalOpenIncidentDrawer = window.openIncidentDrawer;
+window.openIncidentDrawer = function (id) {
+  cerrarPanelCabecera();
+  const aviso = buscarAviso(id);
+  if (!aviso) {
+    /* Ids de maqueta (INC-104, INC-102…): no se inventan datos. */
+    showToast("Ese aviso no esta en el tablero (" + id + "). Inyecta un escenario para verlo.");
+    return;
+  }
+  originalOpenIncidentDrawer(id);
+  pintarFicha(aviso, derivarUnidades(tablero));
+};
+
+window.confirmIncidentAction = async function () {
+  if (!avisoAbierto) { showToast("No hay ningun aviso abierto."); return; }
+  const id = avisoAbierto.correlation_id;
+  const actuaciones = avisoAbierto.suggested || [];
+  const accion = accionElegida || actuaciones[0];
+  if (!accion) { showToast("El backend no ha propuesto ninguna actuacion para este aviso."); return; }
+  const cajaNota = document.getElementById("ficha-nota");
+  const nota = cajaNota && cajaNota.value.trim() ? cajaNota.value.trim() : undefined;
+  const boton = document.querySelector('#drawer-incident button[onclick="confirmIncidentAction()"]');
+  if (boton) { boton.disabled = true; boton.classList.add("opacity-60"); }
+  try {
+    const res = await fetch("/api/incidents/" + encodeURIComponent(id) + "/decision", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        action: accion,
+        note: nota,
+        decided_by: (tablero && tablero.decided_by_default) || undefined,
+      }),
+    });
+    const datos = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(datos.error || ("HTTP " + res.status));
+    showToast("Firma registrada en " + id + ": " + accion + (nota ? " (con nota)." : "."));
+    window.closeIncidentDrawer();
+    await refrescar();
+  } catch (err) {
+    showToast("No se pudo firmar: " + err.message);
+  } finally {
+    if (boton) { boton.disabled = false; boton.classList.remove("opacity-60"); }
+  }
+};
+
+/* --- Resolver: cierra el aviso (PATCH status=resuelto) y libera recursos --- */
+window.resolverIncidente = async function () {
+  if (!avisoAbierto) { showToast("No hay ningun aviso abierto."); return; }
+  const id = avisoAbierto.correlation_id;
+  if (avisoAbierto.status === "resuelto") { showToast("El aviso " + id + " ya esta resuelto."); return; }
+  const boton = document.getElementById("ficha-btn-resolver");
+  if (boton) { boton.disabled = true; boton.classList.add("opacity-60"); }
+  try {
+    const res = await fetch("/api/incidents/" + encodeURIComponent(id), {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "resuelto" }),
+    });
+    const datos = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(datos.error || ("HTTP " + res.status));
+    showToast("Aviso " + id + " resuelto: sus recursos quedan libres.");
+    window.closeIncidentDrawer();
+    await refrescar();
+  } catch (err) {
+    showToast("No se pudo resolver: " + err.message);
+  } finally {
+    if (boton) { boton.disabled = false; boton.classList.remove("opacity-60"); }
+  }
+};
+
+let cargandoEscenario = false;
+
+window.loadScenario = async function (type) {
+  if (cargandoEscenario) { showToast("Ya hay un escenario cargando; espera a que termine."); return; }
+  const clave = type === "normal" ? "dia1" : "dia2";
+  const escenario = ESCENARIOS[clave];
+  const botones = [document.getElementById("btn-escenario-normal"), document.getElementById("btn-escenario-stress")];
+  const envoltorio = document.getElementById("escenario-progreso-wrap");
+  const barra = document.getElementById("escenario-progreso-barra");
+  const etiqueta = document.getElementById("escenario-progreso");
+
+  cargandoEscenario = true;
+  botones.forEach((b) => { if (b) { b.disabled = true; b.classList.add("opacity-50", "cursor-not-allowed"); } });
+  if (envoltorio) envoltorio.classList.remove("hidden");
+  if (barra) barra.style.width = "0%";
+  if (etiqueta) etiqueta.textContent = escenario.nombre + ": preparando " + escenario.items.length + " avisos…";
+
+  let hechos = 0;
+  try {
+    for (let i = 0; i < escenario.items.length; i += 1) {
+      const item = escenario.items[i];
+      if (etiqueta) {
+        const corto = item.text.length > 42 ? item.text.slice(0, 42) + "…" : item.text;
+        etiqueta.textContent = escenario.nombre + ": inyectando " + (i + 1) + "/" + escenario.items.length + " · " + corto;
+      }
+      await inyectar(item.text, "webcall", item.perfil, item.reporter, "sim-" + clave + "-" + (i + 1));
+      hechos += 1;
+      if (barra) barra.style.width = Math.round((hechos / escenario.items.length) * 100) + "%";
+    }
+    if (etiqueta) etiqueta.textContent = escenario.nombre + ": " + hechos + " avisos inyectados. Actualizando el tablero…";
+    showToast(escenario.nombre + ": " + hechos + " avisos inyectados.");
+    await refrescar();
+    if (etiqueta) etiqueta.textContent = escenario.nombre + ": listo. Ids estables (sim-" + clave + "-N), sin duplicar.";
+    window.closeInjectionDrawer();
+  } catch (err) {
+    showToast("No se pudo cargar el escenario: " + err.message);
+    if (etiqueta) etiqueta.textContent = escenario.nombre + ": falló tras " + hechos + " avisos — " + err.message;
+  } finally {
+    cargandoEscenario = false;
+    botones.forEach((b) => { if (b) { b.disabled = false; b.classList.remove("opacity-50", "cursor-not-allowed"); } });
+  }
+};
+
+/* Canal elegido en la mesa de inyeccion. Defecto: Telegram. */
+function canalElegido() {
+  const sel = document.getElementById("canal-inyeccion");
+  return sel && sel.value ? sel.value : "telegram";
+}
+
+const originalSimulateManualInjection = window.simulateManualInjection;
+window.simulateManualInjection = async function () {
+  const caja = document.getElementById("manual-incident-text");
+  const texto = caja.value.trim();
+  if (!texto) { originalSimulateManualInjection(); return; }  /* mismo aviso de la maqueta */
+  const canal = canalElegido();
+  try {
+    const datos = await inyectar(texto, canal, "adulto", "Mesa de inyeccion");
+    showToast("Aviso por " + (ETIQUETA_CANAL[canal] || canal) + " clasificado como " +
+      ((datos.extract && datos.extract.triage_color) || "sin triage") +
+      " en " + ((datos.extract && datos.extract.sector) || "sector desconocido") + ".");
+    caja.value = "";
+    window.closeInjectionDrawer();
+    await refrescar();
+  } catch (err) {
+    showToast("No se pudo inyectar: " + err.message);
+  }
+};
+
+/* --- Estado plan: despliega el reparto REAL de recursos (allocation) --- */
+window.togglePlanStatus = function () {
+  const detalle = document.getElementById("plan-detalle");
+  if (!detalle) return;
+  if (detalle.style.display !== "none" && detalle.style.display !== "") {
+    detalle.style.display = "none";
+    return;
+  }
+  if (!tablero) {
+    detalle.textContent = "Sin datos del tablero.";
+    detalle.style.display = "";
+    showToast("Sin datos del tablero: no hay plan que mostrar.");
+    return;
+  }
+  const a = tablero.allocation || {};
+  const libres = ORDEN_RECURSOS.map((k) => (NOMBRE_RECURSO[k] || k) + ": " + ((a.remaining && a.remaining[k]) || 0)).join(" · ");
+  const lineas = [
+    "<div><b>" + (a.broken ? "Saturado (déficit)" : "Cubierto") + "</b> · " + (a.assignments || []).length + " aviso(s) con recursos asignados.</div>",
+    "<div>Libres por tipo → " + esc(libres) + "</div>",
+  ];
+  if ((a.overflow || []).length) {
+    lineas.push("<div>Sin cubrir: " + (a.overflow || []).map((o) =>
+      "#" + esc(o.correlation_id) + " (falta " + esc((o.missing || []).map((k) => NOMBRE_RECURSO[k] || k).join(" + ")) + ")").join(" · ") + "</div>");
+  } else {
+    lineas.push("<div>Ningún aviso abierto se ha quedado sin recursos.</div>");
+  }
+  lineas.push('<div class="text-slate-400">Dato real de /api/board (allocation).</div>');
+  detalle.innerHTML = lineas.join("");
+  detalle.style.display = "";
+  showToast("Estado del plan: " + (a.broken ? "saturado (déficit)" : "cubierto") + ".");
+};
+
+const originalExportCSV = window.exportCSV;
+window.exportCSV = function () {
+  originalExportCSV();
+  const incidentes = (tablero && tablero.incidents) || [];
+  if (!incidentes.length) { showToast("No hay avisos que exportar."); return; }
+  const unidades = derivarUnidades(tablero);
+  const cabecera = ["aviso", "estado", "gravedad", "tipo", "sector", "prioridad", "unidades_asignadas", "cubierto", "reportado", "texto"];
+  const lineas = [cabecera.map(celdaCSV).join(";")];
+  incidentes.forEach((a) => {
+    const triage = (a.extract && a.extract.triage_color) || "desconocido";
+    const tipo = (a.extract && a.extract.incident_type) || "otro";
+    lineas.push([
+      a.correlation_id,
+      ETIQUETA_ESTADO[a.status] || a.status,
+      ETIQUETA_TRIAGE[triage] || "SIN TRIAJE",
+      ETIQUETA_TIPO[tipo] || "Otro",
+      (a.extract && a.extract.sector) || "",
+      a.priority,
+      unidadesDe(unidades, a.correlation_id).map((u) => u.id).join(" + "),
+      a.covered ? "si" : "no",
+      a.reported_at,
+      a.text || (a.extract && a.extract.summary) || "",
+    ].map(celdaCSV).join(";"));
+  });
+  const blob = new Blob(["\ufeff" + lineas.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = "mando-interfaz-manifiesto-" + new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-") + ".csv";
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  URL.revokeObjectURL(url);
+};
+
+function celdaCSV(valor) {
+  const texto = valor === null || valor === undefined ? "" : String(valor);
+  return '"' + texto.replace(/"/g, '""') + '"';
+}
+
+/* Neutraliza los textos de maqueta de la ficha antes del primer aviso: asi no
+   queda ni un detalle de un incidente inventado (transcripcion, subtitulo…).
+   Se conserva el <label> molde (solo con su texto en blanco), porque
+   `pintarFicha` lo clona para construir las actuaciones reales. */
+function limpiarFichaInicial() {
+  const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  set("ficha-id", "\u2014");
+  set("ficha-gravedad", "\u2014");
+  set("ficha-subtitulo", "Sin aviso seleccionado.");
+  set("ficha-notificado", "\u2014");
+  set("ficha-transcripcion", "Sin transcripcion.");
+  set("ficha-propuesta", "\u2014");
+  set("ficha-firmante", "\u2014");
+  const perfil = document.getElementById("ficha-perfil");
+  if (perfil) perfil.style.display = "none";
+  const traza = document.getElementById("ficha-traza-lista");
+  if (traza) traza.textContent = "";
+  const dec = document.getElementById("ficha-decision");
+  if (dec) dec.style.display = "none";
+  const def = document.getElementById("ficha-deficit");
+  if (def) def.style.display = "none";
+  const btn = document.getElementById("ficha-btn-resolver");
+  if (btn) btn.disabled = true;
+  const labels = document.querySelectorAll("#ficha-actuaciones label");
+  labels.forEach((l) => {
+    const span = l.querySelector("div.font-bold span");
+    if (span) span.textContent = "\u2014";
+    const insignias = l.querySelectorAll("div.font-bold span");
+    if (insignias.length > 1) insignias[1].remove();
+    const desc = l.querySelector("div.text-slate-500");
+    if (desc) desc.remove();
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   11. Arranque: estado honesto, primer sondeo y refresco segun 1x / 2x / PAUSA
+   --------------------------------------------------------------------------- */
+
+window.addEventListener("DOMContentLoaded", () => {
+  /* La fila-molde se cachea ANTES de vaciar el tbody: las filas de ejemplo del
+     diseno no deben verse nunca como si fueran avisos reales. */
+  prepararMolde();
+  limpiarFichaInicial();
+  mostrarAvisoTablero("Conectando con el tablero…",
+    "Primer sondeo de /api/board en curso. Hasta que llegue, la pantalla no muestra cifras de ejemplo.", "info");
+  pintarSinDatos("Conectando con el tablero…");
+  refrescar();
+  programarSondeo();
+  /* Los iconos se comprueban tras cargar: si la fuente de Google no llega,
+     los botones de solo-icono pasan a mostrar su nombre en texto. */
+  comprobarIconos();
+});
+</script>
+
+</body></html>

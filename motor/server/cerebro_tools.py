@@ -332,6 +332,7 @@ def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
     from . import adaptativo, confianza as conf_mod, enjambre
     sync_agent(session)
     body = _unwrap_body(dict(body or {}))
+    body = session.rapido.bind_decision(body)
     papeles = equipo.extraer_por_papel(body)
     body = equipo.peel_decision_fields(body)
     agente = equipo.parse_agente(body.get("agente"))
@@ -341,7 +342,9 @@ def decidir(session: Any, body: dict[str, Any]) -> dict[str, Any]:
     if fase == "revision":
         return _decidir_revision(session, body, d, papeles, agente)
     if fase == "rapida":
-        return _decidir_rapida(session, body, d, papeles, agente)
+        out = _decidir_rapida(session, body, d, papeles, agente)
+        session.rapido.record_decision(out)
+        return out
     key = _vote_key(session, d)
     if key:
         equipo.store_raw(session, key, d)

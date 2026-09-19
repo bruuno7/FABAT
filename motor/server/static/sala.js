@@ -52,6 +52,7 @@
   let whatif = null, toastTimer = 0;
   let currentTab = "ahora", adaptacion = null, adaptAt = 0, lecciones = null, leccAt = 0;
   let historial = null, histAt = 0, agentCache = {}, agentFetch = {};
+  let workflowBusy = false, workflowRequest = null;
   const beacons = new Map();
   const notes = new Map();   // nota escrita por el operador, por acción: sobrevive a cada repintado
   const armed = new Set();   // acciones graves esperando el segundo clic de confirmación
@@ -331,7 +332,7 @@
     if (!S || !plano) return;
     head(); sidebar(); renderModo(); renderEquipoStrip(); renderTabBadges();
     if (currentTab === "ahora") { band(); map(); queue(); renderAhoraExtras(); }
-    else if (currentTab === "equipo") panelEquipo();
+    else if (currentTab === "equipo") { renderWorkflow(); panelEquipo(); }
     else if (currentTab === "enjambre") panelEnjambre();
     else if (currentTab === "recursos") { aside(); panelCalls(); }
     else if (currentTab === "comunicaciones") { chatPanel(); panelCommsCalls(); }
@@ -814,6 +815,62 @@
       schedule();
     }).catch(() => { delete agentFetch[iid]; });
   }
+
+  function renderWorkflow() {
+    const cfg = S.workflow_rapido || { ready: false, missing: ["Backend sin integración del workflow rápido"] };
+    $("workflow-config").textContent = cfg.ready
+      ? `Configurado para ${cfg.environment} · espera máxima ${cfg.timeout_s} s. La publicación y conectividad se verifican al ejecutar.`
+      : "Pendiente: " + (cfg.missing || []).join(", ");
+    $("workflow-launch").disabled = workflowBusy || !cfg.ready;
+    $("workflow-launch").textContent = workflowBusy ? "Registrando aviso…" : `Lanzar en HappyRobot (${cfg.environment || "—"})`;
+    const zone = $("workflow-zone");
+    if (!zone.dataset.loaded && S.zones) {
+      S.zones.forEach((z) => {
+        const option = document.createElement("option");
+        option.value = z.id; option.textContent = z.name || z.id; zone.appendChild(option);
+      });
+      zone.dataset.loaded = "true";
+    }
+    const labels = { pendiente: "Pendiente", en_curso: "En curso", esperando_callback: "Run terminado; esperando decisión",
+      decision_recibida: "Decisión rápida recibida", decision_bloqueada: "Decisión bloqueada por MANDO",
+      fallido: "Error de HappyRobot", timeout: "Sin decisión dentro del plazo" };
+    setHTML($("workflow-runs"), (cfg.runs || []).slice().reverse().map((r) => `
+      <div class="workflow-run">
+        <button data-workflow-incident="${E(r.incident_id)}">${E(r.incident_id)} · ${E(labels[r.status] || r.status)}</button>
+        <p class="tiny">Run: ${E(r.run_id || "sin confirmar")} · Aviso: ${E(r.report_id)}</p>
+        <p class="tiny">Revisión del equipo: ${E(r.revision ? "recibida" : "pendiente")}</p>
+        ${r.error ? `<p>${E(r.error)}</p>` : ""}
+      </div>`).join(""));
+  }
+  $("workflow-form").addEventListener("input", () => { workflowRequest = null; });
+  $("workflow-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (workflowBusy) return;
+    const text = $("workflow-text").value.trim();
+    if (!text) { $("workflow-result").textContent = "Escribe un aviso."; return; }
+    if (!workflowRequest) workflowRequest = `sala-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    workflowBusy = true;
+    $("workflow-text").disabled = true; $("workflow-zone").disabled = true;
+    renderWorkflow();
+    const result = await post("/api/workflows/rapido", {
+      text, zone: $("workflow-zone").value || null, request_id: workflowRequest,
+    });
+    workflowBusy = false;
+    $("workflow-text").disabled = false; $("workflow-zone").disabled = false;
+    if (result.ok) {
+      $("workflow-result").textContent = result.workflow_status === "sin_ejecucion"
+        ? `Aviso ${result.report_id} registrado sin nuevo run: no abrió un incidente pendiente de decisión.`
+        : `Aviso ${result.report_id} registrado. El estado del run se actualiza abajo.`;
+      $("workflow-text").value = ""; workflowRequest = null;
+    } else {
+      $("workflow-result").textContent = result.error || "No se pudo registrar el aviso.";
+    }
+    renderWorkflow();
+  });
+  $("workflow-runs").addEventListener("click", (ev) => {
+    const button = ev.target.closest("[data-workflow-incident]");
+    if (button) pick({ incident: button.dataset.workflowIncident });
+  });
 
   function panelEquipo() {
     const cards = S.agentes || {};

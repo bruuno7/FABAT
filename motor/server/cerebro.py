@@ -30,7 +30,8 @@ def mode() -> str:
 
 def timeout_s() -> float:
     try:
-        return max(0.0, float(os.environ.get("MANDO_CEREBRO_TIMEOUT_S") or "8"))
+        default = "90" if mode() == "agente" and os.environ.get("HR_WORKFLOW_RAPIDO") else "8"
+        return max(0.0, float(os.environ.get("MANDO_CEREBRO_TIMEOUT_S") or default))
     except (TypeError, ValueError):
         return 8.0
 
@@ -177,6 +178,8 @@ def _plan_dirty_gated(session: Any, original: Any) -> None:
         if m == "abanico":
             from . import abanico
             abanico.lanzar_si_aviso(session)
+        elif m == "agente":
+            session.rapido.launch_pending()
 
 
 def _should_send(session: Any, a: Action) -> bool:

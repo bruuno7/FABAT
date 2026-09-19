@@ -474,6 +474,11 @@ details.chat>summary .arrow{margin-left:auto}
 /* Lo que escribe el público y lo que dice la llamada vienen sin cortes: se parten antes que desbordar. */
 .drawer-body,.drawer>header h2{overflow-wrap:anywhere}
 .box{border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;min-width:0;background:var(--paper)}
+.workflow-panel,.workflow-panel form,.equipo-results{display:grid;gap:10px}
+.workflow-panel h2{font-size:var(--title)}
+.workflow-panel button[type=submit]{justify-self:start}
+.workflow-run{padding:10px 0;border-top:1px solid var(--line-soft);overflow-wrap:anywhere}
+.workflow-run button{margin-bottom:4px}
 .box>h3{font-size:10px;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;font-weight:800}
 .box.bad{border-color:var(--emerg);background:var(--emerg-bg)}
 .box.good{border-color:var(--mild)}

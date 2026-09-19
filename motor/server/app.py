@@ -29,6 +29,7 @@ from motor.contracts import ALWAYS_APPROVE, Action, ActionKind, ActionStatus
 from motor.world import SimComms, World, load_festival
 
 from . import intake, memoria, regression_live, views, whatif, validation, privacy, cerebro
+from .rapido import RapidoRunner, configuration as rapido_configuration
 from .comms_happyrobot import HappyRobotComms, load_contacts, public_base, shared_secret
 from . import telegram_bot, hr_config, llm_parser_factory
 from .ledger import open_ledger
@@ -218,6 +219,7 @@ def needs_approval(a: Action) -> bool:
 # ---------------------------------------------------------------- sesión
 
 class Session:
+    _cerebro_decided: set[str]
     callback_url = ""  # lo fija create_app: adónde devuelve HappyRobot los webhooks
     chat_router: Any = None    # lo fija create_app: (session, action) -> canal. Preguntas a quien está en una conversación de recogida
     ask_router: Any = None     # lo fija create_app: (session, action) -> bool. El bot de Telegram se queda las preguntas a los suyos
@@ -315,6 +317,7 @@ class Session:
             self.log("chaos", "Mando no arranca: " + traceback.format_exc(limit=1).strip().splitlines()[-1] + ". Entra el agente de relleno")
             from .fallback_agent import FallbackAgent
             self.agent, self.agent_name = FallbackAgent(comms=self.comms), "relleno (Mando falló al arrancar)"
+        self.rapido = RapidoRunner(self)
         cerebro.attach(self)
         self.chaos = load_chaos(self.seed)
 
@@ -368,6 +371,7 @@ class Session:
 
     def close(self) -> None:
         self._stop.set()
+        self.rapido.close()
         self.refresh.close()
         self.receipts.close()
         self._wake.set()
@@ -642,6 +646,7 @@ class Session:
                                       "wristband": {k: prof[k] for k in ("code", "access", "tags", "verified_staff")} if prof else None}
             self._report_meta[rid]["reserved"] = bool((first or {}).get("reserved")) or (str((extracted or {}).get("sensitive")).lower() == "true") or privacy.sensitive(
                 self.world.reports[-1], self.world.observe().zones)
+            self.rapido.note_report(rid, said, real, zone, lang)
             how = "entendido por HappyRobot" if understood == "happyrobot" else "entendido en local"
             self.log("report", f"Aviso de {source} por {real}: «{rep['text'][:80]}» · {how}"
                      + (f" · pulsera {prof['access']}" + (f" ({', '.join(prof['tags'])})" if prof["tags"] else "") if prof else ""),
@@ -960,6 +965,7 @@ class Session:
             "zones": zones, "resources": resources, "incidents": incidents, "reports": reports,
             "plans": plan_view, "approvals": approvals, "actions": actions[-60:], "log": log,
             "calls": self.comms.view(), "strikes": self.strikes[-10:],
+            "workflow_rapido": self.rapido.view(),
             "metrics": self._metrics(snap, incidents, plans, truth),
             "lessons": snap.get("lessons", {}), "counters": snap.get("counters", {}),
             "funnel": self._funnel(w, incidents, truth),
@@ -1454,6 +1460,26 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
 
     from . import cerebro_tools
     cerebro_tools.mount(app, S, check_token, operator)
+
+    @app.post("/api/workflows/rapido")
+    async def launch_rapido(request: Request) -> dict:
+        operator(request)
+        d = await body(request)
+        text, zone, request_id = d.get("text"), d.get("zone"), d.get("request_id")
+        if not isinstance(text, str) or not 1 <= len(text.strip()) <= 400:
+            raise HTTPException(422, "text debe contener entre 1 y 400 caracteres")
+        if zone is not None and (not isinstance(zone, str) or zone not in S().world.L.idx):
+            raise HTTPException(422, "Zona desconocida")
+        if not isinstance(request_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", request_id):
+            raise HTTPException(422, "request_id debe ser un identificador de hasta 80 caracteres")
+        if not rapido_configuration()["ready"]:
+            raise HTTPException(503, "Completa la configuración indicada en Equipo")
+        try:
+            return await asyncio.to_thread(S().rapido.submit, request_id, text.strip(), zone)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc))
+        except RuntimeError as exc:
+            raise HTTPException(503, str(exc))
 
     _FIELD = re.compile(r'"(action_id|type|message|result|resultado|eta_min|hr_run_id|hr_session_id|reason|call_status|report_ref|'
                         r'channel|stage|reply_to|event_id|field|value)"\s*:\s*"((?:[^"\\\n]|\\.)*)"')

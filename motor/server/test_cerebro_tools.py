@@ -125,7 +125,15 @@ class CerebroToolsTest(unittest.TestCase):
             "porque": "El mismo equipo otra vez.",
             "recursos": ["med_1"],
         }).json()
-        self.assertTrue(any("ocupado" in (x.get("motivo") or "") for x in b["bloqueadas"]), b)
+        self.assertTrue(any(x.get("recurso") == "med_1" and x.get("ya_cumplido") for x in b["aceptadas"]), b)
+        self.assertFalse(any(x.get("id") == "med_1" and "ocupado" in (x.get("motivo") or "")
+                             for x in b["bloqueadas"]), b)
+        other = self.post("/hr/tools/decidir", {
+            "incident_id": "nuevo", "prioridad": 5, "zona": "gate_b",
+            "porque": "Otro aviso: el médico ya está en el foso.",
+            "recursos": ["med_1"],
+        }).json()
+        self.assertTrue(any("ocupado" in (x.get("motivo") or "") for x in other["bloqueadas"]), other)
         ghost = self.post("/hr/tools/decidir", {
             "incident_id": iid, "prioridad": 5,
             "porque": "Un recurso que no existe.",

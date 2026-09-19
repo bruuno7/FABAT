@@ -1,4 +1,19 @@
-# Estado del equipo de agentes en HappyRobot (rama `ana`) — sáb 19-sep, 16:40
+# Estado del equipo de agentes en HappyRobot (rama `ana`) — sáb 19-sep, 19:00
+
+## `MANDO_CEREBRO` — qué poner en cada demo
+
+Valores: `reglas` | `agente` | `hibrido` | `abanico`. Si falta o no encaja, el backend usa `reglas`.
+Nada de esto elude las barandillas (lista blanca, lo grave → persona, despacho vital ya).
+
+| Valor | Quién decide | Cuándo usarlo |
+|---|---|---|
+| **`agente`** | Agente rápido de HappyRobot (`decidir` con `fase: rapida`, `agente: rapido`) y después el enjambre (`fase: revision`, CONFIRMA/CORRIGE). Si HappyRobot no contesta en `MANDO_CEREBRO_TIMEOUT_S` (8 s), el mismo equipo con LLM local; si también falla, reglas en rojo. | **Demo real** (Sala + plataforma). Es el camino de dos velocidades. |
+| **`reglas`** | Planificador determinista (`motor/mando`). La Sala no espera a HappyRobot. | **Demo pública sin claves** (Render). Arranca y se entiende sin `HR_API_KEY` ni LLM. |
+| **`agente`** + `MANDO_LLM=1` y `AGENTES_LLM_KEY` | Igual que `agente`, pero el plan B es el LLM local en vez de ir directo a reglas. | **Demo pública con clave LLM** y sin HappyRobot. A los N s decide el equipo local. |
+| **`abanico`** | El backend lanza los seis especialistas en paralelo (`abanico.py`) y compone. Misma cadena plataforma → LLM local → reglas. | Demo del enjambre en abanico; hace falta `HR_API_KEY` y los `HR_AGENTE_*`. |
+| **`hibrido`** | Las reglas proponen y ejecutan; el agente puede corregir por `decidir`. | No es la demo del reto; útil si la plataforma va a trompicones y se quiere un plan B que no espere. |
+
+La Sala pinta las seis tarjetas por papel en `S.agentes[inc].agentes` (triaje, prioridad, recursos, avisos, vigía, crítico) y la línea «Decisión rápida en N s · enjambre: CONFIRMA/CORRIGE/pendiente». En `abanico` añade «Primera decisión en N s · enjambre completo en N s».
 
 ## Publicado en *development* (listo para correr)
 | Workflow | Papel |

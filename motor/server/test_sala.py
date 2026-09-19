@@ -393,7 +393,7 @@ class AgentesCerebroTest(unittest.TestCase):
                 self.assertEqual(det.status_code, 200, det.text)
                 js = (HERE / "static" / "sala.js").read_text(encoding="utf-8")
                 for marca in ("S.agentes", "/api/agentes/", "Equipo de agentes", "CÓMO LO HA DECIDIDO EL EQUIPO",
-                              "Decisión rápida", "revisión del enjambre", "velocidad-line",
+                              "Decisión rápida", " · enjambre:", "velocidad-line",
                               "switchTab", "panelEnjambre", "panelAprendizaje"):
                     self.assertIn(marca, js, marca)
             finally:

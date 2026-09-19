@@ -240,6 +240,114 @@ class DosVelocidadesTest(unittest.TestCase):
         self.assertIn("densidad", card["agentes"]["vigia"]["razonamiento"])
         self.assertIn("APROBAR", card["agentes"]["critico"]["razonamiento"])
 
+    def test_extraer_claves_con_acento(self) -> None:
+        from motor.server import equipo
+        got = equipo.extraer_por_papel({"por_papel": {
+            "Triaje": "nuevo", "Prioridad": "6", "Recursos": "med_1",
+            "Avisos": "pista", "Vigía": "caída", "Crítico": "ok",
+        }})
+        self.assertEqual(set(got), set(PAPELES))
+        self.assertIn("caída", got["vigia"]["razonamiento"])
+
+    def test_por_papel_lista_de_lineas(self) -> None:
+        r = self.post("/hr/tools/decidir", {
+            "fase": "rapida", "agente": "rapido", "aviso_at": time.time() - 3,
+            "incident_id": "nuevo", "zona": "front_pit", "prioridad": 6,
+            "porque": "Mareo en el foso: mando médico ya.",
+            "recursos": ["med_1"],
+            "por_papel": [
+                "Triaje: Aviso nuevo, no es duplicado.",
+                "Prioridad: 6, mareo no vital.",
+                "Recursos: Mandar med_1 al foso.",
+                "Avisos: Avisar al sanitario de pista.",
+                "Vigía: Vigilar si pierde el conocimiento.",
+                "Crítico: APROBAR el despacho médico.",
+            ],
+        }).json()
+        self.assertTrue(r["ok"], r)
+        card = self.card(r["incident_id"])
+        for papel in PAPELES:
+            self.assertIn(papel, card["agentes"], papel)
+            self.assertTrue(card["agentes"][papel]["razonamiento"], papel)
+        self.assertIn("duplicado", card["agentes"]["triaje"]["razonamiento"])
+        self.assertIn("med_1", card["agentes"]["recursos"]["razonamiento"])
+
+    def test_por_papel_texto_largo_y_porque(self) -> None:
+        texto = ("Triaje: Aviso nuevo en B. Prioridad: 5, cola molesta. "
+                 "Recursos: Aún no hace falta despacho. Avisos: Informar al jefe de puerta. "
+                 "Vigía: Si la densidad pasa de 4, corregir. Crítico: APROBAR con seguimiento.")
+        r = self.post("/hr/tools/decidir", {
+            "fase": "rapida", "agente": "rapido", "aviso_at": time.time() - 4,
+            "incident_id": "nuevo", "zona": "gate_b", "prioridad": 5,
+            "porque": "Cola molesta en B.",
+            "por_papel": texto,
+        }).json()
+        self.assertTrue(r["ok"], r)
+        card = self.card(r["incident_id"])
+        for papel in PAPELES:
+            self.assertIn(papel, card["agentes"], papel)
+        self.assertIn("Aviso nuevo", card["agentes"]["triaje"]["razonamiento"])
+        self.assertIn("puerta", card["agentes"]["avisos"]["razonamiento"])
+
+        r2 = self.post("/hr/tools/decidir", {
+            "fase": "rapida", "agente": "rapido", "aviso_at": time.time() - 2,
+            "incident_id": "nuevo", "zona": "gate_c", "prioridad": 4,
+            "porque": texto,
+        }).json()
+        self.assertTrue(r2["ok"], r2)
+        card2 = self.card(r2["incident_id"])
+        for papel in PAPELES:
+            self.assertIn(papel, card2["agentes"], papel)
+            self.assertTrue(card2["agentes"][papel]["razonamiento"], papel)
+
+    def test_recurso_de_barandilla_no_bloquea_la_rapida(self) -> None:
+        first = self.post("/hr/tools/decidir", {
+            "incident_id": "nuevo", "prioridad": 9, "zona": "front_pit",
+            "porque": "Persona en el suelo que no responde y no respira.",
+            "recursos": [],
+        }).json()
+        rid = next(x["recurso"] for x in first["aceptadas"] if x.get("kind") == "dispatch" and x.get("ok"))
+        iid = first["incident_id"]
+        d = self.post("/hr/tools/decidir", {
+            "fase": "rapida", "agente": "rapido", "aviso_at": time.time() - 5,
+            "incident_id": iid, "prioridad": 9,
+            "porque": "El rápido pide el mismo recurso que ya mandó la barandilla.",
+            "recursos": [rid],
+            "por_papel": {
+                "triaje": "Vital, no duplicado.", "prioridad": "9, no espera.",
+                "recursos": rid, "avisos": "Sanitario ya avisado.",
+                "vigia": "Si no responde en 2 min, escalar.", "critico": "APROBAR.",
+            },
+        }).json()
+        self.assertTrue(any(x.get("recurso") == rid and x.get("ya_cumplido") for x in d["aceptadas"]), d)
+        self.assertFalse(any("ocupado" in (x.get("motivo") or "") for x in d.get("bloqueadas") or []), d)
+        self.assertEqual(set(PAPELES), set(self.card(iid)["agentes"]) & set(PAPELES))
+
+    def test_segundo_dispatch_sec_mismo_incidente_ya_cumplido(self) -> None:
+        d, _ = self._rapida(zona="gate_b", texto="Cola en B", porque="Cola en B: mando seguridad.",
+                            recursos=["sec_2"], por_papel={
+                                "triaje": "Aviso en B.", "prioridad": "6", "recursos": "sec_2",
+                                "avisos": "—", "vigia": "—", "critico": "ok",
+                            })
+        iid = d["incident_id"]
+        again = self.post("/hr/tools/decidir", {
+            "fase": "rapida", "agente": "rapido", "incident_id": iid,
+            "prioridad": 6, "recursos": ["sec_2"],
+            "porque": "El enjambre vuelve a pedir sec_2 al mismo incidente.",
+        }).json()
+        self.assertTrue(any(x.get("recurso") == "sec_2" and x.get("ya_cumplido") for x in again["aceptadas"]), again)
+        self.assertFalse(any(x.get("id") == "sec_2" and "ocupado" in (x.get("motivo") or "")
+                             for x in again.get("bloqueadas") or []), again)
+
+    def test_sala_js_seis_tarjetas_y_linea(self) -> None:
+        from pathlib import Path
+        js = (Path(__file__).resolve().parent / "static" / "sala.js").read_text(encoding="utf-8")
+        self.assertIn("Decisión rápida en", js)
+        self.assertIn(" · enjambre:", js)
+        self.assertIn("AGENT_ROLES.map", js)
+        self.assertIn("agent-grid", js)
+        self.assertIn("razonamiento = \"—\"", js)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,859 @@
+{
+ "code": "3b6e1c0ecdf4",
+ "cases": "/Users/anayang/workspace/hackspain-2026/motor/harness/out/_frozen/3b6e1c0ecdf4-001320/data/heldout.jsonl",
+ "pool_n": 395,
+ "passed_n": 219,
+ "listed_n": 40,
+ "filter": "heldout, dificultad 4–5; sin errores en ningún brazo; Mando (sin lecciones, con manual aprendido si lo hay, y con 2 semillas más) sin críticos fallidos ni acciones inseguras. Orden por hash del id, no por puntuación.",
+ "disclosure": "Lista PREFILTRADA: pasan el filtro 219 de 395 casos heldout de dificultad 4–5. Si en cámara se dice «caso nunca visto elegido por alguien de fuera», hay que decir también que se elige entre casos que Mando ya ha corrido sin fallar críticos (nunca usados para aprender ni para ajustar nada).",
+ "rows": [
+  {
+   "n": 1,
+   "case_id": "c-h000494",
+   "seed": 1381056323,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "supply",
+    "resource",
+    "info"
+   ],
+   "primary_type": "injured_staff",
+   "incidents": 5,
+   "duration_min": 80,
+   "score": {
+    "baseline": 30.37,
+    "baseline_plus": 35.4,
+    "mando": 75.65,
+    "mando_learned": 75.65
+   }
+  },
+  {
+   "n": 2,
+   "case_id": "c-h000290",
+   "seed": 1370589160,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "resource"
+   ],
+   "primary_type": "injured_staff",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 86.17,
+    "baseline_plus": 86.17,
+    "mando": 88.44,
+    "mando_learned": 88.44
+   }
+  },
+  {
+   "n": 3,
+   "case_id": "c-h000673",
+   "seed": 1362252544,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "resource",
+    "info"
+   ],
+   "primary_type": "heat_stroke",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 86.92,
+    "baseline_plus": 84.43,
+    "mando": 90.66,
+    "mando_learned": 90.66
+   }
+  },
+  {
+   "n": 4,
+   "case_id": "c-h000294",
+   "seed": 1457275889,
+   "difficulty": 5,
+   "families": [
+    "crowd",
+    "aggression",
+    "resource",
+    "info"
+   ],
+   "primary_type": "corridor_bottleneck",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 80.71,
+    "baseline_plus": 80.71,
+    "mando": 96.02,
+    "mando_learned": 96.64
+   }
+  },
+  {
+   "n": 5,
+   "case_id": "c-h000273",
+   "seed": 1446771676,
+   "difficulty": 5,
+   "families": [
+    "aggression",
+    "resource",
+    "info",
+    "external"
+   ],
+   "primary_type": "road_access_blocked",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 74.29,
+    "baseline_plus": 74.29,
+    "mando": 96.39,
+    "mando_learned": 97.53
+   }
+  },
+  {
+   "n": 6,
+   "case_id": "c-h000590",
+   "seed": 1425969517,
+   "difficulty": 4,
+   "families": [
+    "medical",
+    "resource",
+    "info",
+    "external"
+   ],
+   "primary_type": "transport_cut_exit",
+   "incidents": 2,
+   "duration_min": 60,
+   "score": {
+    "baseline": 78.26,
+    "baseline_plus": 81.99,
+    "mando": 92.55,
+    "mando_learned": 97.78
+   }
+  },
+  {
+   "n": 7,
+   "case_id": "c-h000477",
+   "seed": 1440433015,
+   "difficulty": 5,
+   "families": [
+    "aggression",
+    "resource",
+    "info",
+    "external"
+   ],
+   "primary_type": "road_access_blocked",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 72.24,
+    "baseline_plus": 72.24,
+    "mando": 83.11,
+    "mando_learned": 84.26
+   }
+  },
+  {
+   "n": 8,
+   "case_id": "c-h000973",
+   "seed": 1517163581,
+   "difficulty": 5,
+   "families": [
+    "crowd",
+    "medical",
+    "aggression",
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "mass_food_poisoning",
+   "incidents": 4,
+   "duration_min": 80,
+   "score": {
+    "baseline": 68.95,
+    "baseline_plus": 71.95,
+    "mando": 55.12,
+    "mando_learned": 55.87
+   }
+  },
+  {
+   "n": 9,
+   "case_id": "c-h000622",
+   "seed": 1531090899,
+   "difficulty": 5,
+   "families": [
+    "weather",
+    "aggression",
+    "resource",
+    "info"
+   ],
+   "primary_type": "storm_structures",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 95.03,
+    "baseline_plus": 95.03,
+    "mando": 95.74,
+    "mando_learned": 96.54
+   }
+  },
+  {
+   "n": 10,
+   "case_id": "c-h000698",
+   "seed": 1482925830,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "resource"
+   ],
+   "primary_type": "injured_staff",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 84.15,
+    "baseline_plus": 74.15,
+    "mando": 97.25,
+    "mando_learned": 97.25
+   }
+  },
+  {
+   "n": 11,
+   "case_id": "c-h000798",
+   "seed": 1503776049,
+   "difficulty": 4,
+   "families": [
+    "crowd",
+    "medical",
+    "aggression",
+    "info"
+   ],
+   "primary_type": "weapon_seen",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 94.47,
+    "baseline_plus": 94.47,
+    "mando": 87.74,
+    "mando_learned": 87.74
+   }
+  },
+  {
+   "n": 12,
+   "case_id": "c-h000198",
+   "seed": 1563210115,
+   "difficulty": 4,
+   "families": [
+    "crowd",
+    "aggression",
+    "supply",
+    "resource",
+    "info"
+   ],
+   "primary_type": "food_shortage",
+   "incidents": 3,
+   "duration_min": 60,
+   "score": {
+    "baseline": 47.8,
+    "baseline_plus": 50.48,
+    "mando": 51.53,
+    "mando_learned": 51.53
+   }
+  },
+  {
+   "n": 13,
+   "case_id": "c-h000963",
+   "seed": 1131750780,
+   "difficulty": 4,
+   "families": [
+    "crowd",
+    "supply",
+    "resource",
+    "info"
+   ],
+   "primary_type": "ice_cooling_out",
+   "incidents": 3,
+   "duration_min": 60,
+   "score": {
+    "baseline": 81.36,
+    "baseline_plus": 81.36,
+    "mando": 84.14,
+    "mando_learned": 84.14
+   }
+  },
+  {
+   "n": 14,
+   "case_id": "c-h000880",
+   "seed": 1161638783,
+   "difficulty": 5,
+   "families": [
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "structure_damage",
+   "incidents": 3,
+   "duration_min": 60,
+   "score": {
+    "baseline": 94.34,
+    "baseline_plus": 94.34,
+    "mando": 87.73,
+    "mando_learned": 89.19
+   }
+  },
+  {
+   "n": 15,
+   "case_id": "c-h000584",
+   "seed": 1250452533,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "infra",
+    "info",
+    "external"
+   ],
+   "primary_type": "cardiac_arrest",
+   "incidents": 3,
+   "duration_min": 60,
+   "score": {
+    "baseline": 65.37,
+    "baseline_plus": 65.37,
+    "mando": 90.97,
+    "mando_learned": 90.97
+   }
+  },
+  {
+   "n": 16,
+   "case_id": "c-h000988",
+   "seed": 1243926906,
+   "difficulty": 5,
+   "families": [
+    "aggression",
+    "resource",
+    "external"
+   ],
+   "primary_type": "suspicious_object",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 85.27,
+    "baseline_plus": 85.27,
+    "mando": 97.28,
+    "mando_learned": 97.28
+   }
+  },
+  {
+   "n": 17,
+   "case_id": "c-h000367",
+   "seed": 1234134195,
+   "difficulty": 5,
+   "families": [
+    "crowd",
+    "medical",
+    "resource",
+    "info"
+   ],
+   "primary_type": "anaphylaxis",
+   "incidents": 2,
+   "duration_min": 60,
+   "score": {
+    "baseline": 49.43,
+    "baseline_plus": 49.43,
+    "mando": 69.4,
+    "mando_learned": 69.4
+   }
+  },
+  {
+   "n": 18,
+   "case_id": "c-h000932",
+   "seed": 1225122223,
+   "difficulty": 4,
+   "families": [
+    "medical",
+    "weather",
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "heavy_rain_flooding",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 23.38,
+    "baseline_plus": 24.04,
+    "mando": 71.49,
+    "mando_learned": 72.3
+   }
+  },
+  {
+   "n": 19,
+   "case_id": "c-h000384",
+   "seed": 1308956807,
+   "difficulty": 5,
+   "families": [
+    "crowd",
+    "aggression",
+    "resource",
+    "info"
+   ],
+   "primary_type": "fake_staff_instructions",
+   "incidents": 5,
+   "duration_min": 60,
+   "score": {
+    "baseline": 76.53,
+    "baseline_plus": 76.53,
+    "mando": 92.07,
+    "mando_learned": 92.52
+   }
+  },
+  {
+   "n": 20,
+   "case_id": "c-h000780",
+   "seed": 1315009602,
+   "difficulty": 5,
+   "families": [
+    "crowd",
+    "medical",
+    "aggression",
+    "info"
+   ],
+   "primary_type": "fight",
+   "incidents": 3,
+   "duration_min": 60,
+   "score": {
+    "baseline": 88.57,
+    "baseline_plus": 88.57,
+    "mando": 91.47,
+    "mando_learned": 91.47
+   }
+  },
+  {
+   "n": 21,
+   "case_id": "c-h000836",
+   "seed": 1336561537,
+   "difficulty": 5,
+   "families": [
+    "crowd",
+    "medical",
+    "aggression",
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "counterflow_exit",
+   "incidents": 4,
+   "duration_min": 70,
+   "score": {
+    "baseline": 78.62,
+    "baseline_plus": 78.62,
+    "mando": 70.93,
+    "mando_learned": 70.93
+   }
+  },
+  {
+   "n": 22,
+   "case_id": "c-h000084",
+   "seed": 3836950032,
+   "difficulty": 5,
+   "families": [
+    "weather",
+    "aggression",
+    "infra",
+    "info",
+    "external"
+   ],
+   "primary_type": "extreme_heat_alert",
+   "incidents": 3,
+   "duration_min": 60,
+   "score": {
+    "baseline": 57.72,
+    "baseline_plus": 57.72,
+    "mando": 91.12,
+    "mando_learned": 91.73
+   }
+  },
+  {
+   "n": 23,
+   "case_id": "c-h000580",
+   "seed": 1306894380,
+   "difficulty": 4,
+   "families": [
+    "medical",
+    "resource",
+    "info",
+    "external"
+   ],
+   "primary_type": "suspicious_object",
+   "incidents": 3,
+   "duration_min": 75,
+   "score": {
+    "baseline": 67.25,
+    "baseline_plus": 67.25,
+    "mando": 93.11,
+    "mando_learned": 93.11
+   }
+  },
+  {
+   "n": 24,
+   "case_id": "c-h000163",
+   "seed": 1298560196,
+   "difficulty": 5,
+   "families": [
+    "crowd",
+    "medical",
+    "resource",
+    "info",
+    "external"
+   ],
+   "primary_type": "anaphylaxis",
+   "incidents": 2,
+   "duration_min": 60,
+   "score": {
+    "baseline": 63.76,
+    "baseline_plus": 63.76,
+    "mando": 88.65,
+    "mando_learned": 89.45
+   }
+  },
+  {
+   "n": 25,
+   "case_id": "c-h000512",
+   "seed": 1915320905,
+   "difficulty": 4,
+   "families": [
+    "medical",
+    "resource",
+    "info",
+    "external"
+   ],
+   "primary_type": "suspicious_object",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 62.61,
+    "baseline_plus": 62.61,
+    "mando": 82.01,
+    "mando_learned": 82.01
+   }
+  },
+  {
+   "n": 26,
+   "case_id": "c-h000716",
+   "seed": 1992321598,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "weather",
+    "resource",
+    "info",
+    "external"
+   ],
+   "primary_type": "suspicious_object",
+   "incidents": 4,
+   "duration_min": 70,
+   "score": {
+    "baseline": 51.29,
+    "baseline_plus": 51.29,
+    "mando": 82.81,
+    "mando_learned": 81.31
+   }
+  },
+  {
+   "n": 27,
+   "case_id": "c-h000947",
+   "seed": 1982759911,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "aggression",
+    "supply",
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "theft_gang",
+   "incidents": 4,
+   "duration_min": 70,
+   "score": {
+    "baseline": 41.45,
+    "baseline_plus": 77.69,
+    "mando": 65.73,
+    "mando_learned": 65.73
+   }
+  },
+  {
+   "n": 28,
+   "case_id": "c-h000416",
+   "seed": 1954993255,
+   "difficulty": 4,
+   "families": [
+    "medical",
+    "supply",
+    "infra",
+    "info"
+   ],
+   "primary_type": "turnstile_failure",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 37.18,
+    "baseline_plus": 28.43,
+    "mando": 94.42,
+    "mando_learned": 94.42
+   }
+  },
+  {
+   "n": 29,
+   "case_id": "c-h000012",
+   "seed": 3692177516,
+   "difficulty": 4,
+   "families": [
+    "crowd",
+    "medical",
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "medical_post_saturated",
+   "incidents": 3,
+   "duration_min": 60,
+   "score": {
+    "baseline": 77.96,
+    "baseline_plus": 77.96,
+    "mando": 94.51,
+    "mando_learned": 95.08
+   }
+  },
+  {
+   "n": 30,
+   "case_id": "c-h000912",
+   "seed": 2066973485,
+   "difficulty": 4,
+   "families": [
+    "crowd",
+    "aggression",
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "sexual_assault_report",
+   "incidents": 4,
+   "duration_min": 65,
+   "score": {
+    "baseline": 59.44,
+    "baseline_plus": 59.44,
+    "mando": 95.1,
+    "mando_learned": 95.67
+   }
+  },
+  {
+   "n": 31,
+   "case_id": "c-h000147",
+   "seed": 2017317471,
+   "difficulty": 5,
+   "families": [
+    "crowd",
+    "supply",
+    "infra",
+    "info",
+    "external"
+   ],
+   "primary_type": "ice_cooling_out",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 63.3,
+    "baseline_plus": 63.3,
+    "mando": 93.17,
+    "mando_learned": 93.17
+   }
+  },
+  {
+   "n": 32,
+   "case_id": "c-h000443",
+   "seed": 2040255661,
+   "difficulty": 4,
+   "families": [
+    "supply",
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "generator_fuel_low",
+   "incidents": 3,
+   "duration_min": 65,
+   "score": {
+    "baseline": 81.81,
+    "baseline_plus": 82.7,
+    "mando": 78.03,
+    "mando_learned": 74.71
+   }
+  },
+  {
+   "n": 33,
+   "case_id": "c-h000547",
+   "seed": 2134145667,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "weather",
+    "resource",
+    "info",
+    "external"
+   ],
+   "primary_type": "drone_intrusion",
+   "incidents": 4,
+   "duration_min": 65,
+   "score": {
+    "baseline": 49.53,
+    "baseline_plus": 51.03,
+    "mando": 94.88,
+    "mando_learned": 91.79
+   }
+  },
+  {
+   "n": 34,
+   "case_id": "c-h000343",
+   "seed": 2094318120,
+   "difficulty": 4,
+   "families": [
+    "crowd",
+    "resource",
+    "info",
+    "external"
+   ],
+   "primary_type": "drone_intrusion",
+   "incidents": 1,
+   "duration_min": 60,
+   "score": {
+    "baseline": 91.58,
+    "baseline_plus": 91.58,
+    "mando": 94.77,
+    "mando_learned": 94.77
+   }
+  },
+  {
+   "n": 35,
+   "case_id": "c-h000357",
+   "seed": 1654798192,
+   "difficulty": 4,
+   "families": [
+    "crowd",
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "small_fire",
+   "incidents": 3,
+   "duration_min": 60,
+   "score": {
+    "baseline": 83.05,
+    "baseline_plus": 83.05,
+    "mando": 92.61,
+    "mando_learned": 92.54
+   }
+  },
+  {
+   "n": 36,
+   "case_id": "c-h000802",
+   "seed": 1676335195,
+   "difficulty": 4,
+   "families": [
+    "crowd",
+    "medical",
+    "infra",
+    "info"
+   ],
+   "primary_type": "diabetic_emergency",
+   "incidents": 2,
+   "duration_min": 60,
+   "score": {
+    "baseline": 93.4,
+    "baseline_plus": 93.4,
+    "mando": 96.22,
+    "mando_learned": 96.22
+   }
+  },
+  {
+   "n": 37,
+   "case_id": "c-h000453",
+   "seed": 1619060204,
+   "difficulty": 5,
+   "families": [
+    "crowd",
+    "aggression",
+    "resource"
+   ],
+   "primary_type": "gate_crush_risk",
+   "incidents": 4,
+   "duration_min": 60,
+   "score": {
+    "baseline": 92.91,
+    "baseline_plus": 93.76,
+    "mando": 96.5,
+    "mando_learned": 96.5
+   }
+  },
+  {
+   "n": 38,
+   "case_id": "c-h000557",
+   "seed": 1714375618,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "infra",
+    "resource",
+    "info"
+   ],
+   "primary_type": "lighting_failure",
+   "incidents": 4,
+   "duration_min": 70,
+   "score": {
+    "baseline": 75.06,
+    "baseline_plus": 79.56,
+    "mando": 69.86,
+    "mando_learned": 69.86
+   }
+  },
+  {
+   "n": 39,
+   "case_id": "c-h000053",
+   "seed": 3480870398,
+   "difficulty": 5,
+   "families": [
+    "medical",
+    "supply",
+    "resource",
+    "info"
+   ],
+   "primary_type": "wristbands_out",
+   "incidents": 4,
+   "duration_min": 70,
+   "score": {
+    "baseline": 36.41,
+    "baseline_plus": 36.41,
+    "mando": 80.78,
+    "mando_learned": 80.78
+   }
+  },
+  {
+   "n": 40,
+   "case_id": "c-h000806",
+   "seed": 1686576194,
+   "difficulty": 4,
+   "families": [
+    "crowd",
+    "medical",
+    "supply",
+    "resource",
+    "info"
+   ],
+   "primary_type": "stage_invasion",
+   "incidents": 3,
+   "duration_min": 100,
+   "score": {
+    "baseline": 84.0,
+    "baseline_plus": 84.0,
+    "mando": 95.88,
+    "mando_learned": 95.88
+   }
+  }
+ ]
+}

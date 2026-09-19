@@ -1,0 +1,1545 @@
+{
+ "version": 1,
+ "_note": "MUESTRA de motor/intake. Se usa solo mientras no exista motor/protocolos/protocolos.json. Los textos de instrucciones salen de la lista validada en consejo/seguridad-eventos.md (Anexo C) y de motor/happyrobot/NORTHSTARS.md: validados para la demo, SIN verificar contra guías clínicas externas. Misma semántica que motor/protocolos/__init__.py: «no lo sé» vale \"unknown\" y gana la primera señal que se cumple.",
+ "global": {
+  "opening": {
+   "es": "Centro de control del recinto. Cuéntame qué pasa y dónde estás.",
+   "en": "Venue control centre. Tell me what is happening and where you are."
+  },
+  "location_questions": [
+   {
+    "es": "¿Dónde estás exactamente?",
+    "en": "Where exactly are you?"
+   },
+   {
+    "es": "¿Qué ves cerca: una puerta, una barra, los baños, el escenario?",
+    "en": "What can you see nearby: a gate, a bar, the toilets, the stage?"
+   }
+  ],
+  "never_say": [
+   "no te preocupes",
+   "no pasa nada",
+   "tranquilo que no es nada",
+   "seguro que no es grave",
+   "es un infarto",
+   "es una sobredosis",
+   "llegan en",
+   "llegaran en",
+   "estaran ahi en",
+   "te prometo",
+   "evacuad",
+   "evacua la zona",
+   "salid todos",
+   "don t worry",
+   "it s nothing",
+   "i promise",
+   "they will be there in",
+   "evacuate"
+  ],
+  "stop_rules": [
+   {
+    "id": "max_questions",
+    "value": 5
+   },
+   {
+    "id": "unknown_twice",
+    "value": 2
+   },
+   {
+    "id": "no_decisive_slot_left"
+   },
+   {
+    "id": "silence_s",
+    "value": 60
+   },
+   {
+    "id": "off_topic_turns",
+    "value": 3
+   }
+  ],
+  "reserved_handling": {
+   "ack": {
+    "es": "Gracias por decírmelo. Esto lo trata una persona, en privado.",
+    "en": "Thank you for telling me. A person will handle this, in private."
+   },
+   "ask_only": [
+    "safe",
+    "location"
+   ],
+   "report_headline": "Aviso reservado para el punto violeta",
+   "police": {
+    "es": "La policía solo se avisa si tú quieres.",
+    "en": "The police are only called if you want."
+   },
+   "handoff_to": "violet_point",
+   "repeat_content": false,
+   "instruction": "violet"
+  }
+ },
+ "protocols": [
+  {
+   "id": "person_down",
+   "family": "medical",
+   "label": {
+    "es": "Persona que no responde",
+    "en": "Unresponsive person"
+   },
+   "triggers": {
+    "es": [
+     "desmay",
+     "desvanec",
+     "inconsciente",
+     "no responde",
+     "no reacciona",
+     "no respira",
+     "se ha caido redond",
+     "tirado en el suelo",
+     "tirada en el suelo",
+     "tendido en el suelo",
+     "tendida en el suelo",
+     "no se mueve",
+     "no se despierta",
+     "no despierta",
+     "perdido el conocimiento",
+     "sin pulso",
+     "infarto",
+     "parada cardiaca",
+     "convulsi",
+     "se ha desplomado"
+    ],
+    "en": [
+     "fainted",
+     "passed out",
+     "collapsed",
+     "unconscious",
+     "unresponsive",
+     "not breathing",
+     "isn t breathing",
+     "not responding",
+     "not moving",
+     "no pulse",
+     "heart attack",
+     "blacked out",
+     "seizure",
+     "won t wake"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente?",
+      "en": "Where exactly are you?"
+     },
+     "why": {
+      "es": "sin saber dónde no puedo mandar a nadie",
+      "en": "without a place I cannot send anyone"
+     }
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Te responde si le hablas o le tocas el hombro?",
+      "en": "Do they respond if you talk to them or tap their shoulder?"
+     },
+     "why": {
+      "es": "si no responde es riesgo vital y sale el equipo más cercano",
+      "en": "if they do not respond it is life-threatening and the nearest team goes"
+     }
+    },
+    {
+     "id": "breathing",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Respira con normalidad? Mira si se le mueve el pecho.",
+      "en": "Are they breathing normally? Watch if the chest moves."
+     },
+     "why": {
+      "es": "sin saber si respira no sé si es una parada",
+      "en": "without knowing if they breathe I cannot tell if it is a cardiac arrest"
+     }
+    },
+    {
+     "id": "seizure",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Tiene convulsiones?",
+      "en": "Are they having a seizure?"
+     },
+     "why": {
+      "es": "cambia lo que hay que hacer mientras llegan",
+      "en": "it changes what to do until help arrives"
+     }
+    },
+    {
+     "id": "intox",
+     "critical": false,
+     "type": "bool",
+     "ask_if": {
+      "responsive": false,
+      "breathing": true
+     },
+     "question": {
+      "es": "¿Sabes si ha bebido o ha tomado algo?",
+      "en": "Do you know if they drank or took something?"
+     },
+     "why": {
+      "es": "el equipo sanitario lleva otro material",
+      "en": "the medical team brings different equipment"
+     }
+    },
+    {
+     "id": "count",
+     "critical": false,
+     "type": "number",
+     "question": {
+      "es": "¿Cuántas personas están así?",
+      "en": "How many people are like this?"
+     },
+     "why": {
+      "es": "con más de una persona salen más equipos",
+      "en": "more than one person means more teams"
+     }
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "breathing": false
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "cpr_hands_only",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ],
+      "breathing": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "recovery_position",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "not_responding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "responsive": true,
+      "breathing": "unknown"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "not_responding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "seizure": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "seizure",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location"
+   ],
+   "instructions": [
+    {
+     "id": "cpr_hands_only",
+     "steps": {
+      "es": [
+       "Que otra persona vaya a por el personal con chaleco y pida un desfibrilador.",
+       "Pon a la persona boca arriba en el suelo.",
+       "Aprieta fuerte y rápido en el centro del pecho, solo con las manos.",
+       "No pares hasta que llegue el equipo."
+      ],
+      "en": [
+       "Send someone else to fetch staff in vests and ask for a defibrillator.",
+       "Lay the person on their back on the ground.",
+       "Push hard and fast in the centre of the chest, hands only.",
+       "Do not stop until the team arrives."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave not_responding (RCP solo con las manos); sin verificar fuera del dictamen"
+    },
+    {
+     "id": "not_responding",
+     "steps": {
+      "es": [
+       "Quédate con la persona.",
+       "Que otro vaya a por el personal con chaleco y pida un desfibrilador.",
+       "Si no respira normal: aprieta fuerte y rápido en el centro del pecho, sin parar."
+      ],
+      "en": [
+       "Stay with the person.",
+       "Send someone else to fetch staff in vests and ask for a defibrillator.",
+       "If they are not breathing normally: push hard and fast in the centre of the chest, without stopping."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave not_responding"
+    },
+    {
+     "id": "recovery_position",
+     "steps": {
+      "es": [
+       "Si respira, ponla de lado.",
+       "No la dejes sola.",
+       "Vigila que siga respirando."
+      ],
+      "en": [
+       "If they are breathing, roll them onto their side.",
+       "Do not leave them alone.",
+       "Keep checking that they are still breathing."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave unconscious_breathing"
+    },
+    {
+     "id": "seizure",
+     "steps": {
+      "es": [
+       "No la sujetes ni le metas nada en la boca.",
+       "Aparta lo que pueda golpearla.",
+       "Cuando pare, ponla de lado."
+      ],
+      "en": [
+       "Do not hold them down or put anything in their mouth.",
+       "Move away anything that could hit them.",
+       "When it stops, roll them onto their side."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave seizure"
+    }
+   ],
+   "handoff": {
+    "to": "medical_lead",
+    "when": "life_risk"
+   },
+   "mando_type_hint": "fainting",
+   "sources": [
+    "consejo/seguridad-eventos.md (Anexo C y D)",
+    "motor/happyrobot/NORTHSTARS.md"
+   ]
+  },
+  {
+   "id": "heat",
+   "family": "medical",
+   "label": {
+    "es": "Golpe de calor",
+    "en": "Heat illness"
+   },
+   "triggers": {
+    "es": [
+     "golpe de calor",
+     "insolacion",
+     "deshidrat",
+     "mucho calor",
+     "por el calor",
+     "del calor",
+     "mareo",
+     "mareado",
+     "mareada",
+     "se encuentra mal",
+     "se siente mal"
+    ],
+    "en": [
+     "heat stroke",
+     "heatstroke",
+     "sunstroke",
+     "heat exhaustion",
+     "overheated",
+     "dehydrat",
+     "dizzy",
+     "too hot",
+     "feeling sick",
+     "feels sick"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estáis exactamente?",
+      "en": "Where exactly are you?"
+     },
+     "why": {
+      "es": "sin saber dónde no puedo mandar a nadie",
+      "en": "without a place I cannot send anyone"
+     }
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Está despierta y te responde?",
+      "en": "Are they awake and responding to you?"
+     },
+     "why": {
+      "es": "si no responde deja de ser un mareo y pasa a riesgo vital",
+      "en": "if they do not respond it stops being dizziness and becomes life-threatening"
+     }
+    },
+    {
+     "id": "confused",
+     "critical": true,
+     "type": "bool",
+     "ask_if": {
+      "responsive": true
+     },
+     "question": {
+      "es": "¿Está confusa o dice cosas raras?",
+      "en": "Are they confused or not making sense?"
+     },
+     "why": {
+      "es": "calor con confusión es riesgo vital: hay que enfriar ya",
+      "en": "heat with confusion is life-threatening: cooling must start now"
+     }
+    },
+    {
+     "id": "hot_skin",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Tiene la piel muy caliente?",
+      "en": "Is their skin very hot?"
+     },
+     "why": {
+      "es": "piel muy caliente apunta a golpe de calor y sube la prioridad",
+      "en": "very hot skin points to heat stroke and raises the priority"
+     }
+    },
+    {
+     "id": "count",
+     "critical": false,
+     "type": "number",
+     "question": {
+      "es": "¿Cuántas personas están así?",
+      "en": "How many people are like this?"
+     },
+     "why": {
+      "es": "varios casos juntos son un problema de la zona, no de una persona",
+      "en": "several cases together are a zone problem, not one person"
+     }
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "not_responding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "confused": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "cool_now",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "hot_skin": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "cool_now",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "cool_now",
+      "dispatch_now": false
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location"
+   ],
+   "instructions": [
+    {
+     "id": "cool_now",
+     "steps": {
+      "es": [
+       "Llévala a la sombra.",
+       "Mójale la piel y la ropa y abanícala.",
+       "Si está despierta y traga bien, agua a sorbos."
+      ],
+      "en": [
+       "Move them into the shade.",
+       "Wet their skin and clothes and fan them.",
+       "If they are awake and can swallow, small sips of water."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave heat"
+    },
+    {
+     "id": "not_responding",
+     "steps": {
+      "es": [
+       "Quédate con la persona.",
+       "Que otro vaya a por el personal con chaleco y pida un desfibrilador.",
+       "Si no respira normal: aprieta fuerte y rápido en el centro del pecho, sin parar."
+      ],
+      "en": [
+       "Stay with the person.",
+       "Send someone else to fetch staff in vests and ask for a defibrillator.",
+       "If they are not breathing normally: push hard and fast in the centre of the chest, without stopping."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave not_responding"
+    }
+   ],
+   "handoff": {
+    "to": "medical_lead",
+    "when": "life_risk"
+   },
+   "mando_type_hint": "heat_stroke",
+   "sources": [
+    "consejo/seguridad-eventos.md (Anexo C: enfriar en el sitio, menos de 30 min)"
+   ]
+  },
+  {
+   "id": "crowd",
+   "family": "crowd",
+   "label": {
+    "es": "Aglomeración",
+    "en": "Crowd pressure"
+   },
+   "triggers": {
+    "es": [
+     "aglomeracion",
+     "avalancha",
+     "aplast",
+     "empuj",
+     "mucha gente",
+     "muchisima gente",
+     "demasiada gente",
+     "no cabe",
+     "apretad",
+     "agobi",
+     "estampida",
+     "tapon",
+     "no podemos respirar",
+     "no podemos salir",
+     "nos aprietan",
+     "no me puedo mover",
+     "no podemos movernos",
+     "atrapad"
+    ],
+    "en": [
+     "crush",
+     "pushing",
+     "too many people",
+     "overcrowd",
+     "packed",
+     "stampede",
+     "squeezed",
+     "can t move",
+     "trapped",
+     "crowd"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿En qué zona estás?",
+      "en": "Which area are you in?"
+     },
+     "why": {
+      "es": "sin la zona no se puede abrir espacio ni desviar a la gente",
+      "en": "without the area nobody can open space or divert people"
+     }
+    },
+    {
+     "id": "pressure",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Estáis atrapados, sin poder moveros?",
+      "en": "Are you stuck, unable to move?"
+     },
+     "why": {
+      "es": "si la gente no puede moverse hay riesgo de aplastamiento y suben dos equipos",
+      "en": "if people cannot move there is a crush risk and two teams go"
+     }
+    },
+    {
+     "id": "people_down",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay gente en el suelo?",
+      "en": "Is anyone on the ground?"
+     },
+     "why": {
+      "es": "gente en el suelo dentro de una aglomeración es riesgo vital y añade equipo sanitario",
+      "en": "people on the ground inside a crowd is life-threatening and adds a medical team"
+     }
+    },
+    {
+     "id": "caller_inside",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Estás tú dentro de la aglomeración?",
+      "en": "Are you inside the crowd yourself?"
+     },
+     "why": {
+      "es": "si estás dentro la instrucción es para ti",
+      "en": "if you are inside, the instruction is for you"
+     }
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "people_down": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "pressure": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location"
+   ],
+   "instructions": [
+    {
+     "id": "crowd_pressure",
+     "steps": {
+      "es": [
+       "No empujes.",
+       "Brazos delante del pecho.",
+       "No te agaches.",
+       "Sal en diagonal hacia los lados cuando afloje."
+      ],
+      "en": [
+       "Do not push.",
+       "Keep your arms in front of your chest.",
+       "Do not bend down.",
+       "Move diagonally towards the sides when it eases."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave crowd_pressure"
+    }
+   ],
+   "handoff": {
+    "to": "security_lead",
+    "when": "life_risk"
+   },
+   "mando_type_hint": "crowd_surge",
+   "sources": [
+    "consejo/seguridad-eventos.md (Anexo C)"
+   ]
+  },
+  {
+   "id": "fight",
+   "family": "aggression",
+   "label": {
+    "es": "Pelea",
+    "en": "Fight"
+   },
+   "triggers": {
+    "es": [
+     "pelea",
+     "se estan pegando",
+     "se pegan",
+     "punetazo",
+     "bronca",
+     "se estan peleando",
+     "a golpes",
+     "le estan pegando",
+     "navaja",
+     "cuchillo"
+    ],
+    "en": [
+     "fight",
+     "brawl",
+     "punch",
+     "hitting each other",
+     "beating",
+     "knife"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde es la pelea?",
+      "en": "Where is the fight?"
+     },
+     "why": {
+      "es": "sin saber dónde no puedo mandar a seguridad",
+      "en": "without a place I cannot send security"
+     }
+    },
+    {
+     "id": "weapon",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Has visto algún arma o algún objeto cortante?",
+      "en": "Have you seen any weapon or sharp object?"
+     },
+     "why": {
+      "es": "con un arma no va un vigilante solo: van dos y se avisa al jefe de seguridad",
+      "en": "with a weapon one guard does not go alone: two go and the head of security is told"
+     }
+    },
+    {
+     "id": "injured",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien herido?",
+      "en": "Is anyone hurt?"
+     },
+     "why": {
+      "es": "si hay heridos sale también un equipo sanitario",
+      "en": "if someone is hurt a medical team goes too"
+     }
+    },
+    {
+     "id": "ongoing",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Siguen peleando ahora?",
+      "en": "Are they still fighting now?"
+     },
+     "why": {
+      "es": "si ya han parado baja la urgencia",
+      "en": "if it has stopped the urgency drops"
+     }
+    },
+    {
+     "id": "count",
+     "critical": false,
+     "type": "number",
+     "question": {
+      "es": "¿Cuántas personas hay metidas?",
+      "en": "How many people are involved?"
+     },
+     "why": {
+      "es": "con muchos implicados hacen falta más vigilantes",
+      "en": "many people involved need more guards"
+     }
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "weapon": [
+       true,
+       "unknown"
+      ],
+      "injured": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 9,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "aggression",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "weapon": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 9,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "aggression",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "injured": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "aggression",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "aggression",
+      "dispatch_now": false
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location"
+   ],
+   "instructions": [
+    {
+     "id": "aggression",
+     "steps": {
+      "es": [
+       "Aléjate y no te enfrentes.",
+       "Ve hacia el personal con chaleco."
+      ],
+      "en": [
+       "Move away and do not confront them.",
+       "Go towards staff in vests."
+      ]
+     },
+     "source": "motor/happyrobot/NORTHSTARS.md, clave aggression (solo peleas; prohibida en violencia sexual)"
+    }
+   ],
+   "handoff": {
+    "to": "security_lead",
+    "when": "weapon"
+   },
+   "mando_type_hint": "fight",
+   "sources": [
+    "consejo/seguridad-eventos.md (Anexo C)",
+    "motor/happyrobot/NORTHSTARS.md"
+   ]
+  },
+  {
+   "id": "bleeding",
+   "family": "medical",
+   "label": {
+    "es": "Herida o sangrado",
+    "en": "Injury or bleeding"
+   },
+   "triggers": {
+    "es": [
+     "sangr",
+     "herida",
+     "herido",
+     "brecha",
+     "se ha cortado",
+     "un corte",
+     "fractura",
+     "se ha roto",
+     "golpe en la cabeza",
+     "tobillo",
+     "se ha caido"
+    ],
+    "en": [
+     "bleed",
+     "blood",
+     "wound",
+     "injur",
+     "cut ",
+     "broken leg",
+     "broken arm",
+     "broken ankle",
+     "hit his head",
+     "hit her head"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente?",
+      "en": "Where exactly are you?"
+     },
+     "why": {
+      "es": "sin saber dónde no puedo mandar a nadie",
+      "en": "without a place I cannot send anyone"
+     }
+    },
+    {
+     "id": "bleeding",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Está sangrando?",
+      "en": "Are they bleeding?"
+     },
+     "why": {
+      "es": "si sangra hay que apretar la herida mientras llegan",
+      "en": "if they bleed the wound must be pressed until help arrives"
+     }
+    },
+    {
+     "id": "heavy_bleeding",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Sangra mucho, sin parar?",
+      "en": "Is it bleeding a lot, without stopping?"
+     },
+     "why": {
+      "es": "un sangrado que no para es riesgo vital y cambia la prioridad",
+      "en": "bleeding that does not stop is life-threatening and changes the priority"
+     }
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Está consciente y te responde?",
+      "en": "Are they conscious and responding?"
+     },
+     "why": {
+      "es": "si no responde es riesgo vital",
+      "en": "if they do not respond it is life-threatening"
+     }
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "heavy_bleeding": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "bleeding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "not_responding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "bleeding": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 5,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "bleeding",
+      "dispatch_now": false
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location"
+   ],
+   "instructions": [
+    {
+     "id": "bleeding",
+     "steps": {
+      "es": [
+       "Aprieta fuerte sobre la herida con una prenda.",
+       "No sueltes."
+      ],
+      "en": [
+       "Press hard on the wound with a piece of clothing.",
+       "Do not let go."
+      ]
+     },
+     "source": "motor/happyrobot/NORTHSTARS.md, clave bleeding (validada en Anexo C)"
+    },
+    {
+     "id": "not_responding",
+     "steps": {
+      "es": [
+       "Quédate con la persona.",
+       "Que otro vaya a por el personal con chaleco y pida un desfibrilador.",
+       "Si no respira normal: aprieta fuerte y rápido en el centro del pecho, sin parar."
+      ],
+      "en": [
+       "Stay with the person.",
+       "Send someone else to fetch staff in vests and ask for a defibrillator.",
+       "If they are not breathing normally: push hard and fast in the centre of the chest, without stopping."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave not_responding"
+    }
+   ],
+   "handoff": {
+    "to": "medical_lead",
+    "when": "life_risk"
+   },
+   "mando_type_hint": "injury",
+   "sources": [
+    "consejo/seguridad-eventos.md (Anexo C)"
+   ]
+  },
+  {
+   "id": "violet",
+   "family": "aggression",
+   "label": {
+    "es": "Aviso reservado",
+    "en": "Private report"
+   },
+   "triggers": {
+    "es": [
+     "agresion sexual",
+     "me han tocado",
+     "me ha tocado",
+     "la han tocado",
+     "le han tocado",
+     "me ha metido mano",
+     "me han metido mano",
+     "me esta siguiendo",
+     "me estan siguiendo",
+     "se ha propasado",
+     "tocamiento",
+     "abuso",
+     "abusado",
+     "acoso",
+     "acosando",
+     "violacion",
+     "violad",
+     "punto violeta",
+     "me han echado algo",
+     "le han echado algo",
+     "burundanga",
+     "me sigue un",
+     "no me deja en paz"
+    ],
+    "en": [
+     "sexual",
+     "groped",
+     "harass",
+     "assaulted me",
+     "touched me",
+     "raped",
+     "spiked",
+     "following me",
+     "won t leave me alone"
+    ]
+   },
+   "sensitive": true,
+   "slots": [
+    {
+     "id": "safe",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Estás en un sitio seguro?",
+      "en": "Are you in a safe place?"
+     },
+     "why": {
+      "es": "si no estás a salvo va seguridad primero, sin preguntar nada más",
+      "en": "if you are not safe, security goes first, with no more questions"
+     }
+    },
+    {
+     "id": "location",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás?",
+      "en": "Where are you?"
+     },
+     "why": {
+      "es": "para que una persona responsable pueda ir contigo",
+      "en": "so that a responsible person can come to you"
+     }
+    },
+    {
+     "id": "police_consent",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Quieres que se avise a la policía?",
+      "en": "Do you want the police to be called?"
+     },
+     "why": {
+      "es": "la policía solo se avisa con tu consentimiento",
+      "en": "the police are only called with your consent"
+     }
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "safe": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 9,
+      "needs": {
+       "security": 1
+      },
+      "instruction": "violet",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "security": 1
+      },
+      "instruction": "violet",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [],
+   "instructions": [
+    {
+     "id": "violet",
+     "steps": {
+      "es": [
+       "Te creemos. No es culpa tuya.",
+       "Si puedes, ve con alguien de confianza hacia el personal con chaleco.",
+       "Te paso con una persona."
+      ],
+      "en": [
+       "We believe you. It is not your fault.",
+       "If you can, go with someone you trust towards staff in vests.",
+       "I am putting you through to a person."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave violet (NS-25)"
+    }
+   ],
+   "handoff": {
+    "to": "violet_point",
+    "when": "always",
+    "police": "only_with_consent"
+   },
+   "mando_type_hint": "sexual_assault",
+   "sources": [
+    "consejo/seguridad-eventos.md (Anexo C, NS-25)"
+   ]
+  },
+  {
+   "id": "lost_child",
+   "family": "info",
+   "label": {
+    "es": "Menor perdido",
+    "en": "Lost child"
+   },
+   "triggers": {
+    "es": [
+     "he perdido a mi hij",
+     "ha perdido a su hij",
+     "no encuentro a mi hij",
+     "nino perdido",
+     "nina perdida",
+     "menor perdido",
+     "nino solo",
+     "nina sola",
+     "se ha perdido mi hij",
+     "no encuentro a mi nin",
+     "he encontrado un nin",
+     "he encontrado una nin"
+    ],
+    "en": [
+     "lost child",
+     "lost kid",
+     "lost my son",
+     "lost my daughter",
+     "missing child",
+     "can t find my son",
+     "can t find my daughter",
+     "can t find my kid",
+     "found a child",
+     "found a kid",
+     "child alone"
+    ]
+   },
+   "sensitive": true,
+   "slots": [
+    {
+     "id": "location",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás ahora?",
+      "en": "Where are you now?"
+     },
+     "why": {
+      "es": "para avisar a las puertas y mandar a alguien contigo",
+      "en": "to alert the gates and send someone to you"
+     }
+    },
+    {
+     "id": "caller_has_child",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿El menor está contigo ahora?",
+      "en": "Is the child with you now?"
+     },
+     "why": {
+      "es": "no es lo mismo buscar a un menor que acompañar a uno encontrado",
+      "en": "searching for a child is different from staying with a found one"
+     }
+    },
+    {
+     "id": "age",
+     "critical": true,
+     "type": "number",
+     "ask_if": {
+      "caller_has_child": false
+     },
+     "question": {
+      "es": "¿Qué edad tiene?",
+      "en": "How old are they?"
+     },
+     "why": {
+      "es": "la edad cambia la urgencia y a quién se avisa",
+      "en": "age changes the urgency and who is alerted"
+     }
+    },
+    {
+     "id": "clothing",
+     "critical": true,
+     "type": "text",
+     "ask_if": {
+      "caller_has_child": false
+     },
+     "question": {
+      "es": "¿Cómo va vestido?",
+      "en": "What are they wearing?"
+     },
+     "why": {
+      "es": "es lo que permite reconocerlo en las puertas",
+      "en": "it is what lets the gates recognise them"
+     }
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "caller_has_child": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 5,
+      "needs": {
+       "security": 1
+      },
+      "instruction": "lost_child_found",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "caller_has_child": false
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "security": 1
+      },
+      "instruction": "lost_child_parent",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location"
+   ],
+   "instructions": [
+    {
+     "id": "lost_child_found",
+     "steps": {
+      "es": [
+       "Quédate con el menor en ese sitio.",
+       "No os mováis.",
+       "Pide a otra persona que avise al personal con chaleco."
+      ],
+      "en": [
+       "Stay with the child in that spot.",
+       "Do not move.",
+       "Ask someone else to alert staff in vests."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave lost_child"
+    },
+    {
+     "id": "lost_child_parent",
+     "steps": {
+      "es": [
+       "Quédate donde lo viste por última vez."
+      ],
+      "en": [
+       "Stay where you last saw them."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md Anexo C, clave lost_child_parent"
+    }
+   ],
+   "handoff": {
+    "to": "gates",
+    "when": "always",
+    "never_disclose_location_of_minor": true
+   },
+   "mando_type_hint": "lost_child",
+   "sources": [
+    "consejo/seguridad-eventos.md (Anexo C, NS-26)"
+   ]
+  },
+  {
+   "id": "generic",
+   "family": "info",
+   "label": {
+    "es": "Otro aviso",
+    "en": "Other report"
+   },
+   "triggers": {
+    "es": [],
+    "en": []
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "what",
+     "critical": true,
+     "type": "text",
+     "question": {
+      "es": "¿Qué está pasando?",
+      "en": "What is happening?"
+     },
+     "why": {
+      "es": "sin saber qué pasa no sé a quién mandar",
+      "en": "without knowing what is happening I do not know who to send"
+     }
+    },
+    {
+     "id": "location",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde es?",
+      "en": "Where is it?"
+     },
+     "why": {
+      "es": "sin saber dónde no puedo mandar a nadie",
+      "en": "without a place I cannot send anyone"
+     }
+    },
+    {
+     "id": "injured",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien herido o en peligro ahora mismo?",
+      "en": "Is anyone hurt or in danger right now?"
+     },
+     "why": {
+      "es": "si hay alguien en peligro sale un equipo sanitario además de quien arregle el problema",
+      "en": "if someone is in danger a medical team goes as well as whoever fixes the problem"
+     }
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "injured": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "what",
+    "location"
+   ],
+   "instructions": [
+    {
+     "id": "generic_stay_safe",
+     "steps": {
+      "es": [
+       "Ponte en un sitio seguro.",
+       "Si empeora, escribe otra vez."
+      ],
+      "en": [
+       "Get to a safe place.",
+       "If it gets worse, write again."
+      ]
+     },
+     "source": "motor/happyrobot/NORTHSTARS.md, clave generic_stay_safe"
+    }
+   ],
+   "handoff": {
+    "to": "coordinator",
+    "when": "never"
+   },
+   "mando_type_hint": "",
+   "sources": [
+    "motor/happyrobot/NORTHSTARS.md"
+   ]
+  }
+ ]
+}

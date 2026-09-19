@@ -1,0 +1,2019 @@
+{
+ "code": "cc17622e1b13",
+ "n_per_arm": 400,
+ "festival_seed": 2026,
+ "approve_mode": "criterion",
+ "what": "revisado − inicial, pareado; SOLO métricas del mundo; veredicto por métrica con IC 99 % bootstrap (2.000 remuestreos)",
+ "simulation_note": "Simulación. Los parámetros ocultos del recinto (festival_profile) los hemos puesto nosotros: el tamaño del efecto depende de ellos. Se demuestra el circuito observar → proponer → aprobar → medir, no un dato de campo.",
+ "festival_profile": {
+  "seed": 2026,
+  "resupply_min": {
+   "water_n": [
+    20,
+    30
+   ],
+   "water_s": [
+    7,
+    12
+   ]
+  },
+  "contact": {
+   "med_1": {
+    "p_no_answer": 0.02,
+    "p_reject": 0.04
+   },
+   "med_2": {
+    "p_no_answer": 0.06,
+    "p_reject": 0.04
+   },
+   "med_3": {
+    "p_no_answer": 0.35,
+    "p_reject": 0.04
+   },
+   "sec_1": {
+    "p_no_answer": 0.35,
+    "p_reject": 0.04
+   },
+   "sec_2": {
+    "p_no_answer": 0.02,
+    "p_reject": 0.04
+   },
+   "sec_3": {
+    "p_no_answer": 0.03,
+    "p_reject": 0.04
+   },
+   "sec_4": {
+    "p_no_answer": 0.48,
+    "p_reject": 0.04
+   },
+   "sec_5": {
+    "p_no_answer": 0.02,
+    "p_reject": 0.04
+   },
+   "tech_1": {
+    "p_no_answer": 0.38,
+    "p_reject": 0.04
+   },
+   "tech_2": {
+    "p_no_answer": 0.02,
+    "p_reject": 0.04
+   },
+   "vol_1": {
+    "p_no_answer": 0.02,
+    "p_reject": 0.04
+   },
+   "vol_2": {
+    "p_no_answer": 0.06,
+    "p_reject": 0.04
+   },
+   "vol_3": {
+    "p_no_answer": 0.44,
+    "p_reject": 0.04
+   }
+  },
+  "locate": {
+   "zones": {
+    "front_pit": [
+     2,
+     4
+    ],
+    "general": [
+     4,
+     9
+    ],
+    "food": [
+     2,
+     4
+    ]
+   },
+   "p_point": 0.8
+  }
+ },
+ "day1": {
+  "n": 400,
+  "errors": 0,
+  "case_signature": "c938adc4c06e",
+  "composition": {
+   "n": 400,
+   "hot_over_32c": 106,
+   "scripted_water_out": 17,
+   "resource_no_answer_or_rejects": 186,
+   "duplicates": 56,
+   "ops_wind_alert": 78,
+   "conditional_chains": 96
+  },
+  "memory_runs": 400,
+  "n_by_parameter": {
+   "resupply_lead_min": {
+    "water_n": 50,
+    "water_s": 70
+   },
+   "contact_order": {
+    "security": 2408,
+    "tech": 648,
+    "logistics": 290,
+    "volunteer": 144,
+    "medical": 699,
+    "ambulance": 37
+   },
+   "require_precise_location": {
+    "general": 115,
+    "food": 89,
+    "gate_b": 2,
+    "front_pit": 68,
+    "toilets": 2,
+    "corridor_s": 1
+   },
+   "duplicate_window_min": 2497,
+   "weather_followup": 247
+  },
+  "world_score": {
+   "n": 400,
+   "mean": 81.085,
+   "median": 87.285,
+   "p90": 98.38,
+   "ci95": [
+    79.157,
+    82.875
+   ]
+  }
+ },
+ "proposals": {
+  "changes": [
+   {
+    "id": "C-01",
+    "param": "resupply_lead_min",
+    "key": "water_n",
+    "old": 10,
+    "new": 32,
+    "n": 50,
+    "text": "Reposición en Punto de agua norte: tardó 28,7 min de media (N=50; 46 veces el depósito llegó a 0 antes); propongo pedirla 22 min antes (con 32 min de margen en vez de 10)",
+    "evidence": {
+     "minutes_mean": 28.7,
+     "minutes_p80": 32.0,
+     "dry_before_refill": 46,
+     "consumption_l_per_min": 7.3
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=50 ≥ 5"
+   },
+   {
+    "id": "C-02",
+    "param": "resupply_lead_min",
+    "key": "water_s",
+    "old": 10,
+    "new": 15,
+    "n": 70,
+    "text": "Reposición en Punto de agua sur: tardó 13,1 min de media (N=70; 44 veces el depósito llegó a 0 antes); propongo pedirla 5 min antes (con 15 min de margen en vez de 10)",
+    "evidence": {
+     "minutes_mean": 13.1,
+     "minutes_p80": 15.0,
+     "dry_before_refill": 44,
+     "consumption_l_per_min": 7.4
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=70 ≥ 5"
+   },
+   {
+    "id": "C-03",
+    "param": "contact_order",
+    "key": "medical",
+    "old": null,
+    "new": {
+     "order": [
+      "med_1",
+      "med_2",
+      "med_3"
+     ],
+     "rate": {
+      "med_1": 0.914,
+      "med_2": 0.891,
+      "med_3": 0.743
+     },
+     "n": {
+      "med_1": 248,
+      "med_2": 212,
+      "med_3": 239
+     },
+     "fail_cost_min": 1.5
+    },
+    "n": 699,
+    "text": "Contacto de medical: Equipo médico 3 (itinerante) aceptó 177 de 239 llamadas y Equipo médico 1 227 de 248 (N=699); propongo llamar primero a quien contesta, salvo que esté mucho más lejos",
+    "evidence": {
+     "sent": {
+      "med_1": 248,
+      "med_2": 212,
+      "med_3": 239
+     },
+     "accepted": {
+      "med_1": 227,
+      "med_2": 189,
+      "med_3": 177
+     },
+     "smoothed_rate": {
+      "med_1": 0.914,
+      "med_2": 0.891,
+      "med_3": 0.743
+     },
+     "pooled_rate": 0.848
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=699 ≥ 5"
+   },
+   {
+    "id": "C-04",
+    "param": "contact_order",
+    "key": "security",
+    "old": null,
+    "new": {
+     "order": [
+      "sec_5",
+      "sec_2",
+      "sec_3",
+      "sec_1",
+      "sec_4"
+     ],
+     "rate": {
+      "sec_1": 0.722,
+      "sec_2": 0.938,
+      "sec_3": 0.911,
+      "sec_4": 0.649,
+      "sec_5": 0.943
+     },
+     "n": {
+      "sec_1": 566,
+      "sec_2": 445,
+      "sec_3": 468,
+      "sec_4": 590,
+      "sec_5": 326
+     },
+     "fail_cost_min": 1.7
+    },
+    "n": 2395,
+    "text": "Contacto de security: Seguridad 4 (pista) aceptó 382 de 590 llamadas y Seguridad 5 (Puerta C) 308 de 326 (N=2395); propongo llamar primero a quien contesta, salvo que esté mucho más lejos",
+    "evidence": {
+     "sent": {
+      "sec_1": 566,
+      "sec_2": 445,
+      "sec_3": 468,
+      "sec_4": 590,
+      "sec_5": 326
+     },
+     "accepted": {
+      "sec_1": 408,
+      "sec_2": 418,
+      "sec_3": 427,
+      "sec_4": 382,
+      "sec_5": 308
+     },
+     "smoothed_rate": {
+      "sec_1": 0.722,
+      "sec_2": 0.938,
+      "sec_3": 0.911,
+      "sec_4": 0.649,
+      "sec_5": 0.943
+     },
+     "pooled_rate": 0.811
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=2395 ≥ 5"
+   },
+   {
+    "id": "C-05",
+    "param": "require_precise_location",
+    "key": "corridor_s",
+    "old": false,
+    "new": true,
+    "n": 1,
+    "text": "En Pasillo sur (ruta de ambulancia) el equipo tardó 3,0 min de media en dar con la persona (N=1): «Pasillo sur (ruta de ambulancia)» es demasiado amplio; propongo que el ASK pida un punto concreto (torre, puesto o acceso numerado) mientras el equipo va de camino — EVIDENCIA LIMITADA, cambio conservador",
+    "evidence": {
+     "search_min_mean": 3.0,
+     "search_min_p80": 3.0
+    },
+    "limited": true,
+    "status": "rejected",
+    "decided_by": "operador simulado (criterion)",
+    "note": "evidencia limitada (N=1 < 5): faltan datos"
+   },
+   {
+    "id": "C-06",
+    "param": "require_precise_location",
+    "key": "general",
+    "old": false,
+    "new": true,
+    "n": 115,
+    "text": "En Pista general el equipo tardó 6,4 min de media en dar con la persona (N=115): «Pista general» es demasiado amplio; propongo que el ASK pida un punto concreto (torre, puesto o acceso numerado) mientras el equipo va de camino",
+    "evidence": {
+     "search_min_mean": 6.4,
+     "search_min_p80": 8.0
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=115 ≥ 5"
+   },
+   {
+    "id": "C-07",
+    "param": "require_precise_location",
+    "key": "toilets",
+    "old": false,
+    "new": true,
+    "n": 2,
+    "text": "En Baños el equipo tardó 5,0 min de media en dar con la persona (N=2): «Baños» es demasiado amplio; propongo que el ASK pida un punto concreto (torre, puesto o acceso numerado) mientras el equipo va de camino — EVIDENCIA LIMITADA, cambio conservador",
+    "evidence": {
+     "search_min_mean": 5.0,
+     "search_min_p80": 8.0
+    },
+    "limited": true,
+    "status": "rejected",
+    "decided_by": "operador simulado (criterion)",
+    "note": "evidencia limitada (N=2 < 5): faltan datos"
+   },
+   {
+    "id": "C-08",
+    "param": "weather_standdown_min",
+    "key": null,
+    "old": null,
+    "new": 10,
+    "n": 48,
+    "text": "Meteorología: 55 de 247 alertas de viento no llegaron a más y se desactivaron a los 9,6 min de media (N=48); propongo cancelar los preparativos tras 10 min seguidos en calma, en vez de dejarlos abiertos. No cambia ningún criterio de seguridad: viento de parada 70 km/h, escalones 40/50/60, densidades de alerta y aprobación humana para parar, evacuar o pedir ayuda externa siguen igual.",
+    "evidence": {
+     "alerts": 247,
+     "did_not_arrive": 55,
+     "arrived": 192,
+     "minutes_to_clear_mean": 9.6,
+     "preparations": 778
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=48 ≥ 5"
+   },
+   {
+    "id": "C-09",
+    "param": "weather_followup_min",
+    "key": null,
+    "old": 5,
+    "new": 3,
+    "n": 159,
+    "text": "Meteorología: en 159 alertas el viento pasó de preaviso a riesgo en menos de 5 min; propongo revisar cada 3 min mientras haya alerta. No cambia ningún criterio de seguridad: viento de parada 70 km/h, escalones 40/50/60, densidades de alerta y aprobación humana para parar, evacuar o pedir ayuda externa siguen igual.",
+    "evidence": {
+     "alerts": 247,
+     "did_not_arrive": 55,
+     "arrived": 192,
+     "minutes_to_clear_mean": 9.6,
+     "preparations": 778
+    },
+    "limited": false,
+    "status": "approved",
+    "decided_by": "operador simulado (criterion)",
+    "note": "N=159 ≥ 5"
+   }
+  ],
+  "unchanged": [
+   {
+    "param": "contact_order",
+    "key": "tech",
+    "n": 641,
+    "value": null,
+    "evidence": {
+     "sent": {
+      "tech_1": 304,
+      "tech_2": 337
+     },
+     "accepted": {
+      "tech_1": 230,
+      "tech_2": 306
+     },
+     "smoothed_rate": {
+      "tech_1": 0.758,
+      "tech_2": 0.907
+     },
+     "pooled_rate": 0.836
+    },
+    "text": "Contacto de tech: todos contestan parecido (84 % de media, N=641); se sigue llamando al más cercano"
+   },
+   {
+    "param": "contact_order",
+    "key": "volunteer",
+    "n": 144,
+    "value": null,
+    "evidence": {
+     "sent": {
+      "vol_1": 60,
+      "vol_2": 57,
+      "vol_3": 27
+     },
+     "accepted": {
+      "vol_1": 58,
+      "vol_2": 50,
+      "vol_3": 23
+     },
+     "smoothed_rate": {
+      "vol_1": 0.962,
+      "vol_2": 0.88,
+      "vol_3": 0.861
+     },
+     "pooled_rate": 0.91
+    },
+    "text": "Contacto de volunteer: todos contestan parecido (91 % de media, N=144); se sigue llamando al más cercano"
+   },
+   {
+    "param": "require_precise_location",
+    "key": "food",
+    "n": 89,
+    "value": false,
+    "evidence": {
+     "search_min_mean": 2.9,
+     "search_min_p80": 4.0
+    },
+    "text": "En Restauración se da con la persona en 2,9 min de media (N=89): no hace falta pedir más"
+   },
+   {
+    "param": "require_precise_location",
+    "key": "front_pit",
+    "n": 68,
+    "value": false,
+    "evidence": {
+     "search_min_mean": 2.9,
+     "search_min_p80": 4.0
+    },
+    "text": "En Frente de escenario se da con la persona en 2,9 min de media (N=68): no hace falta pedir más"
+   },
+   {
+    "param": "require_precise_location",
+    "key": "gate_b",
+    "n": 2,
+    "value": false,
+    "evidence": {
+     "search_min_mean": 2.0,
+     "search_min_p80": 2.0
+    },
+    "text": "En Puerta B (principal) se da con la persona en 2,0 min de media (N=2): no hace falta pedir más"
+   },
+   {
+    "param": "duplicate_window_min",
+    "key": null,
+    "n": 2497,
+    "value": 15,
+    "evidence": {
+     "reports": 5017,
+     "incidents": 2520,
+     "merged": 2497,
+     "merge_gap_p95": 15.0,
+     "teams_moved_for_nothing": 340,
+     "teams_moved_by_duplicate": 0,
+     "missed_gap_p90": null
+    },
+    "text": "Duplicados: 2497 avisos repetidos fundidos, el 95 % a ≤ 15 min del aviso anterior; 0 equipos movidos por un duplicado, ninguno fuera de la ventana de 15 min: no se toca (N=2497)"
+   }
+  ],
+  "safety_note": "No cambia ningún criterio de seguridad: viento de parada 70 km/h, escalones 40/50/60, densidades de alerta y aprobación humana para parar, evacuar o pedir ayuda externa siguen igual.",
+  "safety_locked": [
+   "wind_stop_kmh",
+   "wind_steps_kmh",
+   "watch_density",
+   "crush_density",
+   "amb_max_density",
+   "always_approve",
+   "approve_reroute_density",
+   "confirm_below",
+   "life_threat_dispatch"
+  ],
+  "tunable": [
+   "resupply_lead_min",
+   "contact_order",
+   "require_precise_location",
+   "duplicate_window_min",
+   "weather_followup_min",
+   "weather_standdown_min"
+  ]
+ },
+ "params": {
+  "initial": {
+   "values": {},
+   "evidence": {}
+  },
+  "revised": {
+   "values": {
+    "resupply_lead_min": {
+     "water_n": 32,
+     "water_s": 15
+    },
+    "contact_order": {
+     "medical": {
+      "order": [
+       "med_1",
+       "med_2",
+       "med_3"
+      ],
+      "rate": {
+       "med_1": 0.914,
+       "med_2": 0.891,
+       "med_3": 0.743
+      },
+      "n": {
+       "med_1": 248,
+       "med_2": 212,
+       "med_3": 239
+      },
+      "fail_cost_min": 1.5
+     },
+     "security": {
+      "order": [
+       "sec_5",
+       "sec_2",
+       "sec_3",
+       "sec_1",
+       "sec_4"
+      ],
+      "rate": {
+       "sec_1": 0.722,
+       "sec_2": 0.938,
+       "sec_3": 0.911,
+       "sec_4": 0.649,
+       "sec_5": 0.943
+      },
+      "n": {
+       "sec_1": 566,
+       "sec_2": 445,
+       "sec_3": 468,
+       "sec_4": 590,
+       "sec_5": 326
+      },
+      "fail_cost_min": 1.7
+     }
+    },
+    "require_precise_location": {
+     "general": true
+    },
+    "weather_followup_min": 3,
+    "weather_standdown_min": 10
+   },
+   "evidence": {
+    "resupply_lead_min[water_n]": "N=50",
+    "resupply_lead_min[water_s]": "N=70",
+    "contact_order[medical]": "N=699",
+    "contact_order[security]": "N=2395",
+    "require_precise_location[general]": "N=115",
+    "weather_standdown_min": "N=48",
+    "weather_followup_min": "N=159"
+   }
+  },
+  "hash": {
+   "initial": "f413b0bfa036",
+   "revised": "94edceb1ab92"
+  }
+ },
+ "splits": {
+  "day2_train": {
+   "n": 400,
+   "case_signature": "31ab4b545439e09d",
+   "composition": {
+    "n": 400,
+    "hot_over_32c": 92,
+    "scripted_water_out": 16,
+    "resource_no_answer_or_rejects": 162,
+    "duplicates": 58,
+    "ops_wind_alert": 77,
+    "conditional_chains": 97
+   },
+   "errors": {
+    "initial": 0,
+    "revised": 0,
+    "legacy": 0
+   },
+   "unsafe_actions": {
+    "initial": 0,
+    "revised": 0,
+    "legacy": 0
+   },
+   "critical_failed": {
+    "initial": [
+     103,
+     794
+    ],
+    "revised": [
+     105,
+     793
+    ],
+    "legacy": [
+     103,
+     793
+    ]
+   },
+   "params_applied_in_revised": {
+    "contact_order[security]": 173,
+    "require_precise_location[general]": 181,
+    "resupply_lead_min[water_n]": 114,
+    "resupply_lead_min[water_s]": 105,
+    "weather_followup_min": 384,
+    "weather_standdown_min": 10
+   },
+   "compare": {
+    "stockouts": {
+     "text": "roturas de stock de agua que llegan a ocurrir (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.33,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.268,
+       0.398
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.175,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.128,
+       0.223
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": -0.155,
+      "ci": [
+       -0.2,
+       -0.115
+      ],
+      "level": 0.95,
+      "better": 1,
+      "worse": 55,
+      "evidence": true
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": -0.155,
+      "ci": [
+       -0.212,
+       -0.105
+      ],
+      "level": 0.99,
+      "better": 1,
+      "worse": 55,
+      "evidence": true
+     },
+     "unpaired_ci95_overlap": false,
+     "verdict": "MEJORA",
+     "totals": {
+      "initial": 132.0,
+      "revised": 70.0
+     }
+    },
+    "dry_minutes": {
+     "text": "minutos-punto con el depósito a cero (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 4.393,
+      "median": 0.0,
+      "p90": 18.0,
+      "ci95": [
+       3.342,
+       5.52
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 2.485,
+      "median": 0.0,
+      "p90": 8.0,
+      "ci95": [
+       1.685,
+       3.368
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": -1.907,
+      "ci": [
+       -2.572,
+       -1.325
+      ],
+      "level": 0.95,
+      "better": 9,
+      "worse": 68,
+      "evidence": true
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": -1.907,
+      "ci": [
+       -2.79,
+       -1.145
+      ],
+      "level": 0.99,
+      "better": 9,
+      "worse": 68,
+      "evidence": true
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "MEJORA",
+     "totals": {
+      "initial": 1757.0,
+      "revised": 994.0
+     }
+    },
+    "heat_incidents": {
+     "text": "incidentes de calor espontáneos (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.427,
+      "median": 0.0,
+      "p90": 2.0,
+      "ci95": [
+       0.318,
+       0.557
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.425,
+      "median": 0.0,
+      "p90": 2.0,
+      "ci95": [
+       0.312,
+       0.557
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": -0.003,
+      "ci": [
+       -0.015,
+       0.013
+      ],
+      "level": 0.95,
+      "better": 1,
+      "worse": 3,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": -0.003,
+      "ci": [
+       -0.018,
+       0.018
+      ],
+      "level": 0.99,
+      "better": 1,
+      "worse": 3,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 171.0,
+      "revised": 170.0
+     }
+    },
+    "skipped_events": {
+     "text": "incidentes derivados que se evitan, `skipped_events` (por caso)",
+     "lower_is_better": false,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.117,
+      "median": 0.0,
+      "p90": 0.0,
+      "ci95": [
+       0.077,
+       0.16
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.125,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.085,
+       0.168
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": 0.007,
+      "ci": [
+       0.0,
+       0.02
+      ],
+      "level": 0.95,
+      "better": 2,
+      "worse": 0,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": 0.007,
+      "ci": [
+       0.0,
+       0.025
+      ],
+      "level": 0.99,
+      "better": 2,
+      "worse": 0,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 47.0,
+      "revised": 50.0
+     }
+    },
+    "accept_min": {
+     "text": "minutos del aviso al despacho que acaba llegando",
+     "lower_is_better": true,
+     "n_pairs": 389,
+     "initial": {
+      "n": 389,
+      "mean": 0.902,
+      "median": 0.667,
+      "p90": 2.0,
+      "ci95": [
+       0.796,
+       1.014
+      ]
+     },
+     "revised": {
+      "n": 389,
+      "mean": 0.939,
+      "median": 0.667,
+      "p90": 2.0,
+      "ci95": [
+       0.813,
+       1.07
+      ]
+     },
+     "paired_diff_95": {
+      "n": 389,
+      "mean": 0.038,
+      "ci": [
+       -0.02,
+       0.111
+      ],
+      "level": 0.95,
+      "better": 34,
+      "worse": 38,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 389,
+      "mean": 0.038,
+      "ci": [
+       -0.031,
+       0.139
+      ],
+      "level": 0.99,
+      "better": 34,
+      "worse": 38,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 350.73,
+      "revised": 365.4
+     }
+    },
+    "dup_moved": {
+     "text": "equipos movidos por un duplicado (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.158,
+      "median": 0.0,
+      "p90": 0.0,
+      "ci95": [
+       0.095,
+       0.242
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.172,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.107,
+       0.268
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": 0.015,
+      "ci": [
+       -0.013,
+       0.043
+      ],
+      "level": 0.95,
+      "better": 9,
+      "worse": 4,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": 0.015,
+      "ci": [
+       -0.02,
+       0.05
+      ],
+      "level": 0.99,
+      "better": 9,
+      "worse": 4,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 63.0,
+      "revised": 69.0
+     }
+    },
+    "locate_min": {
+     "text": "minutos buscando a la persona en zona amplia",
+     "lower_is_better": true,
+     "n_pairs": 112,
+     "initial": {
+      "n": 112,
+      "mean": 4.292,
+      "median": 4.0,
+      "p90": 7.0,
+      "ci95": [
+       3.97,
+       4.644
+      ]
+     },
+     "revised": {
+      "n": 112,
+      "mean": 2.854,
+      "median": 3.0,
+      "p90": 4.5,
+      "ci95": [
+       2.574,
+       3.14
+      ]
+     },
+     "paired_diff_95": {
+      "n": 112,
+      "mean": -1.438,
+      "ci": [
+       -1.826,
+       -1.053
+      ],
+      "level": 0.95,
+      "better": 2,
+      "worse": 47,
+      "evidence": true
+     },
+     "paired_diff_99": {
+      "n": 112,
+      "mean": -1.438,
+      "ci": [
+       -2.006,
+       -0.963
+      ],
+      "level": 0.99,
+      "better": 2,
+      "worse": 47,
+      "evidence": true
+     },
+     "unpaired_ci95_overlap": false,
+     "verdict": "MEJORA",
+     "totals": {
+      "initial": 480.68,
+      "revised": 319.65
+     }
+    },
+    "time_to_first_attention": {
+     "text": "minutos hasta la primera atención",
+     "lower_is_better": true,
+     "n_pairs": 389,
+     "initial": {
+      "n": 389,
+      "mean": 2.914,
+      "median": 2.5,
+      "p90": 5.5,
+      "ci95": [
+       2.708,
+       3.127
+      ]
+     },
+     "revised": {
+      "n": 389,
+      "mean": 2.805,
+      "median": 2.5,
+      "p90": 5.0,
+      "ci95": [
+       2.599,
+       3.028
+      ]
+     },
+     "paired_diff_95": {
+      "n": 389,
+      "mean": -0.108,
+      "ci": [
+       -0.204,
+       -0.013
+      ],
+      "level": 0.95,
+      "better": 36,
+      "worse": 72,
+      "evidence": true
+     },
+     "paired_diff_99": {
+      "n": 389,
+      "mean": -0.108,
+      "ci": [
+       -0.234,
+       0.018
+      ],
+      "level": 0.99,
+      "better": 36,
+      "worse": 72,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 1133.48,
+      "revised": 1091.28
+     }
+    },
+    "critical_failed": {
+     "text": "críticos fallidos (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.258,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.207,
+       0.307
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.263,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.212,
+       0.312
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": 0.005,
+      "ci": [
+       -0.007,
+       0.02
+      ],
+      "level": 0.95,
+      "better": 5,
+      "worse": 3,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": 0.005,
+      "ci": [
+       -0.013,
+       0.022
+      ],
+      "level": 0.99,
+      "better": 5,
+      "worse": 3,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 103.0,
+      "revised": 105.0
+     }
+    },
+    "world_score": {
+     "text": "`world_score` (solo-mundo, 0–100)",
+     "lower_is_better": false,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 82.6,
+      "median": 87.79,
+      "p90": 98.67,
+      "ci95": [
+       81.031,
+       84.216
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 82.716,
+      "median": 87.685,
+      "p90": 98.67,
+      "ci95": [
+       81.076,
+       84.327
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": 0.115,
+      "ci": [
+       -0.334,
+       0.551
+      ],
+      "level": 0.95,
+      "better": 77,
+      "worse": 46,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": 0.115,
+      "ci": [
+       -0.478,
+       0.686
+      ],
+      "level": 0.99,
+      "better": 77,
+      "worse": 46,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 33040.12,
+      "revised": 33086.25
+     }
+    }
+   },
+   "sentence": "day2_train (N=400 por brazo, mismos casos y semillas): con los parámetros revisados MEJORA: roturas de stock de agua que llegan a ocurrir (por caso): 0.33 → 0.175 (diferencia pareada -0.155, IC 99 % [-0.212, -0.105], N=400); minutos-punto con el depósito a cero (por caso): 4.393 → 2.485 (diferencia pareada -1.907, IC 99 % [-2.79, -1.145], N=400; ojo: los intervalos NO pareados de los dos brazos se solapan, solo vale como diferencia pareada); minutos buscando a la persona en zona amplia: 4.292 → 2.854 (diferencia pareada -1.438, IC 99 % [-2.006, -0.963], N=112). sin evidencia de mejora en: incidentes de calor espontáneos (por caso); incidentes derivados que se evitan, `skipped_events` (por caso); minutos del aviso al despacho que acaba llegando; equipos movidos por un duplicado (por caso); minutos hasta la primera atención; críticos fallidos (por caso); `world_score` (solo-mundo, 0–100).",
+   "initial_minus_legacy": {
+    "stockouts": {
+     "n": 400,
+     "mean": -0.045,
+     "ci": [
+      -0.075,
+      -0.02
+     ],
+     "level": 0.99,
+     "better": 0,
+     "worse": 18,
+     "evidence": true
+    },
+    "dry_minutes": {
+     "n": 400,
+     "mean": -2.408,
+     "ci": [
+      -3.23,
+      -1.603
+     ],
+     "level": 0.99,
+     "better": 2,
+     "worse": 78,
+     "evidence": true
+    },
+    "heat_incidents": {
+     "n": 400,
+     "mean": -0.03,
+     "ci": [
+      -0.077,
+      0.003
+     ],
+     "level": 0.99,
+     "better": 1,
+     "worse": 5,
+     "evidence": false
+    },
+    "skipped_events": {
+     "n": 400,
+     "mean": -0.003,
+     "ci": [
+      -0.01,
+      0.0
+     ],
+     "level": 0.99,
+     "better": 0,
+     "worse": 1,
+     "evidence": false
+    },
+    "accept_min": {
+     "n": 390,
+     "mean": 0.006,
+     "ci": [
+      -0.005,
+      0.02
+     ],
+     "level": 0.99,
+     "better": 14,
+     "worse": 6,
+     "evidence": false
+    },
+    "dup_moved": {
+     "n": 400,
+     "mean": 0.007,
+     "ci": [
+      0.0,
+      0.025
+     ],
+     "level": 0.99,
+     "better": 2,
+     "worse": 0,
+     "evidence": false
+    },
+    "locate_min": {
+     "n": 115,
+     "mean": -0.016,
+     "ci": [
+      -0.134,
+      0.122
+     ],
+     "level": 0.99,
+     "better": 4,
+     "worse": 8,
+     "evidence": false
+    },
+    "time_to_first_attention": {
+     "n": 390,
+     "mean": 0.01,
+     "ci": [
+      -0.019,
+      0.045
+     ],
+     "level": 0.99,
+     "better": 13,
+     "worse": 9,
+     "evidence": false
+    },
+    "critical_failed": {
+     "n": 400,
+     "mean": 0.0,
+     "ci": [
+      -0.01,
+      0.01
+     ],
+     "level": 0.99,
+     "better": 1,
+     "worse": 1,
+     "evidence": false
+    },
+    "world_score": {
+     "n": 400,
+     "mean": 0.052,
+     "ci": [
+      -0.278,
+      0.354
+     ],
+     "level": 0.99,
+     "better": 13,
+     "worse": 17,
+     "evidence": false
+    }
+   }
+  },
+  "heldout": {
+   "n": 400,
+   "case_signature": "a7156338cf678342",
+   "composition": {
+    "n": 400,
+    "hot_over_32c": 113,
+    "scripted_water_out": 13,
+    "resource_no_answer_or_rejects": 194,
+    "duplicates": 60,
+    "ops_wind_alert": 74,
+    "conditional_chains": 99
+   },
+   "errors": {
+    "initial": 0,
+    "revised": 0,
+    "legacy": 0
+   },
+   "unsafe_actions": {
+    "initial": 0,
+    "revised": 0,
+    "legacy": 0
+   },
+   "critical_failed": {
+    "initial": [
+     159,
+     982
+    ],
+    "revised": [
+     153,
+     982
+    ],
+    "legacy": [
+     160,
+     982
+    ]
+   },
+   "params_applied_in_revised": {
+    "contact_order[security]": 221,
+    "require_precise_location[general]": 197,
+    "resupply_lead_min[water_n]": 129,
+    "resupply_lead_min[water_s]": 97,
+    "weather_followup_min": 395,
+    "weather_standdown_min": 13
+   },
+   "compare": {
+    "stockouts": {
+     "text": "roturas de stock de agua que llegan a ocurrir (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.383,
+      "median": 0.0,
+      "p90": 2.0,
+      "ci95": [
+       0.32,
+       0.448
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.247,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.195,
+       0.3
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": -0.135,
+      "ci": [
+       -0.175,
+       -0.098
+      ],
+      "level": 0.95,
+      "better": 4,
+      "worse": 55,
+      "evidence": true
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": -0.135,
+      "ci": [
+       -0.19,
+       -0.083
+      ],
+      "level": 0.99,
+      "better": 4,
+      "worse": 55,
+      "evidence": true
+     },
+     "unpaired_ci95_overlap": false,
+     "verdict": "MEJORA",
+     "totals": {
+      "initial": 153.0,
+      "revised": 99.0
+     }
+    },
+    "dry_minutes": {
+     "text": "minutos-punto con el depósito a cero (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 5.338,
+      "median": 0.0,
+      "p90": 20.0,
+      "ci95": [
+       4.197,
+       6.588
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 3.522,
+      "median": 0.0,
+      "p90": 13.0,
+      "ci95": [
+       2.567,
+       4.647
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": -1.815,
+      "ci": [
+       -2.46,
+       -1.21
+      ],
+      "level": 0.95,
+      "better": 8,
+      "worse": 78,
+      "evidence": true
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": -1.815,
+      "ci": [
+       -2.665,
+       -1.04
+      ],
+      "level": 0.99,
+      "better": 8,
+      "worse": 78,
+      "evidence": true
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "MEJORA",
+     "totals": {
+      "initial": 2135.0,
+      "revised": 1409.0
+     }
+    },
+    "heat_incidents": {
+     "text": "incidentes de calor espontáneos (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.398,
+      "median": 0.0,
+      "p90": 2.0,
+      "ci95": [
+       0.302,
+       0.505
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.4,
+      "median": 0.0,
+      "p90": 2.0,
+      "ci95": [
+       0.305,
+       0.507
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": 0.003,
+      "ci": [
+       -0.022,
+       0.033
+      ],
+      "level": 0.95,
+      "better": 3,
+      "worse": 4,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": 0.003,
+      "ci": [
+       -0.03,
+       0.043
+      ],
+      "level": 0.99,
+      "better": 3,
+      "worse": 4,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 159.0,
+      "revised": 160.0
+     }
+    },
+    "skipped_events": {
+     "text": "incidentes derivados que se evitan, `skipped_events` (por caso)",
+     "lower_is_better": false,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.028,
+      "median": 0.0,
+      "p90": 0.0,
+      "ci95": [
+       0.013,
+       0.045
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.028,
+      "median": 0.0,
+      "p90": 0.0,
+      "ci95": [
+       0.013,
+       0.045
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "level": 0.95,
+      "better": 0,
+      "worse": 0,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": 0.0,
+      "ci": [
+       0.0,
+       0.0
+      ],
+      "level": 0.99,
+      "better": 0,
+      "worse": 0,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 11.0,
+      "revised": 11.0
+     }
+    },
+    "accept_min": {
+     "text": "minutos del aviso al despacho que acaba llegando",
+     "lower_is_better": true,
+     "n_pairs": 394,
+     "initial": {
+      "n": 394,
+      "mean": 1.001,
+      "median": 0.75,
+      "p90": 2.0,
+      "ci95": [
+       0.886,
+       1.117
+      ]
+     },
+     "revised": {
+      "n": 394,
+      "mean": 0.97,
+      "median": 0.75,
+      "p90": 2.0,
+      "ci95": [
+       0.861,
+       1.085
+      ]
+     },
+     "paired_diff_95": {
+      "n": 394,
+      "mean": -0.031,
+      "ci": [
+       -0.076,
+       0.015
+      ],
+      "level": 0.95,
+      "better": 43,
+      "worse": 61,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 394,
+      "mean": -0.031,
+      "ci": [
+       -0.088,
+       0.033
+      ],
+      "level": 0.99,
+      "better": 43,
+      "worse": 61,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 394.49,
+      "revised": 382.18
+     }
+    },
+    "dup_moved": {
+     "text": "equipos movidos por un duplicado (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.212,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.158,
+       0.278
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.215,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.152,
+       0.287
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": 0.003,
+      "ci": [
+       -0.02,
+       0.025
+      ],
+      "level": 0.95,
+      "better": 6,
+      "worse": 6,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": 0.003,
+      "ci": [
+       -0.028,
+       0.033
+      ],
+      "level": 0.99,
+      "better": 6,
+      "worse": 6,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 85.0,
+      "revised": 86.0
+     }
+    },
+    "locate_min": {
+     "text": "minutos buscando a la persona en zona amplia",
+     "lower_is_better": true,
+     "n_pairs": 121,
+     "initial": {
+      "n": 121,
+      "mean": 4.648,
+      "median": 4.0,
+      "p90": 7.0,
+      "ci95": [
+       4.311,
+       5.02
+      ]
+     },
+     "revised": {
+      "n": 121,
+      "mean": 2.846,
+      "median": 3.0,
+      "p90": 5.0,
+      "ci95": [
+       2.563,
+       3.16
+      ]
+     },
+     "paired_diff_95": {
+      "n": 121,
+      "mean": -1.802,
+      "ci": [
+       -2.259,
+       -1.346
+      ],
+      "level": 0.95,
+      "better": 4,
+      "worse": 60,
+      "evidence": true
+     },
+     "paired_diff_99": {
+      "n": 121,
+      "mean": -1.802,
+      "ci": [
+       -2.409,
+       -1.221
+      ],
+      "level": 0.99,
+      "better": 4,
+      "worse": 60,
+      "evidence": true
+     },
+     "unpaired_ci95_overlap": false,
+     "verdict": "MEJORA",
+     "totals": {
+      "initial": 562.35,
+      "revised": 344.33
+     }
+    },
+    "time_to_first_attention": {
+     "text": "minutos hasta la primera atención",
+     "lower_is_better": true,
+     "n_pairs": 394,
+     "initial": {
+      "n": 394,
+      "mean": 3.073,
+      "median": 2.67,
+      "p90": 6.0,
+      "ci95": [
+       2.867,
+       3.302
+      ]
+     },
+     "revised": {
+      "n": 394,
+      "mean": 2.837,
+      "median": 2.5,
+      "p90": 5.4,
+      "ci95": [
+       2.661,
+       3.033
+      ]
+     },
+     "paired_diff_95": {
+      "n": 394,
+      "mean": -0.236,
+      "ci": [
+       -0.338,
+       -0.146
+      ],
+      "level": 0.95,
+      "better": 48,
+      "worse": 95,
+      "evidence": true
+     },
+     "paired_diff_99": {
+      "n": 394,
+      "mean": -0.236,
+      "ci": [
+       -0.373,
+       -0.121
+      ],
+      "level": 0.99,
+      "better": 48,
+      "worse": 95,
+      "evidence": true
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "MEJORA",
+     "totals": {
+      "initial": 1210.8,
+      "revised": 1117.66
+     }
+    },
+    "critical_failed": {
+     "text": "críticos fallidos (por caso)",
+     "lower_is_better": true,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 0.398,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.328,
+       0.47
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 0.383,
+      "median": 0.0,
+      "p90": 1.0,
+      "ci95": [
+       0.312,
+       0.455
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": -0.015,
+      "ci": [
+       -0.037,
+       0.005
+      ],
+      "level": 0.95,
+      "better": 6,
+      "worse": 11,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": -0.015,
+      "ci": [
+       -0.045,
+       0.013
+      ],
+      "level": 0.99,
+      "better": 6,
+      "worse": 11,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 159.0,
+      "revised": 153.0
+     }
+    },
+    "world_score": {
+     "text": "`world_score` (solo-mundo, 0–100)",
+     "lower_is_better": false,
+     "n_pairs": 400,
+     "initial": {
+      "n": 400,
+      "mean": 78.824,
+      "median": 86.635,
+      "p90": 97.93,
+      "ci95": [
+       76.553,
+       81.002
+      ]
+     },
+     "revised": {
+      "n": 400,
+      "mean": 79.377,
+      "median": 87.605,
+      "p90": 98.1,
+      "ci95": [
+       77.073,
+       81.561
+      ]
+     },
+     "paired_diff_95": {
+      "n": 400,
+      "mean": 0.553,
+      "ci": [
+       -0.018,
+       1.175
+      ],
+      "level": 0.95,
+      "better": 108,
+      "worse": 63,
+      "evidence": false
+     },
+     "paired_diff_99": {
+      "n": 400,
+      "mean": 0.553,
+      "ci": [
+       -0.189,
+       1.344
+      ],
+      "level": 0.99,
+      "better": 108,
+      "worse": 63,
+      "evidence": false
+     },
+     "unpaired_ci95_overlap": true,
+     "verdict": "sin evidencia de mejora",
+     "totals": {
+      "initial": 31529.7,
+      "revised": 31750.95
+     }
+    }
+   },
+   "sentence": "heldout (N=400 por brazo, mismos casos y semillas): con los parámetros revisados MEJORA: roturas de stock de agua que llegan a ocurrir (por caso): 0.383 → 0.247 (diferencia pareada -0.135, IC 99 % [-0.19, -0.083], N=400); minutos-punto con el depósito a cero (por caso): 5.338 → 3.522 (diferencia pareada -1.815, IC 99 % [-2.665, -1.04], N=400; ojo: los intervalos NO pareados de los dos brazos se solapan, solo vale como diferencia pareada); minutos buscando a la persona en zona amplia: 4.648 → 2.846 (diferencia pareada -1.802, IC 99 % [-2.409, -1.221], N=121); minutos hasta la primera atención: 3.073 → 2.837 (diferencia pareada -0.236, IC 99 % [-0.373, -0.121], N=394; ojo: los intervalos NO pareados de los dos brazos se solapan, solo vale como diferencia pareada). sin evidencia de mejora en: incidentes de calor espontáneos (por caso); incidentes derivados que se evitan, `skipped_events` (por caso); minutos del aviso al despacho que acaba llegando; equipos movidos por un duplicado (por caso); críticos fallidos (por caso); `world_score` (solo-mundo, 0–100).",
+   "initial_minus_legacy": {
+    "stockouts": {
+     "n": 400,
+     "mean": -0.055,
+     "ci": [
+      -0.087,
+      -0.028
+     ],
+     "level": 0.99,
+     "better": 0,
+     "worse": 22,
+     "evidence": true
+    },
+    "dry_minutes": {
+     "n": 400,
+     "mean": -2.65,
+     "ci": [
+      -3.583,
+      -1.823
+     ],
+     "level": 0.99,
+     "better": 1,
+     "worse": 78,
+     "evidence": true
+    },
+    "heat_incidents": {
+     "n": 400,
+     "mean": -0.028,
+     "ci": [
+      -0.08,
+      -0.003
+     ],
+     "level": 0.99,
+     "better": 0,
+     "worse": 6,
+     "evidence": true
+    },
+    "skipped_events": {
+     "n": 400,
+     "mean": 0.0,
+     "ci": [
+      0.0,
+      0.0
+     ],
+     "level": 0.99,
+     "better": 0,
+     "worse": 0,
+     "evidence": false
+    },
+    "accept_min": {
+     "n": 394,
+     "mean": -0.008,
+     "ci": [
+      -0.057,
+      0.038
+     ],
+     "level": 0.99,
+     "better": 9,
+     "worse": 8,
+     "evidence": false
+    },
+    "dup_moved": {
+     "n": 400,
+     "mean": 0.0,
+     "ci": [
+      -0.01,
+      0.01
+     ],
+     "level": 0.99,
+     "better": 1,
+     "worse": 1,
+     "evidence": false
+    },
+    "locate_min": {
+     "n": 120,
+     "mean": 0.003,
+     "ci": [
+      -0.129,
+      0.149
+     ],
+     "level": 0.99,
+     "better": 5,
+     "worse": 4,
+     "evidence": false
+    },
+    "time_to_first_attention": {
+     "n": 394,
+     "mean": -0.016,
+     "ci": [
+      -0.08,
+      0.042
+     ],
+     "level": 0.99,
+     "better": 11,
+     "worse": 14,
+     "evidence": false
+    },
+    "critical_failed": {
+     "n": 400,
+     "mean": -0.003,
+     "ci": [
+      -0.015,
+      0.007
+     ],
+     "level": 0.99,
+     "better": 1,
+     "worse": 2,
+     "evidence": false
+    },
+    "world_score": {
+     "n": 400,
+     "mean": 0.202,
+     "ci": [
+      -0.083,
+      0.568
+     ],
+     "level": 0.99,
+     "better": 19,
+     "worse": 15,
+     "evidence": false
+    }
+   }
+  }
+ },
+ "seconds": 6.7
+}

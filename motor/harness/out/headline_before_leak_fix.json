@@ -1,0 +1,260 @@
+{
+ "code": "cc9662535bc8",
+ "what": "Mando sin lecciones − lista fija; diferencia pareada en los mismos casos y semillas",
+ "train": {
+  "n": 1000,
+  "cases": "/Users/anayang/workspace/hackspain-2026/motor/harness/out/_frozen/cc9662535bc8-000327/data/train.jsonl",
+  "chaos": "none",
+  "budget": 0,
+  "case_signature": "4aa25bdcecfd0f94",
+  "mando": {
+   "n": 1000,
+   "mean": 86.172,
+   "median": 92.965,
+   "p90": 98.79,
+   "ci95": [
+    85.189,
+    87.189
+   ]
+  },
+  "baseline": {
+   "n": 1000,
+   "mean": 71.761,
+   "median": 77.89,
+   "p90": 93.25,
+   "ci95": [
+    70.521,
+    72.959
+   ]
+  },
+  "mando_world": {
+   "n": 1000,
+   "mean": 87.805,
+   "median": 95.195,
+   "p90": 99.2,
+   "ci95": [
+    86.884,
+    88.773
+   ]
+  },
+  "baseline_world": {
+   "n": 1000,
+   "mean": 77.77,
+   "median": 83.655,
+   "p90": 98.26,
+   "ci95": [
+    76.545,
+    78.977
+   ]
+  },
+  "critical_failed": {
+   "mando": [
+    163,
+    2105
+   ],
+   "baseline": [
+    387,
+    2144
+   ]
+  },
+  "errors": {
+   "mando": 0,
+   "baseline": 0
+  },
+  "paired_score": {
+   "n": 1000,
+   "mean": 14.411,
+   "ci": [
+    13.294,
+    15.546
+   ],
+   "level": 0.95,
+   "better": 876,
+   "worse": 120,
+   "evidence": true
+  },
+  "paired_world_score": {
+   "n": 1000,
+   "mean": 10.035,
+   "ci": [
+    8.963,
+    11.114
+   ],
+   "level": 0.95,
+   "better": 720,
+   "worse": 229,
+   "evidence": true
+  }
+ },
+ "heldout": {
+  "n": 1000,
+  "cases": "/Users/anayang/workspace/hackspain-2026/motor/harness/out/_frozen/cc9662535bc8-000327/data/heldout.jsonl",
+  "chaos": "none",
+  "budget": 0,
+  "case_signature": "63970392c7f75beb",
+  "mando": {
+   "n": 1000,
+   "mean": 84.283,
+   "median": 91.255,
+   "p90": 98.85,
+   "ci95": [
+    83.139,
+    85.408
+   ]
+  },
+  "baseline": {
+   "n": 1000,
+   "mean": 69.82,
+   "median": 75.46,
+   "p90": 92.81,
+   "ci95": [
+    68.488,
+    71.162
+   ]
+  },
+  "mando_world": {
+   "n": 1000,
+   "mean": 85.797,
+   "median": 93.19,
+   "p90": 99.09,
+   "ci95": [
+    84.687,
+    86.883
+   ]
+  },
+  "baseline_world": {
+   "n": 1000,
+   "mean": 76.022,
+   "median": 81.865,
+   "p90": 98.5,
+   "ci95": [
+    74.744,
+    77.329
+   ]
+  },
+  "critical_failed": {
+   "mando": [
+    224,
+    2331
+   ],
+   "baseline": [
+    438,
+    2355
+   ]
+  },
+  "errors": {
+   "mando": 0,
+   "baseline": 0
+  },
+  "paired_score": {
+   "n": 1000,
+   "mean": 14.463,
+   "ci": [
+    13.279,
+    15.663
+   ],
+   "level": 0.95,
+   "better": 856,
+   "worse": 140,
+   "evidence": true
+  },
+  "paired_world_score": {
+   "n": 1000,
+   "mean": 9.774,
+   "ci": [
+    8.65,
+    10.943
+   ],
+   "level": 0.95,
+   "better": 717,
+   "worse": 239,
+   "evidence": true
+  }
+ },
+ "train_smart_chaos": {
+  "n": 300,
+  "cases": "/Users/anayang/workspace/hackspain-2026/motor/harness/out/_frozen/cc9662535bc8-000327/data/train.jsonl",
+  "chaos": "smart",
+  "budget": 3,
+  "case_signature": "ec4b2ade90a47a50",
+  "mando": {
+   "n": 300,
+   "mean": 54.042,
+   "median": 54.275,
+   "p90": 95.47,
+   "ci95": [
+    51.103,
+    57.491
+   ]
+  },
+  "baseline": {
+   "n": 300,
+   "mean": 32.133,
+   "median": 28.46,
+   "p90": 64.5,
+   "ci95": [
+    29.568,
+    34.558
+   ]
+  },
+  "mando_world": {
+   "n": 300,
+   "mean": 56.108,
+   "median": 55.97,
+   "p90": 97.39,
+   "ci95": [
+    53.297,
+    59.445
+   ]
+  },
+  "baseline_world": {
+   "n": 300,
+   "mean": 38.218,
+   "median": 34.935,
+   "p90": 71.31,
+   "ci95": [
+    35.816,
+    40.649
+   ]
+  },
+  "critical_failed": {
+   "mando": [
+    421,
+    1069
+   ],
+   "baseline": [
+    587,
+    958
+   ]
+  },
+  "errors": {
+   "mando": 0,
+   "baseline": 0
+  },
+  "paired_score": {
+   "n": 300,
+   "mean": 21.909,
+   "ci": [
+    19.203,
+    24.837
+   ],
+   "level": 0.95,
+   "better": 258,
+   "worse": 42,
+   "evidence": true
+  },
+  "paired_world_score": {
+   "n": 300,
+   "mean": 17.89,
+   "ci": [
+    15.221,
+    20.787
+   ],
+   "level": 0.95,
+   "better": 242,
+   "worse": 58,
+   "evidence": true
+  }
+ },
+ "note": "Mando de las 23:48 (ANTES de quitar la fuga de heldout del léxico), simulador fase 2"
+}

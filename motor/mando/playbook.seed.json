@@ -1,0 +1,31 @@
+{
+  "lessons": [
+    {
+      "id": "L-001",
+      "text": "con más de 35 °C un golpe de calor va antes y se avisa de agua y sombra por megafonía",
+      "when": {"type": ["heat_stroke", "dizziness", "fainting"], "weather": {"temp_c_above": 35}},
+      "then": {
+        "priority_boost": 1.0,
+        "pre_action": {"kind": "broadcast", "params": {"message": "Hace mucho calor: bebed agua y buscad sombra. Puntos de agua gratis al norte y al sur."}}
+      },
+      "source": "ejemplo de formato (sin ejecuciones detrás)",
+      "evidence_n": 0
+    },
+    {
+      "id": "L-002",
+      "text": "al desviar una puerta, el destino debe quedar por debajo del 75 %, no del 85 %",
+      "when": {"type": ["gate_saturation", "bottleneck"], "zone_kind": "gate"},
+      "then": {"assumption_threshold": {"zone_occupancy_below": {"ratio": 0.75}}},
+      "source": "ejemplo de formato (sin ejecuciones detrás)",
+      "evidence_n": 0
+    },
+    {
+      "id": "L-003",
+      "text": "durante el cabeza de cartel no se desvía público hacia la salida de transporte",
+      "when": {"family": "crowd", "state": {"show_phase": "headliner"}},
+      "then": {"forbid_action": {"kind": "reroute", "to": "exit_transport"}},
+      "source": "ejemplo de formato (sin ejecuciones detrás)",
+      "evidence_n": 0
+    }
+  ]
+}

@@ -1,9 +1,27 @@
-node_modules/
-dist/
+# entornos, cachés y ficheros locales
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
 .env
 .env.*
 !.env.example
+
+# datos que no se versionan
+motor/server/contacts.local.json
+motor/harness/runs/
+
+# casos regenerables con semilla (ver motor/cases/README.md):
+#   python3 -m motor.cases generate --n 3000 --seed 1 --split train   --out motor/cases/data/train.jsonl
+#   python3 -m motor.cases generate --n 1000 --seed 1 --split heldout --out motor/cases/data/heldout.jsonl
+motor/cases/data/train.jsonl
+motor/cases/data/heldout.jsonl
+
+# páginas en bruto de la documentación de HappyRobot (van tras código de acceso): solo se sube el resumen
+
+# puente Node
+node_modules/
+dist/
 *.log
-.DS_Store
 .turbo
 coverage/

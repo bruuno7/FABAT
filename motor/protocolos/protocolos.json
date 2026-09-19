@@ -1,0 +1,6386 @@
+{
+ "version": 1,
+ "disclaimer": {
+  "es": "AVISO: instrucciones de apoyo para una SIMULACIÓN de hackathon. No sustituyen al 112 ni a la formación en primeros auxilios. En un despliegue real las valida y firma la dirección sanitaria del evento.",
+  "en": "NOTICE: support instructions for a hackathon SIMULATION. They do not replace the emergency number 112 or first-aid training. In a real deployment they must be validated and signed off by the event's medical director."
+ },
+ "global": {
+  "opening": {
+   "es": "Centro de control del festival. ¿Qué pasa y dónde estás?",
+   "en": "Festival control centre. What is happening and where are you?"
+  },
+  "location_questions": [
+   {
+    "id": "zone_and_landmark",
+    "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+    "en": "Where exactly are you? Tell me the area and something you can see nearby."
+   },
+   {
+    "id": "landmark_menu",
+    "es": "¿Qué tienes cerca: una barra, una torre, una puerta, los baños?",
+    "en": "What is near you: a bar, a tower, a gate, the toilets?"
+   },
+   {
+    "id": "stage_or_exit",
+    "es": "¿Estás más cerca del escenario o de la salida?",
+    "en": "Are you nearer the stage or the exit?"
+   },
+   {
+    "id": "share_location",
+    "es": "¿Puedes compartir tu ubicación desde el móvil?",
+    "en": "Can you share your location from your phone?"
+   },
+   {
+    "id": "staff_nearby",
+    "es": "¿Hay alguien con chaleco cerca de ti?",
+    "en": "Is there someone in a staff vest near you?"
+   }
+  ],
+  "never_say": [
+   {
+    "es": "«Cálmate» / «tranquilízate»",
+    "why": "No calma a nadie y suena a reproche. En su lugar: decir qué se está haciendo («ya va un equipo») y dar una tarea concreta. (Northstars del proyecto; SAMUR pide calma al que ayuda, no se la ordena a la víctima.)"
+   },
+   {
+    "es": "«Llegan en X minutos»",
+    "why": "No se prometen tiempos (NS-05): el agente no controla el recorrido. Se dice «ya va un equipo hacia ahí»."
+   },
+   {
+    "es": "«Es un infarto / un golpe de calor / está borracho / es un ataque de ansiedad»",
+    "why": "El agente no diagnostica ni clasifica pacientes (SAMUR, «Qué NO hacer»: intentar hacer diagnósticos médicos; dictamen, Anexo D)."
+   },
+   {
+    "es": "«No parece grave» / «seguro que no es nada»",
+    "why": "Minimizar retrasa la ayuda y no es una valoración que le corresponda. Todo aviso se reenvía (NS-08)."
+   },
+   {
+    "es": "«Antes de enviar a nadie necesito que me digas…»",
+    "why": "Nunca se retrasa el envío por seguir preguntando: en el 112 «durante la llamada, la ayuda está en camino» (The Conversation, 112/061)."
+   },
+   {
+    "es": "«Entendido: agresión sexual en los aseos, ¿correcto?» (repetir o confirmar contenido sensible)",
+    "why": "NS-25: no se repite el hecho, no se pide confirmación, no se piden detalles. La taxonomía lo prohíbe (`echo report_content`)."
+   },
+   {
+    "es": "«¿Por qué no te fuiste?» / «¿habías bebido?» / «¿qué llevabas puesto?» / «¿seguro que fue así?»",
+    "why": "Juzga y culpa. Igualdad: «escucha activa, sin juicios» y «reconocer en todo momento la credibilidad de su relato»."
+   },
+   {
+    "es": "«Tienes que denunciar» / «voy a llamar a la policía»",
+    "why": "Igualdad: «no presionarla en ningún momento… respetar sus tiempos y sus elecciones». Policía solo con consentimiento (adulta) y aprobación humana."
+   },
+   {
+    "es": "«No te enfrentes» dicho a una víctima de violencia sexual",
+    "why": "Anexo C: es culparla. La instrucción `aggression` solo vale para peleas."
+   },
+   {
+    "es": "«Avisa a los de alrededor» / «corred» / «salid todos»",
+    "why": "Siembra la carrera (`rumor_panic`). Anexo C; Cruz Roja: «evita toda acción que pueda llevar a cundir el pánico»; Protección Civil: no correr, no gritar, no empujar."
+   },
+   {
+    "es": "Las palabras «bomba», «atentado», «estampida», «pánico» o «evacuación» dichas por el agente al público",
+    "why": "Las decide y las dice una persona con cargo, con mensaje pregrabado (HSE: «pre-agreed wording for public announcements»). Sin fuente abierta sobre vocabulario concreto: es criterio de la experta."
+   },
+   {
+    "es": "«¿Seguro que es una bomba?» / «¿no será una broma?»",
+    "why": "NS-27: no se valora la credibilidad de una amenaza; la valora la policía (gov.uk: «Police will assess the credibility of the threat»). Se anota literal y se pasa."
+   },
+   {
+    "es": "«Tu hijo está en…» / «sí, tenemos un aviso de ese niño» a quien dice ser familiar",
+    "why": "NS-26: nunca se dice dónde está un menor ni se confirma un aviso sobre él. La entrega es en persona, a tutor verificado, con dos miembros del personal."
+   },
+   {
+    "es": "Nombre o descripción de un menor, de una víctima o de un sospechoso por megafonía o canal abierto",
+    "why": "Ticket Fairy: nunca anunciar el nombre del menor; dictamen (Anexo D): lo sensible no va por la malla ni por la PA."
+   },
+   {
+    "es": "«Sujétale» / «métele algo en la boca para que no se muerda la lengua»",
+    "why": "Epilepsy Action y SAMUR: no sujetar ni meter nada en la boca."
+   },
+   {
+    "es": "«Dale agua» / «dale algo de comer» a quien está inconsciente, convulsionando, confuso o con alergia grave",
+    "why": "Riesgo de atragantamiento (SAMUR en todos esos capítulos; Epilepsy Action)."
+   },
+   {
+    "es": "«Hazle vomitar» / «dale un café» / «métele en la ducha fría»",
+    "why": "NHS (alcohol poisoning): no provocar el vómito, no cafeína, no agua fría."
+   },
+   {
+    "es": "«Sácale lo que tiene clavado» / «hazle un torniquete con el cinturón»",
+    "why": "St John: no extraer objetos. ERC 2021: torniquete fabricado y, si es improvisado, solo con formación; el público hace presión directa."
+   },
+   {
+    "es": "«Ponle un collarín» / «muévela a un sitio mejor»",
+    "why": "ERC 2021: el collarín no se recomienda en primeros auxilios; no se mueve salvo peligro (Cruz Roja)."
+   },
+   {
+    "es": "«Cierra la puerta» / «entrad por la otra puerta» / cualquier orden de flujo al público",
+    "why": "Regla dura de Mando: no se cierra una puerta con presión detrás; los desvíos los decide control tras el ensayo en el gemelo."
+   },
+   {
+    "es": "Cualquier consejo médico, dosis o medicamento que no esté en `instructions`",
+    "why": "Solo texto aprobado, literal y pretraducido (NS-17 corregida: nada de traducción en caliente)."
+   }
+  ],
+  "stop_rules": [
+   "ENVÍO ANTES QUE PREGUNTAS: en cuanto estén rellenos los slots de `dispatch_as_soon_as`, se envía el aviso a Mando; el resto de preguntas se hacen con la ayuda ya en camino.",
+   "BANDERA ROJA = PARAR: si se cumple una `red_flag` con `dispatch_now`, se envía, se da SU instrucción y ya no se hacen preguntas no críticas (`critical: false`).",
+   "LAS BANDERAS SE EVALÚAN EN ORDEN y gana la primera que se cumple: las más graves y específicas van primero en la lista.",
+   "«NO SÉ» ES EL PEOR CASO: un slot `bool` admite true, false o \"unknown\"; en un slot crítico, \"unknown\" se trata como la respuesta peligrosa y no se insiste más de una vez (ERC 2021 acepta el sobretriaje).",
+   "NO SE PREGUNTA LO YA DICHO: antes de preguntar, se rellenan los slots con lo que la persona contó en su primer mensaje.",
+   "MÁXIMO 5 PREGUNTAS por aviso y cada pregunta se repite como mucho una vez; si sigue sin respuesta, se envía con lo que hay y el slot queda en \"unknown\".",
+   "QUIEN AVISA PRIMERO: si quien avisa está en peligro (atrapado, con humo, junto a una pelea o a un objeto sospechoso), primero su instrucción de autoprotección y después las preguntas.",
+   "MANOS OCUPADAS: si la persona está haciendo compresiones o apretando una herida, se acabaron las preguntas; solo ánimo, conteo y «sigue, ya van».",
+   "UNA INSTRUCCIÓN CADA VEZ, con el texto literal de `instructions` en el idioma de la persona (es o en). Nunca texto generado ni traducido en caliente. Si habla otro idioma, se usa el inglés.",
+   "PROTOCOLOS SENSIBLES (`sensitive: true`): solo las preguntas `critical`, sin pedir relato ni descripción, sin repetir lo contado, tono neutro, frase de `reserved_handling` y paso inmediato a una persona.",
+   "CAMBIO DE ESTADO: si la persona dice que ha cambiado algo («ya no respira», «ha empezado a convulsionar», «ahora hay humo»), se vuelve a los slots críticos o se cambia de protocolo (`switch_to`) conservando los slots con el mismo id.",
+   "SILENCIO: si con un riesgo vital abierto la persona deja de contestar 60 segundos, se envía lo que haya y se le manda por texto la instrucción que corresponda (el umbral de 60 s es criterio propio).",
+   "CIERRE: se termina diciendo qué se ha hecho («tu aviso está en control y ya va un equipo») y cómo volver a avisar; nunca un tiempo de llegada.",
+   "NUNCA SE DESCARTA: un aviso que parece broma o duplicado se reenvía igual marcado como tal; filtrar es cosa de Mando y de las personas.",
+   "DESEMPATE DE DISPARADORES: si el texto encaja con varios protocolos, gana el que aparece antes en `protocols` (van ordenados de más a menos crítico); `unknown` es siempre el último recurso."
+  ],
+  "reserved_handling": {
+   "es": "Gracias por avisar. No hace falta que me cuentes nada más. Te paso ahora con una persona del equipo.",
+   "en": "Thank you for telling us. You do not need to tell me anything more. I am putting you through to a person on the team now."
+  },
+  "reserved_rules": [
+   "En pantalla compartida solo «Incidente reservado» y el destinatario (p. ej. punto violeta): sin zona, sin texto, sin tipo.",
+   "Nunca megafonía. Nunca radio en abierto: de persona a persona, por teléfono o mensaje directo.",
+   "Policía y cualquier servicio externo: solo con aprobación humana; en violencia sexual y sumisión química con víctima adulta, además con su consentimiento (salvo menor, agresor presente o riesgo).",
+   "No se repite al informante lo que ha contado, no se pide confirmación por repetición, no se pide relato ni descripción del agresor.",
+   "El agente no valora credibilidad, no promete resultados y no informa a terceros (ni a quien dice ser familiar)."
+  ],
+  "external_report_template": {
+   "scheme": "ETHANE (METHANE si una persona con cargo declara incidente mayor)",
+   "source": "https://www.jesip.org.uk/wp-content/uploads/2022/03/Posters_METHANE_OCT2021.pdf",
+   "fields": [
+    {
+     "letter": "M",
+     "es": "¿Se ha declarado incidente mayor? Sí/No, con fecha y hora. (Solo lo declara una persona con cargo; el agente lo deja en blanco. Si es No, el parte es ETHANE.)",
+     "from_slots": []
+    },
+    {
+     "letter": "E",
+     "es": "¿Cuál es la ubicación exacta? Lo más precisa posible y en un sistema que entiendan todos: zona del recinto, punto de referencia y puerta más cercana",
+     "from_slots": [
+      "location_point",
+      "last_seen"
+     ]
+    },
+    {
+     "letter": "T",
+     "es": "¿Qué tipo de incidente es? En hechos y sin diagnóstico («persona que no responde y no respira normal»)",
+     "from_slots": [
+      "what",
+      "kind",
+      "cause",
+      "mechanism",
+      "what_seen",
+      "state"
+     ]
+    },
+    {
+     "letter": "H",
+     "es": "¿Qué peligros hay o puede haber? Multitud densa, humo, estructura, arma, tormenta",
+     "from_slots": [
+      "pressure",
+      "trend",
+      "hazard",
+      "weapon",
+      "near_kitchen_gas",
+      "people_under"
+     ]
+    },
+    {
+     "letter": "A",
+     "es": "¿Cuáles son las mejores rutas de entrada Y de salida, y el punto de encuentro? (Lo pone Mando desde el plano, no quien avisa.)",
+     "from_slots": []
+    },
+    {
+     "letter": "N",
+     "es": "¿Cuántas víctimas hay y en qué estado? En hechos: responde / respira / sangra mucho (la clasificación P1-P3 la hace un sanitario, no el agente)",
+     "from_slots": [
+      "people_count",
+      "responsive",
+      "breathing_normal",
+      "bleeding_heavy",
+      "people_down"
+     ]
+    },
+    {
+     "letter": "E",
+     "es": "¿Qué servicios de emergencia hay ya en el lugar y cuáles y cuántos hacen falta? Equipo sanitario del evento, DESA, seguridad; ambulancia, bomberos, policía",
+     "from_slots": []
+    }
+   ],
+   "warn": "JESIP es doctrina británica; en España cada 112 autonómico tiene su propio formulario. Se usa como plantilla ordenada del parte, que SIEMPRE aprueba una persona. Las preguntas son traducción propia del póster oficial de JESIP; los ejemplos de recinto y el reparto de qué slot alimenta cada letra son míos."
+  },
+  "context_notes": [
+   "Triaje START (solo contexto, el agente NO clasifica pacientes): valora por este orden si camina, si respira por sí misma, la frecuencia respiratoria, la perfusión (pulso radial o relleno capilar < 2 s) y si obedece órdenes; categorías inmediato (rojo), demorado (amarillo), leve (verde) y expectante (negro). Sirve para entender por qué «no responde / no respira» va delante de todo cuando hay varias víctimas. El umbral clásico de 30 respiraciones/min no aparecía en la página abierta: sin verificar. Fuente: https://chemm.hhs.gov/incident-primer/triage/start-triage",
+   "Densidad de multitudes (G. Keith Still): 2 p/m² es el límite habitual de planificación de eventos, 4 p/m² en colas en movimiento, 4,7 p/m² en gradas de pie (Green Guide) y 5 p/m² el tope para zonas de pie. Fuente: https://www.gkstill.com/Support/crowd-density/CrowdDensity-1.html"
+  ],
+  "conventions": {
+   "bool_values": [
+    true,
+    false,
+    "unknown"
+   ],
+   "condition_forms": "valor exacto · lista = cualquiera de · {\"gte\": n} / {\"lte\": n} para `number`; todas las claves de un `if` o `ask_if` deben cumplirse (Y lógico)",
+   "optional_fields": "`warn` (extrapolación a validar), `status` y `sources_extra` en instrucciones, `switch_to` y `mando_type_hint` dentro de `then`, `hint_warn` en el protocolo, `requires_consent` en `handoff.external`",
+   "need_kinds": [
+    "medical",
+    "ambulance",
+    "security",
+    "volunteer",
+    "logistics",
+    "tech"
+   ],
+   "notify_roles": [
+    "medical_lead",
+    "security_lead",
+    "violet_point",
+    "coordinator",
+    "gates",
+    "production",
+    "stage_manager",
+    "health_authority",
+    "all_leads"
+   ],
+   "external_kinds": [
+    "112",
+    "ambulance",
+    "fire",
+    "police",
+    "transport"
+   ]
+  }
+ },
+ "protocols": [
+  {
+   "id": "unresponsive_person",
+   "family": "medical",
+   "label": {
+    "es": "Persona que no responde",
+    "en": "Person not responding"
+   },
+   "triggers": {
+    "es": [
+     "no responde",
+     "inconsciente",
+     "desmayad",
+     "no se mueve",
+     "no respira",
+     "desplomad",
+     "no reacciona",
+     "tirado en el suelo",
+     "tirada en el suelo",
+     "parada",
+     "infarto",
+     "no despierta"
+    ],
+    "en": [
+     "unconscious",
+     "collapsed",
+     "not breathing",
+     "not moving",
+     "unresponsive",
+     "passed out",
+     "won't wake",
+     "cardiac",
+     "heart attack"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Responde si le hablas fuerte y le tocas el hombro?",
+      "en": "Do they respond if you speak loudly and tap their shoulder?"
+     },
+     "why": "reconocer parada: primera de las dos preguntas de la RCP telefónica (ERC 2021, SJA, MCW)"
+    },
+    {
+     "id": "breathing_normal",
+     "critical": true,
+     "type": "bool",
+     "ask_if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "question": {
+      "es": "¿Respira con normalidad? Mírale el pecho diez segundos.",
+      "en": "Are they breathing normally? Watch their chest for ten seconds."
+     },
+     "why": "reconocer parada: segunda pregunta; no responde + no respira normal = RCP (ERC 2021)"
+    },
+    {
+     "id": "breathing_description",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "normal",
+      "gasping_or_noisy",
+      "none",
+      "unknown"
+     ],
+     "ask_if": {
+      "responsive": [
+       false,
+       "unknown"
+      ],
+      "breathing_normal": "unknown"
+     },
+     "question": {
+      "es": "¿Cómo es su respiración: normal, a boqueadas o con ronquidos, o no respira?",
+      "en": "How is their breathing: normal, gasping or snoring, or not breathing?"
+     },
+     "why": "la respiración agónica (boqueadas, ronquidos, gemidos) se confunde con estar vivo y es parada (ERC 2021; guion MCW paso 3)"
+    },
+    {
+     "id": "helper_available",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien contigo que pueda ir a por un desfibrilador?",
+      "en": "Is someone with you who can go and fetch a defibrillator?"
+     },
+     "why": "quien hace compresiones no debe dejarlas; otro trae el DESA (ERC 2021, Anexo C)"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ],
+      "breathing_normal": false
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "cpr_hands_only",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ],
+      "breathing_description": [
+       "gasping_or_noisy",
+       "none",
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "cpr_hands_only",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ],
+      "breathing_normal": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "unconscious_breathing",
+      "dispatch_now": true
+     },
+     "warn": "severity_min 8 es criterio propio: inconsciente que respira sigue siendo urgencia vital (vía aérea)."
+    },
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "not_responding",
+      "dispatch_now": true
+     },
+     "warn": "«No sé» en un slot vital se trata como el peor caso: ERC acepta el sobretriaje («will moderately overtriage»)."
+    },
+    {
+     "if": {
+      "responsive": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "stay_with_person",
+      "dispatch_now": true
+     },
+     "warn": "Persona que sí responde (mareo, dolor en el pecho, desmayo recuperado): se envía sanitario igualmente; severidad 6 es criterio propio."
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "not_responding",
+     "steps": {
+      "es": [
+       "Quédate con la persona.",
+       "Que otro vaya a por el personal con chaleco y pida un desfibrilador.",
+       "Si no respira normal: aprieta fuerte y rápido en el centro del pecho, sin parar."
+      ],
+      "en": [
+       "Stay with the person.",
+       "Send someone else to fetch staff in a vest and ask for a defibrillator.",
+       "If they are not breathing normally: push hard and fast on the centre of the chest, without stopping."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "cpr_hands_only",
+     "steps": {
+      "es": [
+       "Pon el móvil en altavoz y déjalo junto a la persona.",
+       "Ponla boca arriba en el suelo y arrodíllate a su lado.",
+       "Pon el talón de una mano en el centro del pecho y la otra mano encima.",
+       "Con los brazos rectos, aprieta fuerte y rápido, sin parar.",
+       "Hunde el pecho unos 5 centímetros, unas dos veces por segundo. Cuenta en voz alta.",
+       "Deja que el pecho suba del todo después de cada compresión.",
+       "Si te cansas, que otra persona te releve sin parar.",
+       "Sigue hasta que el equipo sanitario te releve."
+      ],
+      "en": [
+       "Put your phone on speaker and leave it next to the person.",
+       "Lay them flat on their back on the ground and kneel by their side.",
+       "Put the heel of one hand on the centre of the chest and your other hand on top.",
+       "With your arms straight, push hard and fast, without stopping.",
+       "Push the chest down about 5 centimetres, about twice a second. Count out loud.",
+       "Let the chest come all the way up after each push.",
+       "If you get tired, have someone else take over without stopping.",
+       "Keep going until the medical team takes over."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+      "https://www.sja.org.uk/first-aid-advice/cpr/"
+     ],
+     "warn": "Traducción y simplificación propias de ERC 2021 (centro del pecho, 5-6 cm, 100-120/min, reexpansión completa, altavoz) y del guion de RCP telefónica de MCW. «Unos 5 cm» y «dos veces por segundo» son redondeos míos de 5-6 cm y 100-120/min."
+    },
+    {
+     "id": "aed_arrives",
+     "steps": {
+      "es": [
+       "Cuando llegue el desfibrilador, enciéndelo y haz lo que diga.",
+       "Pega los parches en el pecho desnudo, como indica el dibujo.",
+       "Que nadie toque a la persona mientras analiza o da la descarga.",
+       "Después, sigue con las compresiones enseguida."
+      ],
+      "en": [
+       "When the defibrillator arrives, switch it on and do what it says.",
+       "Stick the pads on the bare chest as shown in the picture.",
+       "Nobody touches the person while it analyses or gives the shock.",
+       "Then go straight back to chest compressions."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "pendiente_validacion",
+     "warn": "Traducción resumida propia de la sección «When and how to use an AED» de ERC 2021."
+    },
+    {
+     "id": "unconscious_breathing",
+     "steps": {
+      "es": [
+       "Si respira, ponla de lado.",
+       "No la dejes sola.",
+       "Vigila que siga respirando."
+      ],
+      "en": [
+       "If they are breathing, roll them onto their side.",
+       "Do not leave them alone.",
+       "Keep checking that they are still breathing."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www2.cruzroja.es/web/ahora/-/que-es-la-posicion-lateral-de-seguridad-y-cuando-se-utiliza",
+      "https://www.sja.org.uk/first-aid-advice/recovery-position/"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "recovery_position_steps",
+     "steps": {
+      "es": [
+       "Arrodíllate a su lado y estírale las piernas.",
+       "El brazo más cercano a ti, en ángulo recto con la palma hacia arriba.",
+       "El otro brazo cruzado sobre el pecho, con el dorso de la mano contra su mejilla.",
+       "Dobla la rodilla más alejada y tira de ella para girar a la persona hacia ti.",
+       "Échale la cabeza un poco hacia atrás para que respire bien.",
+       "Si se ha dado un golpe fuerte en la cabeza o el cuello, no la muevas salvo que vomite o no respire bien."
+      ],
+      "en": [
+       "Kneel beside them and straighten their legs.",
+       "Put the arm nearest you at a right angle, palm up.",
+       "Bring the other arm across the chest, back of the hand against their cheek.",
+       "Bend the far knee and pull on it to roll the person towards you.",
+       "Tilt the head back slightly so they can breathe.",
+       "If they took a hard blow to the head or neck, do not move them unless they vomit or cannot breathe well."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www2.cruzroja.es/web/ahora/-/que-es-la-posicion-lateral-de-seguridad-y-cuando-se-utiliza",
+      "https://www.sja.org.uk/first-aid-advice/recovery-position/"
+     ],
+     "warn": "Pasos 1-5: traducción resumida de ERC 2021 Primeros auxilios. Paso 6: síntesis propia de Cruz Roja («no conviene moverla si se sospecha de lesiones graves en la columna…») y de St John (si no mantiene la vía aérea, se coloca igualmente)."
+    },
+    {
+     "id": "stay_with_person",
+     "steps": {
+      "es": [
+       "Quédate con la persona hasta que llegue el equipo.",
+       "Si deja de responder o de respirar bien, dímelo enseguida."
+      ],
+      "en": [
+       "Stay with the person until the team arrives.",
+       "If they stop responding or breathing well, tell me at once."
+      ]
+     },
+     "source": "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+     "status": "pendiente_validacion",
+     "warn": "Redacción propia; SAMUR solo dice «nunca deje sola a la víctima» y avisar de los cambios."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "ambulance",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "cardiac_arrest",
+   "sources": [
+    "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+    "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+    "https://www.sja.org.uk/first-aid-advice/cpr/",
+    "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+    "https://theconversation.com/112-y-061-asi-funcionan-los-telefonos-de-emergencias-sanitarias-243736"
+   ]
+  },
+  {
+   "id": "breathing_choking",
+   "family": "medical",
+   "label": {
+    "es": "Dificultad para respirar o atragantamiento",
+    "en": "Breathing difficulty or choking"
+   },
+   "triggers": {
+    "es": [
+     "atragant",
+     "se ahoga",
+     "se está ahogando",
+     "no puede respirar",
+     "le cuesta respirar",
+     "se asfixia",
+     "asma",
+     "no le entra el aire"
+    ],
+    "en": [
+     "choking",
+     "can't breathe",
+     "cannot breathe",
+     "struggling to breathe",
+     "asthma",
+     "suffocating",
+     "short of breath"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "can_speak_cough",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Puede hablar o toser?",
+      "en": "Can they speak or cough?"
+     },
+     "why": "separa obstrucción leve de grave (ERC 2021; guion MCW: «Are they able to cough or able to speak?»)"
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Está despierta y te responde?",
+      "en": "Are they awake and answering you?"
+     },
+     "why": "si no responde se pasa al protocolo de persona que no responde"
+    },
+    {
+     "id": "cause",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "eating",
+      "sting_or_allergy",
+      "asthma",
+      "crushed_in_crowd",
+      "smoke",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Qué pasó justo antes: comía, le picó algo, tiene asma?",
+      "en": "What happened just before: eating, a sting, do they have asthma?"
+     },
+     "why": "orienta la instrucción sin diagnosticar"
+    },
+    {
+     "id": "has_inhaler",
+     "critical": false,
+     "type": "bool",
+     "ask_if": {
+      "cause": "asthma"
+     },
+     "question": {
+      "es": "¿Lleva su inhalador encima?",
+      "en": "Do they have their inhaler with them?"
+     },
+     "why": "ERC 2021: ayudar con su propio broncodilatador"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "switch_to": "unresponsive_person",
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "cpr_hands_only",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "can_speak_cough": false,
+      "cause": "eating"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "choking_back_blows",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "cause": "crushed_in_crowd"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true,
+      "mando_type_hint": "crowd_surge_general"
+     }
+    },
+    {
+     "if": {
+      "cause": "smoke"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "fire_or_structure",
+      "dispatch_now": true,
+      "mando_type_hint": "small_fire"
+     }
+    },
+    {
+     "if": {
+      "cause": "sting_or_allergy"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "allergy_wait",
+      "dispatch_now": true,
+      "mando_type_hint": "anaphylaxis"
+     }
+    },
+    {
+     "if": {
+      "can_speak_cough": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "breathing_sit_up",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "can_speak_cough": true,
+      "cause": "eating"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "choking_cough",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "can_speak_cough": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "breathing_sit_up",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "breathing_sit_up",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "choking_cough",
+     "steps": {
+      "es": [
+       "Anímale a toser fuerte.",
+       "No le des golpes en la espalda mientras pueda toser.",
+       "Si deja de poder toser o hablar, dímelo enseguida."
+      ],
+      "en": [
+       "Encourage them to cough hard.",
+       "Do not hit their back while they can still cough.",
+       "If they can no longer cough or speak, tell me right away."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf"
+     ],
+     "warn": "ERC dice «Encourage the victim to cough» y reserva golpes y compresiones para la tos ineficaz; el paso 2 es mi redacción en negativo de esa regla."
+    },
+    {
+     "id": "choking_back_blows",
+     "steps": {
+      "es": [
+       "Ponte a su lado e inclínala hacia delante.",
+       "Dale hasta 5 golpes fuertes entre los omóplatos con el talón de la mano.",
+       "Si no sale: ponte detrás, rodéale la cintura y pon el puño entre el ombligo y las costillas.",
+       "Agarra el puño con la otra mano y tira fuerte hacia dentro y hacia arriba, hasta 5 veces.",
+       "Alterna 5 golpes y 5 compresiones hasta que lo expulse.",
+       "Si deja de responder, túmbala en el suelo y dímelo: te guío con las compresiones en el pecho."
+      ],
+      "en": [
+       "Stand to their side and lean them forwards.",
+       "Give up to 5 sharp blows between the shoulder blades with the heel of your hand.",
+       "If it does not come out: stand behind them, put your arms round their waist and place your fist between the navel and the ribs.",
+       "Grasp your fist with the other hand and pull sharply inwards and upwards, up to 5 times.",
+       "Alternate 5 back blows and 5 abdominal thrusts until it comes out.",
+       "If they stop responding, lay them on the ground and tell me: I will guide you through chest compressions."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.sja.org.uk/first-aid-advice/choking/"
+     ],
+     "warn": "Traducción propia, casi literal, de la sección «Foreign body airway obstruction» de ERC 2021."
+    },
+    {
+     "id": "breathing_sit_up",
+     "steps": {
+      "es": [
+       "Que se siente, un poco inclinada hacia delante, y aflójale la ropa del cuello.",
+       "Si tiene su inhalador, ayúdale a usarlo.",
+       "No la dejes sola. Si deja de responder, dímelo."
+      ],
+      "en": [
+       "Have them sit up, leaning slightly forwards, and loosen clothing round the neck.",
+       "If they have their own inhaler, help them use it.",
+       "Do not leave them alone. If they stop responding, tell me."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "ERC 2021: «Assist individuals with asthma who are experiencing difficulty in breathing with their bronchodilator administration». SAMUR: posición semisentada y aflojar ropa. «Inclinada hacia delante» es añadido mío."
+    },
+    {
+     "id": "cpr_hands_only",
+     "steps": {
+      "es": [
+       "Pon el móvil en altavoz y déjalo junto a la persona.",
+       "Ponla boca arriba en el suelo y arrodíllate a su lado.",
+       "Pon el talón de una mano en el centro del pecho y la otra mano encima.",
+       "Con los brazos rectos, aprieta fuerte y rápido, sin parar.",
+       "Hunde el pecho unos 5 centímetros, unas dos veces por segundo. Cuenta en voz alta.",
+       "Deja que el pecho suba del todo después de cada compresión.",
+       "Si te cansas, que otra persona te releve sin parar.",
+       "Sigue hasta que el equipo sanitario te releve."
+      ],
+      "en": [
+       "Put your phone on speaker and leave it next to the person.",
+       "Lay them flat on their back on the ground and kneel by their side.",
+       "Put the heel of one hand on the centre of the chest and your other hand on top.",
+       "With your arms straight, push hard and fast, without stopping.",
+       "Push the chest down about 5 centimetres, about twice a second. Count out loud.",
+       "Let the chest come all the way up after each push.",
+       "If you get tired, have someone else take over without stopping.",
+       "Keep going until the medical team takes over."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+      "https://www.sja.org.uk/first-aid-advice/cpr/"
+     ],
+     "warn": "Traducción y simplificación propias de ERC 2021 (centro del pecho, 5-6 cm, 100-120/min, reexpansión completa, altavoz) y del guion de RCP telefónica de MCW. «Unos 5 cm» y «dos veces por segundo» son redondeos míos de 5-6 cm y 100-120/min."
+    },
+    {
+     "id": "allergy_wait",
+     "steps": {
+      "es": [
+       "Que se tumbe. Si le cuesta respirar, que se quede sentada.",
+       "Que no se ponga de pie ni camine, aunque se encuentre mejor.",
+       "No le des de comer ni de beber.",
+       "No la dejes sola. Si deja de responder, dímelo."
+      ],
+      "en": [
+       "Have them lie down. If breathing is hard, let them stay sitting up.",
+       "They must not stand or walk, even if they feel better.",
+       "No food or drink.",
+       "Do not leave them alone. If they stop responding, tell me."
+      ]
+     },
+     "source": "https://www.nhs.uk/conditions/anaphylaxis/",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "Traducción resumida propia de NHS (Anaphylaxis) y SAMUR (Reacciones alérgicas)."
+    },
+    {
+     "id": "crowd_pressure",
+     "steps": {
+      "es": [
+       "No empujes.",
+       "Brazos delante del pecho.",
+       "No te agaches.",
+       "Sal en diagonal hacia los lados cuando afloje."
+      ],
+      "en": [
+       "Do not push.",
+       "Keep your arms in front of your chest.",
+       "Do not bend down.",
+       "Work your way out diagonally to the side when the pressure eases."
+      ]
+     },
+     "source": "https://www.cdc.gov/yellow-book/hcp/travel-for-work-other/mass-gatherings.html",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.kqed.org/news/11930646/8-tips-to-follow-if-youre-trapped-in-a-crushing-crowd",
+      "https://time.com/6226680/how-to-survive-crowd-crush-south-korea/"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "fire_or_structure",
+     "steps": {
+      "es": [
+       "Aléjate de ahí andando, sin correr, y no vuelvas.",
+       "Avisa al personal con chaleco."
+      ],
+      "en": [
+       "Walk away from there, without running, and do not go back.",
+       "Tell staff in a vest."
+      ]
+     },
+     "source": "https://112.jcyl.es/web/es/consejos-recomendaciones/lugares-publicos.html",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/mes_consells_dautoproteccio/grans_concentracions_persones/index.html"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "ambulance",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "anaphylaxis",
+   "hint_warn": "La taxonomía de Mando no tiene tipo «atragantamiento»: se usa `anaphylaxis` como perfil operativo más cercano (vía aérea, sanitario + ambulancia, 6-8 min).",
+   "sources": [
+    "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+    "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+    "https://www.sja.org.uk/first-aid-advice/choking/",
+    "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+   ]
+  },
+  {
+   "id": "severe_bleeding",
+   "family": "medical",
+   "label": {
+    "es": "Hemorragia o herida grave",
+    "en": "Severe bleeding or serious wound"
+   },
+   "triggers": {
+    "es": [
+     "sangr",
+     "hemorragia",
+     "herida",
+     "corte profundo",
+     "se ha cortado",
+     "cristal",
+     "apuñal",
+     "navaj"
+    ],
+    "en": [
+     "bleeding",
+     "blood",
+     "wound",
+     "deep cut",
+     "got cut",
+     "cut himself",
+     "cut herself",
+     "stabbed",
+     "broken glass"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "bleeding_heavy",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Sangra mucho: a chorro o empapando la ropa?",
+      "en": "Is it bleeding a lot: spurting or soaking through clothes?"
+     },
+     "why": "hemorragia que amenaza la vida: presión directa inmediata (ERC 2021)",
+     "warn": "«A chorro o empapando la ropa» es mi forma de describir «severe, life-threatening bleeding»; la fuente no da umbral."
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Está despierta y te responde?",
+      "en": "Are they awake and answering you?"
+     },
+     "why": "si no responde se pasa al protocolo de persona que no responde"
+    },
+    {
+     "id": "object_embedded",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Tiene algo clavado en la herida?",
+      "en": "Is something stuck in the wound?"
+     },
+     "why": "no se extrae; se presiona a los lados (St John Ambulance)"
+    },
+    {
+     "id": "cause",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "fall",
+      "glass_or_cut",
+      "weapon_or_assault",
+      "crush",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Cómo se ha hecho la herida?",
+      "en": "How did the wound happen?"
+     },
+     "why": "si fue una agresión o un arma, seguridad va con el sanitario"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "bleeding",
+      "dispatch_now": true,
+      "switch_to": "unresponsive_person"
+     }
+    },
+    {
+     "if": {
+      "cause": "weapon_or_assault"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "security": 2,
+       "ambulance": 1
+      },
+      "instruction": "bleeding",
+      "dispatch_now": true,
+      "mando_type_hint": "weapon_seen"
+     },
+     "warn": "Pasa a tratamiento reservado (sin megafonía, policía con aprobación) aunque el protocolo no sea `sensitive`."
+    },
+    {
+     "if": {
+      "bleeding_heavy": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "bleeding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "object_embedded": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "bleeding_object",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "bleeding_heavy": false
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 4,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "bleeding",
+      "dispatch_now": false
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "bleeding",
+     "steps": {
+      "es": [
+       "Aprieta fuerte sobre la herida con una prenda.",
+       "No sueltes."
+      ],
+      "en": [
+       "Press hard on the wound with a piece of clothing.",
+       "Do not let go."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "bleeding_detail",
+     "steps": {
+      "es": [
+       "Siéntala o túmbala.",
+       "Si la prenda se empapa, pon otra encima sin quitar la primera y aprieta más fuerte.",
+       "No le des de comer ni de beber.",
+       "Si se marea, túmbala y súbele las piernas."
+      ],
+      "en": [
+       "Sit or lay them down.",
+       "If the cloth soaks through, put another on top without removing the first and press harder.",
+       "No food or drink.",
+       "If they feel faint, lay them down and raise their legs."
+      ]
+     },
+     "source": "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+      "https://www.sja.org.uk/first-aid-advice/severe-bleeding/"
+     ],
+     "warn": "Traducción resumida propia de SAMUR, capítulo Hemorragias. OJO: St John Ambulance dice lo contrario en el paso 2 (retirar el apósito empapado y poner uno nuevo); SAMUR y el guion telefónico de MCW dicen no retirar. Se sigue a SAMUR. El torniquete NO se indica al público (ERC: fabricado y con formación)."
+    },
+    {
+     "id": "bleeding_object",
+     "steps": {
+      "es": [
+       "No saques lo que tenga clavado.",
+       "Aprieta a los dos lados del objeto, juntando los bordes de la herida."
+      ],
+      "en": [
+       "Do not pull out anything stuck in the wound.",
+       "Press on either side of the object, pushing the edges of the wound together."
+      ]
+     },
+     "source": "https://www.sja.org.uk/first-aid-advice/severe-bleeding/",
+     "status": "pendiente_validacion",
+     "warn": "Traducción propia de St John Ambulance."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "ambulance",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "trauma_fall",
+   "hint_warn": "La taxonomía no tiene tipo «hemorragia»: se usa `trauma_fall` con severity_min 9 si sangra mucho; si no, `minor_injury` es razonable.",
+   "sources": [
+    "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+    "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+    "https://www.sja.org.uk/first-aid-advice/severe-bleeding/"
+   ]
+  },
+  {
+   "id": "allergic_reaction",
+   "family": "medical",
+   "label": {
+    "es": "Reacción alérgica grave",
+    "en": "Severe allergic reaction"
+   },
+   "triggers": {
+    "es": [
+     "alergi",
+     "alérgic",
+     "picadura",
+     "se le hincha",
+     "hinchad",
+     "anafilax",
+     "ronchas",
+     "epipen",
+     "adrenalina"
+    ],
+    "en": [
+     "allergic",
+     "allergy",
+     "anaphyla",
+     "swollen",
+     "swelling",
+     "stung",
+     "bee sting",
+     "epipen",
+     "hives"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "breathing_trouble",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Le cuesta respirar o tragar?",
+      "en": "Are they having trouble breathing or swallowing?"
+     },
+     "why": "signo de anafilaxia (NHS); Anexo C: sube a riesgo vital"
+    },
+    {
+     "id": "swelling",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Tiene hinchados los labios, la cara o la lengua?",
+      "en": "Are their lips, face or tongue swollen?"
+     },
+     "why": "signo de anafilaxia (NHS); Anexo C: «labios o cara hinchados» es riesgo vital"
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Está despierta y te responde?",
+      "en": "Are they awake and answering you?"
+     },
+     "why": "si no responde se pasa al protocolo de persona que no responde"
+    },
+    {
+     "id": "has_autoinjector",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Lleva encima su inyector de adrenalina?",
+      "en": "Do they carry their adrenaline auto-injector?"
+     },
+     "why": "NHS: usarlo es el primer paso; ERC 2021: segunda dosis a los 5 min"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "switch_to": "unresponsive_person",
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "allergy_wait",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "has_autoinjector": true,
+      "breathing_trouble": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "allergy_autoinjector",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "has_autoinjector": true,
+      "swelling": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "allergy_autoinjector",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "breathing_trouble": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "allergy_wait",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "swelling": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "allergy_wait",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "breathing_trouble": false,
+      "swelling": false
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "allergy_wait",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "allergy_wait",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "allergy_wait",
+     "steps": {
+      "es": [
+       "Que se tumbe. Si le cuesta respirar, que se quede sentada.",
+       "Que no se ponga de pie ni camine, aunque se encuentre mejor.",
+       "No le des de comer ni de beber.",
+       "No la dejes sola. Si deja de responder, dímelo."
+      ],
+      "en": [
+       "Have them lie down. If breathing is hard, let them stay sitting up.",
+       "They must not stand or walk, even if they feel better.",
+       "No food or drink.",
+       "Do not leave them alone. If they stop responding, tell me."
+      ]
+     },
+     "source": "https://www.nhs.uk/conditions/anaphylaxis/",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "Traducción resumida propia de NHS (Anaphylaxis) y SAMUR (Reacciones alérgicas)."
+    },
+    {
+     "id": "allergy_autoinjector",
+     "steps": {
+      "es": [
+       "Si lleva su inyector de adrenalina, que se lo ponga ya; ayúdale si hace falta.",
+       "Si a los 5 minutos no mejora y tiene otro, que se ponga el segundo."
+      ],
+      "en": [
+       "If they carry their adrenaline auto-injector, they should use it now; help them if needed.",
+       "If they are no better after 5 minutes and have a second one, they should use it."
+      ]
+     },
+     "source": "https://www.nhs.uk/conditions/anaphylaxis/",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf"
+     ],
+     "warn": "DECISIÓN A VALIDAR: es la única instrucción que toca medicación. Es el dispositivo propio y prescrito de la persona; NHS lo indica al público y ERC 2021 recoge la segunda dosis a los 5 min. El agente no recomienda ningún otro fármaco."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "ambulance",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "anaphylaxis",
+   "sources": [
+    "https://www.nhs.uk/conditions/anaphylaxis/",
+    "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+   ]
+  },
+  {
+   "id": "seizure",
+   "family": "medical",
+   "label": {
+    "es": "Convulsión",
+    "en": "Seizure"
+   },
+   "triggers": {
+    "es": [
+     "convuls",
+     "epilep",
+     "sacudidas",
+     "ataque epiléptico",
+     "espasmos",
+     "tiembla en el suelo",
+     "espuma por la boca"
+    ],
+    "en": [
+     "seizure",
+     "fitting",
+     "convuls",
+     "epilep",
+     "shaking on the ground",
+     "spasms"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "still_seizing",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Sigue con las sacudidas ahora mismo?",
+      "en": "Are they still jerking right now?"
+     },
+     "why": "decide la instrucción: durante la crisis no se toca; después se valora la respiración"
+    },
+    {
+     "id": "breathing_after",
+     "critical": true,
+     "type": "bool",
+     "ask_if": {
+      "still_seizing": false
+     },
+     "question": {
+      "es": "Ahora que ha parado, ¿respira con normalidad?",
+      "en": "Now that it has stopped, are they breathing normally?"
+     },
+     "why": "ERC 2021: una parada puede empezar con movimientos como de convulsión; se valora al parar"
+    },
+    {
+     "id": "over_5_min",
+     "critical": true,
+     "type": "bool",
+     "ask_if": {
+      "still_seizing": true
+     },
+     "question": {
+      "es": "¿Lleva más de cinco minutos con sacudidas?",
+      "en": "Has the jerking lasted more than five minutes?"
+     },
+     "why": "criterio de ambulancia (Epilepsy Action, SAMUR)"
+    },
+    {
+     "id": "head_hit",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Se ha golpeado la cabeza al caer?",
+      "en": "Did they hit their head when they fell?"
+     },
+     "why": "lesión asociada: criterio de ambulancia (Epilepsy Action: «seriously injured during the seizure»)"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "still_seizing": false,
+      "breathing_after": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "cpr_hands_only",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "over_5_min": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "seizure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "still_seizing": false,
+      "breathing_after": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "unconscious_breathing",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "still_seizing": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "seizure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": true,
+      "severity_min": 7,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "seizure",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "seizure",
+     "steps": {
+      "es": [
+       "No la sujetes ni le metas nada en la boca.",
+       "Aparta lo que pueda golpearla.",
+       "Cuando pare, ponla de lado."
+      ],
+      "en": [
+       "Do not hold them down or put anything in their mouth.",
+       "Move away anything that could hurt them.",
+       "When it stops, roll them onto their side."
+      ]
+     },
+     "source": "https://www.epilepsy.org.uk/info/first-aid/tonic-clonic-convulsive-seizures-first-aid",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+      "https://www.cruzroja.es/guiaprevencionNew/primeros-auxilios.html"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "seizure_extra",
+     "steps": {
+      "es": [
+       "Ponle algo blando debajo de la cabeza.",
+       "Mira la hora: importa cuánto dura.",
+       "No le des agua ni comida hasta que esté del todo despierta.",
+       "Quédate con ella hasta que llegue el equipo."
+      ],
+      "en": [
+       "Put something soft under their head.",
+       "Check the time: how long it lasts matters.",
+       "No water or food until they are fully awake.",
+       "Stay with them until the team arrives."
+      ]
+     },
+     "source": "https://www.epilepsy.org.uk/info/first-aid/tonic-clonic-convulsive-seizures-first-aid",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "Traducción resumida propia de Epilepsy Action y SAMUR."
+    },
+    {
+     "id": "unconscious_breathing",
+     "steps": {
+      "es": [
+       "Si respira, ponla de lado.",
+       "No la dejes sola.",
+       "Vigila que siga respirando."
+      ],
+      "en": [
+       "If they are breathing, roll them onto their side.",
+       "Do not leave them alone.",
+       "Keep checking that they are still breathing."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www2.cruzroja.es/web/ahora/-/que-es-la-posicion-lateral-de-seguridad-y-cuando-se-utiliza",
+      "https://www.sja.org.uk/first-aid-advice/recovery-position/"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "cpr_hands_only",
+     "steps": {
+      "es": [
+       "Pon el móvil en altavoz y déjalo junto a la persona.",
+       "Ponla boca arriba en el suelo y arrodíllate a su lado.",
+       "Pon el talón de una mano en el centro del pecho y la otra mano encima.",
+       "Con los brazos rectos, aprieta fuerte y rápido, sin parar.",
+       "Hunde el pecho unos 5 centímetros, unas dos veces por segundo. Cuenta en voz alta.",
+       "Deja que el pecho suba del todo después de cada compresión.",
+       "Si te cansas, que otra persona te releve sin parar.",
+       "Sigue hasta que el equipo sanitario te releve."
+      ],
+      "en": [
+       "Put your phone on speaker and leave it next to the person.",
+       "Lay them flat on their back on the ground and kneel by their side.",
+       "Put the heel of one hand on the centre of the chest and your other hand on top.",
+       "With your arms straight, push hard and fast, without stopping.",
+       "Push the chest down about 5 centimetres, about twice a second. Count out loud.",
+       "Let the chest come all the way up after each push.",
+       "If you get tired, have someone else take over without stopping.",
+       "Keep going until the medical team takes over."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+      "https://www.sja.org.uk/first-aid-advice/cpr/"
+     ],
+     "warn": "Traducción y simplificación propias de ERC 2021 (centro del pecho, 5-6 cm, 100-120/min, reexpansión completa, altavoz) y del guion de RCP telefónica de MCW. «Unos 5 cm» y «dos veces por segundo» son redondeos míos de 5-6 cm y 100-120/min."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "ambulance",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "seizure",
+   "sources": [
+    "https://www.epilepsy.org.uk/info/first-aid/tonic-clonic-convulsive-seizures-first-aid",
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+    "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+    "https://www.cruzroja.es/guiaprevencionNew/primeros-auxilios.html"
+   ]
+  },
+  {
+   "id": "heat_illness",
+   "family": "medical",
+   "label": {
+    "es": "Golpe de calor o desmayo por calor",
+    "en": "Heat stroke or fainting from heat"
+   },
+   "triggers": {
+    "es": [
+     "golpe de calor",
+     "calor",
+     "insolación",
+     "maread",
+     "mareo",
+     "se ha desmayado",
+     "desmayo",
+     "deshidrat",
+     "muy caliente",
+     "sofoc"
+    ],
+    "en": [
+     "heat",
+     "heatstroke",
+     "sunstroke",
+     "dizzy",
+     "fainted",
+     "faint",
+     "dehydrat",
+     "overheated"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Está despierta y te responde?",
+      "en": "Are they awake and answering you?"
+     },
+     "why": "si no responde se pasa al protocolo de persona que no responde"
+    },
+    {
+     "id": "confused",
+     "critical": true,
+     "type": "bool",
+     "ask_if": {
+      "responsive": true
+     },
+     "question": {
+      "es": "¿Está confusa, dice cosas raras o no sabe dónde está?",
+      "en": "Are they confused, talking strangely or unsure where they are?"
+     },
+     "why": "confusión, agitación o desorientación con calor = golpe de calor (ERC 2021); Anexo C: riesgo vital"
+    },
+    {
+     "id": "skin_hot",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Tiene la piel muy caliente al tocarla?",
+      "en": "Does their skin feel very hot to the touch?"
+     },
+     "why": "temperatura elevada (ERC 2021); piel caliente (NHS, SAMUR)"
+    },
+    {
+     "id": "people_count",
+     "critical": false,
+     "type": "number",
+     "question": {
+      "es": "¿Cuántas personas están así?",
+      "en": "How many people are like this?"
+     },
+     "why": "varias a la vez cambia el tipo de incidente y pide logística (agua, hielo)"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "switch_to": "unresponsive_person",
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "not_responding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "confused": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "logistics": 1
+      },
+      "instruction": "heat_cool_now",
+      "dispatch_now": true
+     },
+     "warn": "severity_min 9 y la necesidad de logística (hielo, agua) vienen del dictamen de la experta (Anexo B), no de una guía."
+    },
+    {
+     "if": {
+      "skin_hot": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1,
+       "logistics": 1
+      },
+      "instruction": "heat_cool_now",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "people_count": {
+       "gte": 2
+      }
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "medical": 2,
+       "logistics": 1
+      },
+      "instruction": "heat",
+      "dispatch_now": true,
+      "mando_type_hint": "multiple_heat_strokes"
+     }
+    },
+    {
+     "if": {
+      "responsive": true,
+      "confused": false,
+      "skin_hot": false
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 5,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "faint_lie_down",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "heat",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "heat",
+     "steps": {
+      "es": [
+       "Llévala a la sombra.",
+       "Mójale la piel y la ropa y abanícala.",
+       "Si está despierta y traga bien, agua a sorbos."
+      ],
+      "en": [
+       "Move them into the shade.",
+       "Wet their skin and clothes and fan them.",
+       "If they are awake and can swallow well, give sips of water."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.nhs.uk/conditions/heat-exhaustion-heatstroke/",
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "heat_cool_now",
+     "steps": {
+      "es": [
+       "Llévala a la sombra ya y quítale la ropa que sobre.",
+       "Échale agua por la piel y la ropa y abanícala sin parar.",
+       "Si hay hielo o bolsas frías, envuélvelas en tela y ponlas en cuello y axilas.",
+       "No le des de beber si está confusa o no traga bien.",
+       "No la dejes sola. Si deja de responder, dímelo."
+      ],
+      "en": [
+       "Move them into the shade now and take off any extra clothing.",
+       "Pour water over their skin and clothes and keep fanning them.",
+       "If there is ice or cold packs, wrap them in cloth and put them on the neck and armpits.",
+       "Do not give drinks if they are confused or cannot swallow well.",
+       "Do not leave them alone. If they stop responding, tell me."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.nhs.uk/conditions/heat-exhaustion-heatstroke/",
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "Síntesis propia de ERC 2021 («commence additional cooling using any technique immediately available»), NHS (agua, abanicar, bolsas frías envueltas en axilas y cuello) y SAMUR. OJO: SAMUR dice «no enfriar directamente con hielo» y ERC admite hielo; por eso «envueltas en tela». A decidir por Talía."
+    },
+    {
+     "id": "faint_lie_down",
+     "steps": {
+      "es": [
+       "Túmbala boca arriba y súbele las piernas.",
+       "Aflójale la ropa apretada y que le dé el aire. Que la gente no se agolpe.",
+       "No le des de comer ni de beber hasta que esté del todo recuperada.",
+       "Cuando se recupere, que se siente despacio antes de ponerse de pie."
+      ],
+      "en": [
+       "Lay them on their back and raise their legs.",
+       "Loosen tight clothing and give them air. Keep people from crowding round.",
+       "No food or drink until they have fully recovered.",
+       "When they recover, have them sit up slowly before standing."
+      ]
+     },
+     "source": "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf"
+     ],
+     "warn": "Traducción resumida propia de SAMUR, capítulo Lipotimia."
+    },
+    {
+     "id": "not_responding",
+     "steps": {
+      "es": [
+       "Quédate con la persona.",
+       "Que otro vaya a por el personal con chaleco y pida un desfibrilador.",
+       "Si no respira normal: aprieta fuerte y rápido en el centro del pecho, sin parar."
+      ],
+      "en": [
+       "Stay with the person.",
+       "Send someone else to fetch staff in a vest and ask for a defibrillator.",
+       "If they are not breathing normally: push hard and fast on the centre of the chest, without stopping."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "ambulance",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "heat_stroke",
+   "sources": [
+    "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+    "https://www.nhs.uk/conditions/heat-exhaustion-heatstroke/",
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+   ]
+  },
+  {
+   "id": "intoxication",
+   "family": "medical",
+   "label": {
+    "es": "Intoxicación por alcohol o drogas",
+    "en": "Alcohol or drug intoxication"
+   },
+   "triggers": {
+    "es": [
+     "borrach",
+     "ha bebido",
+     "alcohol",
+     "droga",
+     "pastilla",
+     "se ha metido",
+     "sobredosis",
+     "coma etílico",
+     "vomita",
+     "colocad"
+    ],
+    "en": [
+     "drunk",
+     "alcohol",
+     "drugs",
+     "overdose",
+     "pills",
+     "took something",
+     "vomiting",
+     "wasted",
+     "too high"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Se despierta si le hablas fuerte y le tocas el hombro?",
+      "en": "Do they wake if you speak loudly and tap their shoulder?"
+     },
+     "why": "Anexo C: «ha tomado algo y no despierta» es riesgo vital"
+    },
+    {
+     "id": "breathing_normal",
+     "critical": true,
+     "type": "bool",
+     "ask_if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "question": {
+      "es": "¿Respira con normalidad? Mírale el pecho diez segundos.",
+      "en": "Are they breathing normally? Watch their chest for ten seconds."
+     },
+     "why": "reconocer parada: segunda pregunta; no responde + no respira normal = RCP (ERC 2021)"
+    },
+    {
+     "id": "spiked_suspected",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Crees que le han echado algo en la bebida?",
+      "en": "Do you think someone put something in their drink?"
+     },
+     "why": "si sí, pasa al protocolo reservado de sumisión química"
+    },
+    {
+     "id": "substance",
+     "critical": false,
+     "type": "text",
+     "question": {
+      "es": "¿Sabes qué ha tomado?",
+      "en": "Do you know what they took?"
+     },
+     "why": "dato para el equipo sanitario (SAMUR); nunca se juzga ni se repite"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ],
+      "breathing_normal": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "switch_to": "unresponsive_person",
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "cpr_hands_only",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ],
+      "breathing_normal": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "unconscious_breathing",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "not_responding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "spiked_suspected": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1,
+       "security": 1
+      },
+      "instruction": "intox_stay",
+      "dispatch_now": true,
+      "switch_to": "chemical_submission",
+      "mando_type_hint": "chemical_submission"
+     }
+    },
+    {
+     "if": {
+      "responsive": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "intox_stay",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "intox_stay",
+     "steps": {
+      "es": [
+       "No la dejes sola: puede ahogarse con su vómito.",
+       "Si está despierta, siéntala. Si se duerme y no despierta, ponla de lado.",
+       "No le des comida, más alcohol ni café, y no la hagas vomitar.",
+       "Abrígala. No la metas en agua fría."
+      ],
+      "en": [
+       "Do not leave them alone: they could choke on their vomit.",
+       "If awake, sit them up. If they pass out and will not wake, roll them onto their side.",
+       "No food, no more alcohol, no coffee, and do not make them vomit.",
+       "Keep them warm. Do not put them in cold water."
+      ]
+     },
+     "source": "https://www.nhs.uk/conditions/alcohol-poisoning/",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "Traducción resumida propia de NHS (Alcohol poisoning) y SAMUR. OJO: NHS permite agua a sorbos si está consciente y traga; SAMUR dice no dar de beber. Se ha omitido el agua. A decidir por Talía."
+    },
+    {
+     "id": "unconscious_breathing",
+     "steps": {
+      "es": [
+       "Si respira, ponla de lado.",
+       "No la dejes sola.",
+       "Vigila que siga respirando."
+      ],
+      "en": [
+       "If they are breathing, roll them onto their side.",
+       "Do not leave them alone.",
+       "Keep checking that they are still breathing."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www2.cruzroja.es/web/ahora/-/que-es-la-posicion-lateral-de-seguridad-y-cuando-se-utiliza",
+      "https://www.sja.org.uk/first-aid-advice/recovery-position/"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "recovery_position_steps",
+     "steps": {
+      "es": [
+       "Arrodíllate a su lado y estírale las piernas.",
+       "El brazo más cercano a ti, en ángulo recto con la palma hacia arriba.",
+       "El otro brazo cruzado sobre el pecho, con el dorso de la mano contra su mejilla.",
+       "Dobla la rodilla más alejada y tira de ella para girar a la persona hacia ti.",
+       "Échale la cabeza un poco hacia atrás para que respire bien.",
+       "Si se ha dado un golpe fuerte en la cabeza o el cuello, no la muevas salvo que vomite o no respire bien."
+      ],
+      "en": [
+       "Kneel beside them and straighten their legs.",
+       "Put the arm nearest you at a right angle, palm up.",
+       "Bring the other arm across the chest, back of the hand against their cheek.",
+       "Bend the far knee and pull on it to roll the person towards you.",
+       "Tilt the head back slightly so they can breathe.",
+       "If they took a hard blow to the head or neck, do not move them unless they vomit or cannot breathe well."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www2.cruzroja.es/web/ahora/-/que-es-la-posicion-lateral-de-seguridad-y-cuando-se-utiliza",
+      "https://www.sja.org.uk/first-aid-advice/recovery-position/"
+     ],
+     "warn": "Pasos 1-5: traducción resumida de ERC 2021 Primeros auxilios. Paso 6: síntesis propia de Cruz Roja («no conviene moverla si se sospecha de lesiones graves en la columna…») y de St John (si no mantiene la vía aérea, se coloca igualmente)."
+    },
+    {
+     "id": "cpr_hands_only",
+     "steps": {
+      "es": [
+       "Pon el móvil en altavoz y déjalo junto a la persona.",
+       "Ponla boca arriba en el suelo y arrodíllate a su lado.",
+       "Pon el talón de una mano en el centro del pecho y la otra mano encima.",
+       "Con los brazos rectos, aprieta fuerte y rápido, sin parar.",
+       "Hunde el pecho unos 5 centímetros, unas dos veces por segundo. Cuenta en voz alta.",
+       "Deja que el pecho suba del todo después de cada compresión.",
+       "Si te cansas, que otra persona te releve sin parar.",
+       "Sigue hasta que el equipo sanitario te releve."
+      ],
+      "en": [
+       "Put your phone on speaker and leave it next to the person.",
+       "Lay them flat on their back on the ground and kneel by their side.",
+       "Put the heel of one hand on the centre of the chest and your other hand on top.",
+       "With your arms straight, push hard and fast, without stopping.",
+       "Push the chest down about 5 centimetres, about twice a second. Count out loud.",
+       "Let the chest come all the way up after each push.",
+       "If you get tired, have someone else take over without stopping.",
+       "Keep going until the medical team takes over."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+      "https://www.sja.org.uk/first-aid-advice/cpr/"
+     ],
+     "warn": "Traducción y simplificación propias de ERC 2021 (centro del pecho, 5-6 cm, 100-120/min, reexpansión completa, altavoz) y del guion de RCP telefónica de MCW. «Unos 5 cm» y «dos veces por segundo» son redondeos míos de 5-6 cm y 100-120/min."
+    },
+    {
+     "id": "not_responding",
+     "steps": {
+      "es": [
+       "Quédate con la persona.",
+       "Que otro vaya a por el personal con chaleco y pida un desfibrilador.",
+       "Si no respira normal: aprieta fuerte y rápido en el centro del pecho, sin parar."
+      ],
+      "en": [
+       "Stay with the person.",
+       "Send someone else to fetch staff in a vest and ask for a defibrillator.",
+       "If they are not breathing normally: push hard and fast on the centre of the chest, without stopping."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "ambulance",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "intoxication_overdose",
+   "sources": [
+    "https://www.nhs.uk/conditions/alcohol-poisoning/",
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+    "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+    "https://www2.cruzroja.es/web/ahora/-/que-es-la-posicion-lateral-de-seguridad-y-cuando-se-utiliza"
+   ]
+  },
+  {
+   "id": "fall_trauma",
+   "family": "medical",
+   "label": {
+    "es": "Caída o traumatismo",
+    "en": "Fall or injury"
+   },
+   "triggers": {
+    "es": [
+     "se ha caído al suelo",
+     "se ha caído por",
+     "una caída",
+     "se ha dado un golpe",
+     "se ha roto",
+     "fractura",
+     "tobillo",
+     "le ha caído encima",
+     "traumatismo",
+     "se ha dado en la cabeza"
+    ],
+    "en": [
+     "fell over",
+     "fell down",
+     "fell off",
+     "had a fall",
+     "broken leg",
+     "broken arm",
+     "fracture",
+     "ankle",
+     "hit their head",
+     "hit his head",
+     "hit her head",
+     "something fell on"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Está despierta y te responde?",
+      "en": "Are they awake and answering you?"
+     },
+     "why": "si no responde se pasa al protocolo de persona que no responde"
+    },
+    {
+     "id": "bleeding_heavy",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Sangra mucho?",
+      "en": "Is there a lot of bleeding?"
+     },
+     "why": "hemorragia grave: presión directa inmediata (ERC 2021)"
+    },
+    {
+     "id": "mechanism",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "ground_level",
+      "from_height",
+      "hit_by_object",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Se ha caído desde una altura o le ha golpeado algo?",
+      "en": "Did they fall from a height or did something hit them?"
+     },
+     "why": "SAMUR: sospechar lesión de columna en caídas de altura e impactos violentos"
+    },
+    {
+     "id": "can_move_limbs",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Puede mover brazos y piernas?",
+      "en": "Can they move their arms and legs?"
+     },
+     "why": "SAMUR: presumir gravedad si ha perdido movilidad o sensibilidad"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "switch_to": "unresponsive_person",
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "not_responding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "bleeding_heavy": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "bleeding",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "can_move_limbs": false
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "trauma_do_not_move",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "mechanism": [
+       "from_height",
+       "hit_by_object"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "trauma_do_not_move",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "responsive": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 5,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "trauma_do_not_move",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": false,
+      "severity_min": 5,
+      "needs": {
+       "medical": 1
+      },
+      "instruction": "trauma_do_not_move",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "trauma_do_not_move",
+     "steps": {
+      "es": [
+       "No la muevas, salvo que ahí corra peligro.",
+       "Pídele que no mueva la cabeza ni el cuello.",
+       "No intentes colocarle un hueso torcido.",
+       "No le des de comer ni de beber. Quédate con ella."
+      ],
+      "en": [
+       "Do not move them unless they are in danger where they are.",
+       "Ask them to keep their head and neck still.",
+       "Do not try to straighten a bent limb.",
+       "No food or drink. Stay with them."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+      "https://www2.cruzroja.es/web/ahora/-/que-es-la-posicion-lateral-de-seguridad-y-cuando-se-utiliza"
+     ],
+     "warn": "Síntesis propia de ERC 2021 (que mantenga el cuello estable por sí misma; no alinear fracturas; collarín no recomendado) y Cruz Roja/SAMUR (no mover). OJO: SAMUR describe un collarín improvisado; ERC 2021 lo desaconseja. Se sigue a ERC."
+    },
+    {
+     "id": "bleeding",
+     "steps": {
+      "es": [
+       "Aprieta fuerte sobre la herida con una prenda.",
+       "No sueltes."
+      ],
+      "en": [
+       "Press hard on the wound with a piece of clothing.",
+       "Do not let go."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf",
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "not_responding",
+     "steps": {
+      "es": [
+       "Quédate con la persona.",
+       "Que otro vaya a por el personal con chaleco y pida un desfibrilador.",
+       "Si no respira normal: aprieta fuerte y rápido en el centro del pecho, sin parar."
+      ],
+      "en": [
+       "Stay with the person.",
+       "Send someone else to fetch staff in a vest and ask for a defibrillator.",
+       "If they are not breathing normally: push hard and fast on the centre of the chest, without stopping."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "ambulance",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "trauma_fall",
+   "sources": [
+    "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+    "https://www2.cruzroja.es/web/ahora/-/que-es-la-posicion-lateral-de-seguridad-y-cuando-se-utiliza"
+   ]
+  },
+  {
+   "id": "crowd_crush",
+   "family": "crowd",
+   "label": {
+    "es": "Aglomeración, empujones o riesgo de aplastamiento",
+    "en": "Crowding, pushing or crush risk"
+   },
+   "triggers": {
+    "es": [
+     "aplast",
+     "empuj",
+     "avalancha",
+     "no puedo moverme",
+     "no me puedo mover",
+     "demasiada gente",
+     "agobio",
+     "apretad",
+     "estampida",
+     "nos estamos ahogando"
+    ],
+    "en": [
+     "crush",
+     "crushed",
+     "pushing",
+     "surge",
+     "can't move",
+     "cannot move",
+     "too crowded",
+     "squeezed",
+     "stampede",
+     "packed"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "caller_trapped",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Estás tú dentro de la zona apretada?",
+      "en": "Are you inside the packed area yourself?"
+     },
+     "why": "si quien avisa está dentro, primero va la instrucción de autoprotección"
+    },
+    {
+     "id": "people_down",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay gente en el suelo o que no puede respirar?",
+      "en": "Are people on the ground or unable to breathe?"
+     },
+     "why": "caída en cadena o asfixia por compresión: riesgo vital (Still, en Time)"
+    },
+    {
+     "id": "can_move",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Puedes moverte o salir por tu cuenta?",
+      "en": "Can you move or get out on your own?"
+     },
+     "why": "sin movimiento propio la densidad ronda el límite (Still: 5 p/m² es el tope; Moussaïd: contacto en ambos hombros ≈ 6)"
+    },
+    {
+     "id": "trend",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "worse",
+      "same",
+      "easing",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Va a más o se está aflojando?",
+      "en": "Is it getting worse or easing?"
+     },
+     "why": "la tendencia importa más que la foto (dictamen de la experta)"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "people_down": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 2,
+       "security": 2,
+       "ambulance": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true,
+      "mando_type_hint": "crowd_collapse"
+     }
+    },
+    {
+     "if": {
+      "caller_trapped": true,
+      "can_move": false
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "trend": "worse"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "caller_trapped": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "caller_trapped": false
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_leave_early",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "crowd_pressure",
+     "steps": {
+      "es": [
+       "No empujes.",
+       "Brazos delante del pecho.",
+       "No te agaches.",
+       "Sal en diagonal hacia los lados cuando afloje."
+      ],
+      "en": [
+       "Do not push.",
+       "Keep your arms in front of your chest.",
+       "Do not bend down.",
+       "Work your way out diagonally to the side when the pressure eases."
+      ]
+     },
+     "source": "https://www.cdc.gov/yellow-book/hcp/travel-for-work-other/mass-gatherings.html",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.kqed.org/news/11930646/8-tips-to-follow-if-youre-trapped-in-a-crushing-crowd",
+      "https://time.com/6226680/how-to-survive-crowd-crush-south-korea/"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "crowd_if_fallen",
+     "steps": {
+      "es": [
+       "Si te caes, hazte una bola para protegerte.",
+       "Levántate en cuanto puedas."
+      ],
+      "en": [
+       "If you fall, protect yourself by curling into a ball.",
+       "Get up as soon as you can."
+      ]
+     },
+     "source": "https://www.cdc.gov/yellow-book/hcp/travel-for-work-other/mass-gatherings.html",
+     "status": "pendiente_validacion",
+     "warn": "Traducción literal propia de CDC Yellow Book."
+    },
+    {
+     "id": "crowd_leave_early",
+     "steps": {
+      "es": [
+       "Si notas gente pegada a los dos hombros a la vez, sal de ahí ya.",
+       "Ve hacia donde haya menos gente, andando y sin empujar.",
+       "Aléjate de vallas y paredes.",
+       "No dejes mochilas ni bolsas en el suelo."
+      ],
+      "en": [
+       "If you feel people pressed against both your shoulders at once, leave now.",
+       "Head for where there are fewer people, walking and without pushing.",
+       "Keep away from fences and walls.",
+       "Do not put backpacks or bags on the ground."
+      ]
+     },
+     "source": "https://www.kqed.org/news/11930646/8-tips-to-follow-if-youre-trapped-in-a-crushing-crowd",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://time.com/6226680/how-to-survive-crowd-crush-south-korea/",
+      "https://www.gkstill.com/Support/crowd-density/CrowdDensity-1.html"
+     ],
+     "warn": "Traducción resumida propia de los consejos de Mehdi Moussaïd (Max Planck) en KQED y de G. Keith Still en Time («si parece demasiado lleno, no vayas»)."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "security_lead",
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "112",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "crowd_surge_general",
+   "hint_warn": "Si la zona es `front_pit`, Mando debe leerlo como `front_pit_critical_density`; si es una puerta, como `gate_crush_risk`. El agente nunca dice «evacuad» ni «parad»: eso es de una persona con cargo.",
+   "sources": [
+    "https://www.cdc.gov/yellow-book/hcp/travel-for-work-other/mass-gatherings.html",
+    "https://www.kqed.org/news/11930646/8-tips-to-follow-if-youre-trapped-in-a-crushing-crowd",
+    "https://time.com/6226680/how-to-survive-crowd-crush-south-korea/",
+    "https://www.gkstill.com/Support/crowd-density/CrowdDensity-1.html",
+    "https://www.hse.gov.uk/event-safety/crowd-management-monitoring.htm",
+    "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/mes_consells_dautoproteccio/grans_concentracions_persones/index.html"
+   ]
+  },
+  {
+   "id": "gate_saturation",
+   "family": "crowd",
+   "label": {
+    "es": "Puerta o acceso saturado",
+    "en": "Gate or entrance overcrowded"
+   },
+   "triggers": {
+    "es": [
+     "puerta saturada",
+     "puerta colapsada",
+     "mucha gente en la puerta",
+     "cola parada",
+     "la cola no avanza",
+     "no avanza",
+     "no se puede entrar",
+     "no se puede salir",
+     "salida bloqueada",
+     "embudo",
+     "tapón",
+     "tornos"
+    ],
+    "en": [
+     "gate is packed",
+     "gate is jammed",
+     "queue not moving",
+     "line not moving",
+     "can't get in",
+     "can't get out",
+     "exit blocked",
+     "bottleneck",
+     "turnstiles"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿En qué puerta o acceso estás? Dime algo que veas cerca.",
+      "en": "Which gate or entrance are you at? Tell me something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "pressure",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay empujones o gente apretada contra las vallas?",
+      "en": "Is there pushing, or people pressed against the barriers?"
+     },
+     "why": "separa cola larga de riesgo de aplastamiento en puerta"
+    },
+    {
+     "id": "people_down",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien en el suelo o que se encuentre mal?",
+      "en": "Is anyone on the ground or feeling unwell?"
+     },
+     "why": "añade sanitario"
+    },
+    {
+     "id": "moving",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿La cola avanza?",
+      "en": "Is the queue moving?"
+     },
+     "why": "cola parada + llegada continua = la presión crece"
+    },
+    {
+     "id": "direction",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "entering",
+      "leaving",
+      "both",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿La gente está entrando o saliendo?",
+      "en": "Are people coming in or going out?"
+     },
+     "why": "a la salida el riesgo es el contraflujo"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "people_down": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true,
+      "mando_type_hint": "gate_crush_risk"
+     }
+    },
+    {
+     "if": {
+      "pressure": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true,
+      "mando_type_hint": "gate_crush_risk"
+     }
+    },
+    {
+     "if": {
+      "direction": "both"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "security": 2,
+       "volunteer": 1
+      },
+      "instruction": "queue_wait",
+      "dispatch_now": true,
+      "mando_type_hint": "counterflow_exit"
+     }
+    },
+    {
+     "if": {
+      "pressure": false
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 5,
+      "needs": {
+       "security": 1,
+       "volunteer": 1
+      },
+      "instruction": "queue_wait",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point",
+    "pressure"
+   ],
+   "instructions": [
+    {
+     "id": "crowd_pressure",
+     "steps": {
+      "es": [
+       "No empujes.",
+       "Brazos delante del pecho.",
+       "No te agaches.",
+       "Sal en diagonal hacia los lados cuando afloje."
+      ],
+      "en": [
+       "Do not push.",
+       "Keep your arms in front of your chest.",
+       "Do not bend down.",
+       "Work your way out diagonally to the side when the pressure eases."
+      ]
+     },
+     "source": "https://www.cdc.gov/yellow-book/hcp/travel-for-work-other/mass-gatherings.html",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.kqed.org/news/11930646/8-tips-to-follow-if-youre-trapped-in-a-crushing-crowd",
+      "https://time.com/6226680/how-to-survive-crowd-crush-south-korea/"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "queue_wait",
+     "steps": {
+      "es": [
+       "No empujes ni intentes colarte.",
+       "Si quieres salir de la cola, hazlo hacia un lado, nunca contra la gente que viene detrás.",
+       "Si alguien se encuentra mal, avisa al personal con chaleco."
+      ],
+      "en": [
+       "Do not push or try to jump the queue.",
+       "If you want to leave the queue, step out to the side, never back against the people behind you.",
+       "If someone feels unwell, tell staff in a vest."
+      ]
+     },
+     "source": "https://www.hse.gov.uk/event-safety/crowd-management-controls.htm",
+     "status": "pendiente_validacion",
+     "warn": "Redacción propia. HSE lo dice como obligación del organizador («a safe way people can get out of a queue without having to move against those queuing behind them»), no como consejo al público."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "gates",
+     "security_lead"
+    ],
+    "external": null
+   },
+   "mando_type_hint": "gate_saturation",
+   "hint_warn": "Regla dura de Mando: nunca se cierra una puerta con presión detrás. El agente no sugiere cerrar ni dice por dónde entrar; eso lo decide control.",
+   "sources": [
+    "https://www.hse.gov.uk/event-safety/crowd-management-controls.htm",
+    "https://www.hse.gov.uk/event-safety/crowd-management-monitoring.htm",
+    "https://www.gkstill.com/Support/crowd-density/CrowdDensity-1.html",
+    "https://www.cdc.gov/yellow-book/hcp/travel-for-work-other/mass-gatherings.html"
+   ]
+  },
+  {
+   "id": "smoke_fire",
+   "family": "infra",
+   "label": {
+    "es": "Humo o fuego",
+    "en": "Smoke or fire"
+   },
+   "triggers": {
+    "es": [
+     "fuego",
+     "humo",
+     "incendio",
+     "arde",
+     "llamas",
+     "huele a quemado",
+     "huele a gas",
+     "quemando"
+    ],
+    "en": [
+     "fire",
+     "smoke",
+     "burning",
+     "flames",
+     "smell of gas",
+     "smells like gas"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "caller_safe",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Estás tú lejos del humo o del fuego?",
+      "en": "Are you yourself away from the smoke or fire?"
+     },
+     "why": "si no, primero la instrucción de alejarse"
+    },
+    {
+     "id": "what_seen",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "flames",
+      "smoke_only",
+      "smell_burning",
+      "smell_gas",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Ves llamas, solo humo o solo huele?",
+      "en": "Do you see flames, only smoke, or just a smell?"
+     },
+     "why": "dimensiona el envío"
+    },
+    {
+     "id": "people_hurt",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien atrapado o herido?",
+      "en": "Is anyone trapped or hurt?"
+     },
+     "why": "añade sanitario y sube a riesgo vital"
+    },
+    {
+     "id": "near_kitchen_gas",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Es en una cocina o cerca de bombonas?",
+      "en": "Is it in a kitchen or near gas bottles?"
+     },
+     "why": "HSE: el GLP es el riesgo de proceso típico en eventos"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "people_hurt": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "security": 2,
+       "medical": 1,
+       "tech": 1
+      },
+      "instruction": "fire_or_structure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "what_seen": "smell_gas"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2,
+       "tech": 1
+      },
+      "instruction": "smoke_low",
+      "dispatch_now": true,
+      "mando_type_hint": "gas_leak_food"
+     }
+    },
+    {
+     "if": {
+      "what_seen": "flames"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2,
+       "tech": 1
+      },
+      "instruction": "fire_or_structure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "near_kitchen_gas": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2,
+       "tech": 1
+      },
+      "instruction": "fire_or_structure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "caller_safe": false
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "security": 2,
+       "tech": 1
+      },
+      "instruction": "fire_or_structure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "what_seen": [
+       "smoke_only",
+       "smell_burning",
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "security": 2,
+       "tech": 1
+      },
+      "instruction": "fire_or_structure",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "security": 2,
+       "tech": 1
+      },
+      "instruction": "fire_or_structure",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "fire_or_structure",
+     "steps": {
+      "es": [
+       "Aléjate de ahí andando, sin correr, y no vuelvas.",
+       "Avisa al personal con chaleco."
+      ],
+      "en": [
+       "Walk away from there, without running, and do not go back.",
+       "Tell staff in a vest."
+      ]
+     },
+     "source": "https://112.jcyl.es/web/es/consejos-recomendaciones/lugares-publicos.html",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/mes_consells_dautoproteccio/grans_concentracions_persones/index.html"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "smoke_low",
+     "steps": {
+      "es": [
+       "Si hay humo, agáchate: junto al suelo el aire está más limpio.",
+       "No vuelvas a por tus cosas.",
+       "Si huele a gas, no enciendas mecheros ni nada eléctrico."
+      ],
+      "en": [
+       "If there is smoke, keep low: the air is cleaner near the ground.",
+       "Do not go back for your belongings.",
+       "If you smell gas, do not light anything or switch anything on."
+      ]
+     },
+     "source": "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://112.jcyl.es/web/es/consejos-recomendaciones/lugares-publicos.html",
+      "https://112.cantabria.es/consejos-de-autoproteccion/grandes-aglomeraciones"
+     ],
+     "warn": "Traducción resumida propia de SAMUR (inhalación de humo) y de 112 Castilla y León / Cantabria (no recoger pertenencias)."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "security_lead",
+     "production"
+    ],
+    "external": {
+     "kind": "fire",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "small_fire",
+   "hint_warn": "El agente nunca pide a quien avisa que alerte a los de alrededor (Anexo C: siembra la carrera) ni que apague el fuego.",
+   "sources": [
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+    "https://112.jcyl.es/web/es/consejos-recomendaciones/lugares-publicos.html",
+    "https://112.cantabria.es/consejos-de-autoproteccion/grandes-aglomeraciones",
+    "https://www.hse.gov.uk/event-safety/fire-safety.htm",
+    "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm"
+   ]
+  },
+  {
+   "id": "wind_structure",
+   "family": "weather",
+   "label": {
+    "es": "Viento o estructura en riesgo",
+    "en": "Wind or structure at risk"
+   },
+   "triggers": {
+    "es": [
+     "viento",
+     "se mueve la torre",
+     "se mueve la pantalla",
+     "se mueve la estructura",
+     "se tambalea",
+     "se ha caído la",
+     "se ha caído una",
+     "se va a caer",
+     "lona suelta",
+     "se ha volado",
+     "se ha soltado"
+    ],
+    "en": [
+     "wind",
+     "wobbling",
+     "swaying",
+     "structure is moving",
+     "tower is moving",
+     "about to fall",
+     "has fallen",
+     "blown away",
+     "come loose",
+     "structure collapsed"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "people_hurt",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien herido o atrapado?",
+      "en": "Is anyone hurt or trapped?"
+     },
+     "why": "riesgo vital y sanitario"
+    },
+    {
+     "id": "state",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "moving",
+      "partly_fallen",
+      "fallen",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Se mueve, se ha caído una parte o se ha caído entera?",
+      "en": "Is it moving, has part fallen, or has it all come down?"
+     },
+     "why": "separa preaviso de daño"
+    },
+    {
+     "id": "people_under",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay gente debajo o pegada a la estructura?",
+      "en": "Are people under or right next to the structure?"
+     },
+     "why": "despejar el entorno es la primera medida del escalón de viento (dictamen de la experta)"
+    },
+    {
+     "id": "what",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "stage",
+      "tower",
+      "screen",
+      "tent_or_canopy",
+      "fence_or_barrier",
+      "tree",
+      "other"
+     ],
+     "question": {
+      "es": "¿Qué es: escenario, torre, pantalla, carpa, valla u otra cosa?",
+      "en": "What is it: stage, tower, screen, tent, fence or something else?"
+     },
+     "why": "a quién se manda (técnico de estructuras)"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "people_hurt": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "tech": 1,
+       "security": 2
+      },
+      "instruction": "wind_away",
+      "dispatch_now": true,
+      "mando_type_hint": "structure_damage"
+     }
+    },
+    {
+     "if": {
+      "state": [
+       "partly_fallen",
+       "fallen"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "tech": 1,
+       "security": 1
+      },
+      "instruction": "wind_away",
+      "dispatch_now": true,
+      "mando_type_hint": "structure_damage"
+     }
+    },
+    {
+     "if": {
+      "state": [
+       "moving",
+       "unknown"
+      ],
+      "people_under": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "tech": 1,
+       "security": 1
+      },
+      "instruction": "wind_away",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "state": [
+       "moving",
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "tech": 1,
+       "security": 1
+      },
+      "instruction": "weather",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "weather",
+     "steps": {
+      "es": [
+       "Aléjate de torres, carpas y vallas."
+      ],
+      "en": [
+       "Keep away from towers, tents and fences."
+      ]
+     },
+     "source": "https://www.weather.gov/media/safety/lightning/Lightning_Safety_Toolkit_Outdoor_Venues.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://112.jcyl.es/web/es/consejos-recomendaciones/vientos.html"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "wind_away",
+     "steps": {
+      "es": [
+       "Aléjate de lo que pueda caer: torres, pantallas, carpas y vallas.",
+       "No te refugies junto a muros, vallas ni árboles.",
+       "No toques cables caídos."
+      ],
+      "en": [
+       "Keep away from anything that could fall: towers, screens, tents and fences.",
+       "Do not shelter next to walls, fences or trees.",
+       "Do not touch fallen cables."
+      ]
+     },
+     "source": "https://112.jcyl.es/web/es/consejos-recomendaciones/vientos.html",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/riscos_naturals/ventades/index.html"
+     ],
+     "warn": "Adaptación propia al recinto de los consejos de 112 Castilla y León y Protección Civil de Cataluña (andamios, anuncios, muros, árboles, cables)."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "production",
+     "security_lead"
+    ],
+    "external": {
+     "kind": "112",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "strong_wind_gusts",
+   "hint_warn": "Los escalones de viento (≈40 preaviso, ≈50 despejar, ≈60 parar) son criterio de la experta sin fuente abierta; no se han llevado a datos. Parar el espectáculo es decisión humana.",
+   "sources": [
+    "https://112.jcyl.es/web/es/consejos-recomendaciones/vientos.html",
+    "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/riscos_naturals/ventades/index.html",
+    "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm"
+   ]
+  },
+  {
+   "id": "storm_lightning",
+   "family": "weather",
+   "label": {
+    "es": "Tormenta o rayos",
+    "en": "Storm or lightning"
+   },
+   "triggers": {
+    "es": [
+     "rayo",
+     "rayos",
+     "trueno",
+     "tormenta",
+     "relámpago",
+     "granizo",
+     "diluvia"
+    ],
+    "en": [
+     "lightning",
+     "thunder",
+     "storm",
+     "hail"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "anyone_struck",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Le ha caído un rayo a alguien o hay heridos?",
+      "en": "Has anyone been struck by lightning or hurt?"
+     },
+     "why": "riesgo vital"
+    },
+    {
+     "id": "lightning_seen",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Has visto rayos o has oído truenos?",
+      "en": "Have you seen lightning or heard thunder?"
+     },
+     "why": "dato para control; NWS: con tormenta cerca ningún sitio al aire libre es seguro"
+    },
+    {
+     "id": "shelter",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "open",
+      "tent_or_canopy",
+      "under_tree",
+      "vehicle",
+      "building",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Dónde estás: al aire libre, bajo una carpa, un árbol, o dentro?",
+      "en": "Where are you: in the open, under a tent, a tree, or indoors?"
+     },
+     "why": "carpas y árboles no son refugio (NWS, Protección Civil de Cataluña)"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "anyone_struck": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1
+      },
+      "instruction": "not_responding",
+      "dispatch_now": true,
+      "switch_to": "unresponsive_person"
+     }
+    },
+    {
+     "if": {
+      "shelter": [
+       "tent_or_canopy",
+       "under_tree",
+       "open"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "weather_lightning",
+      "dispatch_now": false
+     }
+    },
+    {
+     "if": {
+      "lightning_seen": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "weather_lightning",
+      "dispatch_now": false
+     }
+    },
+    {
+     "if": {},
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "security": 1
+      },
+      "instruction": "weather",
+      "dispatch_now": false
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point",
+    "anyone_struck"
+   ],
+   "instructions": [
+    {
+     "id": "weather",
+     "steps": {
+      "es": [
+       "Aléjate de torres, carpas y vallas."
+      ],
+      "en": [
+       "Keep away from towers, tents and fences."
+      ]
+     },
+     "source": "https://www.weather.gov/media/safety/lightning/Lightning_Safety_Toolkit_Outdoor_Venues.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://112.jcyl.es/web/es/consejos-recomendaciones/vientos.html"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "weather_lightning",
+     "steps": {
+      "es": [
+       "Las carpas y las tiendas no protegen de los rayos.",
+       "Si tienes cerca un edificio cerrado o un coche cerrado, métete dentro.",
+       "Aléjate de árboles, torres, farolas y vallas metálicas.",
+       "Espera 30 minutos desde el último trueno antes de volver."
+      ],
+      "en": [
+       "Tents and canopies do not protect you from lightning.",
+       "If a closed building or a closed car is near, get inside.",
+       "Keep away from trees, towers, light poles and metal fences.",
+       "Wait 30 minutes after the last thunder before going back."
+      ]
+     },
+     "source": "https://www.weather.gov/safety/lightning-outdoors",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.weather.gov/media/safety/lightning/Lightning_Safety_Toolkit_Outdoor_Venues.pdf",
+      "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/riscos_naturals/tempestes_electriques/index.html",
+      "https://112.castillalamancha.es/proteccion-civil/consejos/tormentas-y-rayos"
+     ],
+     "warn": "Traducción resumida propia de NWS y Protección Civil de Cataluña. OJO: en un recinto de 40.000 personas no hay refugio para todos; a dónde se manda a la gente lo decide el plan del evento, no el agente. Esta instrucción es solo para quien pregunta."
+    },
+    {
+     "id": "not_responding",
+     "steps": {
+      "es": [
+       "Quédate con la persona.",
+       "Que otro vaya a por el personal con chaleco y pida un desfibrilador.",
+       "Si no respira normal: aprieta fuerte y rápido en el centro del pecho, sin parar."
+      ],
+      "en": [
+       "Stay with the person.",
+       "Send someone else to fetch staff in a vest and ask for a defibrillator.",
+       "If they are not breathing normally: push hard and fast on the centre of the chest, without stopping."
+      ]
+     },
+     "source": "https://genoplivning.dk/wp-content/uploads/2021/03/04_Basic-Life-Support.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.mcw.edu/-/media/MCW/Departments/Emergency-Medicine/EMS/Telecommunicator-CPR-Program-Dispatch-Protocols-In-House.pdf"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "coordinator",
+     "production"
+    ],
+    "external": null
+   },
+   "mando_type_hint": "lightning_nearby",
+   "hint_warn": "Un aviso de rayos del público es INFORMACIÓN para control, no un despacho: suspender o evacuar es decisión humana con el dato meteorológico. La plantilla del NWS para recintos propone, como valores editables, preaviso a 15 y 12 millas, evacuar a 8 millas (≈13 km) y reanudar a los 30 min del último trueno.",
+   "sources": [
+    "https://www.weather.gov/safety/lightning-outdoors",
+    "https://www.weather.gov/media/safety/lightning/Lightning_Safety_Toolkit_Outdoor_Venues.pdf",
+    "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/riscos_naturals/tempestes_electriques/index.html",
+    "https://112.castillalamancha.es/proteccion-civil/consejos/tormentas-y-rayos"
+   ]
+  },
+  {
+   "id": "suspicious_object_threat",
+   "family": "external",
+   "label": {
+    "es": "Objeto sospechoso o amenaza",
+    "en": "Suspicious item or threat"
+   },
+   "triggers": {
+    "es": [
+     "mochila abandonada",
+     "paquete",
+     "objeto sospechoso",
+     "maleta sola",
+     "bomba",
+     "amenaza",
+     "un arma",
+     "arma blanca",
+     "pistola",
+     "cuchillo",
+     "navaja",
+     "explosiv"
+    ],
+    "en": [
+     "unattended bag",
+     "suspicious",
+     "package",
+     "bomb",
+     "threat",
+     "weapon",
+     "a gun",
+     "has a gun",
+     "knife",
+     "explosive"
+    ]
+   },
+   "sensitive": true,
+   "slots": [
+    {
+     "id": "kind",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "object",
+      "threat",
+      "weapon"
+     ],
+     "question": {
+      "es": "¿Es un objeto abandonado, una amenaza o alguien con un arma?",
+      "en": "Is it an unattended item, a threat, or someone with a weapon?"
+     },
+     "why": "cada caso va a un tipo distinto de Mando; no se valora la credibilidad"
+    },
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "caller_away",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Estás ya lejos de ahí?",
+      "en": "Are you already well away from it?"
+     },
+     "why": "gov.uk: despejar (100 m para un bulto pequeño) y quedar fuera de la línea de visión; la distancia la fija seguridad, no el agente"
+    },
+    {
+     "id": "touched",
+     "critical": false,
+     "type": "bool",
+     "ask_if": {
+      "kind": "object"
+     },
+     "question": {
+      "es": "¿Alguien lo ha tocado o movido?",
+      "en": "Has anyone touched or moved it?"
+     },
+     "why": "gov.uk: «do not touch it further»"
+    },
+    {
+     "id": "threat_words",
+     "critical": false,
+     "type": "text",
+     "ask_if": {
+      "kind": "threat"
+     },
+     "question": {
+      "es": "¿Cuáles fueron las palabras exactas de la amenaza?",
+      "en": "What were the exact words of the threat?"
+     },
+     "why": "Cruz Roja y gov.uk: anotar el mensaje lo más textual posible; NO se repite a quien avisa"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "kind": "weapon"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "aggression",
+      "dispatch_now": true,
+      "mando_type_hint": "weapon_seen"
+     }
+    },
+    {
+     "if": {
+      "kind": "object",
+      "caller_away": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "suspicious_move_first",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "kind": "object"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "suspicious_object",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "kind": "threat"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "threat_noted",
+      "dispatch_now": true,
+      "mando_type_hint": "bomb_threat_call"
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "kind",
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "suspicious_object",
+     "steps": {
+      "es": [
+       "No lo toques ni lo muevas.",
+       "Aléjate y díselo al personal con chaleco."
+      ],
+      "en": [
+       "Do not touch it or move it.",
+       "Move away and tell staff in a vest."
+      ]
+     },
+     "source": "https://www.gov.uk/government/publications/crowded-places-guidance/unattended-and-suspicious-items",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "suspicious_move_first",
+     "steps": {
+      "es": [
+       "Aléjate primero del objeto; seguimos hablando cuando estés lejos.",
+       "No avises tú a la gente de alrededor: lo hace el personal."
+      ],
+      "en": [
+       "Move away from the item first; we will carry on once you are well away.",
+       "Do not warn the people around you yourself: staff will do that."
+      ]
+     },
+     "source": "https://www.gov.uk/government/publications/crowded-places-guidance/unattended-and-suspicious-items",
+     "status": "pendiente_validacion",
+     "warn": "La guía abierta (gov.uk) dice «do not use radios within 15 metres»; la mención a móviles solo la vi en un resumen de buscador de ProtectUK (página no abierta: 404). Por prudencia se pide alejarse antes de seguir usando el móvil. El paso 2 es criterio de la experta (Anexo C y NS-27), sin fuente abierta."
+    },
+    {
+     "id": "threat_noted",
+     "steps": {
+      "es": [
+       "Gracias. Lo he anotado tal cual y ya está en control de seguridad.",
+       "No lo comentes con otras personas ni lo publiques."
+      ],
+      "en": [
+       "Thank you. I have written it down exactly and security control already has it.",
+       "Do not discuss it with others or post it."
+      ]
+     },
+     "source": "https://www.cruzroja.es/guiaprevencionNew/aviso-bomba.html",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://www.gov.uk/government/publications/crowded-places-guidance/bomb-threats"
+     ],
+     "warn": "Redacción propia a partir de Cruz Roja («toma nota lo más textual posible», «evita toda acción que pueda llevar a cundir el pánico») y gov.uk. El agente nunca valora la credibilidad (NS-27)."
+    },
+    {
+     "id": "aggression",
+     "steps": {
+      "es": [
+       "Aléjate y no te enfrentes.",
+       "Ve hacia el personal con chaleco."
+      ],
+      "en": [
+       "Move away and do not confront anyone.",
+       "Go towards staff in a vest."
+      ]
+     },
+     "source": "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión. PROHIBIDA en violencia sexual (Anexo C)."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "security_lead"
+    ],
+    "external": {
+     "kind": "police",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "suspicious_object",
+   "hint_warn": "No se preguntan los detalles HOT (oculto, claramente sospechoso, típico del lugar): obligaría a acercarse. El HOT y las 4 C (confirmar, despejar, comunicar, controlar) los hace seguridad en el sitio. Sin megafonía; evacuar lo deciden las Fuerzas y Cuerpos de Seguridad.",
+   "sources": [
+    "https://www.gov.uk/government/publications/crowded-places-guidance/unattended-and-suspicious-items",
+    "https://www.gov.uk/government/publications/crowded-places-guidance/bomb-threats",
+    "https://www.cruzroja.es/guiaprevencionNew/aviso-bomba.html"
+   ]
+  },
+  {
+   "id": "sexual_violence",
+   "family": "aggression",
+   "label": {
+    "es": "Agresión o acoso sexual",
+    "en": "Sexual assault or harassment"
+   },
+   "triggers": {
+    "es": [
+     "agresión sexual",
+     "me han tocado",
+     "me ha tocado",
+     "tocamientos",
+     "violación",
+     "violad",
+     "acoso",
+     "me acosan",
+     "abus",
+     "me siguen",
+     "punto violeta",
+     "me han metido mano"
+    ],
+    "en": [
+     "sexual assault",
+     "raped",
+     "rape",
+     "groped",
+     "harass",
+     "touched me",
+     "following me",
+     "assaulted me",
+     "molest"
+    ]
+   },
+   "sensitive": true,
+   "slots": [
+    {
+     "id": "safe_now",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Estás en un sitio seguro ahora?",
+      "en": "Are you somewhere safe right now?"
+     },
+     "why": "NS-25: es una de las dos únicas preguntas permitidas; Igualdad: preservar la seguridad"
+    },
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás?",
+      "en": "Where are you?"
+     },
+     "why": "NS-25: segunda y última pregunta; la zona NO se muestra en pantalla compartida"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "safe_now": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 1
+      },
+      "instruction": "violet_unsafe",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "safe_now": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 9,
+      "needs": {
+       "security": 1
+      },
+      "instruction": "violet",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "violet",
+     "steps": {
+      "es": [
+       "Te creemos. No es culpa tuya.",
+       "Si puedes, ve con alguien de confianza hacia el personal con chaleco.",
+       "Te paso con una persona."
+      ],
+      "en": [
+       "We believe you. It is not your fault.",
+       "If you can, go with someone you trust towards staff in a vest.",
+       "I am putting you through to a person."
+      ]
+     },
+     "source": "https://violenciagenero.igualdad.gob.es/wp-content/uploads/RECOMENDACIONES-PARA-LA-IMPLANTACION-DE-PUNTOS-VIOLETA_-maquetado.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "violet_unsafe",
+     "steps": {
+      "es": [
+       "Si puedes, acércate a personal con chaleco o a un sitio con más gente.",
+       "Sigo aquí contigo. Te paso con una persona."
+      ],
+      "en": [
+       "If you can, move towards staff in a vest or somewhere with more people.",
+       "I am still here with you. I am putting you through to a person."
+      ]
+     },
+     "source": "https://violenciagenero.igualdad.gob.es/wp-content/uploads/RECOMENDACIONES-PARA-LA-IMPLANTACION-DE-PUNTOS-VIOLETA_-maquetado.pdf",
+     "status": "pendiente_validacion",
+     "warn": "Redacción propia. La fuente pide «preservar la seguridad» y «no dejar sola a la persona agredida», pero no da un texto para quien sigue en riesgo."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "violet_point"
+    ],
+    "external": {
+     "kind": "police",
+     "requires_approval": true,
+     "requires_consent": true
+    }
+   },
+   "mando_type_hint": "sexual_assault_report",
+   "hint_warn": "No se pide relato, descripción ni confirmación por repetición. Seguridad va a localizar y vigilar con discreción, no «al incidente». Policía solo con consentimiento de la víctima adulta, salvo menor, agresor presente o riesgo (criterio de la experta; cotejar con LO 10/2022). Si es acoso de un grupo sin agresión, Mando puede leerlo como `harassment_group`. La instrucción `aggression` está PROHIBIDA aquí.",
+   "sources": [
+    "https://violenciagenero.igualdad.gob.es/wp-content/uploads/RECOMENDACIONES-PARA-LA-IMPLANTACION-DE-PUNTOS-VIOLETA_-maquetado.pdf",
+    "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+   ]
+  },
+  {
+   "id": "chemical_submission",
+   "family": "aggression",
+   "label": {
+    "es": "Sospecha de sumisión química",
+    "en": "Suspected drink spiking"
+   },
+   "triggers": {
+    "es": [
+     "me han echado algo",
+     "le han echado algo",
+     "en la bebida",
+     "en la copa",
+     "pinchazo",
+     "me han pinchado",
+     "sumisión química",
+     "burundanga",
+     "no recuerdo",
+     "me siento rara"
+    ],
+    "en": [
+     "spiked",
+     "drink spiked",
+     "needle",
+     "injected",
+     "something in my drink",
+     "can't remember",
+     "roofied"
+    ]
+   },
+   "sensitive": true,
+   "slots": [
+    {
+     "id": "who",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "me",
+      "other"
+     ],
+     "question": {
+      "es": "¿Te ha pasado a ti o a otra persona?",
+      "en": "Did it happen to you or to someone else?"
+     },
+     "why": "cambia la instrucción"
+    },
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás?",
+      "en": "Where are you?"
+     },
+     "why": "la zona NO se muestra en pantalla compartida"
+    },
+    {
+     "id": "responsive",
+     "critical": true,
+     "type": "bool",
+     "ask_if": {
+      "who": "other"
+     },
+     "question": {
+      "es": "¿Está despierta y te responde?",
+      "en": "Are they awake and answering you?"
+     },
+     "why": "Igualdad: somnolencia o pérdida de consciencia exige actuar con la mayor diligencia y 112"
+    },
+    {
+     "id": "accompanied",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien de confianza contigo?",
+      "en": "Is someone you trust with you?"
+     },
+     "why": "SAS 2022: «deben estar siempre acompañadas»"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "who": "other",
+      "responsive": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 10,
+      "needs": {
+       "medical": 1,
+       "ambulance": 1,
+       "security": 1
+      },
+      "instruction": "unconscious_breathing",
+      "dispatch_now": true,
+      "switch_to": "unresponsive_person"
+     }
+    },
+    {
+     "if": {
+      "who": "other"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "security": 1
+      },
+      "instruction": "spiking_other",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "who": "me"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "medical": 1,
+       "security": 1
+      },
+      "instruction": "spiking_self",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "spiking_self",
+     "steps": {
+      "es": [
+       "No te quedes a solas: busca a alguien de confianza.",
+       "Id juntos hacia el personal con chaleco o el puesto médico.",
+       "Te paso con una persona."
+      ],
+      "en": [
+       "Do not stay on your own: find someone you trust.",
+       "Go together towards staff in a vest or the medical post.",
+       "I am putting you through to a person."
+      ]
+     },
+     "source": "https://www.sspa.juntadeandalucia.es/servicioandaluzdesalud/sites/default/files/sincfiles/wsas-media-mediafile_sasdocumento/2022/protocolo_sumision_quimica_15082022.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://violenciagenero.igualdad.gob.es/wp-content/uploads/RECOMENDACIONES-PARA-LA-IMPLANTACION-DE-PUNTOS-VIOLETA_-maquetado.pdf"
+     ],
+     "warn": "Redacción propia a partir de «deben estar siempre acompañadas» (SAS 2022) y de las recomendaciones de puntos violeta. El «id hacia el puesto médico» es extrapolación al recinto."
+    },
+    {
+     "id": "spiking_other",
+     "steps": {
+      "es": [
+       "No la dejes sola ni con desconocidos.",
+       "Si puede andar, acompáñala hacia el personal con chaleco o el puesto médico.",
+       "Si deja de responder pero respira, ponla de lado y dímelo."
+      ],
+      "en": [
+       "Do not leave them alone or with strangers.",
+       "If they can walk, go with them towards staff in a vest or the medical post.",
+       "If they stop responding but are breathing, roll them onto their side and tell me."
+      ]
+     },
+     "source": "https://www.sspa.juntadeandalucia.es/servicioandaluzdesalud/sites/default/files/sincfiles/wsas-media-mediafile_sasdocumento/2022/protocolo_sumision_quimica_15082022.pdf",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://violenciagenero.igualdad.gob.es/wp-content/uploads/RECOMENDACIONES-PARA-LA-IMPLANTACION-DE-PUNTOS-VIOLETA_-maquetado.pdf",
+      "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf"
+     ],
+     "warn": "Redacción propia a partir de SAS 2022 («siempre acompañadas») e Igualdad («si la víctima está somnolienta… se actuará con la mayor diligencia»). «Ni con desconocidos» es añadido mío."
+    },
+    {
+     "id": "unconscious_breathing",
+     "steps": {
+      "es": [
+       "Si respira, ponla de lado.",
+       "No la dejes sola.",
+       "Vigila que siga respirando."
+      ],
+      "en": [
+       "If they are breathing, roll them onto their side.",
+       "Do not leave them alone.",
+       "Keep checking that they are still breathing."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www2.cruzroja.es/web/ahora/-/que-es-la-posicion-lateral-de-seguridad-y-cuando-se-utiliza",
+      "https://www.sja.org.uk/first-aid-advice/recovery-position/"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "violet_point",
+     "medical_lead"
+    ],
+    "external": {
+     "kind": "police",
+     "requires_approval": true,
+     "requires_consent": true
+    }
+   },
+   "mando_type_hint": "chemical_submission",
+   "hint_warn": "Aquí el sanitario SÍ es urgente: las sustancias dejan de detectarse en sangre pasadas unas 72 h (SAS 2022) y el cuadro puede empeorar. El agente no habla de pruebas ni de denuncia: eso lo explica una persona.",
+   "sources": [
+    "https://www.sspa.juntadeandalucia.es/servicioandaluzdesalud/sites/default/files/sincfiles/wsas-media-mediafile_sasdocumento/2022/protocolo_sumision_quimica_15082022.pdf",
+    "https://violenciagenero.igualdad.gob.es/wp-content/uploads/RECOMENDACIONES-PARA-LA-IMPLANTACION-DE-PUNTOS-VIOLETA_-maquetado.pdf",
+    "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+   ]
+  },
+  {
+   "id": "fight_assault",
+   "family": "aggression",
+   "label": {
+    "es": "Pelea o agresión",
+    "en": "Fight or assault"
+   },
+   "triggers": {
+    "es": [
+     "pelea",
+     "se están pegando",
+     "agresión",
+     "le han pegado",
+     "bronca",
+     "paliza",
+     "puñetazo",
+     "botellazo"
+    ],
+    "en": [
+     "fight",
+     "fighting",
+     "assault",
+     "punched",
+     "attacked",
+     "brawl",
+     "beaten"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "weapon",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Has visto algún arma u objeto peligroso?",
+      "en": "Have you seen any weapon or dangerous object?"
+     },
+     "why": "con arma pasa a tratamiento reservado: sin megafonía, policía con aprobación"
+    },
+    {
+     "id": "injured",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien herido?",
+      "en": "Is anyone hurt?"
+     },
+     "why": "añade sanitario"
+    },
+    {
+     "id": "caller_safe",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Estás tú a salvo, lejos de la pelea?",
+      "en": "Are you safe, away from the fight?"
+     },
+     "why": "si no, primero la instrucción de alejarse"
+    },
+    {
+     "id": "people_count",
+     "critical": false,
+     "type": "number",
+     "question": {
+      "es": "¿Cuántas personas están peleando?",
+      "en": "How many people are fighting?"
+     },
+     "why": "dimensiona el envío de seguridad"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "weapon": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "aggression",
+      "dispatch_now": true,
+      "mando_type_hint": "weapon_seen"
+     }
+    },
+    {
+     "if": {
+      "injured": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "aggression",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "people_count": {
+       "gte": 5
+      }
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "security": 3
+      },
+      "instruction": "aggression",
+      "dispatch_now": true
+     },
+     "warn": "El umbral de 5 personas y las 3 parejas de seguridad son criterio propio."
+    },
+    {
+     "if": {
+      "weapon": [
+       false,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 5,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "aggression",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "aggression",
+     "steps": {
+      "es": [
+       "Aléjate y no te enfrentes.",
+       "Ve hacia el personal con chaleco."
+      ],
+      "en": [
+       "Move away and do not confront anyone.",
+       "Go towards staff in a vest."
+      ]
+     },
+     "source": "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión. PROHIBIDA en violencia sexual (Anexo C)."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "security_lead"
+    ],
+    "external": {
+     "kind": "police",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "fight",
+   "hint_warn": "Nunca se piden descripciones de sospechosos por este canal ni se difunden (dictamen, Anexo D). Si la víctima es personal del evento, Mando lo lee como `staff_assaulted`.",
+   "sources": [
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+    "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+   ]
+  },
+  {
+   "id": "lost_child",
+   "family": "info",
+   "label": {
+    "es": "Menor perdido o encontrado",
+    "en": "Lost or found child"
+   },
+   "triggers": {
+    "es": [
+     "niño perdido",
+     "niña perdida",
+     "he perdido a mi hij",
+     "no encuentro a mi hij",
+     "un menor solo",
+     "menor perdido",
+     "niño solo",
+     "niña sola",
+     "un crío solo"
+    ],
+    "en": [
+     "lost child",
+     "lost my son",
+     "lost my daughter",
+     "can't find my",
+     "child alone",
+     "kid alone",
+     "missing child"
+    ]
+   },
+   "sensitive": true,
+   "slots": [
+    {
+     "id": "role",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "found_child",
+      "lost_my_child"
+     ],
+     "question": {
+      "es": "¿Has encontrado a un menor o has perdido al tuyo?",
+      "en": "Have you found a child, or lost your own?"
+     },
+     "why": "Anexo C: son dos instrucciones distintas"
+    },
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás ahora? Dime la zona y algo que veas cerca.",
+      "en": "Where are you now? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "age",
+     "critical": true,
+     "type": "number",
+     "ask_if": {
+      "role": "lost_my_child"
+     },
+     "question": {
+      "es": "¿Qué edad tiene?",
+      "en": "How old are they?"
+     },
+     "why": "descripción para los equipos y las puertas; con los muy pequeños se escala antes"
+    },
+    {
+     "id": "clothing",
+     "critical": true,
+     "type": "text",
+     "ask_if": {
+      "role": "lost_my_child"
+     },
+     "question": {
+      "es": "¿Cómo va vestido?",
+      "en": "What are they wearing?"
+     },
+     "why": "descripción; va por canal reservado, nunca por megafonía"
+    },
+    {
+     "id": "last_seen",
+     "critical": false,
+     "type": "zone_point",
+     "ask_if": {
+      "role": "lost_my_child"
+     },
+     "question": {
+      "es": "¿Dónde lo viste por última vez?",
+      "en": "Where did you last see them?"
+     },
+     "why": "punto de partida de la búsqueda"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "role": "lost_my_child",
+      "age": {
+       "lte": 5
+      }
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "security": 1,
+       "volunteer": 1
+      },
+      "instruction": "lost_child_parent",
+      "dispatch_now": true
+     },
+     "warn": "El corte de 5 años es criterio propio; la fuente de sector solo dice «immediately if the child is very young»."
+    },
+    {
+     "if": {
+      "role": "lost_my_child"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "security": 1,
+       "volunteer": 1
+      },
+      "instruction": "lost_child_parent",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "role": "found_child"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "security": 1,
+       "volunteer": 1
+      },
+      "instruction": "lost_child",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "role",
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "lost_child",
+     "steps": {
+      "es": [
+       "Quédate con el menor en ese sitio. No os mováis.",
+       "Pide a otra persona que avise al personal con chaleco."
+      ],
+      "en": [
+       "Stay with the child where you are. Do not move.",
+       "Ask someone else to tell staff in a vest."
+      ]
+     },
+     "source": "https://www.ticketfairy.com/blog/lost-child-and-vulnerable-persons-protocols-at-festivals",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "lost_child_parent",
+     "steps": {
+      "es": [
+       "Quédate donde lo viste por última vez.",
+       "Dinos edad y cómo va vestido."
+      ],
+      "en": [
+       "Stay where you last saw them.",
+       "Tell us their age and what they are wearing."
+      ]
+     },
+     "source": "https://www.ticketfairy.com/blog/lost-child-and-vulnerable-persons-protocols-at-festivals",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "security_lead",
+     "gates"
+    ],
+    "external": {
+     "kind": "police",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "lost_child",
+   "hint_warn": "NUNCA megafonía con el nombre o la descripción del menor. NS-26: el agente no dice dónde está un menor ni confirma que hay un aviso a quien dice ser familiar. No se pide el nombre del menor por este canal (lo recoge el personal en persona). Dos personas acreditadas con el menor, entrega solo a tutor verificado con documento. Escalar a policía si no aparece en 15-20 min (experta, sin fuente abierta) o 30 min (Ticket Fairy).",
+   "sources": [
+    "https://www.ticketfairy.com/blog/lost-child-and-vulnerable-persons-protocols-at-festivals",
+    "https://www.nipperbout.com/tips-and-tales/tips-planning-lost-child-services-at-events",
+    "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/mes_consells_dautoproteccio/grans_concentracions_persones/index.html",
+    "https://112.cantabria.es/consejos-de-autoproteccion/grandes-aglomeraciones",
+    "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)"
+   ]
+  },
+  {
+   "id": "vulnerable_person",
+   "family": "info",
+   "label": {
+    "es": "Persona vulnerable desorientada",
+    "en": "Disoriented vulnerable person"
+   },
+   "triggers": {
+    "es": [
+     "desorientad",
+     "perdido y confuso",
+     "señor mayor",
+     "señora mayor",
+     "alzheimer",
+     "demencia",
+     "discapacidad",
+     "no sabe dónde está",
+     "no encuentro a mi padre",
+     "no encuentro a mi madre"
+    ],
+    "en": [
+     "disoriented",
+     "confused person",
+     "elderly",
+     "dementia",
+     "alzheimer",
+     "disabled person lost",
+     "doesn't know where"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "role",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "with_person",
+      "looking_for_person"
+     ],
+     "question": {
+      "es": "¿Estás con esa persona o la estás buscando?",
+      "en": "Are you with that person, or looking for them?"
+     },
+     "why": "cambia la instrucción"
+    },
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "unwell",
+     "critical": true,
+     "type": "bool",
+     "ask_if": {
+      "role": "with_person"
+     },
+     "question": {
+      "es": "¿Está herida o se encuentra mal?",
+      "en": "Are they hurt or feeling unwell?"
+     },
+     "why": "la confusión puede ser calor, azúcar bajo o un golpe: si hay duda va un sanitario (ERC 2021: la hipoglucemia parece embriaguez)"
+    },
+    {
+     "id": "description",
+     "critical": false,
+     "type": "text",
+     "ask_if": {
+      "role": "looking_for_person"
+     },
+     "question": {
+      "es": "¿Cómo es y cómo va vestida?",
+      "en": "What do they look like and what are they wearing?"
+     },
+     "why": "para equipos y puertas, por canal reservado"
+    },
+    {
+     "id": "last_seen",
+     "critical": false,
+     "type": "zone_point",
+     "ask_if": {
+      "role": "looking_for_person"
+     },
+     "question": {
+      "es": "¿Dónde la viste por última vez?",
+      "en": "Where did you last see them?"
+     },
+     "why": "punto de partida de la búsqueda"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "unwell": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "medical": 1,
+       "volunteer": 1
+      },
+      "instruction": "vulnerable_stay",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "role": "with_person"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "volunteer": 1,
+       "security": 1
+      },
+      "instruction": "vulnerable_stay",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "role": "looking_for_person"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "volunteer": 1,
+       "security": 1
+      },
+      "instruction": "vulnerable_searching",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "role",
+    "location_point"
+   ],
+   "instructions": [
+    {
+     "id": "vulnerable_stay",
+     "steps": {
+      "es": [
+       "Quédate con ella, sin agobiarla.",
+       "Háblale despacio y con frases cortas.",
+       "Si hay mucho ruido, acompáñala a un sitio más tranquilo que esté cerca y dime cuál."
+      ],
+      "en": [
+       "Stay with them without crowding them.",
+       "Speak slowly, in short sentences.",
+       "If it is very noisy, take them somewhere quieter close by and tell me where."
+      ]
+     },
+     "source": "https://www.ticketfairy.com/blog/lost-child-and-vulnerable-persons-protocols-at-festivals",
+     "status": "pendiente_validacion",
+     "warn": "Adaptación propia de las pautas de Ticket Fairy (tono respetuoso, lenguaje sencillo, rincón tranquilo). Fuente de sector, no clínica."
+    },
+    {
+     "id": "vulnerable_searching",
+     "steps": {
+      "es": [
+       "Quédate donde la viste por última vez.",
+       "Dinos cómo es y cómo va vestida."
+      ],
+      "en": [
+       "Stay where you last saw them.",
+       "Tell us what they look like and what they are wearing."
+      ]
+     },
+     "source": "https://www.ticketfairy.com/blog/lost-child-and-vulnerable-persons-protocols-at-festivals",
+     "status": "pendiente_validacion",
+     "warn": "Calco propio de la instrucción validada `lost_child_parent`, aplicada a adultos."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "security_lead",
+     "gates"
+    ],
+    "external": {
+     "kind": "police",
+     "requires_approval": true
+    }
+   },
+   "mando_type_hint": "lost_vulnerable_adult",
+   "hint_warn": "No es `sensitive` en la taxonomía, pero el nombre y la descripción tampoco se megafonean.",
+   "sources": [
+    "https://www.ticketfairy.com/blog/lost-child-and-vulnerable-persons-protocols-at-festivals",
+    "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+    "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/mes_consells_dautoproteccio/grans_concentracions_persones/index.html"
+   ]
+  },
+  {
+   "id": "rumor_running",
+   "family": "info",
+   "label": {
+    "es": "Gente corriendo o rumor de peligro",
+    "en": "People running or rumour of danger"
+   },
+   "triggers": {
+    "es": [
+     "la gente corre",
+     "están corriendo",
+     "dicen que hay",
+     "he oído que",
+     "rumor",
+     "pánico",
+     "todo el mundo huye"
+    ],
+    "en": [
+     "people running",
+     "everyone is running",
+     "they say there is",
+     "i heard that",
+     "rumour",
+     "rumor",
+     "panic"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "people_running",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay gente corriendo ahora mismo?",
+      "en": "Are people running right now?"
+     },
+     "why": "la carrera es el peligro, sea cierto o no el motivo"
+    },
+    {
+     "id": "people_down",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien en el suelo o herido?",
+      "en": "Is anyone on the ground or hurt?"
+     },
+     "why": "añade sanitario"
+    },
+    {
+     "id": "seen_directly",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "seen",
+      "told",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Lo has visto tú o te lo han contado?",
+      "en": "Did you see it yourself, or were you told?"
+     },
+     "why": "distingue testigo de rumor sin valorar a la persona"
+    },
+    {
+     "id": "what_heard",
+     "critical": false,
+     "type": "text",
+     "question": {
+      "es": "¿Qué dice la gente que pasa?",
+      "en": "What are people saying is happening?"
+     },
+     "why": "se anota literal para control; no se repite ni se confirma"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "people_down": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "no_run",
+      "dispatch_now": true,
+      "mando_type_hint": "crowd_surge_general"
+     }
+    },
+    {
+     "if": {
+      "people_running": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "no_run",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "people_running": false
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "security": 2
+      },
+      "instruction": "no_run",
+      "dispatch_now": false
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point",
+    "people_running"
+   ],
+   "instructions": [
+    {
+     "id": "no_run",
+     "steps": {
+      "es": [
+       "No corras, no grites y no empujes.",
+       "Camina hacia un lado, donde haya menos gente.",
+       "No reenvíes lo que has oído: en control lo estamos comprobando."
+      ],
+      "en": [
+       "Do not run, shout or push.",
+       "Walk to the side, where there are fewer people.",
+       "Do not pass on what you heard: control is checking it."
+      ]
+     },
+     "source": "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/mes_consells_dautoproteccio/grans_concentracions_persones/index.html",
+     "status": "pendiente_validacion",
+     "warn": "Paso 1 de Protección Civil de Cataluña («evita chillar, correr o empujar»). Pasos 2 y 3: redacción propia."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "security_lead",
+     "coordinator"
+    ],
+    "external": null
+   },
+   "mando_type_hint": "rumor_panic",
+   "hint_warn": "El agente nunca confirma ni desmiente el rumor. El mensaje al público por megafonía es pregrabado y lo aprueba una persona (HSE: «pre-agreed wording for public announcements»).",
+   "sources": [
+    "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/mes_consells_dautoproteccio/grans_concentracions_persones/index.html",
+    "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "https://112.jcyl.es/web/es/consejos-recomendaciones/lugares-publicos.html"
+   ]
+  },
+  {
+   "id": "power_outage",
+   "family": "infra",
+   "label": {
+    "es": "Apagón o fallo eléctrico",
+    "en": "Power cut or electrical failure"
+   },
+   "triggers": {
+    "es": [
+     "apagón",
+     "se ha ido la luz",
+     "sin luz",
+     "a oscuras",
+     "no funciona el datáfono",
+     "no se puede pagar",
+     "se ha cortado el sonido",
+     "chispas",
+     "cable suelto"
+    ],
+    "en": [
+     "power cut",
+     "blackout",
+     "no lights",
+     "lights went out",
+     "in the dark",
+     "payments down",
+     "sound cut",
+     "sparks",
+     "loose cable"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "hazard",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Ves chispas, cables sueltos u olor a quemado?",
+      "en": "Do you see sparks, loose cables, or smell burning?"
+     },
+     "why": "riesgo eléctrico o de incendio: sube la prioridad"
+    },
+    {
+     "id": "what_off",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "lights",
+      "stage_sound",
+      "food_stalls",
+      "payments",
+      "everything",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Qué se ha apagado: luces, escenario, barras o pagos?",
+      "en": "What has gone off: lights, stage, bars or payments?"
+     },
+     "why": "cada uno es un tipo distinto en Mando"
+    },
+    {
+     "id": "dark",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Está la zona a oscuras?",
+      "en": "Is the area in the dark?"
+     },
+     "why": "a oscuras hay caídas y contraflujo (taxonomía: lighting_failure)"
+    },
+    {
+     "id": "crowd_mood",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "calm",
+      "restless",
+      "pushing",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Cómo está la gente: tranquila, nerviosa o empujando?",
+      "en": "How are people: calm, restless or pushing?"
+     },
+     "why": "un corte en el escenario puede acabar en avalancha"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "hazard": true
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 9,
+      "needs": {
+       "tech": 1,
+       "security": 2
+      },
+      "instruction": "power_keep_away",
+      "dispatch_now": true,
+      "mando_type_hint": "small_fire"
+     }
+    },
+    {
+     "if": {
+      "crowd_mood": "pushing"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "security": 2,
+       "medical": 1
+      },
+      "instruction": "crowd_pressure",
+      "dispatch_now": true,
+      "mando_type_hint": "crowd_surge_general"
+     }
+    },
+    {
+     "if": {
+      "what_off": "stage_sound"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "tech": 2
+      },
+      "instruction": "dark_stay",
+      "dispatch_now": true,
+      "mando_type_hint": "stage_power_failure"
+     }
+    },
+    {
+     "if": {
+      "dark": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "tech": 1,
+       "volunteer": 1
+      },
+      "instruction": "dark_stay",
+      "dispatch_now": true,
+      "mando_type_hint": "lighting_failure"
+     }
+    },
+    {
+     "if": {
+      "what_off": "payments"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 5,
+      "needs": {
+       "tech": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true,
+      "mando_type_hint": "cashless_down"
+     }
+    },
+    {
+     "if": {
+      "what_off": [
+       "lights",
+       "food_stalls",
+       "everything",
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "tech": 1,
+       "security": 1
+      },
+      "instruction": "power_keep_away",
+      "dispatch_now": true
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point",
+    "what_off"
+   ],
+   "instructions": [
+    {
+     "id": "power_keep_away",
+     "steps": {
+      "es": [
+       "No toques cables, cuadros eléctricos ni generadores.",
+       "Si ves chispas o huele a quemado, aléjate y avisa al personal con chaleco."
+      ],
+      "en": [
+       "Do not touch cables, electrical boxes or generators.",
+       "If you see sparks or smell burning, move away and tell staff in a vest."
+      ]
+     },
+     "source": "https://www.hse.gov.uk/event-safety/electrical-safety.htm",
+     "status": "pendiente_validacion",
+     "sources_extra": [
+      "https://112.jcyl.es/web/es/consejos-recomendaciones/vientos.html"
+     ],
+     "warn": "Redacción propia. HSE lo formula como deber del organizador (que el público no pueda tocar la instalación); 112 CyL: «no toque cables ni postes»."
+    },
+    {
+     "id": "dark_stay",
+     "steps": {
+      "es": [
+       "Si donde estás es seguro, quédate ahí.",
+       "Usa la linterna del móvil.",
+       "Si te mueves, hazlo despacio, sin correr ni empujar."
+      ],
+      "en": [
+       "If where you are is safe, stay there.",
+       "Use your phone torch.",
+       "If you move, go slowly, without running or pushing."
+      ]
+     },
+     "source": "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/mes_consells_dautoproteccio/grans_concentracions_persones/index.html",
+     "status": "pendiente_validacion",
+     "warn": "Redacción propia. Solo «sin correr ni empujar» sale de la fuente; lo demás es sentido común sin fuente abierta."
+    },
+    {
+     "id": "crowd_pressure",
+     "steps": {
+      "es": [
+       "No empujes.",
+       "Brazos delante del pecho.",
+       "No te agaches.",
+       "Sal en diagonal hacia los lados cuando afloje."
+      ],
+      "en": [
+       "Do not push.",
+       "Keep your arms in front of your chest.",
+       "Do not bend down.",
+       "Work your way out diagonally to the side when the pressure eases."
+      ]
+     },
+     "source": "https://www.cdc.gov/yellow-book/hcp/travel-for-work-other/mass-gatherings.html",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.kqed.org/news/11930646/8-tips-to-follow-if-youre-trapped-in-a-crushing-crowd",
+      "https://time.com/6226680/how-to-survive-crowd-crush-south-korea/"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "generic_stay_safe",
+     "steps": {
+      "es": [
+       "Ponte en un sitio seguro.",
+       "Si empeora, escribe otra vez."
+      ],
+      "en": [
+       "Get to a safe place.",
+       "If it gets worse, message again."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+     "status": "validada_anexo_c",
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "production"
+    ],
+    "external": null
+   },
+   "mando_type_hint": "power_outage_food",
+   "sources": [
+    "https://www.hse.gov.uk/event-safety/electrical-safety.htm",
+    "https://112.jcyl.es/web/es/consejos-recomendaciones/vientos.html",
+    "https://interior.gencat.cat/es/arees_dactuacio/proteccio_civil/consells_autoproteccio_emergencia/mes_consells_dautoproteccio/grans_concentracions_persones/index.html"
+   ]
+  },
+  {
+   "id": "water_supplies_out",
+   "family": "supply",
+   "label": {
+    "es": "Falta de agua o suministros",
+    "en": "Water or supplies running out"
+   },
+   "triggers": {
+    "es": [
+     "no hay agua",
+     "sin agua",
+     "se ha acabado el agua",
+     "fuente seca",
+     "no queda",
+     "se ha agotado",
+     "no hay hielo",
+     "no hay comida"
+    ],
+    "en": [
+     "no water",
+     "out of water",
+     "water ran out",
+     "run out",
+     "no ice",
+     "no food",
+     "sold out of water"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿En qué punto de agua o barra estás? Dime algo que veas cerca.",
+      "en": "Which water point or bar are you at? Tell me something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "what",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "water",
+      "food",
+      "ice",
+      "medical_supplies",
+      "other"
+     ],
+     "question": {
+      "es": "¿Qué falta: agua, comida, hielo u otra cosa?",
+      "en": "What is missing: water, food, ice or something else?"
+     },
+     "why": "el agua con calor es urgente; la comida no"
+    },
+    {
+     "id": "people_unwell",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien que se encuentre mal por el calor?",
+      "en": "Is anyone feeling unwell from the heat?"
+     },
+     "why": "la cadena calor → sin agua → golpes de calor es la que hay que cortar pronto"
+    },
+    {
+     "id": "level",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "empty",
+      "low",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Se ha acabado del todo o queda poco?",
+      "en": "Has it run out completely, or is there a little left?"
+     },
+     "why": "plazo para reponer"
+    },
+    {
+     "id": "queue_mood",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "calm",
+      "long",
+      "tense",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Cómo está la cola: tranquila, muy larga o con tensión?",
+      "en": "How is the queue: calm, very long, or tense?"
+     },
+     "why": "la taxonomía prevé que `water_out` degenere en pelea"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "people_unwell": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 8,
+      "needs": {
+       "medical": 1,
+       "logistics": 1
+      },
+      "instruction": "heat",
+      "dispatch_now": true,
+      "switch_to": "heat_illness"
+     }
+    },
+    {
+     "if": {
+      "queue_mood": "tense"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "logistics": 1,
+       "security": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "what": "water"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "logistics": 1,
+       "volunteer": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "what": "ice"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "logistics": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true,
+      "mando_type_hint": "ice_cooling_out"
+     }
+    },
+    {
+     "if": {
+      "what": "medical_supplies"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 6,
+      "needs": {
+       "logistics": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true,
+      "mando_type_hint": "medical_supplies_low"
+     }
+    },
+    {
+     "if": {
+      "what": [
+       "food",
+       "other"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 3,
+      "needs": {
+       "logistics": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": false,
+      "mando_type_hint": "food_shortage"
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point",
+    "what"
+   ],
+   "instructions": [
+    {
+     "id": "heat",
+     "steps": {
+      "es": [
+       "Llévala a la sombra.",
+       "Mójale la piel y la ropa y abanícala.",
+       "Si está despierta y traga bien, agua a sorbos."
+      ],
+      "en": [
+       "Move them into the shade.",
+       "Wet their skin and clothes and fan them.",
+       "If they are awake and can swallow well, give sips of water."
+      ]
+     },
+     "source": "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf",
+     "status": "validada_anexo_c",
+     "sources_extra": [
+      "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+      "https://www.nhs.uk/conditions/heat-exhaustion-heatstroke/",
+      "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf"
+     ],
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "generic_stay_safe",
+     "steps": {
+      "es": [
+       "Ponte en un sitio seguro.",
+       "Si empeora, escribe otra vez."
+      ],
+      "en": [
+       "Get to a safe place.",
+       "If it gets worse, message again."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+     "status": "validada_anexo_c",
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "production"
+    ],
+    "external": null
+   },
+   "mando_type_hint": "water_out",
+   "hint_warn": "Sin guía abierta sobre qué decir al público cuando falta agua (la Purple Guide es de pago). Las severidades copian la taxonomía de Mando.",
+   "sources": [
+    "https://www.nhs.uk/conditions/heat-exhaustion-heatstroke/",
+    "https://semicyuc.org/wp-content/uploads/2021/09/RCP-Guias-ERC-2021-08-Primeros-auxilios-Resuscitation-2021.pdf"
+   ]
+  },
+  {
+   "id": "infrastructure_failure",
+   "family": "infra",
+   "label": {
+    "es": "Fallo de baños o de infraestructura",
+    "en": "Toilets or infrastructure failure"
+   },
+   "triggers": {
+    "es": [
+     "baños",
+     "aseos",
+     "váter",
+     "atascad",
+     "valla rota",
+     "valla caída",
+     "se ha roto",
+     "inundad",
+     "charco",
+     "torno roto",
+     "no funciona"
+    ],
+    "en": [
+     "toilets",
+     "blocked toilet",
+     "broken fence",
+     "barrier down",
+     "flooded",
+     "puddle",
+     "turnstile broken",
+     "not working",
+     "broken"
+    ]
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "what",
+     "critical": true,
+     "type": "enum",
+     "options": [
+      "toilets",
+      "barrier",
+      "flooding",
+      "turnstile",
+      "other"
+     ],
+     "question": {
+      "es": "¿Qué falla: baños, una valla, el suelo, los tornos u otra cosa?",
+      "en": "What is failing: toilets, a barrier, the ground, turnstiles or something else?"
+     },
+     "why": "una valla cedida es un incidente grave de multitudes; un baño, no"
+    },
+    {
+     "id": "danger_now",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Puede hacerse daño alguien ahora mismo?",
+      "en": "Could someone get hurt right now?"
+     },
+     "why": "separa mantenimiento de urgencia"
+    },
+    {
+     "id": "people_hurt",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien herido?",
+      "en": "Is anyone hurt?"
+     },
+     "why": "añade sanitario"
+    },
+    {
+     "id": "scale",
+     "critical": false,
+     "type": "enum",
+     "options": [
+      "one",
+      "several",
+      "all",
+      "unknown"
+     ],
+     "question": {
+      "es": "¿Falla uno, varios o todos?",
+      "en": "Is it one, several or all of them?"
+     },
+     "why": "dimensiona"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "people_hurt": true
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "medical": 1,
+       "tech": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true,
+      "switch_to": "fall_trauma"
+     }
+    },
+    {
+     "if": {
+      "what": "barrier"
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "tech": 1,
+       "security": 2
+      },
+      "instruction": "barrier_away",
+      "dispatch_now": true,
+      "mando_type_hint": "barrier_failure"
+     }
+    },
+    {
+     "if": {
+      "danger_now": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 7,
+      "needs": {
+       "tech": 1,
+       "security": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "what": "flooding"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 5,
+      "needs": {
+       "tech": 1,
+       "logistics": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true,
+      "mando_type_hint": "heavy_rain_flooding"
+     }
+    },
+    {
+     "if": {
+      "what": "turnstile"
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 4,
+      "needs": {
+       "tech": 1,
+       "volunteer": 1
+      },
+      "instruction": "queue_wait",
+      "dispatch_now": true,
+      "mando_type_hint": "turnstile_failure"
+     }
+    },
+    {
+     "if": {
+      "what": [
+       "toilets",
+       "other"
+      ]
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 3,
+      "needs": {
+       "tech": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": false
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point",
+    "what"
+   ],
+   "instructions": [
+    {
+     "id": "generic_stay_safe",
+     "steps": {
+      "es": [
+       "Ponte en un sitio seguro.",
+       "Si empeora, escribe otra vez."
+      ],
+      "en": [
+       "Get to a safe place.",
+       "If it gets worse, message again."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+     "status": "validada_anexo_c",
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    },
+    {
+     "id": "barrier_away",
+     "steps": {
+      "es": [
+       "Aléjate de la valla y no te apoyes en ella.",
+       "Avisa al personal con chaleco."
+      ],
+      "en": [
+       "Move away from the barrier and do not lean on it.",
+       "Tell staff in a vest."
+      ]
+     },
+     "source": "https://www.kqed.org/news/11930646/8-tips-to-follow-if-youre-trapped-in-a-crushing-crowd",
+     "status": "pendiente_validacion",
+     "warn": "Redacción propia; la fuente solo dice evitar paredes y objetos sólidos en una multitud densa."
+    },
+    {
+     "id": "queue_wait",
+     "steps": {
+      "es": [
+       "No empujes ni intentes colarte.",
+       "Si quieres salir de la cola, hazlo hacia un lado, nunca contra la gente que viene detrás.",
+       "Si alguien se encuentra mal, avisa al personal con chaleco."
+      ],
+      "en": [
+       "Do not push or try to jump the queue.",
+       "If you want to leave the queue, step out to the side, never back against the people behind you.",
+       "If someone feels unwell, tell staff in a vest."
+      ]
+     },
+     "source": "https://www.hse.gov.uk/event-safety/crowd-management-controls.htm",
+     "status": "pendiente_validacion",
+     "warn": "Redacción propia. HSE lo dice como obligación del organizador («a safe way people can get out of a queue without having to move against those queuing behind them»), no como consejo al público."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "production"
+    ],
+    "external": null
+   },
+   "mando_type_hint": "toilets_blocked",
+   "hint_warn": "Sin guía abierta específica; las severidades copian la taxonomía de Mando. Es el protocolo que más tranquilamente puede esperar (`may_wait`).",
+   "sources": [
+    "https://www.hse.gov.uk/event-safety/crowd-management-controls.htm",
+    "https://www.kqed.org/news/11930646/8-tips-to-follow-if-youre-trapped-in-a-crushing-crowd"
+   ]
+  },
+  {
+   "id": "unknown",
+   "family": "info",
+   "label": {
+    "es": "Aviso sin clasificar (recogida genérica)",
+    "en": "Unclassified report (generic intake)"
+   },
+   "triggers": {
+    "es": [],
+    "en": []
+   },
+   "sensitive": false,
+   "slots": [
+    {
+     "id": "what",
+     "critical": true,
+     "type": "text",
+     "question": {
+      "es": "¿Qué está pasando?",
+      "en": "What is happening?"
+     },
+     "why": "112 y SAMUR: qué ocurre"
+    },
+    {
+     "id": "location_point",
+     "critical": true,
+     "type": "zone_point",
+     "question": {
+      "es": "¿Dónde estás exactamente? Dime la zona y algo que veas cerca.",
+      "en": "Where exactly are you? Tell me the area and something you can see nearby."
+     },
+     "why": "sin ubicación no se puede enviar a nadie (112 y SAMUR: primero el lugar, con puntos de referencia)"
+    },
+    {
+     "id": "danger_now",
+     "critical": true,
+     "type": "bool",
+     "question": {
+      "es": "¿Hay alguien en peligro ahora mismo?",
+      "en": "Is anyone in danger right now?"
+     },
+     "why": "decide si se envía ya sin saber más"
+    },
+    {
+     "id": "people_count",
+     "critical": false,
+     "type": "number",
+     "question": {
+      "es": "¿Cuántas personas están afectadas?",
+      "en": "How many people are affected?"
+     },
+     "why": "SAMUR: número de heridos; METHANE: N"
+    },
+    {
+     "id": "caller_safe",
+     "critical": false,
+     "type": "bool",
+     "question": {
+      "es": "¿Estás tú a salvo?",
+      "en": "Are you safe yourself?"
+     },
+     "why": "PAS: proteger va antes que socorrer (Cruz Roja)"
+    }
+   ],
+   "red_flags": [
+    {
+     "if": {
+      "danger_now": [
+       true,
+       "unknown"
+      ]
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 8,
+      "needs": {
+       "security": 1,
+       "medical": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true
+     },
+     "warn": "Enviar seguridad + sanitario a ciegas ante «peligro ahora» es criterio propio: es la pareja que cubre más casos."
+    },
+    {
+     "if": {
+      "caller_safe": false
+     },
+     "then": {
+      "life_risk": true,
+      "severity_min": 7,
+      "needs": {
+       "security": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": true
+     }
+    },
+    {
+     "if": {
+      "danger_now": false
+     },
+     "then": {
+      "life_risk": false,
+      "severity_min": 4,
+      "needs": {
+       "volunteer": 1
+      },
+      "instruction": "generic_stay_safe",
+      "dispatch_now": false
+     }
+    }
+   ],
+   "dispatch_as_soon_as": [
+    "location_point",
+    "danger_now"
+   ],
+   "instructions": [
+    {
+     "id": "generic_stay_safe",
+     "steps": {
+      "es": [
+       "Ponte en un sitio seguro.",
+       "Si empeora, escribe otra vez."
+      ],
+      "en": [
+       "Get to a safe place.",
+       "If it gets worse, message again."
+      ]
+     },
+     "source": "consejo/seguridad-eventos.md (Anexo C, lista validada por la experta del consejo)",
+     "status": "validada_anexo_c",
+     "warn": "El español es el texto validado en el Anexo C; la versión inglesa es traducción propia y fija, pendiente de revisión."
+    }
+   ],
+   "handoff": {
+    "notify": [
+     "coordinator"
+    ],
+    "external": null
+   },
+   "mando_type_hint": "ambiguous_report",
+   "hint_warn": "En cuanto `what` encaje con los disparadores de otro protocolo, se cambia a ese protocolo conservando los slots ya rellenos (mismos ids: location_point, responsive, people_count…).",
+   "sources": [
+    "https://www.madrid.es/UnidadesDescentralizadas/Emergencias/Samur-PCivil/Samur/ApartadosSecciones/09_QueHacerEnEmergencias/Ficheros/Guia_PrimerosAuxilios_SAMUR.pdf",
+    "https://112.gencat.cat/es/us-del-112/preguntes-frequeents/index.html",
+    "https://theconversation.com/112-y-061-asi-funcionan-los-telefonos-de-emergencias-sanitarias-243736",
+    "https://www.cruzroja.es/guiaprevencionNew/primeros-auxilios.html",
+    "https://www.jesip.org.uk/joint-doctrine/early-stages-of-an-incident-m-ethane/",
+    "https://www.jesip.org.uk/wp-content/uploads/2022/03/Posters_METHANE_OCT2021.pdf"
+   ]
+  }
+ ]
+}

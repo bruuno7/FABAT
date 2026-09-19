@@ -1,0 +1,211 @@
+{
+ "_LEEME": "Perfiles INVENTADOS para la demo. Ningún dato corresponde a una persona real. Tres dimensiones separadas: acceso (General | VIP | Personal), etiquetas de asistencia combinables y, aparte, la urgencia del incidente. VIP no cambia la prioridad. El código de pulsera NO da ubicación en tiempo real.",
+ "access_types": [
+  "General",
+  "VIP",
+  "Personal"
+ ],
+ "assist_tags": [
+  "menor",
+  "movilidad reducida",
+  "alergia grave",
+  "diabetes",
+  "acompañante",
+  "embarazo",
+  "epilepsia",
+  "discapacidad auditiva",
+  "discapacidad visual",
+  "persona mayor",
+  "cardiopatía"
+ ],
+ "profiles": [
+  {
+   "code": "FA-1001",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1002",
+   "access": "General",
+   "tags": [
+    "menor",
+    "acompañante"
+   ]
+  },
+  {
+   "code": "FA-1003",
+   "access": "VIP",
+   "tags": []
+  },
+  {
+   "code": "FA-1004",
+   "access": "VIP",
+   "tags": [
+    "movilidad reducida",
+    "menor"
+   ]
+  },
+  {
+   "code": "FA-1005",
+   "access": "General",
+   "tags": [
+    "diabetes"
+   ]
+  },
+  {
+   "code": "FA-1006",
+   "access": "General",
+   "tags": [
+    "alergia grave"
+   ]
+  },
+  {
+   "code": "FA-1007",
+   "access": "General",
+   "tags": [
+    "movilidad reducida",
+    "acompañante"
+   ]
+  },
+  {
+   "code": "FA-1008",
+   "access": "VIP",
+   "tags": [
+    "diabetes",
+    "persona mayor"
+   ]
+  },
+  {
+   "code": "FA-9001",
+   "access": "Personal",
+   "tags": [],
+   "role": "voluntario de accesos"
+  },
+  {
+   "code": "FA-9002",
+   "access": "Personal",
+   "tags": [],
+   "role": "técnico de sonido"
+  },
+  {
+   "code": "FA-9003",
+   "access": "Personal",
+   "tags": [
+    "alergia grave"
+   ],
+   "role": "seguridad de sector"
+  },
+  {
+   "code": "FA-1009",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1010",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1011",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1012",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1013",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1014",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1015",
+   "access": "General",
+   "tags": [
+    "movilidad reducida"
+   ]
+  },
+  {
+   "code": "FA-9004",
+   "access": "Personal",
+   "tags": [
+    "persona mayor"
+   ],
+   "role": "sanitario de puesto"
+  },
+  {
+   "code": "FA-9005",
+   "access": "Personal",
+   "tags": [
+    "epilepsia"
+   ],
+   "role": "logística de agua"
+  },
+  {
+   "code": "FA-1016",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1017",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1018",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1019",
+   "access": "General",
+   "tags": [
+    "cardiopatía"
+   ]
+  },
+  {
+   "code": "FA-1020",
+   "access": "General",
+   "tags": [
+    "cardiopatía"
+   ]
+  },
+  {
+   "code": "FA-1021",
+   "access": "General",
+   "tags": []
+  },
+  {
+   "code": "FA-1022",
+   "access": "VIP",
+   "tags": [
+    "persona mayor"
+   ]
+  },
+  {
+   "code": "FA-1023",
+   "access": "General",
+   "tags": [
+    "epilepsia"
+   ]
+  },
+  {
+   "code": "FA-1024",
+   "access": "VIP",
+   "tags": []
+  },
+  {
+   "code": "FA-9006",
+   "access": "Personal",
+   "tags": [],
+   "role": "coordinadora de voluntarios"
+  }
+ ]
+}

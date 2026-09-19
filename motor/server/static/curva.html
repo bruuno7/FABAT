@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curva de aprendizaje · Mando</title>
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/pages.css">
+<style>
+  #chart { width: 100%; max-width: 78rem; display: block; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; }
+  #chart text { fill: var(--dim); font-size: 15px; font-family: var(--mono); } #chart .ttl { fill: var(--text); font-size: 19px; font-weight: 700; font-family: var(--sans); }
+  #chart .grid { stroke: var(--line); } #chart .lbl-train { fill: var(--cyan); font-weight: 700; } #chart .lbl-held { fill: var(--amber); font-weight: 700; } #chart .lbl-base { fill: var(--faint); }
+  h1.take { font-size: 1.9rem; margin: .2rem 0 1rem; line-height: 1.2; } h1.take b { color: var(--amber); }
+</style></head>
+<body class="page">
+<header><h1>CURVA DE APRENDIZAJE</h1><p>Mando contra casos que nunca ha visto (heldout), ronda a ronda, según entran lecciones en su manual.</p><a href="/">pantalla de mando</a></header>
+<h1 class="take" id="take"></h1>
+<svg id="chart" viewBox="0 0 1100 520" role="img" aria-label="Curva de aprendizaje"></svg>
+<p class="note" id="metric"></p>
+<h2>RONDAS</h2>
+<table><thead><tr><th>ronda</th><th>lecciones</th><th>train · media [IC 95 %]</th><th>N</th><th>heldout · media [IC 95 %]</th><th>N</th><th>críticos fallidos heldout</th><th>acciones inseguras</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+(function () {
+  const NS = "http://www.w3.org/2000/svg", svg = document.getElementById("chart");
+  const el = (n, a, txt) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; };
+  const es = (x, nd) => (x == null ? "–" : Number(x).toFixed(nd == null ? 1 : nd).replace(".", ","));
+  const T = (tag, text, cls) => { const e = document.createElement(tag); e.textContent = text; if (cls) e.className = cls; return e; };
+  fetch("/api/curve").then((r) => r.json()).then((d) => {
+    const c = d.curve, rounds = (c && c.rounds) || [];
+    if (!d.available || !rounds.length) { document.getElementById("take").textContent = "El banco de pruebas todavía no ha dejado motor/harness/out/curve.json."; svg.remove(); return; }
+    const first = rounds[0], last = rounds[rounds.length - 1];
+    const take = document.getElementById("take");
+    take.append("Casos nunca vistos: de ", T("b", es(first.heldout.mean)), " a ", T("b", es(last.heldout.mean)), ` sobre 100 con ${last.n_lessons} lecciones (N=${last.heldout.n} casos heldout, N=${last.train.n} train)` +
+      (c.reference && c.reference.baseline ? `. Agente de lista fija: ${es(c.reference.baseline.heldout.mean)} (N=${c.reference.baseline.heldout.n}).` : ""));
+    document.getElementById("metric").textContent = "Métrica: " + (c.metric || "score") + ". Banda = intervalo de confianza del 95 % de la media. Cifras de simulación, no de un festival real.";
+    const base = c.reference && c.reference.baseline;
+    const all = []; rounds.forEach((r) => ["train", "heldout"].forEach((k) => all.push(r[k].ci95[0], r[k].ci95[1]))); if (base) all.push(base.heldout.ci95[0]);
+    const lo = Math.floor((Math.min(...all) - 2) / 5) * 5, hi = Math.min(100, Math.ceil((Math.max(...all) + 2) / 5) * 5);
+    const X0 = 90, X1 = 790, Y0 = 60, Y1 = 440;
+    const x = (i) => rounds.length === 1 ? (X0 + X1) / 2 : X0 + (i / (rounds.length - 1)) * (X1 - X0), y = (v) => Y1 - ((v - lo) / (hi - lo)) * (Y1 - Y0);
+    for (let v = lo; v <= hi; v += 5) { el("line", { x1: X0, x2: X1, y1: y(v), y2: y(v), class: "grid" }); el("text", { x: X0 - 12, y: y(v) + 5, "text-anchor": "end" }, v); }
+    el("text", { x: X0, y: 34, class: "ttl" }, "Puntuación media por ronda (0–100)");
+    rounds.forEach((r, i) => { el("text", { x: x(i), y: Y1 + 30, "text-anchor": "middle" }, "ronda " + r.round); el("text", { x: x(i), y: Y1 + 52, "text-anchor": "middle" }, r.n_lessons + " lecciones"); });
+    if (base) { el("line", { x1: X0, x2: X1, y1: y(base.heldout.mean), y2: y(base.heldout.mean), stroke: "#566775", "stroke-dasharray": "6 6", "stroke-width": 2 });
+      el("text", { x: X1 + 12, y: y(base.heldout.mean) + 5, class: "lbl-base" }, `lista fija ${es(base.heldout.mean)} (N=${base.heldout.n})`); }
+    [["train", "#4cc9f0", "lbl-train"], ["heldout", "#ffb02e", "lbl-held"]].forEach(([k, col, cls]) => {
+      const up = rounds.map((r, i) => `${x(i)},${y(r[k].ci95[1])}`), dn = rounds.map((r, i) => `${x(i)},${y(r[k].ci95[0])}`).reverse();
+      el("polygon", { points: up.concat(dn).join(" "), fill: col, opacity: .16 });
+      el("polyline", { points: rounds.map((r, i) => `${x(i)},${y(r[k].mean)}`).join(" "), fill: "none", stroke: col, "stroke-width": 4, "stroke-linejoin": "round" });
+      rounds.forEach((r, i) => { el("circle", { cx: x(i), cy: y(r[k].mean), r: 6, fill: col, stroke: "#06090d", "stroke-width": 2 });
+        el("text", { x: x(i), y: y(r[k].mean) + (k === "train" ? -14 : 26), "text-anchor": "middle", class: cls }, es(r[k].mean)); });
+      const l = rounds[rounds.length - 1][k];
+      el("text", { x: X1 + 12, y: y(l.mean) + 5, class: cls }, `${k} (N=${l.n})`);
+    });
+    const tb = document.getElementById("rows");
+    rounds.forEach((r) => { const tr = document.createElement("tr");
+      [r.round, r.n_lessons, `${es(r.train.mean)} [${es(r.train.ci95[0])} – ${es(r.train.ci95[1])}]`, r.train.n, `${es(r.heldout.mean)} [${es(r.heldout.ci95[0])} – ${es(r.heldout.ci95[1])}]`, r.heldout.n,
+       r.heldout.critical_failed != null ? `${r.heldout.critical_failed} de ${r.heldout.critical_total} (${es(r.heldout.critical_failed_rate * 100)} %)` : "–", r.heldout.unsafe_actions ?? "–"]
+        .forEach((v) => tr.append(T("td", String(v), "num"))); tb.append(tr); });
+  });
+})();
+</script>
+</body></html>

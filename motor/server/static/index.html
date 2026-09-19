@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mando · centro de control</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="mando">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-voice" viewBox="0 0 24 24"><path d="M6.6 3h3l1.5 4.5-2 1.4a12 12 0 0 0 6 6l1.4-2 4.5 1.5v3A2.6 2.6 0 0 1 18.4 20 15.4 15.4 0 0 1 4 5.6 2.6 2.6 0 0 1 6.6 3z" fill="currentColor"/></symbol>
+    <symbol id="i-sms" viewBox="0 0 24 24"><path d="M3 4h18v13H9l-5 4v-4H3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M7 9h10M7 13h6" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 8.5c0 3 2.5 6 6 6.5l1.2-1.6-2-1-1 .8a4 4 0 0 1-2-2.2l.9-.9-.9-2.1z" fill="currentColor"/></symbol>
+    <symbol id="i-sensor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.6" fill="currentColor"/><path d="M6.5 6.5a7.8 7.8 0 0 0 0 11M17.5 6.5a7.8 7.8 0 0 1 0 11M3.5 3.5a12 12 0 0 0 0 17M20.5 3.5a12 12 0 0 1 0 17" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-radio" viewBox="0 0 24 24"><rect x="6" y="8" width="12" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M9 8V2M10 12h4M10 16h4" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-operator" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M6 10h2M10 10h2M14 10h2M7 14h10" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cross" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/></symbol>
+    <symbol id="i-temp" viewBox="0 0 24 24"><path d="M10 3a2 2 0 0 1 4 0v10.5a4.5 4.5 0 1 1-4 0z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="17.5" r="2.2" fill="currentColor"/></symbol>
+    <symbol id="i-wind" viewBox="0 0 24 24"><path d="M2 9h12a3 3 0 1 0-3-3M2 14h17a3 3 0 1 1-3 3M2 19h8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-rain" viewBox="0 0 24 24"><path d="M7 15a5 5 0 1 1 1.5-9.8A6 6 0 0 1 20 8a3.6 3.6 0 0 1-1 7z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 18l-1 3M13 18l-1 3M18 18l-1 3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <div class="brand"><span class="brand-mark"></span><b>MANDO</b><span class="brand-sub">Festival Abierto · 40.000 personas</span></div>
+  <div class="case" id="case-title"></div>
+  <div class="clock"><span id="clock-day">DÍA –</span><b id="clock-hhmm">--:--</b><span id="clock-t">min 0</span><span class="phase" id="clock-phase"></span></div>
+  <div class="weather" id="weather"></div>
+  <div class="board" id="board" title="Cada golpe que Mando absorbe sin un fallo crítico suma a Mando; si provoca uno, suma al jurado">
+    <span class="side">JURADO</span><b id="sb-jury">0</b><span class="dash">—</span><b id="sb-mando">0</b><span class="side">MANDO</span>
+    <span class="dots" id="sb-dots"></span>
+  </div>
+  <div class="controls">
+    <button id="btn-play" class="btn" title="Espacio">PAUSA</button>
+    <button id="btn-step" class="btn ghost" title="S">+1 MIN</button>
+    <div class="speed" id="speed"><button data-speed="1">×1</button><button data-speed="4">×4</button><button data-speed="16">×16</button></div>
+    <select id="case-select" title="Caso"></select>
+    <select id="comms-select" title="Comunicaciones"><option value="sim">Llamadas simuladas</option><option value="happyrobot">HappyRobot (híbrido)</option></select>
+    <button id="btn-reset" class="btn ghost" title="R">REINICIAR</button>
+    <button id="btn-qr" class="btn ghost" title="Q">QR JURADO</button>
+    <button id="btn-scene" class="btn ghost" title="E">ESCENA</button>
+  </div>
+</header>
+
+<section class="overview" aria-label="Avisos y conexiones"><div id="funnel"></div><p id="integrations" role="status"></p><button class="btn ghost" id="btn-sound" aria-pressed="false">Sonido no · M</button><nav><a href="/duelo">Duelo</a> · <a href="/memoria">Memoria</a> · <a href="/asistente">Asistente</a></nav></section>
+<main class="grid">
+  <section class="col left">
+    <div class="panel incidents">
+      <h2>FRENTES <span class="count" id="inc-count"></span></h2>
+      <div id="fronts" class="scroll fronts"></div>
+    </div>
+    <div class="panel reports">
+      <h2>AVISOS ENTRANTES <span class="count" id="rep-count"></span></h2>
+      <div id="reports" class="scroll"></div>
+    </div>
+  </section>
+
+  <section class="col center">
+    <div class="panel map">
+      <div id="banner" class="banner" hidden></div>
+      <svg id="plano" class="plano" role="group" aria-label="Plano esquemático del recinto"></svg>
+      <div class="legend">
+        <span>personas/m²</span>
+        <i class="sw d-green"></i><span>&lt; 2</span><i class="sw d-amber"></i><span>2 – 5</span>
+        <i class="sw d-red"></i><span>&gt; 5</span><i class="sw d-crit"></i><span>&gt; 6,5 riesgo de aplastamiento</span>
+        <span class="sep"></span>
+        <span class="tk tk-security"></span><span>seguridad</span><span class="tk tk-medical"></span><span>médico</span>
+        <span class="tk tk-ambulance"></span><span>ambulancia</span><span class="tk tk-other"></span><span>técnicos · logística · voluntarios</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="col right">
+    <div class="panel fronts-mini" id="fronts-mini-panel">
+      <h2>FRENTES <span class="count" id="fronts-mini-count"></span></h2>
+      <div id="fronts-mini" class="fronts"></div>
+    </div>
+    <div class="panel plan" id="plan-panel">
+      <h2>PLAN ACTUAL <span class="count" id="plan-ref"></span></h2>
+      <div id="plan" class="scroll"></div>
+    </div>
+    <div class="panel approvals" id="approvals-panel">
+      <h2>ESPERAN A UNA PERSONA <span class="count" id="ap-count"></span></h2>
+      <div id="approvals"></div>
+    </div>
+  </section>
+</main>
+
+<section class="strip" id="strip" aria-label="Llamada en curso y tres cifras">
+  <div class="strip-call" id="strip-call"></div>
+  <div class="strip-figs" id="strip-figs"></div>
+</section>
+
+<footer class="bottom">
+  <div class="panel timeline">
+    <h2>REGISTRO <span id="axis-wrap"><svg id="axis" preserveAspectRatio="none"></svg></span></h2>
+    <div id="log" class="scroll"></div>
+  </div>
+  <div class="panel calls">
+    <h2>LLAMADAS <span class="count" id="calls-mode"></span></h2>
+    <div id="calls"></div>
+  </div>
+  <div class="panel score">
+    <h2>FIABILIDAD <small id="score-n"></small></h2>
+    <div id="score" class="tiles"></div>
+  </div>
+</footer>
+
+<div id="break-overlay" class="break-overlay" hidden>
+  <div class="bo-band">SUPUESTO ROTO</div>
+  <div class="bo-what" id="bo-what"></div>
+  <div class="bo-old" id="bo-old"></div>
+  <div class="bo-arrow">PLAN NUEVO</div>
+  <div class="bo-new" id="bo-new"></div>
+</div>
+<div id="lock-bar" class="lock-bar" hidden></div>
+<div id="qr-overlay" class="overlay" hidden>
+  <div class="qr-card">
+    <h1 id="qr-title">Rompe el plan desde tu móvil</h1>
+    <img id="qr-img" alt="Código QR de la página del jurado">
+    <p id="qr-url"></p>
+    <p class="hint">Misma red wifi. Pulsa Q o haz clic para cerrar.</p>
+  </div>
+</div>
+<div id="conn" class="conn" hidden>SIN CONEXIÓN CON EL SERVIDOR · reintentando</div>
+
+<script src="/static/plano.js"></script>
+<aside id="detail-panel" class="detail-panel" aria-labelledby="detail-title" hidden>
+  <header><h2 id="detail-title">Detalle</h2><button id="detail-close" class="btn">Cerrar · Esc</button></header>
+  <form id="whatif-form" class="whatif-form">
+    <h2>¿Y si…? <span id="whatif-origin"></span></h2><p>Prueba tu alternativa durante 15 minutos antes de dar la orden. El reloj se pausa para comparar.</p>
+    <input type="hidden" id="whatif-zone">
+    <label>Acción<select id="whatif-kind"><option value="reroute">Desviar personas</option><option value="set_zone">Restringir o cerrar la zona</option><option value="stop_show">Parar el espectáculo</option></select></label>
+    <div id="reroute-controls"><label>Destino<select id="whatif-to"></select></label><label for="whatif-fraction">Fracción del desvío <output id="fraction-value">50 %</output></label><input id="whatif-fraction" type="range" min="5" max="100" step="5" value="50"></div>
+    <div id="zone-controls" hidden><label>Estado de la zona<select id="whatif-state"><option value="restricted">Restringir entrada</option><option value="closed">Cerrar entrada</option><option value="open">Abrir entrada</option></select></label></div>
+    <button class="btn paused" id="whatif-run" type="submit">Ensayar alternativa</button>
+    <p id="whatif-status" role="status"></p>
+    <label>Zona de la gráfica<select id="whatif-view-zone"><option>Ensaya para comparar</option></select></label><div id="whatif-chart"></div>
+    <button class="btn" type="button" id="whatif-order" disabled>Ordenar esto</button><p class="data-note">Ordenar aplica la alternativa al recinto y registra tu decisión.</p>
+  </form><div id="detail-body"></div>
+</aside>
+<div id="action-error" class="action-error" role="alert" hidden></div>
+<script src="/static/ui.js"></script>
+<script src="/static/interaction.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

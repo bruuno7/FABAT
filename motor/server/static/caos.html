@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caos · consola del adversario</title>
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/pages.css"></head>
+<body class="page">
+<header><h1>CAOS</h1><p>El adversario no ataca la conversación: ataca el mundo. Busca el supuesto del plan que más daño hace si se rompe. Un clic lo ejecuta.</p>
+<span id="meta" class="note"></span><a href="/">pantalla de mando</a></header>
+<h2>GOLPES SUGERIDOS AHORA</h2>
+<div id="cards" class="cards"></div>
+<h2>GOLPES YA DADOS</h2>
+<table><thead><tr><th>min</th><th>quién</th><th>golpe</th></tr></thead><tbody id="done"></tbody></table>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const T = (tag, text, cls) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; };
+  function load() {
+    fetch("/api/chaos/suggest").then((r) => r.json()).then((d) => {
+      $("meta").textContent = `minuto ${d.t} · fuente: ${d.source === "caos" ? "motor/caos" : "sugerencias de relleno (motor/caos no disponible)"}`;
+      const box = $("cards"); box.textContent = "";
+      d.suggestions.forEach((s) => {
+        const c = T("div", null, "card");
+        c.append(T("h3", s.label));
+        const dm = T("div", s.damage == null ? "daño sin estimar" : String(s.damage).replace(".", ","), "dmg" + (s.damage == null ? " na" : ""));
+        if (s.damage != null) dm.append(T("small", (s.damage_unit || "daño estimado") + (s.extra && s.extra.n ? " · N=" + s.extra.n : "")));
+        c.append(dm, T("p", s.why), T("code", JSON.stringify(s.effect)));
+        const b = T("button", "EJECUTAR GOLPE");
+        b.onclick = () => { b.disabled = true; fetch("/api/strike", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ effect: s.effect, origin: "chaos", label: s.label }) }).then(load); };
+        c.append(b); box.append(c);
+      });
+      if (!d.suggestions.length) box.append(T("p", "Sin sugerencias ahora mismo.", "note"));
+    });
+    fetch("/api/state").then((r) => r.json()).then((s) => {
+      const tb = $("done"); tb.textContent = "";
+      (s.strikes || []).slice().reverse().forEach((k) => { const tr = T("tr"); tr.append(T("td", k.t, "num"), T("td", k.origin === "jury" ? "jurado" : k.origin === "chaos" ? "Caos" : k.origin), T("td", k.label)); tb.append(tr); });
+    });
+  }
+  load(); setInterval(load, 5000);
+})();
+</script>
+</body></html>

@@ -1,0 +1,13 @@
+{
+  "_LEEME": "Copiar a contacts.local.json (NO se versiona). Solo los recursos de esta lista salen por HappyRobot; el resto se simula. Teléfonos en formato E.164. Nunca números de emergencias.",
+  "resources": {
+    "sec_2": {"to_number": "+34600000002", "leader_name": "Nombre de quien coge el móvil"},
+    "med_1": {"to_number": "+34600000003", "leader_name": "Otro móvil del equipo o del jurado"}
+  },
+  "roles": {
+    "coordinator": {"to_number": "+34600000001", "role": "control"},
+    "control": "+34600000001",
+    "ambulance": {"to_number": "+34600000900", "service_label": "coordinacion_112_SIMULADA", "role": "external"}
+  },
+  "allowed_numbers": ["+34600000001", "+34600000002", "+34600000003", "+34600000900"]
+}

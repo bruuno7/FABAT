@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Informe posterior · Mando</title>
+<link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/pages.css"></head>
+<body class="page">
+<header><h1>INFORME POSTERIOR</h1><p id="sub"></p><a href="/">pantalla de mando</a></header>
+<div id="kpis" class="kpis"></div>
+<p class="note">Cifras de UNA ejecución (N=1 caso). No son una media: las medias con su N salen del banco de pruebas (<a href="/curva">/curva</a>).</p>
+<h2>INCIDENTES</h2>
+<table><thead><tr><th>id</th><th>qué</th><th>dónde</th><th>prioridad</th><th>avisos</th><th>abierto</th><th>1.ª acción</th><th>estado</th></tr></thead><tbody id="inc"></tbody></table>
+<h2>PLANES: QUÉ SUPUESTO SE ROMPIÓ Y QUÉ SE HIZO DESPUÉS</h2><div id="chains"></div>
+<h2>DECISIONES DE LA PERSONA</h2>
+<table><thead><tr><th>min</th><th>acción</th><th>decisión</th><th>nota</th></tr></thead><tbody id="aps"></tbody></table>
+<h2>GOLPES RECIBIDOS</h2>
+<table><thead><tr><th>min</th><th>quién</th><th>golpe</th></tr></thead><tbody id="strikes"></tbody></table>
+<h2>LLAMADAS</h2>
+<table><thead><tr><th>min</th><th>a quién</th><th>canal</th><th>resultado</th><th>dijo</th></tr></thead><tbody id="calls"></tbody></table>
+<h2>LECCIONES CANDIDATAS (las valida el revisor antes de entrar en el manual)</h2><div id="lessons"></div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const T = (tag, text, cls) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; };
+  const row = (tb, cells) => { const tr = T("tr"); cells.forEach((c) => tr.append(c instanceof Node ? c : T("td", c))); tb.append(tr); };
+  const es = (x) => (x == null ? "–" : String(Math.round(x * 10) / 10).replace(".", ","));
+  fetch("/api/informe").then((r) => r.json()).then((d) => {
+    const m = d.metrics, se = d.session;
+    $("sub").textContent = `${se.title || se.case} · ${se.case} · semilla ${se.seed} · agente ${se.agent} · hasta el minuto ${d.t} · comunicaciones: ${se.comms_mode}`;
+    [[m.critical_failed + " / " + m.critical_total, "críticos fallidos"], [es(m.time_to_first_action) + " min", "a la primera acción (N=" + m.time_to_first_action_n + ")"],
+     [m.replans, "replanificaciones"], [m.assumptions_broken, "supuestos rotos"], [m.calls_failed + " → " + m.calls_recovered, "llamadas fallidas → recuperadas"],
+     [m.unsafe_actions, "acciones graves sin aprobación"], [m.approvals_requested, "aprobaciones pedidas"], [m.wasted_dispatches, "envíos en balde"],
+     [es(m.peak_density) + " /m²", "densidad máxima"], [m.strikes, "golpes recibidos"],
+     [m.decision_latency_n ? es(m.decision_latency_min) + " min" : "–", "latencia de decisión humana (N=" + (m.decision_latency_n || 0) + ")"],
+     [m.fronts_peak, "frentes a la vez (pico)"], [m.signals || 0, "cambios de orden dentro de una llamada"]].forEach(([v, l]) => {
+      const t = T("div", null, "tile"); t.append(T("div", String(v), "v"), T("div", l, "l")); $("kpis").append(t); });
+    d.incidents.forEach((i) => row($("inc"), [i.id, i.label || i.type, (d.zone_names || {})[i.zone] || i.zone || "sin confirmar", T("td", es(i.priority), "num"), T("td", (i.reports || []).length, "num"),
+      T("td", i.t_open, "num"), T("td", i.first_action_t == null ? "–" : i.first_action_t, "num"), i.status]));
+    const byInc = {}; d.plans.forEach((p) => (byInc[p.incident || "?"] = byInc[p.incident || "?"] || []).push(p));
+    Object.entries(byInc).forEach(([inc, plans]) => {
+      const box = T("div", null, "chain"); box.append(T("div", inc, "note"));
+      plans.forEach((p) => {
+        const el = T("div", null, "p" + (p.invalidated_by ? " dead" : ""));
+        el.append(T("div", `${p.id} · min ${p.t} · ${p.objective}`, "obj"));
+        if (p.supersedes) el.append(T("div", "Porque: " + p.why, "why"));
+        (p.assumptions || []).forEach((a) => el.append(T("div", (a.holds ? "se cumple: " : "ROTO en el min " + a.broken_at + ": ") + a.text, a.holds ? "as" : "brk")));
+        box.append(el);
+      });
+      $("chains").append(box);
+    });
+    d.approvals.forEach((a) => row($("aps"), [T("td", a.t, "num"), a.action, a.ok ? "APRUEBA" : "VETA", a.note || ""]));
+    d.strikes.forEach((k) => row($("strikes"), [T("td", k.t, "num"), k.origin === "jury" ? "jurado" : k.origin, k.label]));
+    d.calls.forEach((c) => row($("calls"), [T("td", c.t, "num"), c.to + (c.real ? " (REAL)" : ""), c.channel, c.result || "en curso", c.text || ""]));
+    const cand = (d.lessons && d.lessons.candidates) || [];
+    cand.forEach((l) => $("lessons").append(T("p", (l.id || "") + " · " + (l.text || JSON.stringify(l)))));
+    if (!cand.length) $("lessons").append(T("p", "Ninguna en esta ejecución.", "note"));
+  });
+})();
+</script>
+</body></html>

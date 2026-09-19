@@ -1,0 +1,14 @@
+A1–A3 (CEO HappyRobot, 2026-09):
+- Número US en plataforma: lo cubren ellos.
+- Outbound: no deberían cobrar.
+- Inbound demo: preferir Web Call (no inbound telefónico PSTN).
+- SMS con número americano: OK.
+- WhatsApp: hace falta cuenta Meta Business propia.
+- Telegram: sin integración nativa; bot + API bridge valorado igual que WhatsApp.
+
+Pendientes equipo:
+- ¿Workspace exacto EU confirmado (hackspainteam6)?
+- ¿API key Editor entregada?
+- ¿Token BotFather + nombre bot?
+- ¿Demo HTTPS (CF tunnel) o polling local para TG?
+- Latencia voz <300ms: medir antes de afirmar (jurado).

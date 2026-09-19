@@ -6,7 +6,11 @@ import "dotenv/config";
 import { loadEnv } from "../lib/hr-client.js";
 import { createIncidentStore } from "../hr/store.js";
 import { handleTelegramUpdate } from "./handle-update.js";
-import type { TelegramUpdate } from "../lib/telegram-map.js";
+import {
+  TELEGRAM_ALLOWED_UPDATES,
+  type TelegramUpdate,
+} from "../lib/telegram-map.js";
+import { createStaffStore } from "./staff-store.js";
 
 const env = loadEnv();
 
@@ -17,16 +21,22 @@ if (!env.telegramBotToken) {
 
 const token = env.telegramBotToken;
 const store = createIncidentStore();
+const staff = createStaffStore();
 let offset = 0;
 
 async function loop() {
   console.info("[poll] starting getUpdates loop");
   for (;;) {
     try {
-      const url = new URL(`https://api.telegram.org/bot${token}/getUpdates`);
-      url.searchParams.set("timeout", "30");
-      url.searchParams.set("offset", String(offset));
-      const res = await fetch(url);
+      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          timeout: 30,
+          offset,
+          allowed_updates: [...TELEGRAM_ALLOWED_UPDATES],
+        }),
+      });
       const data = (await res.json()) as {
         ok: boolean;
         result?: TelegramUpdate[];
@@ -39,10 +49,11 @@ async function loop() {
       }
       for (const update of data.result ?? []) {
         offset = update.update_id + 1;
-        const result = await handleTelegramUpdate(env, update, store);
+        const result = await handleTelegramUpdate(env, update, store, staff);
         if (!result.ignored) {
           console.info("[poll] handled", {
             command: result.command,
+            kind: result.kind,
             correlation_id: result.correlation_id,
             hr: result.hr,
           });

@@ -1,30 +1,52 @@
+import { timingSafeEqual } from "node:crypto";
 import type { Env } from "../lib/hr-client.js";
-import { forwardToHappyRobot, telegramSendMessage } from "../lib/hr-client.js";
+import {
+  forwardToHappyRobot,
+  telegramAnswerCallback,
+  telegramSendMessage,
+} from "../lib/hr-client.js";
+import { STAFF_ROLE_LABELS } from "../lib/contract.js";
 import {
   BOT_HELP,
   parseCommand,
+  parseCommandLine,
+  parseStaffRole,
+  displayNameFromUser,
+  staffOccupancyText,
   telegramUpdateToPublicReport,
+  telegramUpdateToStaffResponse,
   type TelegramUpdate,
 } from "../lib/telegram-map.js";
 import type { IncidentStore } from "../hr/store.js";
+import {
+  createStaffStore,
+  type StaffStore,
+} from "./staff-store.js";
 
 export type HandleResult = {
   ok: boolean;
   ignored?: boolean;
   correlation_id?: string;
   command?: string;
+  kind?: string;
   hr?: { ok: boolean; skipped: boolean; status: number };
   replies: string[];
 };
 
 /**
- * Core bot logic: commands locally; free text → ACK + HappyRobot Incoming Hook.
+ * Core bot logic: commands locally; free text → ACK + HappyRobot Incoming Hook;
+ * botones del personal → HR_HOOK_TG_RESPONSE.
  */
 export async function handleTelegramUpdate(
   env: Env,
   update: TelegramUpdate,
   store?: IncidentStore,
+  staff: StaffStore = createStaffStore(),
 ): Promise<HandleResult> {
+  if (update.callback_query) {
+    return handleCallback(env, update, staff);
+  }
+
   const msg = update.message;
   if (!msg?.text?.trim()) {
     return { ok: true, ignored: true, replies: [] };
@@ -33,6 +55,8 @@ export async function handleTelegramUpdate(
   const chatId = String(msg.chat.id);
   const text = msg.text.trim();
   const command = parseCommand(text);
+  const fromId = msg.from?.id != null ? String(msg.from.id) : chatId;
+  const display = displayNameFromUser(msg.from, fromId);
 
   if (command === "start" || command === "ayuda" || command === "help") {
     const reply = BOT_HELP;
@@ -42,6 +66,28 @@ export async function handleTelegramUpdate(
 
   if (command === "ping") {
     const reply = "pong — puente Telegram activo";
+    await telegramSendMessage(env.telegramBotToken, chatId, reply);
+    return { ok: true, command, replies: [reply] };
+  }
+
+  if (command === "rol") {
+    const reply = claimRole(env, staff, chatId, fromId, display, text);
+    await telegramSendMessage(env.telegramBotToken, chatId, reply);
+    return { ok: true, command, replies: [reply] };
+  }
+
+  if (command === "estado") {
+    const mine = staff.getByChat(chatId);
+    const reply = staffOccupancyText(staff.list(), mine?.role);
+    await telegramSendMessage(env.telegramBotToken, chatId, reply);
+    return { ok: true, command, replies: [reply] };
+  }
+
+  if (command === "baja") {
+    const previous = staff.release(chatId);
+    const reply = previous
+      ? `Dejas el puesto ${STAFF_ROLE_LABELS[previous.role]} (simulación).`
+      : "No tenías ningún puesto. /rol para tomar uno.";
     await telegramSendMessage(env.telegramBotToken, chatId, reply);
     return { ok: true, command, replies: [reply] };
   }
@@ -104,4 +150,135 @@ export async function handleTelegramUpdate(
     },
     replies,
   };
+}
+
+async function handleCallback(
+  env: Env,
+  update: TelegramUpdate,
+  staff: StaffStore,
+): Promise<HandleResult> {
+  const cq = update.callback_query!;
+  await telegramAnswerCallback(env.telegramBotToken, cq.id);
+
+  const chatId = String(cq.message?.chat.id ?? cq.from.id);
+  const role = staff.getByChat(chatId)?.role;
+  const mapped = telegramUpdateToStaffResponse(update, { role });
+  if (!mapped) {
+    return { ok: true, ignored: true, replies: [] };
+  }
+
+  const fwd = await forwardToHappyRobot(
+    env.hrHookTgResponse,
+    mapped,
+    env.hrHookApiKey,
+    "HR_HOOK_TG_RESPONSE not configured",
+  );
+
+  const replies: string[] = [];
+  if (fwd.skipped) {
+    const local =
+      "HappyRobot aún no está enlazado (falta HR_HOOK_TG_RESPONSE). " +
+      "Tu respuesta quedó registrada en el puente. Ref: " +
+      mapped.correlation_id;
+    await telegramSendMessage(env.telegramBotToken, mapped.chat_id, local);
+    replies.push(local);
+  } else if (!fwd.ok) {
+    const local = "No pude pasar tu respuesta a control. Inténtalo de nuevo.";
+    await telegramSendMessage(env.telegramBotToken, mapped.chat_id, local);
+    replies.push(local);
+  }
+
+  console.info("[telegram] staff_response", {
+    kind: mapped.kind,
+    correlation_id: mapped.correlation_id,
+    assignment_id: mapped.assignment_id,
+    fwd_ok: fwd.ok,
+    fwd_skipped: fwd.skipped ?? false,
+    fwd_status: fwd.status,
+  });
+
+  return {
+    ok: true,
+    correlation_id: mapped.correlation_id,
+    kind: mapped.kind,
+    hr: {
+      ok: fwd.ok,
+      skipped: fwd.skipped ?? false,
+      status: fwd.status,
+    },
+    replies,
+  };
+}
+
+function claimRole(
+  env: Env,
+  staff: StaffStore,
+  chatId: string,
+  fromId: string,
+  display: string,
+  text: string,
+): string {
+  const line = parseCommandLine(text);
+  const roleArg = line?.args[0];
+  const pinArg = line?.args[1];
+  const occupancy = () => staffOccupancyText(staff.list(), staff.getByChat(chatId)?.role);
+
+  if (!roleArg) {
+    return [
+      "Uso: /rol <puesto> [pin]",
+      "Esto es una simulación. Puestos: medico, staff_entradas, organizador, bomberos, policia.",
+      "",
+      occupancy(),
+    ].join("\n");
+  }
+
+  const role = parseStaffRole(roleArg);
+  if (!role) {
+    return `Puesto «${roleArg}» no existe. Válidos: medico, staff_entradas, organizador, bomberos, policia.`;
+  }
+
+  if (env.requireSecrets && !env.staffPin) {
+    return "El PIN de personal no está configurado. No se pueden tomar puestos en este entorno.";
+  }
+
+  if (env.staffPin) {
+    if (!pinArg) {
+      return `Uso: /rol ${role} <PIN>`;
+    }
+    if (!pinsEqual(env.staffPin, pinArg)) {
+      return "PIN incorrecto.";
+    }
+  }
+
+  const already = staff.getByChat(chatId);
+  if (already?.role === role) {
+    return `Ya eres ${STAFF_ROLE_LABELS[role]} (simulación).`;
+  }
+
+  const result = staff.claim({
+    chat_id: chatId,
+    user_id: fromId,
+    role,
+    display_name: display,
+    claimed_at: new Date().toISOString(),
+  });
+  if (!result.ok) {
+    return `Ese puesto ya lo tiene ${result.holder.display_name}. /estado para ver ocupados.`;
+  }
+
+  const switched = result.previous
+    ? `Dejas ${STAFF_ROLE_LABELS[result.previous.role]} y tomas ${STAFF_ROLE_LABELS[role]} (simulación).`
+    : `Puesto ${STAFF_ROLE_LABELS[role]} tomado (simulación).`;
+  const pinNote =
+    !env.staffPin && !env.requireSecrets
+      ? "\nSin PIN en local."
+      : "";
+  return switched + pinNote;
+}
+
+function pinsEqual(expected: string, got: string): boolean {
+  const a = Buffer.from(expected);
+  const b = Buffer.from(got);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }

@@ -3,8 +3,13 @@ import { checkSecret, type Env } from "../lib/hr-client.js";
 import type { IncidentStore } from "../hr/store.js";
 import { handleTelegramUpdate } from "./handle-update.js";
 import type { TelegramUpdate } from "../lib/telegram-map.js";
+import type { StaffStore } from "./staff-store.js";
 
-export function telegramRouter(env: Env, store: IncidentStore): Router {
+export function telegramRouter(
+  env: Env,
+  store: IncidentStore,
+  staff: StaffStore,
+): Router {
   const router = Router();
 
   router.post("/webhook", async (req, res) => {
@@ -22,7 +27,7 @@ export function telegramRouter(env: Env, store: IncidentStore): Router {
     // Un fallo aguas abajo no debe provocar reintentos de Telegram: siempre 200.
     let result: unknown;
     try {
-      result = await handleTelegramUpdate(env, update, store);
+      result = await handleTelegramUpdate(env, update, store, staff);
     } catch (err) {
       console.error("[telegram] update failed", (err as Error).name);
       result = { ok: false };

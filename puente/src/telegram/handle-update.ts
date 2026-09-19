@@ -3,6 +3,7 @@ import type { Env } from "../lib/hr-client.js";
 import {
   fetchMandoRoster,
   forwardToHappyRobot,
+  postHappyRobotRoster,
   postMandoRoster,
   telegramAnswerCallback,
   telegramSendMessage,
@@ -114,11 +115,23 @@ export async function handleTelegramUpdate(
 
   if (command === "rol") {
     const reply = await claimRole(env, staff, chatId, fromId, display, text);
-    await telegramSendMessage(env.telegramBotToken, chatId, reply);
-    return { ok: true, command, replies: [reply] };
+    if (reply) {
+      await telegramSendMessage(env.telegramBotToken, chatId, reply);
+    }
+    return { ok: true, command, replies: reply ? [reply] : [] };
   }
 
   if (command === "estado") {
+    // Con HappyRobot como directorio, `fa-rol-tg` responde al chat con la ocupación real.
+    const hr = await safeRoster(env, { action: "list", chat_id: chatId });
+    if (hr.ok) {
+      return { ok: true, command, replies: [] };
+    }
+    if (!hr.skipped) {
+      const reply = "No pude consultar los puestos en coordinación. Inténtalo de nuevo.";
+      await telegramSendMessage(env.telegramBotToken, chatId, reply);
+      return { ok: true, command, replies: [reply] };
+    }
     await hydrateStaff(env, staff);
     const mine = staff.getByChat(chatId);
     const reply = staffOccupancyText(staff.list(), mine?.role);
@@ -127,15 +140,39 @@ export async function handleTelegramUpdate(
   }
 
   if (command === "baja") {
+    const hrRelease = await safeRoster(env, { action: "release", chat_id: chatId });
+    if (hrRelease.ok) {
+      return { ok: true, command, replies: [] };
+    }
+    if (!hrRelease.skipped) {
+      const reply = "No pude liberar el puesto en coordinación. Inténtalo de nuevo.";
+      await telegramSendMessage(env.telegramBotToken, chatId, reply);
+      return { ok: true, command, replies: [reply] };
+    }
+
     await hydrateStaff(env, staff);
-    const previous = staff.release(chatId);
+    const previous = staff.getByChat(chatId);
+    let mandoRelease: Awaited<ReturnType<typeof postMandoRoster>> | null = null;
     try {
-      await postMandoRoster(env.mandoBackendUrl, env.hrSecret, {
+      mandoRelease = await postMandoRoster(env.mandoBackendUrl, env.hrSecret, {
         action: "release",
         chat_id: chatId,
       });
     } catch {
-      // MANDO caído: el puesto queda suelto en esta instancia.
+      // MANDO caído: se conserva la caché y se informa del fallo.
+    }
+    const mandoFailed = mandoRelease !== null &&
+      !mandoRelease.result.skipped &&
+      (!mandoRelease.result.ok || mandoRelease.view?.ok === false);
+    if (mandoRelease === null || mandoFailed) {
+      const reply = "No pude liberar el puesto en MANDO. Inténtalo de nuevo.";
+      await telegramSendMessage(env.telegramBotToken, chatId, reply);
+      return { ok: true, command, replies: [reply] };
+    }
+    if (mandoRelease.view?.seats.length) {
+      applyRoster(staff, mandoRelease.view.seats);
+    } else {
+      staff.release(chatId);
     }
     const reply = previous
       ? `Dejas el puesto ${STAFF_ROLE_LABELS[previous.role]}. Puesto liberado.`
@@ -277,11 +314,13 @@ async function claimRole(
   fromId: string,
   display: string,
   text: string,
-): Promise<string> {
+): Promise<string | null> {
   const line = parseCommandLine(text);
   const roleArg = line?.args[0];
   const pinArg = line?.args[1];
-  await hydrateStaff(env, staff);
+  if (!env.hrHookTgRoster) {
+    await hydrateStaff(env, staff);
+  }
   const occupancy = () => staffOccupancyText(staff.list(), staff.getByChat(chatId)?.role);
 
   if (!roleArg) {
@@ -311,9 +350,18 @@ async function claimRole(
     }
   }
 
-  const already = staff.getByChat(chatId);
+  const already = env.hrHookTgRoster ? undefined : staff.getByChat(chatId);
   if (already?.role === role) {
     return `Ya tienes el puesto ${STAFF_ROLE_LABELS[role]}.`;
+  }
+
+  // Directorio en HappyRobot (Redis): es quien manda si está configurado. MANDO queda como espejo.
+  const hrClaim = await safeRoster(env, { action: "claim", role, chat_id: chatId, alias: display });
+  if (hrClaim.ok) {
+    return null;
+  }
+  if (!hrClaim.skipped) {
+    return "No pude registrar el puesto en coordinación. Inténtalo de nuevo.";
   }
 
   let remote;
@@ -370,6 +418,18 @@ async function claimRole(
       ? "\nSin PIN en local: cualquier miembro del equipo puede registrar puestos."
       : "";
   return switched + pinNote;
+}
+
+async function safeRoster(
+  env: Env,
+  payload: Parameters<typeof postHappyRobotRoster>[1],
+): Promise<{ ok: boolean; skipped: boolean }> {
+  try {
+    const r = await postHappyRobotRoster(env, payload);
+    return { ok: r.ok, skipped: r.skipped ?? false };
+  } catch {
+    return { ok: false, skipped: false };
+  }
 }
 
 async function hydrateStaff(env: Env, staff: StaffStore): Promise<void> {

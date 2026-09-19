@@ -8,7 +8,7 @@ export type StaffClaim = {
   claimed_at: string;
 };
 
-/** Puestos del personal: caché en memoria + directorio durable en MANDO (`/hr/tg/roster`). */
+/** Caché local; HappyRobot/Redis es la autoridad y MANDO queda como fallback legado. */
 export function createStaffStore() {
   const byChat = new Map<string, StaffClaim>();
   const byRole = new Map<StaffRole, string>();

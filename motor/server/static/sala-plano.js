@@ -1,7 +1,7 @@
 /* Plano de la Sala de control: disposición del diseño de las compañeras sobre las 17 zonas REALES de
    motor/world/festival.json. No se inventa ninguna zona: cada caja es un id del motor y la etiqueta grande
    es el nombre del diseño; debajo va siempre el nombre real que da el servidor.
-   No hay GPS: la posición de las balizas es la zona que publica el simulador (posición simulada · 1 Hz). */
+   No hay GPS: la posición de las balizas es la zona que publica el simulador. */
 (function () {
   "use strict";
   const NS = "http://www.w3.org/2000/svg";

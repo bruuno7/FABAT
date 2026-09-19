@@ -230,9 +230,13 @@
     $("pax").title = `Suma de los aforos de las 17 zonas de motor/world/festival.json: ${total.toLocaleString("es-ES")} personas`;
     const run = S.session.running, done = S.session.done;
     const st = $("event-state");
-    st.textContent = done ? "● CASO TERMINADO" : run ? "● FESTIVAL ABIERTO" : "● FESTIVAL EN PAUSA";
+    st.textContent = done ? "CASO TERMINADO" : run ? "FESTIVAL ABIERTO" : "FESTIVAL EN PAUSA";
     st.className = "nav-state" + (run && !done ? "" : " paused");
-    st.title = `Caso ${S.session.case} · semilla ${S.session.seed} · minuto ${S.t} de ${S.session.duration_min || "—"}`;
+    st.title = `Caso ${S.session.case} · semilla ${S.session.seed} · minuto ${S.t} de ${S.session.duration_min || "—"} · simulación`;
+
+    $("clock").textContent = (S.clock && S.clock.hhmm) || "—:—";
+    $("clock").title = `Reloj del recinto simulado · minuto ${S.t}`
+      + (S.clock && S.clock.show_phase ? ` · ${S.clock.show_phase}` : "");
 
     const open = openIncidents();
     const crit = open.filter((i) => ["vital", "emergencia"].includes(gravity(i))).length;
@@ -251,7 +255,9 @@
 
     $("speed-label").textContent = (S.session.speed || 1) + "x";
     $("live-chip").className = "live-chip" + (S.session.running ? "" : " paused");
-    $("live-sub").textContent = S.session.running ? "posición simulada · 1 Hz" : "en pausa · posición simulada";
+    $("live-sub").textContent = S.session.running
+      ? "posición por zona · sin GPS"
+      : "en pausa · posición por zona";
 
     // Enlace con HappyRobot: rótulo real / simulado según el propio estado.
     const mode = S.calls.mode === "happyrobot";
@@ -369,7 +375,7 @@
       b.setAttribute("transform", `translate(${at.x}, ${at.y})`);
       b.querySelector(".mark").textContent = shortName(r);
       b.querySelector("title").textContent = `${r.name} · ${statusES(r)}`
-        + (r.task ? ` · ${r.task}` : "") + " · posición simulada, 1 Hz (no hay GPS)";
+        + (r.task ? ` · ${r.task}` : "") + " · posición simulada por zona (no hay GPS)";
     });
     beacons.forEach((b, id) => { if (!(S.resources || []).some((r) => r.id === id)) { b.remove(); beacons.delete(id); } });
 

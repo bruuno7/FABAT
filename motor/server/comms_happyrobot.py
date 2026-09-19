@@ -21,8 +21,9 @@
   esos workflows (`type: dispatch_result | dispatch_progress`, todo cadenas) se normaliza en `normalize_platform_event`.
 - Lista blanca OBLIGATORIA para marcar un teléfono: `MANDO_ALLOWED_NUMBERS`. Sin ella no se marca a nadie.
 - En `MANDO_VOICE_MODE=phone`, solo las clases de `MANDO_HR_PHONE_KINDS` (por defecto `dispatch,recall,resupply`)
-  salen a la plataforma; ASK/NOTIFY van a SimComms. Además `MANDO_HR_MAX_INFLIGHT` (por defecto 1) evita
-  ráfagas de Runs cuando el reloj va a ×16.
+  salen a la plataforma; ASK/NOTIFY genéricos van a SimComms. Un NOTIFY a un oficio con workflow propio
+  (sanitario, seguridad, …) sí se enruta a ese workflow, o al despacho genérico si falta. Además
+  `MANDO_HR_MAX_INFLIGHT` (por defecto 1) evita ráfagas de Runs cuando el reloj va a ×16.
 - `external_ask`: una pregunta dirigida a un informante que llegó por otro canal propio (bot de Telegram) no pasa por
   HappyRobot ni por la simulación: la contesta esa persona y vuelve por `answer_external`.
 
@@ -491,6 +492,7 @@ class HappyRobotComms:
         if not entry:
             return None
         voice = kind in (ActionKind.DISPATCH, ActionKind.RECALL, ActionKind.RESUPPLY, ActionKind.ASK, ActionKind.NOTIFY)
+        slot = hr_routing.workflow_slot(action, resource)
         if voice and self.voice_mode == "web_call":
             if not (self.api_base and _env("HR_API_KEY") and self.workflows["webcall"]):
                 return None
@@ -498,8 +500,10 @@ class HappyRobotComms:
             payload = build(action, resource, entry, "")
             payload["to_number"] = None
             return "webcall", payload
-        if self.voice_mode == "phone" and str(kind).lower() not in self._phone_kinds:
-            return None  # ASK/NOTIFY/… → SimComms; evita Runs basura en el Outbound Voice Agent
+        # ASK/NOTIFY genéricos → SimComms (evita Runs basura). NOTIFY a un oficio sin recurso sí sale.
+        role_notify = kind == ActionKind.NOTIFY and resource is None and slot in hr_routing.WORKFLOW_NAMES
+        if self.voice_mode == "phone" and str(kind).lower() not in self._phone_kinds and not role_notify:
+            return None
         if not entry.get("to_number"):
             return None
         number = normalize_number(entry["to_number"])
@@ -535,7 +539,6 @@ class HappyRobotComms:
             hook, build = self.hooks["external"], self._external_payload
         else:
             return None
-        slot = hr_routing.workflow_slot(action, resource)
         specific = hr_routing.endpoint(self, slot)
         if specific:
             hook = specific

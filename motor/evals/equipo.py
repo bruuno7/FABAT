@@ -350,6 +350,9 @@ def render_md(payload: dict[str, Any], *, aprendizaje: dict[str, Any] | None = N
         a("")
         a(f"LLM: {'configurado' if payload.get('llm_configurado') else 'no'} — {payload.get('llm_porque')}.")
     a("")
+    a("El banco completo (`todos()`) suma handmade + 8 heldout. `--n 40` en esta pasada cortó a los 40 primeros handmade; "
+      "los heldout están en el banco y en tests, no en esta N=40 del LLM.")
+    a("")
     a("## Resumen")
     a("")
     a("| métrica | fuente | N | aciertos / media |")
@@ -358,9 +361,9 @@ def render_md(payload: dict[str, Any], *, aprendizaje: dict[str, Any] | None = N
     a(f"| prioridad en rango esperado | reglas | {n} | {payload['prioridad_ok']}/{n} |")
     a(f"| recurso válido y del tipo esperado | reglas | {n} | {payload['recurso_ok']}/{n} |")
     a(f"| JSON válido (sin fallback a falso) | reglas | {n} | {payload['json_ok']}/{n} |")
-    a(f"| recomendación 0–2 | reglas | {n} | media {payload['recomendacion_reglas_media']} |")
+    a(f"| recomendación 0–2 (rúbrica de palabras: hay texto, porqué, alternativa) | reglas | {n} | media {payload['recomendacion_reglas_media']} |")
     jn = payload.get("juez_n") or 0
-    a(f"| recomendación 0–2 | juez LLM | {jn} | "
+    a(f"| recomendación 0–2 (segundo LLM, rúbrica semántica) | juez LLM | {jn} | "
       f"{'media ' + str(payload['recomendacion_juez_media']) if jn else 'omitido (N=0)'} |")
     a("")
     a("## Buenas decisiones (ejemplos)")

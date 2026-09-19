@@ -239,7 +239,14 @@ def todos(n: int | None = None) -> list[dict[str, Any]]:
         seen.add(e["id"])
         out.append(e)
     if n is not None:
-        return out[: max(1, int(n))]
+        n = max(1, int(n))
+        if n >= len(out):
+            return out
+        held = [e for e in out if e.get("heldout_id")]
+        hand = [e for e in out if not e.get("heldout_id")]
+        n_held = min(len(held), 8 if n >= 40 else max(0, n // 10))
+        n_hand = max(0, n - n_held)
+        return (hand[:n_hand] + held[:n_held])[:n]
     return out
 
 

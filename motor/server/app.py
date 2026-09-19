@@ -827,11 +827,19 @@ class Session:
         if recorder is not None:
             recorder.offer(self._state)
 
+    def _with_live_channels(self, st: dict[str, Any]) -> dict[str, Any]:
+        """Telegram / enlaces / HappyRobot no esperan al siguiente tick: el bot puede pasar a 'on' entre reconstrucciones."""
+        extra = Session.extra_state() if Session.extra_state is not None else None
+        return {**st, **extra} if extra else st
+
     def state(self) -> dict[str, Any]:
-        return self._state
+        return self._with_live_channels(self._state)
 
     def state_json(self) -> str:
-        return self._state_json
+        extra = Session.extra_state() if Session.extra_state is not None else None
+        if extra is None:
+            return self._state_json
+        return json.dumps(self._with_live_channels(self._state), ensure_ascii=False, default=str)
 
     def _build_state(self, snap: dict[str, Any]) -> dict[str, Any]:
         w = self.world

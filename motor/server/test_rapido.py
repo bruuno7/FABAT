@@ -1,8 +1,10 @@
 """Contrato Sala/Telegram → run rápido → tools MANDO (HTTP simulado, sin red)."""
 from __future__ import annotations
 
+import copy
 import json
 import os
+import time
 import unittest
 from unittest.mock import patch
 
@@ -10,6 +12,7 @@ import httpx
 from fastapi.testclient import TestClient
 
 from motor.server.app import create_app
+from motor.server.cerebro_tools import sync_agent
 from motor.server.rapido import configuration
 
 
@@ -28,6 +31,10 @@ class RapidoTest(unittest.TestCase):
         poll = patch("motor.server.rapido.POLL_S", 0.01)
         poll.start()
         self.addCleanup(poll.stop)
+        clock = patch("motor.server.rapido.time", wraps=time)
+        self.clock = clock.start()
+        self.clock.monotonic.return_value = 1000.0
+        self.addCleanup(clock.stop)
         self.app = create_app("demo-gates", threaded=False, comms_mode="sim", secret="callback-test")
         self.s = self.app.state.session
         self.c = TestClient(self.app)
@@ -37,6 +44,8 @@ class RapidoTest(unittest.TestCase):
         self.payloads: list[dict] = []
         self.remote_status = "running"
         self.callback = False
+        self.callback_fields: dict = {}
+        self.callback_result: dict = {}
         self.launch_error = False
         self.queued = False
         client = httpx.Client
@@ -58,7 +67,9 @@ class RapidoTest(unittest.TestCase):
         self.assertEqual(str(request.url), "https://hr.test/api/v2/runs/run-test")
         if self.callback:
             self.callback = False
-            self.decide()
+            self.callback_result = self.decide(**self.callback_fields)
+        else:
+            self.clock.monotonic.return_value += 1
         return httpx.Response(200, json={"status": self.remote_status})
 
     def launch(self, **extra) -> httpx.Response:
@@ -74,14 +85,24 @@ class RapidoTest(unittest.TestCase):
     def row(self) -> dict:
         return self.s.rapido.view()["runs"][0]
 
-    def decide(self, **extra) -> dict:
+    def post_decision(self, **extra) -> httpx.Response:
         data = {"agente": "rapido", "fase": "rapida", "incident_id": self.row()["incident_id"],
+                "correlation_id": self.row()["correlation_id"],
                 "tipo": "security", "zona": "gate_b", "prioridad": 8,
                 "porque": "Contener la pelea con seguridad", "recursos": ["sec_2"]}
         data.update(extra)
-        response = self.c.post("/hr/tools/decidir", json=data, headers={"X-Mando-Token": "callback-test"})
+        return self.c.post("/hr/tools/decidir", json=data, headers={"X-Mando-Token": "callback-test"})
+
+    def decide(self, **extra) -> dict:
+        response = self.post_decision(**extra)
         self.assertEqual(response.status_code, 200, response.text)
         return response.json()
+
+    def decision_state(self) -> dict:
+        with self.s.lock:
+            sync_agent(self.s)
+            return copy.deepcopy({"agent": self.s.agent.snapshot(), "world": self.s.world.truth(),
+                                  "assign": self.s.agent.assign})
 
     def test_launch_callback_and_revision_keep_same_incident(self) -> None:
         self.callback = True
@@ -124,8 +145,11 @@ class RapidoTest(unittest.TestCase):
         before = len(self.s.world.reports)
         with patch.dict(os.environ, {"HR_WORKFLOW_RAPIDO": ""}):
             self.assertEqual(self.launch().status_code, 503)
-        for data in ({"text": ""}, {"text": "x" * 401}, {"zone": "unknown"},
-                     {"request_id": "../bad"}, {"zone": []}):
+        invalid_inputs: tuple[dict[str, str | list[str]], ...] = (
+            {"text": ""}, {"text": "x" * 401}, {"zone": "unknown"},
+            {"request_id": "../bad"}, {"zone": []},
+        )
+        for data in invalid_inputs:
             with self.subTest(data=data):
                 self.assertEqual(self.launch(**data).status_code, 422)
         self.assertEqual(len(self.s.world.reports), before)
@@ -194,26 +218,76 @@ class RapidoTest(unittest.TestCase):
         self.launch()
         self.wait()
         self.assertEqual(self.row()["status"], "timeout")
-        self.decide()
-        actions = list(self.s.agent.actions)
-        self.decide()
-        self.assertEqual(list(self.s.agent.actions), actions)
-        self.assertEqual(self.row()["status"], "decision_recibida")
+        before = self.decision_state()
+        with patch.object(self.s.comms, "send") as send:
+            for _ in range(2):
+                response = self.post_decision()
+                self.assertEqual(response.status_code, 422, response.text)
+                self.assertIn("no vigente: timeout", response.json()["error"])
+            send.assert_not_called()
+        self.assertEqual(self.decision_state(), before)
+        self.assertEqual(self.row()["status"], "timeout")
+        self.assertFalse(self.row()["rapida"])
 
     def test_correlation_binds_new_to_existing_and_rejects_other_incident(self) -> None:
+        self.callback = True
+        self.callback_fields = {"incident_id": "nuevo"}
         self.launch()
         self.wait()
         row = self.row()
         before = len(self.s.agent.incidents)
-        result = self.decide(incident_id="nuevo", correlation_id=row["correlation_id"])
+        result = self.callback_result
         self.assertEqual(result["incident_id"], row["incident_id"])
-        self.assertEqual(len(self.s.agent.incidents), before)
+        self.assertEqual(before, 1)
         bad = self.c.post("/hr/tools/decidir", headers={"X-Mando-Token": "callback-test"}, json={
             "agente": "rapido", "fase": "rapida", "incident_id": "other",
             "correlation_id": row["correlation_id"], "porque": "Otro incidente",
         })
         self.assertEqual(bad.status_code, 422)
         self.assertEqual(len(self.s.agent.incidents), before)
+
+    def test_missing_or_unknown_correlation_has_no_effect(self) -> None:
+        self.callback = True
+        self.launch()
+        self.wait()
+        before = self.decision_state()
+        with patch.object(self.s.comms, "send") as send:
+            for correlation in (None, "", "other-session:report"):
+                with self.subTest(correlation=correlation):
+                    response = self.post_decision(correlation_id=correlation)
+                    self.assertEqual(response.status_code, 422, response.text)
+                    self.assertEqual(self.decision_state(), before)
+            send.assert_not_called()
+
+    def test_duplicate_callback_replays_without_dispatch_and_rejects_changed_decision(self) -> None:
+        self.callback = True
+        self.launch()
+        self.wait()
+        before = self.decision_state()
+        with patch.object(self.s.comms, "send") as send:
+            duplicate = self.decide()
+            self.assertTrue(duplicate.pop("duplicate"))
+            self.assertEqual(duplicate, self.callback_result)
+            changed = self.post_decision(recursos=["sec_1"])
+            self.assertEqual(changed.status_code, 422, changed.text)
+            self.assertIn("otra decisión", changed.json()["error"])
+            send.assert_not_called()
+        self.assertEqual(self.decision_state(), before)
+
+    def test_expired_review_does_not_change_the_accepted_decision(self) -> None:
+        self.callback = True
+        self.launch()
+        self.wait()
+        before = self.decision_state()
+        self.clock.monotonic.return_value += 2
+        with patch.object(self.s.comms, "send") as send:
+            response = self.post_decision(fase="revision", agente="equipo", veredicto="confirma")
+            self.assertEqual(response.status_code, 422, response.text)
+            self.assertIn("revisión expirada", response.json()["error"])
+            send.assert_not_called()
+        self.assertEqual(self.decision_state(), before)
+        self.assertEqual(self.row()["revision_status"], "timeout")
+        self.assertFalse(self.row()["revision"])
 
     def test_reset_rejects_callback_from_old_session(self) -> None:
         self.launch()
@@ -231,13 +305,16 @@ class RapidoTest(unittest.TestCase):
         self.assertEqual(len(self.s.agent.incidents), before)
 
     def test_blocked_decision_is_received_without_claiming_success(self) -> None:
-        self.launch()
-        self.wait()
+        self.callback = True
         with patch("motor.server.enjambre.gate_decidir", return_value={
             "ok": False, "texto": "Objeción pendiente", "bloqueadas": [], "aceptadas": [],
         }):
-            result = self.decide()
+            self.launch()
+            self.wait()
+        result = self.callback_result
         self.assertFalse(result["ok"])
+        self.assertEqual(result["aceptadas"], [])
+        self.assertEqual(self.s.agent.assign, {})
         self.assertTrue(self.row()["rapida"])
         self.assertEqual(self.row()["status"], "decision_bloqueada")
         self.assertEqual(self.row()["error"], "")

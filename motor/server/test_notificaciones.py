@@ -14,7 +14,7 @@ import httpx
 from fastapi.testclient import TestClient
 
 from motor.cases.taxonomy import TAXONOMY, ZONES
-from motor.contracts import Action, ActionKind, ActionStatus, Autonomy
+from motor.contracts import Action, ActionKind, ActionStatus, Autonomy, Family
 from motor.server.app import create_app
 from motor.server.mock_telegram import TOKEN, create_mock_telegram
 from motor.server.test_server import Served, free_port, wait_for
@@ -650,14 +650,32 @@ class NotificacionesTest(unittest.TestCase):
         finally:
             self.heartbeat()
 
-    def test_two_reports_same_fact_merge_in_mando(self):
+    def test_identical_reports_do_not_establish_victim_identity(self):
         for source in ("seguridad", "asistente"):
             self.post("/api/report", {"text": "Una persona mareada por calor en puerta B", "zone": "gate_b", "source": source})
         self.heartbeat()
         self.heartbeat()
         incidents = list(self.s.agent.incidents.values())
-        self.assertEqual(len(incidents), 1, [(i.type, i.reports) for i in incidents])
-        self.assertEqual(len(incidents[0].reports), 2)
+        self.assertEqual(len(incidents), 2, [(i.type, i.reports) for i in incidents])
+        self.assertTrue(all(len(i.reports) == 1 for i in incidents))
+        self.assertEqual(sum(i.needs.get("medical", 0) for i in incidents), 2)
+        self.assertEqual(self.s.agent.counters["merges"], 0)
+
+    def test_explicit_same_victim_reference_merges_reports(self):
+        first = self.post("/api/report", {
+            "text": "Una persona mareada por calor en puerta B", "zone": "gate_b", "source": "seguridad"})
+        self.heartbeat()
+        self.heartbeat()
+        incident = next(i for i in self.s.agent.incidents.values() if first["report_id"] in i.reports)
+        second = self.post("/api/report", {
+            "text": f"La misma persona del incidente {incident.id} sigue mareada por calor en puerta B",
+            "zone": "gate_b", "source": "asistente"})
+        self.heartbeat()
+        self.heartbeat()
+        patients = [i for i in self.s.agent.incidents.values() if i.family == Family.MEDICAL]
+        self.assertEqual([i.id for i in patients], [incident.id])
+        self.assertEqual(incident.reports, [first["report_id"], second["report_id"]])
+        self.assertEqual(self.s.agent.counters["merges"], 1)
 
     def test_invalid_hr_callback_does_not_consume_event(self):
         c, aid, wire = self.flight()

@@ -22,6 +22,7 @@ import httpx
 from motor.server import regression_live, views
 from motor.server.app import create_app
 from motor.server.mock_happyrobot import create_mock
+from motor.world import load_festival
 
 SECRET = "secreto-de-prueba"
 
@@ -100,7 +101,10 @@ class ServerTest(unittest.TestCase):
     def test_state_ticks_and_stream(self) -> None:
         st = self.c.get("/api/state").json()
         self.assertEqual(st["session"]["case"], "demo-gates")
-        self.assertEqual(len(st["zones"]), 17)
+        expected_zones = {z["id"] for z in load_festival()["zones"]}
+        self.assertEqual(len(expected_zones), 18)
+        self.assertEqual({z["id"] for z in st["zones"]}, expected_zones)
+        self.assertEqual(len(st["zones"]), len(expected_zones))
         self.assertEqual(st["t"], 0)
         for key in ("resources", "incidents", "plans", "approvals", "actions", "log", "metrics", "weather", "clock", "calls", "reports"):
             self.assertIn(key, st)
@@ -200,20 +204,25 @@ class ServerTest(unittest.TestCase):
             "to": {"role": "Director del Plan de Actuación", "deputy": "Jefa de seguridad"}, "window_min": 4, "escalate_t": 14,
             "if_approved": {"text": "4,0/m² en 6 min", "peak_density": 4.0}, "if_vetoed": "6,5/m² en 9 min"}}}
         card = views.decision_card(action, 12)
+        assert card is not None
         self.assertEqual((card["remaining_min"], card["escalated"], card["deputy"]), (2, False, "Jefa de seguridad"))
-        self.assertTrue(views.decision_card(action, 14)["escalated"])
+        escalated = views.decision_card(action, 14)
+        assert escalated is not None
+        self.assertTrue(escalated["escalated"])
         self.assertEqual(card["if_vetoed"]["text"], "6,5/m² en 9 min")
         self.assertIsNone(views.decision_card({"params": {}}, 0))
         real = views.decision_card({"t": 2, "params": {"decision_card": {"addressee": "Director del Plan de Actuación", "deputy": "Jefe de seguridad",
                 "if_approved": {"peak_density": 4.18, "minutes_over_4": 12, "crush_at_min": None, "minutes": 12},
                 "if_vetoed": {"peak_density": 6.5, "minutes_over_4": 12, "crush_at_min": 9, "minutes": 12},
                 "rehearsed": True, "window_min": 12, "asked_at": 2, "escalate_at": 8, "escalated_at": None}}}, 5)
+        assert real is not None
         self.assertEqual((real["role"], real["remaining_min"], real["escalated"], real["rehearsed"]), ("Director del Plan de Actuación", 9, False, True))
         self.assertEqual(real["if_approved"]["figures"][0], {"k": "personas/m² de pico", "v": 4.18})
         self.assertIn("aplastamiento en 9 min", real["if_vetoed"]["text"])
         line = [{"kind": "plan", "ref": "P-9", "data": {"rehearsal": True}, "text":
                  "ENSAYO (12 min) para Puerta B: 60 % a Puerta A → Puerta A 6,4/m² en 12 min ✗ · reparto A+C → Puerta C 3,1/m² en 12 min ✓"}]
         parsed = views.rehearsal({"id": "P-9"}, line)
+        assert parsed is not None
         self.assertEqual([(o["label"], o["ok"]) for o in parsed], [("60 % a Puerta A", False), ("reparto A+C", True)])
         fr = views.fronts({"fronts": [{"incident": "M-1", "status": "in_progress", "team": [{"resource": "med_3", "status": "busy", "eta": 0}],
                                        "why_waiting": "espera ambulancia"}]},
@@ -222,6 +231,7 @@ class ServerTest(unittest.TestCase):
         self.assertEqual((fr[0]["resources"], fr[0]["state"], fr[0]["why_waiting"]), (["Equipo médico 3"], "atendido en el sitio", "espera ambulancia"))
         reh = views.rehearsal({"id": "P-1", "rehearsal": [{"label": "todo a Puerta A", "peak_density": 6.4, "ok": False},
                                                          {"label": "reparto A+C", "peak_density": 3.1, "ok": True, "chosen": True}]}, [])
+        assert reh is not None
         self.assertEqual([(o["value"], o["ok"]) for o in reh], [(6.4, False), (3.1, True)])
         self.assertIsNone(views.rehearsal({"id": "P-2"}, []), "sin ensayo no se inventa ninguno")
         incs = [{"id": "M-1", "reserved": True, "label": "agresión", "zone": "toilets", "explain": "x", "reports": ["r1"]}]
@@ -235,12 +245,24 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(self.c.post("/api/duel/session", json={"case_id": "demo-gates"}).status_code, 200)
         self.c.post("/api/duel/control", json={"cmd": "step", "n": 10})
         self.c.post("/api/strike", json={"preset": "storm", "origin": "jury"})
+        surge = self.c.post("/api/strike", json={
+            "effect": {"kind": "zone_inflow", "zone": "gate_b", "per_min": 200, "n": 30},
+            "origin": "jury",
+        })
+        self.assertEqual(surge.status_code, 200, surge.text)
         self.c.post("/api/duel/control", json={"cmd": "step", "n": 50})
         d = self.c.get("/api/duel/state").json()
         self.assertEqual((d["left"]["kind"], d["right"]["kind"]), ("baseline-reroute", "mando"))
-        self.assertEqual(len(d["left"]["strikes"]), 1)
-        self.assertEqual(len(d["right"]["strikes"]), 1)
+        self.assertEqual(len(d["left"]["strikes"]), 2)
+        self.assertEqual(len(d["right"]["strikes"]), 2)
+        self.assertEqual(
+            [(strike["t"], strike["effect"]) for strike in d["left"]["strikes"]],
+            [(strike["t"], strike["effect"]) for strike in d["right"]["strikes"]],
+        )
         self.assertEqual(d["t"], 60)
+        for side, session in zip(("left", "right"), self.app.state.duel.sides):
+            self.assertEqual(d[side]["score"]["minutes_over_5"],
+                             sum(session.world.truth()["minutes_over_5"].values()))
         self.assertGreater(d["left"]["score"]["peak_density"], d["right"]["score"]["peak_density"],
                            "la lista fija satura una puerta con su propio desvío y Mando no")
         self.assertGreater(d["left"]["score"]["minutes_over_5"], d["right"]["score"]["minutes_over_5"])

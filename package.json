@@ -5,7 +5,8 @@
   "scripts": {
     "test": "npm --prefix motor/server test",
     "dev:bridge": "npm --prefix motor/server run dev",
-    "poll": "npm --prefix motor/server run poll"
+    "poll": "npm --prefix motor/server run poll",
+    "build": "npm --prefix motor/server run build"
   },
   "dependencies": {
     "express": "^4.21.2"

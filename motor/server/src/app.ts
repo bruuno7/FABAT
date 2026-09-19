@@ -9,9 +9,18 @@ export function createApp(
   store = createIncidentStore(),
 ): Express {
   const app = express();
+
+  // Vercel rewrite /x → /api may leave the path as /api/x
+  app.use((req, _res, next) => {
+    if (req.url === "/api") req.url = "/";
+    else if (req.url.startsWith("/api?")) req.url = `/${req.url.slice(4)}`;
+    else if (req.url.startsWith("/api/")) req.url = req.url.slice(4);
+    next();
+  });
+
   app.use(express.json({ limit: "1mb" }));
 
-  app.get("/health", (_req, res) => {
+  app.get(["/", "/health"], (_req, res) => {
     res.json({
       ok: true,
       service: "mando-telegram-bridge",

@@ -1,6 +1,11 @@
 {
   "installCommand": "npm install && npm --prefix motor/server install",
-  "buildCommand": "npm --prefix motor/server run typecheck",
-  "framework": null,
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+  "buildCommand": "npm --prefix motor/server run build",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "motor/server/dist/**",
+      "maxDuration": 30
+    }
+  }
 }

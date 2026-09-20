@@ -574,6 +574,7 @@ FAMILY_GENERIC: dict[str, dict[str, list[str]]] = {
 LOC_STAFF: dict[str, list[str]] = {
     "gate_a": ["en puerta A", "acceso A"], "gate_b": ["en puerta B", "acceso B"], "gate_c": ["en puerta C", "acceso C"],
     "front_pit": ["en el foso, frente de escenario", "primera línea, lado {side}"],
+    "stage_2": ["en el escenario 2", "en el escenario pequeño, el 2"],
     "general": ["en pista general, a la altura de la torre de sonido", "pista general, cuadrante {side}"],
     "vip": ["en zona VIP"], "pmr": ["en la plataforma PMR"],
     "food": ["en restauración", "zona de barras y food trucks"], "toilets": ["en el bloque de baños"],
@@ -587,6 +588,7 @@ LOC_PUBLIC: dict[str, dict[str, list[str]]] = {
         "gate_a": ["en la entrada A", "en la puerta A", "en la cola de la entrada A"],
         "gate_b": ["en la entrada B", "en la puerta B"], "gate_c": ["en la puerta C", "en la entrada pequeña, la C"],
         "front_pit": ["delante del todo", "en primera fila", "pegados a la valla del escenario"],
+        "stage_2": ["en el escenario 2", "delante del escenario 2", "en la zona del escenario pequeño"],
         "general": ["en medio de la pista", "por la torre de sonido", "a la altura de la mesa de mezclas"],
         "vip": ["en la zona vip"], "pmr": ["en la plataforma de las sillas de ruedas"],
         "food": ["en los food trucks", "en la zona de comida", "al lado del puesto de hamburguesas"],
@@ -601,7 +603,8 @@ LOC_PUBLIC: dict[str, dict[str, list[str]]] = {
     },
     "en": {
         "gate_a": ["at gate A"], "gate_b": ["at gate B"], "gate_c": ["at gate C"],
-        "front_pit": ["right at the front barrier", "in the front rows"], "general": ["in the main crowd near the sound tower"],
+        "front_pit": ["right at the front barrier", "in the front rows"], "stage_2": ["at stage 2", "in front of stage 2"],
+        "general": ["in the main crowd near the sound tower"],
         "vip": ["in the VIP area"], "pmr": ["on the accessible platform"], "food": ["at the food trucks"],
         "toilets": ["by the toilets"], "water_n": ["at the north water point"], "water_s": ["at the south water point"],
         "medical_1": ["at the medical tent near the stage"], "medical_2": ["at the north medical tent"],
@@ -610,20 +613,23 @@ LOC_PUBLIC: dict[str, dict[str, list[str]]] = {
     },
     "fr": {z: [n] for z, n in {
         "gate_a": "vers l'entrée A", "gate_b": "vers l'entrée B", "gate_c": "vers l'entrée C",
-        "front_pit": "contre la barrière devant la scène", "general": "vers la tour du son", "vip": "dans la zone VIP",
+        "front_pit": "contre la barrière devant la scène", "stage_2": "vers la scène 2",
+        "general": "vers la tour du son", "vip": "dans la zone VIP",
         "pmr": "sur la plateforme PMR", "food": "vers les food trucks", "toilets": "vers les toilettes",
         "water_n": "au point d'eau nord", "water_s": "au point d'eau sud", "medical_1": "devant la tente médicale",
         "medical_2": "devant la tente médicale", "corridor_n": "dans l'allée nord", "corridor_s": "dans l'allée sud",
         "backstage": "derrière la scène", "exit_transport": "à la sortie des navettes"}.items()},
     "de": {z: [f"bei {n}"] for z, n in {
         "gate_a": "Eingang A", "gate_b": "Eingang B", "gate_c": "Eingang C", "front_pit": "der Absperrung vor der Bühne",
+        "stage_2": "Bühne 2",
         "general": "dem Soundturm", "vip": "dem VIP-Bereich", "pmr": "der Rollstuhlplattform", "food": "den Foodtrucks",
         "toilets": "den Toiletten", "water_n": "der Wasserstelle Nord", "water_s": "der Wasserstelle Süd",
         "medical_1": "dem Sanitätszelt", "medical_2": "dem Sanitätszelt", "corridor_n": "dem Nordweg",
         "corridor_s": "dem Südweg", "backstage": "dem Backstage", "exit_transport": "dem Shuttle-Ausgang"}.items()},
     "pt": {z: [n] for z, n in {
         "gate_a": "junto à entrada A", "gate_b": "junto à entrada B", "gate_c": "junto à entrada C",
-        "front_pit": "junto à grade em frente ao palco", "general": "junto à torre de som", "vip": "na zona VIP",
+        "front_pit": "junto à grade em frente ao palco", "stage_2": "junto ao palco 2",
+        "general": "junto à torre de som", "vip": "na zona VIP",
         "pmr": "na plataforma de mobilidade reduzida", "food": "junto às roulottes de comida",
         "toilets": "junto às casas de banho", "water_n": "no ponto de água norte", "water_s": "no ponto de água sul",
         "medical_1": "junto à tenda médica", "medical_2": "junto à tenda médica", "corridor_n": "no corredor norte",
@@ -635,6 +641,24 @@ LOC_VAGUE = {
     "en": ["somewhere near a bar", "I don't know where exactly, near a big flag", "near some lights tower"],
 }
 ENTRANCE_VAGUE = ["en la entrada", "en una de las puertas", "en los accesos"]
+
+
+def staff_location(rng: random.Random, zone: str, slots: dict[str, Any] | None = None) -> str:
+    """Ubicación del personal por radio. Si la zona aún no tiene frase propia, se usa su nombre:
+    añadir una zona a `festival.json` no puede tumbar la generación de casos."""
+    options = LOC_STAFF.get(zone)
+    if options:
+        return rng.choice(options).format(**(slots or {}))
+    return f"en {ZONES[zone]['name'].lower()}"
+
+
+def public_location(rng: random.Random, lang: str, zone: str) -> str:
+    """Ubicación exacta del público. Sin frase para esa zona en ese idioma: se calla la ubicación
+    (en español se usa el nombre de la zona). Mejor omitirla que inventarla en otro idioma."""
+    options = (LOC_PUBLIC.get(lang) or LOC_PUBLIC["es"]).get(zone)
+    if options:
+        return rng.choice(options)
+    return f"en {ZONES[zone]['name'].lower()}" if lang == "es" else ""
 
 # ------------------------------------------------------------------ piezas
 
@@ -787,7 +811,7 @@ def staff_report(rng: random.Random, type_id: str, zone: str, ctx: dict[str, Any
     if kind == "ambulance":
         kind = "medical"
     callsign = rng.choice(CALLSIGNS[kind]).format(k=rng.randint(1, 3))
-    loc = rng.choice(LOC_STAFF[zone]).format(**s)
+    loc = staff_location(rng, zone, s)
     ask = rng.choice(RADIO_ASK[kind])
     channel = rng.choices(["radio", "voice", "operator"], weights=[55, 30, 15])[0]
     if channel == "radio":
@@ -818,7 +842,7 @@ def public_report(rng: random.Random, type_id: str, zone: str, ctx: dict[str, An
         location = rng.choices(["exact", "vague", "none"], weights=[55, 25, 20])[0]
     loc = ""
     if location == "exact":
-        loc = rng.choice(LOC_PUBLIC[lang][zone])
+        loc = public_location(rng, lang, zone)
     elif location == "vague":
         loc = rng.choice(LOC_VAGUE[lang]) if lang in LOC_VAGUE else ""
     urgent = rng.choice(URGENT_ES if lang == "es" else URGENT_EN if lang == "en" else [""])
@@ -828,7 +852,7 @@ def public_report(rng: random.Random, type_id: str, zone: str, ctx: dict[str, An
     text = _noise(rng, ", ".join(parts), lang, rng.uniform(0.3, 1.0) if noise is None else noise)
     channel = rng.choices(["whatsapp", "sms"], weights=[85, 15])[0]
     out = {"channel": channel, "source": "asistente" if lang == "es" else f"asistente ({lang})", "lang": lang, "text": text}
-    if channel == "whatsapp" and location == "exact" and rng.random() < 0.15:
+    if channel == "whatsapp" and location == "exact" and loc and rng.random() < 0.15:
         out["zone_hint"] = zone  # escaneó el QR de zona
     return out
 
@@ -905,7 +929,7 @@ def buried_report(rng: random.Random, type_id: str, zone: str, ctx: dict[str, An
     """El dato clave va enterrado en mitad de un mensaje largo y educado."""
     tpl, _ = _core(rng, type_id, "public", "es")
     core = tpl.format(**_slots(rng, ctx))
-    loc = rng.choice(LOC_PUBLIC["es"][zone])
+    loc = public_location(rng, "es", zone)
     text = f"{rng.choice(RAMBLE_BEFORE)} {core} {loc}. {rng.choice(RAMBLE_AFTER)}"
     return {"channel": "whatsapp", "source": "asistente", "lang": "es", "text": text}
 
@@ -949,7 +973,7 @@ def contradictory_report(rng: random.Random, type_id: str, zone: str, ctx: dict[
     """Aviso que contradice a los anteriores mientras el incidente sigue vivo: «ya está resuelto»,
     «no es para tanto» o el mismo hecho situado en otra zona que no es vecina."""
     kind = rng.choice(["resolved", "resolved_staff", "downplay", "other_zone"])
-    loc = rng.choice(LOC_PUBLIC["es"][zone])
+    loc = public_location(rng, "es", zone)
     if kind == "other_zone":
         far = [z for z in LOC_STAFF if z != zone and z not in NEIGHBORS[zone] and not z.startswith("medical")]
         r = public_report(rng, type_id, rng.choice(far), ctx, lang="es", location="exact") if "public" in CORE[type_id] \
@@ -958,7 +982,7 @@ def contradictory_report(rng: random.Random, type_id: str, zone: str, ctx: dict[
         return r
     if kind == "resolved_staff":
         cs = rng.choice(CALLSIGNS["security"]).format(k=rng.randint(1, 5))
-        staff_loc = rng.choice(LOC_STAFF[zone]).format(side="centro")
+        staff_loc = staff_location(rng, zone, {"side": "centro"})
         text = rng.choice(CONTRA_RESOLVED_STAFF).format(cs=cs, loc=staff_loc, loc_cap=_cap(staff_loc))
         return {"channel": "radio", "source": cs.lower(), "lang": "es", "text": text}
     pool = CONTRA_RESOLVED_PUBLIC if kind == "resolved" else CONTRA_DOWNPLAY
@@ -993,7 +1017,7 @@ def false_alarm_report(rng: random.Random, zone: str | None = None, kind: str | 
                 "text": f"SENSOR aforo {zone}: densidad {rng.choice(['9,8', '11,2', '0,0', '14,5'])} p/m² "
                         f"(1 muestra aislada; lectura anterior {str(round(rng.uniform(0.4, 1.6), 1)).replace('.', ',')} p/m², área {area} m²)"}
     lang, tpl = rng.choice(JOKES if kind == "joke" else MISTAKES)
-    loc = rng.choice(LOC_PUBLIC[lang][zone])
+    loc = public_location(rng, lang, zone)
     text = tpl.format(loc=loc)
     return {"channel": "whatsapp", "source": "asistente" if lang == "es" else f"asistente ({lang})", "lang": lang,
             "text": text if kind == "joke" else _noise(rng, text, lang, 0.5)}

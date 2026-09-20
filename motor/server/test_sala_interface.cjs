@@ -495,3 +495,59 @@ test("registration sends operator roles and contact only in POST then clears the
   ui.pageListeners.pagehide();
   assert.equal(ui.$("staff-address").value, "");
 });
+
+test("el reinicio de incidencias exige confirmación y no arrastra expected_version", async () => {
+  const ui = mounted();
+  ui.state(snapshot());
+  ui.$("reset-incidents").onclick();
+  assert.match(ui.$("command-context").textContent, /Se retiran del estado operativo/);
+
+  // Sin marcar la confirmación no se envía nada.
+  await ui.submit("command-form");
+  assert.match(ui.$("command-error").textContent, /Marca la confirmación/);
+  assert.equal(ui.requests.length, 0);
+
+  await ui.submit("command-form", { confirm: "on" });
+  assert.equal(ui.requests.length, 1);
+  assert.equal(ui.requests[0].body.kind, "reset_incidents");
+  assert.equal(ui.requests[0].body.confirm, true);
+  assert.equal("expected_version" in ui.requests[0].body, false);
+  assert.equal(ui.$("command-dialog").open, false);
+});
+
+test("HappyRobot coordination is read-only and coordinating it from the Sala requires explicit override", async () => {
+  const ui = mounted();
+  const state = snapshot();
+  state.telegram = {
+    staff: { disponibles: 3, total: 5 },
+    incidents: { i1: { id: "i1", tipo: "medica", zona: "stage_2", gravedad: "emergencia" } },
+    assignments: [
+      { incident_id: "i1", rol: "medico", estado: "accepted", alias: "Marta", eta_min: 3, desde_zona: "gate_a", intento: 1 },
+      { incident_id: "i2", rol: "policia", estado: "pending", alias: "Iván", intento: 1 },
+    ],
+  };
+  assert.equal(ui.state(state), true);
+
+  // La decisión de HappyRobot se ve, en solo lectura y sin botones de coordinación.
+  assert.match(ui.$("assignments").textContent, /HappyRobot ya lo había coordinado por Telegram/);
+  assert.match(ui.$("assignments").textContent, /Marta/);
+  assert.match(ui.$("assignments").textContent, /i2 · Policía · HappyRobot/);
+
+  // Coordinar desde la Sala es un override: exige confirmación explícita y no se envía sin ella.
+  ui.click("assignments", "Override · Aceptar");
+  await ui.submit("command-form");
+  assert.match(ui.$("command-error").textContent, /Confirma expresamente que anulas la decisión de HappyRobot/);
+  assert.equal(ui.requests.length, 0);
+  assert.match(ui.$("command-fields").textContent, /HappyRobot ya coordinó por Telegram/);
+
+  await ui.submit("command-form", { override_confirmed: "on" });
+  assert.equal(ui.requests.length, 1);
+  assert.equal(ui.requests[0].body.kind, "accept");
+  assert.equal(ui.requests[0].body.assignment_id, "a1");
+
+  // Sin decisión de HappyRobot, los botones siguen siendo coordinación normal (no override).
+  const plain = mounted();
+  plain.state(snapshot());
+  assert.match(plain.$("assignments").textContent, /Oferta pendiente/);
+  plain.click("assignments", "Aceptar");
+});

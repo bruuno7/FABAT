@@ -39,6 +39,8 @@ CHANNELS = frozenset({"telegram", "phone", "web"})
 AVAILABILITY = frozenset({"available", "unavailable", "unknown"})
 ACTIVE = frozenset({"offered", "accepted", "en_route", "arrived", "located"})
 GRAVE = frozenset({"evacuate", "stop_show", "request_external"})
+# Propósitos que HappyRobot entrega por Telegram cuando MANDO delega la coordinación.
+HAPPYROBOT_PURPOSES = frozenset({"offer", "task", "status", "question", "cancelled"})
 ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.~:@-]{0,119}\Z")
 ROLE_MAP = {
     "medical": "medico", "ambulance": "medico", "security": "policia",
@@ -67,6 +69,7 @@ FIELDS = {
     "decide": {"approval_id", "expected_version", "approved", "content_hash", "note"},
     "merge": {"incident_id", "target_incident_id", "expected_version"},
     "call_result": {"assignment_id", "expected_version", "result", "metadata"},
+    "reset_incidents": {"confirm"},
 }
 PERMISSIONS = {
     "operator": set(FIELDS) - {"identify"},
@@ -184,6 +187,34 @@ def _public(value: JSON, addresses: list[str], key: str = "") -> JSON:
     return value
 
 
+MIRROR_TYPES = frozenset({"tg_incident", "tg_assignment", "tg_staff"})
+MIRROR_TIPOS = frozenset(
+    {"medica", "aglomeracion", "seguridad", "incendio", "clima", "infraestructura", "menor", "otro"}
+)
+MIRROR_GRAVEDAD = frozenset({"vital", "emergencia", "urgente", "leve", "sin_clasificar"})
+MIRROR_ESTADOS = frozenset(
+    {"pending", "accepted", "declined", "timeout", "covered", "llegado", "localizado", "finalizado"}
+)
+MIRROR_EMPTY: Document = {"incidents": {}, "assignments": [], "staff": None, "updated_at": None}
+
+
+def _telegram_view(data: State) -> Document:
+    """Vista de solo lectura de lo que decide HappyRobot; vacía si aún no ha llegado nada."""
+    mirror = data.get("hr_mirror")
+    if not isinstance(mirror, dict):
+        return _document(MIRROR_EMPTY)
+    incidents = mirror.get("incidents")
+    assignments = mirror.get("assignments")
+    staff = mirror.get("staff")
+    updated = mirror.get("updated_at")
+    return {
+        "incidents": _document(incidents) if isinstance(incidents, dict) else {},
+        "assignments": _document(assignments) if isinstance(assignments, list) else [],
+        "staff": _document(staff) if isinstance(staff, dict) else None,
+        "updated_at": updated if isinstance(updated, (int, float)) else None,
+    }
+
+
 def _version(entity: Entity, command: Mapping[str, object]) -> None:
     if entity["version"] != _integer(command.get("expected_version"), "expected_version"):
         raise OperationalError("stale_version", 409)
@@ -194,9 +225,17 @@ class OperationalStore:
     command_permissions: ClassVar[dict[str, set[str]]] = PERMISSIONS
 
     def __init__(self, path: str | Path, festival: Document, *,
-                 clock: Callable[[], float] = time.time) -> None:
+                 clock: Callable[[], float] = time.time,
+                 happyrobot_plans_telegram: bool = False,
+                 telegram_via_happyrobot: bool = False) -> None:
         self._clock = clock
         self._lock = threading.RLock()
+        # HappyRobot decide a quién avisar por Telegram: MANDO no auto-oferta esos
+        # avisos (`happyrobot_plans_telegram`) y no habla con Telegram directamente
+        # (`telegram_via_happyrobot`): entrega la coordinación a HappyRobot, que es
+        # quien conversa con el personal y con el informante.
+        self.happyrobot_plans_telegram = happyrobot_plans_telegram
+        self.telegram_via_happyrobot = telegram_via_happyrobot
         self._parser = HeuristicParser()
         self._closed = False
         self._zones: dict[str, Zone] = {}
@@ -218,6 +257,7 @@ class OperationalStore:
             "schema": 1, "revision": 0, "zones": zones, "actors": {}, "incidents": {},
             "assignments": {}, "approvals": {}, "deliveries": {}, "events": [],
             "reservations": {},
+            "hr_mirror": {"incidents": {}, "assignments": [], "staff": None},
         }
         try:
             database = sqlite3.connect(str(path), isolation_level=None, timeout=10, check_same_thread=False)
@@ -372,6 +412,7 @@ class OperationalStore:
                 "zones": data["zones"], "actors": actors, "incidents": incidents,
                 "assignments": assignments, "approvals": list(data["approvals"].values()),
                 "deliveries": deliveries, "events": data["events"][-500:],
+                "telegram": _telegram_view(data),
             })
             return cast(Document, _public(snapshot, [a["address"] for a in data["actors"].values()]))
 
@@ -421,7 +462,21 @@ class OperationalStore:
         actor = data["actors"].get(recipient)
         if actor is None or not actor["address"]:
             return
+        # HappyRobot conversa con el informante que escribió al bot: MANDO no duplica
+        # el mensaje de cortesía ni la pregunta de ubicación.
+        if (self.happyrobot_plans_telegram and actor["channel"] == "telegram"
+                and purpose in {"status", "question"} and incident_id
+                and data["incidents"].get(incident_id, {}).get("reporter_id") == recipient):
+            return
         local_only = actor["channel"] == "phone" and purpose != "offer"
+        # La coordinación por Telegram la entrega HappyRobot (él manda el mensaje y
+        # sigue la conversación). MANDO sólo escribe el hecho y el botón exacto.
+        via_happyrobot = (
+            not local_only
+            and self.telegram_via_happyrobot
+            and actor["channel"] == "telegram"
+            and purpose in HAPPYROBOT_PURPOSES
+        )
         did = "delivery-" + secrets.token_hex(12)
         body = dict(payload or {})
         if local_only:
@@ -430,11 +485,24 @@ class OperationalStore:
             data["events"][-1]["summary"] = (
                 "Canal telefónico limitado a ofertas: coordinación debe comunicar " + purpose
             )
+        if via_happyrobot:
+            body["chat_id"] = actor["address"]
+            body["alias_staff"] = actor["name"]
+            incident = data["incidents"].get(incident_id) or {}
+            reporter = data["actors"].get(str(incident.get("reporter_id") or ""))
+            if reporter is not None and reporter["channel"] == "telegram":
+                body["reporter_chat_id"] = reporter["address"]
+                body["alias_informante"] = reporter["name"]
+            if incident.get("priority") is not None:
+                body["prioridad"] = incident["priority"]
         if assignment:
             body.update(assignment_id=assignment["id"], expected_version=assignment["version"],
-                        destination_zone_id=assignment["zone"])
+                        destination_zone_id=assignment["zone"], role=assignment["role"],
+                        eta_min=assignment["eta_min"])
         data["deliveries"][did] = {
-            "id": did, "version": 1, "channel": "web" if local_only else actor["channel"], "recipient_id": recipient,
+            "id": did, "version": 1,
+            "channel": "happyrobot" if via_happyrobot else ("web" if local_only else actor["channel"]),
+            "recipient_id": recipient,
             "purpose": purpose, "text": text, "incident_id": incident_id,
             "assignment_id": assignment["id"] if assignment else None,
             "status": "local_required" if local_only else "pending",
@@ -510,6 +578,10 @@ class OperationalStore:
             return self._register(data, command, principal, scope)
         if kind == "report":
             return self._report(data, command, principal, scope, channel, now)
+        if kind == "reset_incidents":
+            # Solo el operador puede vaciar el estado; el resto de alcances no lo
+            # tienen en `command_permissions`.
+            return self._reset_incidents(data, command, now)
         if kind == "availability":
             aid = _id(command.get("actor_id", principal), "actor_id")
             if scope not in {"operator", "system"} and aid != principal:
@@ -732,6 +804,35 @@ class OperationalStore:
             self._say(data, now, principal, "question", "¿En qué zona estás? Necesitamos la ubicación para enviar ayuda.", iid)
         return {"incident_id": iid}
 
+    def _reset_incidents(self, data: State, command: Document, now: float) -> Document:
+        """Reinicio para empezar de cero: retira incidencias y todo lo derivado.
+
+        El personal registrado se conserva y queda libre; se vacía el espejo de
+        Telegram y la cronología. El evento de auditoría lo añade `_execute` con el
+        propio comando, así que no se pierde el rastro de quién reinició. Repetir el
+        mismo `command_id` devuelve el resultado guardado y no vuelve a reiniciar.
+        """
+        if command.get("confirm") is not True:
+            raise OperationalError("confirmation_required", 409, "El reinicio exige confirm=true")
+        removed = {
+            "incidents": len(data["incidents"]),
+            "assignments": len(data["assignments"]),
+            "approvals": len(data["approvals"]),
+            "deliveries": len(data["deliveries"]),
+            "reservations": len(data["reservations"]),
+        }
+        data["incidents"] = {}
+        data["assignments"] = {}
+        data["approvals"] = {}
+        data["deliveries"] = {}
+        data["reservations"] = {}
+        data["hr_mirror"] = {"incidents": {}, "assignments": [], "staff": None}
+        data["events"] = []
+        for actor in data["actors"].values():
+            # Sigue registrado, pero sin ocupación heredada de lo retirado.
+            actor["version"] += 1
+        return {"removed": cast(JSON, removed)}
+
     @staticmethod
     def _tasks(incident: Incident) -> None:
         for role, count in incident["needs"].items():
@@ -743,6 +844,13 @@ class OperationalStore:
     def _covered(data: State, task_id: str) -> bool:
         return any(a["task_id"] == task_id and a["status"] in ACTIVE | {"completed"}
                    for a in data["assignments"].values())
+
+    def _happyrobot_plans(self, incident: Incident) -> bool:
+        """El aviso entró por el bot: HappyRobot decide a quién avisar, no MANDO."""
+        if not self.happyrobot_plans_telegram:
+            return False
+        reporters = incident.get("reporter_ids") or [incident.get("reporter_id")]
+        return any(str(item or "").startswith("tg:") for item in reporters)
 
     def _offer(self, data: State, incident: Incident, actor_id: str, role: str,
                now: float, *, task_id: str | None = None, ttl: int = 120) -> Assignment:
@@ -1073,6 +1181,12 @@ class OperationalStore:
                         self._release(data, assignment, "cancelled", now, "review_required")
             elif incident["zone"] is None:
                 waiting.append("location_required: esperando ubicación del informante")
+            elif self._happyrobot_plans(incident):
+                # Decisión 100% HappyRobot: MANDO no elige a quién avisar en estos
+                # avisos; sólo refleja su despacho y acepta un override del operador.
+                waiting.append(
+                    "coordinacion_happyrobot: el aviso entró por Telegram y HappyRobot decide a quién avisar"
+                )
             else:
                 for task_id, role in incident["tasks"].items():
                     if self._covered(data, task_id):

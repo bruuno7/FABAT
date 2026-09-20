@@ -16,7 +16,12 @@ from . import abanico
 from .operational import (
     ACTIVE,
     FIELDS,
+    MIRROR_ESTADOS,
+    MIRROR_GRAVEDAD,
+    MIRROR_TIPOS,
+    MIRROR_TYPES,
     PERMISSIONS,
+    ROLES,
     OperationalError,
     OperationalStore,
     _boolean,
@@ -130,8 +135,16 @@ class OperationalService(OperationalStore):
         callback_secret: str = "",
         workflow_enabled: bool = False,
         control_chat: str = "",
+        happyrobot_plans_telegram: bool = False,
+        telegram_via_happyrobot: bool = False,
     ) -> None:
-        super().__init__(path, festival, clock=clock)
+        super().__init__(
+            path,
+            festival,
+            clock=clock,
+            happyrobot_plans_telegram=happyrobot_plans_telegram,
+            telegram_via_happyrobot=telegram_via_happyrobot,
+        )
         self.callback_secret = callback_secret
         self.workflow_enabled = workflow_enabled
         self.control_id = "control-" + _hash(control_chat)[:16] if control_chat else ""
@@ -223,6 +236,110 @@ class OperationalService(OperationalStore):
             except OperationalError as exc:
                 if exc.status >= 500:
                     raise
+
+    def receive_happyrobot(self, payload: Document) -> Document:
+        """Espejo de solo lectura: HappyRobot decide por Telegram y MANDO solo lo refleja.
+
+        No crea ofertas, no reserva capacidad ni toca versiones de asignación: la
+        autoridad operativa sigue siendo MANDO. La interfaz pinta este espejo y sus
+        botones de coordinación quedan reservados al override humano.
+        """
+        events = payload.get("events")
+        if not isinstance(events, list) or not 1 <= len(events) <= 50:
+            raise OperationalError("invalid_mirror", 400)
+        with self._transaction() as (data, now):
+            mirror = self._mirror(data)
+            for raw in events:
+                self._mirror_event(mirror, document(raw, "mirror_event"), now)
+            mirror["updated_at"] = now
+        return {"ok": True, "applied": len(events)}
+
+    @staticmethod
+    def _mirror(data: State) -> Document:
+        mirror = data.get("hr_mirror")
+        if not isinstance(mirror, dict):
+            mirror = {"incidents": {}, "assignments": [], "staff": None}
+            data["hr_mirror"] = mirror
+        if not isinstance(mirror.get("incidents"), dict):
+            mirror["incidents"] = {}
+        if not isinstance(mirror.get("assignments"), list):
+            mirror["assignments"] = []
+        return mirror
+
+    @staticmethod
+    def _mirror_int(value: object, field: str, low: int, high: int) -> int:
+        if isinstance(value, str):
+            value = value.strip()
+            if not value or value.lower() == "null":
+                raise OperationalError("invalid_" + field, 400)
+            try:
+                value = int(value, 10)
+            except ValueError:
+                raise OperationalError("invalid_" + field, 400) from None
+        return _integer(value, field, low, high)
+
+    @staticmethod
+    def _mirror_recursos(value: object) -> list[Document]:
+        if value is None:
+            return []
+        if not isinstance(value, list) or len(value) > 8:
+            raise OperationalError("invalid_recursos_requeridos", 400)
+        out: list[Document] = []
+        for raw in value:
+            item = document(raw, "recurso")
+            if set(item) - {"rol", "cantidad"}:
+                raise OperationalError("invalid_recursos_requeridos", 400)
+            out.append({
+                "rol": _choice(item.get("rol"), ROLES, "rol"),
+                "cantidad": OperationalService._mirror_int(item.get("cantidad", 1), "cantidad", 1, 10),
+            })
+        return out
+
+    @staticmethod
+    def _mirror_event(mirror: Document, event: Document, now: float) -> None:
+        kind = _choice(event.get("type"), MIRROR_TYPES, "type")
+        if kind == "tg_staff":
+            disponibles = OperationalService._mirror_int(event.get("disponibles"), "disponibles", 0, 500)
+            total = OperationalService._mirror_int(event.get("total"), "total", 0, 500)
+            if disponibles > total:
+                raise OperationalError("invalid_mirror", 400)
+            mirror["staff"] = {"disponibles": disponibles, "total": total, "t": now}
+            return
+        incidents = cast(dict[str, Document], mirror["incidents"])
+        if kind == "tg_incident":
+            iid = _id(event.get("id"), "id")
+            incidents[iid] = {
+                "id": iid,
+                "texto": _text(event.get("texto") or "", "texto", 400, empty=True),
+                "tipo": _choice(event.get("tipo", "otro"), MIRROR_TIPOS, "tipo"),
+                "zona": _text(event.get("zona") or "", "zona", 60, empty=True) or None,
+                "gravedad": _choice(event.get("gravedad", "sin_clasificar"), MIRROR_GRAVEDAD, "gravedad"),
+                "alias_informante": _text(event.get("alias_informante") or "", "alias_informante", 40, empty=True),
+                "recursos_requeridos": OperationalService._mirror_recursos(event.get("recursos_requeridos")),
+                "t": now,
+            }
+            return
+        iid = _id(event.get("incident_id"), "incident_id")
+        rol = _choice(event.get("rol"), ROLES, "rol")
+        estado = _choice(event.get("estado"), MIRROR_ESTADOS, "estado")
+        alias = _text(event.get("alias") or "", "alias", 40, empty=True)
+        eta_raw = event.get("eta_min")
+        eta = None if eta_raw in (None, "") else OperationalService._mirror_int(eta_raw, "eta_min", 0, 240)
+        intento = OperationalService._mirror_int(event.get("intento", 1), "intento", 1, 20)
+        incidents.setdefault(iid, {
+            "id": iid, "texto": "", "tipo": "otro", "zona": None, "gravedad": "sin_clasificar",
+            "alias_informante": "", "recursos_requeridos": [], "t": now,
+        })
+        rows = cast(list[Document], mirror["assignments"])
+        row = next((r for r in rows if r.get("incident_id") == iid and r.get("rol") == rol
+                    and r.get("alias", "") == alias and r.get("intento") == intento), None)
+        if row is None:
+            row = {"incident_id": iid, "rol": rol, "alias": alias, "intento": intento}
+            rows.append(row)
+        row.update(estado=estado, eta_min=eta,
+                   desde_zona=_text(event.get("from_zone") or "", "from_zone", 60, empty=True) or None,
+                   motivo=_text(event.get("motivo") or "", "motivo", 200, empty=True), t=now)
+        del rows[:-100]
 
     def capability(self, delivery_id: str) -> str:
         if not self.callback_secret:
@@ -570,6 +687,14 @@ class OperationalService(OperationalStore):
                 data, now, target["id"], "El informante ha actualizado la incidencia."
             )
             return result
+        if any(
+            a["actor_id"] == principal and a["status"] in ACTIVE
+            for a in data["assignments"].values()
+        ):
+            # Quien ya tiene una tarea activa es personal en servicio: su texto
+            # (preguntas, notas, respuestas) lo lleva HappyRobot, no abre un aviso
+            # nuevo en MANDO.
+            return {"actor_id": principal, "ignored": True}
         return self._report(
             data,
             {

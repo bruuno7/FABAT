@@ -166,6 +166,20 @@
     const client = createClient({ refresh: (fresh) => sync.refresh(fresh), onMessage: message });
     const zoneName = (id) => (state.zones.find((z) => z.id === id) || {}).name || id || "Sin ubicación confirmada";
     const actorName = (id) => (state.actors.find((a) => a.id === id) || {}).name || id;
+    // Espejo de solo lectura de lo que decide HappyRobot por Telegram. La coordina él;
+    // la Sala sólo lo pinta y sus botones quedan para el override humano.
+    const telegramView = () => (state && state.telegram && typeof state.telegram === "object") ? state.telegram : {};
+    const telegramDecisions = () => {
+      const rows = telegramView().assignments;
+      return Array.isArray(rows) ? rows.filter((r) => r && ["pending", "accepted", "covered"].includes(r.estado)) : [];
+    };
+    const telegramDecision = (incidentId, role) =>
+      telegramDecisions().find((r) => r.incident_id === incidentId && r.rol === role) || null;
+    const telegramPhrase = (row) => {
+      const eta = row.eta_min == null ? "" : ` · ETA ${row.eta_min} min`;
+      const desde = row.desde_zona ? ` · desde ${zoneName(row.desde_zona)}` : "";
+      return `${roleName(row.rol)} · ${row.alias || "sin alias"} · ${label(row.estado)}${eta}${desde}`;
+    };
     function button(title, action, className = "secondary") {
       const b = node("button", title, className);
       b.type = "button";
@@ -210,21 +224,65 @@
       modal = { entity: { ...entity }, payload };
       $("command-dialog").showModal();
     }
-    function assignmentDialog(a, kind) {
+    // Aviso obligatorio cuando el operador va a anular lo que ya decidió HappyRobot.
+    function overrideNotice(row) {
+      const notice = node("div", undefined, "override-notice");
+      notice.append(node("p", `HappyRobot ya coordinó por Telegram: ${telegramPhrase(row)}.`));
+      notice.append(node("p", "La coordinación normal la lleva HappyRobot por Telegram. Continúa sólo si vas a anular su decisión (override)."));
+      const label = node("label");
+      const input = node("input");
+      input.type = "checkbox"; input.name = "override_confirmed"; input.required = true;
+      label.append(input, node("span", " Anulo la decisión de HappyRobot y asumo esta coordinación desde la Sala."));
+      notice.append(label);
+      return notice;
+    }
+
+    // Reinicio para empezar de cero. Destructivo y solo para el operador: exige marcar
+    // la confirmación y no lleva `expected_version` (no depende de una entidad).
+    function resetDialog() {
+      if (authExpired) return message("La sesión ha caducado. Inicia sesión de nuevo.", true);
+      if (client.busy()) return message("Espera a que termine el comando anterior.", true);
+      $("command-fields").replaceChildren();
+      $("command-title").textContent = "Reiniciar incidencias";
+      $("command-context").textContent = "Se retiran del estado operativo las incidencias y todo lo derivado. El personal registrado se conserva y queda libre.";
+      $("command-error").hidden = true;
+      $("command-submit").disabled = false;
+      const label = node("label");
+      const input = node("input");
+      input.type = "checkbox"; input.name = "confirm"; input.required = true;
+      label.append(input, node("span", " Confirmo que quiero empezar de cero: se retiran las incidencias actuales."));
+      $("command-fields").append(label);
+      modal = {
+        entity: null,
+        payload: (data) => {
+          if (!data.has("confirm")) throw new Error("Marca la confirmación para reiniciar.");
+          return { kind: "reset_incidents", fields: { confirm: true } };
+        },
+      };
+      $("command-dialog").showModal();
+    }
+
+    function assignmentDialog(a, kind, options = {}) {
       const titles = { accept: "Aceptar tarea", decline: "Rechazar tarea", eta: "Comunicar ETA", arrive: "Confirmar llegada", locate: "Confirmar localización", complete: "Completar tarea" };
-      open(titles[kind], a, () => {
+      const override = options.override || null;
+      open(`${override ? "Override · " : ""}${titles[kind]}`, a, () => {
+        if (override) $("command-fields").append(overrideNotice(override));
         $("command-fields").append(node("p", `${actorName(a.actor_id)} · incidente ${a.incident_id} · destino ${zoneName(a.zone)}`));
         if (kind === "decline") field("reason", "Motivo del rechazo", { multiline: true });
         if (kind === "eta") {
           field("eta_min", "Minutos hasta el destino", { number: true, value: a.eta_min ?? 0 });
           field("destination_confirmed", `Confirmo el destino: ${zoneName(a.zone)}`, { checkbox: true });
         }
-      }, (data) => ({
-        kind, fields: { assignment_id: a.id,
-          ...(kind === "decline" ? { reason: data.get("reason") } : {}),
-          ...(kind === "eta" ? { eta_min: Number(data.get("eta_min")), destination_confirmed: data.has("destination_confirmed"), destination_zone_id: a.zone } : {}),
-        },
-      }));
+      }, (data) => {
+        if (override && !data.has("override_confirmed")) throw new Error("Confirma expresamente que anulas la decisión de HappyRobot.");
+        const reason = data.get("reason");
+        return {
+          kind, fields: { assignment_id: a.id,
+            ...(kind === "decline" ? { reason: override && reason ? `[override HappyRobot] ${reason}` : reason } : {}),
+            ...(kind === "eta" ? { eta_min: Number(data.get("eta_min")), destination_confirmed: data.has("destination_confirmed"), destination_zone_id: a.zone } : {}),
+          },
+        };
+      });
     }
     function incidentDialog(i, kind) {
       open({ update: "Actualizar aviso", offer: "Ofrecer tarea", propose: "Proponer acción para aprobación" }[kind], i, () => {
@@ -366,12 +424,27 @@
         }, (data) => ({ kind: "availability", fields: { actor_id: a.id, availability: data.get("availability") } }))]]));
         return item;
       }, "Sin personal en esta vista. Revisa la búsqueda o registra los equipos autorizados.", [state.assignments, state.zones]);
-      showList("assignments", state.assignments, (a) => {
+      const operational = state.assignments.map((assignment) => ({ source: "operational", assignment }));
+      const operationalKeys = new Set(state.assignments.map((a) => `${a.incident_id}|${a.role}`));
+      const happyrobotOnly = telegramDecisions()
+        .filter((row) => !operationalKeys.has(`${row.incident_id}|${row.rol}`))
+        .map((mirror) => ({ source: "happyrobot", mirror }));
+      showList("assignments", [...operational, ...happyrobotOnly], (entry) => {
+        if (entry.source === "happyrobot") {
+          const row = entry.mirror;
+          const item = card(`${row.incident_id} · ${roleName(row.rol)} · HappyRobot`, row.estado, row.estado === "accepted" ? "accepted" : "pending");
+          item.append(facts([["Decidido por", "HappyRobot · Telegram"], ["Quién acude", row.alias || "sin alias"], ["ETA", row.eta_min == null ? "Sin confirmar" : `${row.eta_min} min`], ["Desde", row.desde_zona ? zoneName(row.desde_zona) : "—"], ["Intento", row.intento || 1], ["Nota", row.motivo || "—"]]));
+          item.append(empty("Solo lectura: la coordinación la lleva HappyRobot por Telegram. Para anularla, ofrece o reasigna una tarea operativa."));
+          return item;
+        }
+        const a = entry.assignment;
         const item = card(`${a.incident_id} · ${actorName(a.actor_id)}`, a.status, ["offered", "pending"].includes(a.status) ? "pending" : ["accepted", "en_route"].includes(a.status) ? "accepted" : "");
         item.append(facts([["Asignación / tarea", `${a.id} / ${a.task_id || "—"}`], ["Rol", roleName(a.role)], ["Destino", zoneName(a.zone)], ["ETA", a.eta_min == null ? "Sin confirmar" : `${a.eta_min} min`], ["Caduca", date(a.expires_at)], ["Versión", a.version]]));
         if (a.communication?.result) item.append(facts([["Resultado de comunicación", label(a.communication.result)]]));
+        const decision = telegramDecision(a.incident_id, a.role);
+        if (decision) item.append(node("p", `HappyRobot ya lo había coordinado por Telegram: ${telegramPhrase(decision)}. Coordinar aquí es un override.`, "override-hint"));
         const names = { accept: "Aceptar", decline: "Rechazar", eta: "ETA", arrive: "Llegada", locate: "Localizar", complete: "Completar" };
-        const controls = assignmentActions(a.status).map((kind) => [names[kind], () => assignmentDialog(a, kind)]);
+        const controls = assignmentActions(a.status).map((kind) => [decision ? `Override · ${names[kind]}` : names[kind], () => assignmentDialog(a, kind, { override: decision })]);
         if (["declined", "expired", "cancelled"].includes(a.status) && !a.followup_confirmed) controls.push(["Confirmar seguimiento", () => open("Seguimiento humano antes de una nueva oferta", a, () => {
           $("command-fields").append(node("p", `${actorName(a.actor_id)} · tarea ${a.id}. Verifica con el personal que está disponible. Esto permite al planificador generar nuevas ofertas; no se repetirá la llamada anterior.`));
           field("reason", "Resultado de la verificación humana", { multiline: true });
@@ -410,7 +483,7 @@
       event.preventDefault();
       if (!modal || client.busy()) return;
       if (authExpired) return message("La sesión ha caducado. Inicia sesión de nuevo.", true);
-      if (modal.entity.content_hash && expired(modal.entity)) {
+      if (modal.entity && modal.entity.content_hash && expired(modal.entity)) {
         $("command-error").textContent = "La propuesta ha caducado. Cierra y revisa una propuesta vigente.";
         $("command-error").hidden = false; $("command-submit").disabled = true; return;
       }
@@ -469,6 +542,7 @@
       if (target) target.focus({ preventScroll: true });
     };
     $("refresh").onclick = () => sync.refresh(true);
+    $("reset-incidents").onclick = resetDialog;
     const gate = root.SALA_SYNC.snapshotGate();
     sync = root.SALA_SYNC.connect({
       stateURL: "/api/operations/state", streamURL: "/api/operations/stream", staleAfter: 30000,

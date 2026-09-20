@@ -132,6 +132,10 @@ class ChainTest(unittest.TestCase):
 
         cls.directory = TemporaryDirectory()
         cls._saved_env = dict(os.environ)
+        # Este montaje cambia el entorno del proceso (es un despliegue real). Se registra
+        # como limpieza de clase para que se restaure incluso si setUpClass falla a mitad:
+        # si no, el entorno sucio haría fallar en cascada al resto de la suite.
+        cls.addClassCleanup(cls._restore_env)
         cls.happyrobot = FakeHappyRobot()
         cls.mando_port = free_port()
         cls.bridge_port = free_port()
@@ -208,6 +212,11 @@ class ChainTest(unittest.TestCase):
         )
 
     @classmethod
+    def _restore_env(cls) -> None:
+        os.environ.clear()
+        os.environ.update(cls._saved_env)
+
+    @classmethod
     def tearDownClass(cls) -> None:
         if getattr(cls, "bridge", None) is not None:
             cls.bridge.terminate()
@@ -222,10 +231,7 @@ class ChainTest(unittest.TestCase):
             cls.happyrobot.close()
         if getattr(cls, "directory", None) is not None:
             cls.directory.cleanup()
-        # Este montaje cambia el entorno del proceso (es un despliegue real); se
-        # restaura para no condicionar al resto de la suite.
-        os.environ.clear()
-        os.environ.update(cls._saved_env)
+        # El entorno lo restaura la limpieza de clase registrada en setUpClass.
 
     # ── utilidades ────────────────────────────────────────────────────────────
     @classmethod

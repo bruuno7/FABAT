@@ -27,6 +27,9 @@ La UI operativa se sirve desde `motor/server/static/sala-operativa.html`. El [Do
 
 ## Arranque local
 
+Para una **demo aislada con cuatro personajes, guía interactiva y canales reales opcionales**,
+consulta [DEMO-JURADO.md](DEMO-JURADO.md). Reutiliza esta Sala sin modificar el bot ni la base del despliegue habitual.
+
 Requisitos: Python ≥3.12, `uv`, Git y Node ≥20 para puente/tests JS. Versiones comprobadas: Python **3.13.7**, `uv` **0.8.22**, Node **24.19.0**. Desde la raíz:
 
 ```sh

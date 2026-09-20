@@ -1,103 +1,64 @@
-# MANDO — el MVP
+# MVP histórico: simulador y experimentos
 
-**Sabe cuándo su plan ha dejado de valer.** Un agente que coordina los incidentes de un evento masivo:
-recoge avisos por todos los canales, decide qué va primero, llama de verdad a quien tiene que actuar,
-ensaya cada decisión en un gemelo del recinto antes de ejecutarla, y tira el plan y lo rehace cuando un
-supuesto se rompe. Lo grave lo decide una persona, con los dos futuros delante.
+**Este documento ya no es el arranque del producto operativo.** Para ResQval con SQLite persistente, usar [README.md](README.md), [MVP-OPERATIVO.md](MVP-OPERATIVO.md) y `./mvp.sh operational` con canales desactivados en ensayo.
 
-## Arrancarlo
+## Dos recorridos que no deben confundirse
 
-```bash
-./mvp.sh          # todo en local y simulado: http://127.0.0.1:8000  ·  app del asistente: /asistente
-./mvp.sh lan      # accesible desde los móviles de la misma wifi (QR en la tecla Q)
-./mvp.sh real     # con HappyRobot y Telegram reales (rellena antes .env a partir de .env.example)
-./mvp.sh check    # tests de todos los módulos y comprobación de la configuración
-./mvp.sh cifras   # recalcula el número titular del banco de pruebas, con N e intervalo
-```
-
-## Qué ve el jurado (dos perspectivas)
-
-| Quién | Dónde | Qué hace |
+| Recorrido | Activación | Estado y finalidad |
 |---|---|---|
-| **Una persona del festival** (el jurado, con su móvil) | `/asistente`, bot de Telegram, llamada por Web call, email, SMS | Avisa de lo que pasa, por escrito o por voz; ve en directo qué hace Mando con SU aviso; puede provocar un imprevisto y ver cómo cambia el plan |
-| **El centro de control** | `/` (modo escena: tecla E), `/duelo`, `/memoria`, `/informe` | Ve en dos segundos qué pasa y qué ha cambiado; prioridades con su porqué; plan con supuestos; llamadas con ACEPTA / RECHAZA; aprueba o veta lo grave con la tarjeta de decisión; ensaya un «¿y si…?» en el gemelo; aprueba lo que el sistema propone cambiar para mañana |
+| Operativo persistente | `MANDO_OPERATIONAL=1` / `./mvp.sh operational` | SQLite de MANDO, `/api/operations/*`, hechos explícitos y auditoría |
+| Simulador heredado | Sin `MANDO_OPERATIONAL=1`; `./mvp.sh local` | Mundo sintético, reloj acelerable, `/api/state`, casos y comparaciones de políticas |
 
-## Cómo está hecho
+Una pantalla legacy no demuestra persistencia de la operación. Una aceptación generada por SimComms no es una llamada atendida. `web/` conserva un prototipo Next con `Map` en memoria: el Dockerfile raíz no lo empaqueta y Vercel raíz construye `puente`. Queda aislado, no es la sala operativa ni debe recibir sus mutaciones/webhooks. Se conserva su código, sin activarlo como segunda autoridad.
 
+## Qué conserva el simulador
+
+- Un mundo de festival de juguete (`motor/world`), catálogo de incidentes y recursos, generador de casos y harness de evaluación.
+- Un planificador determinista con reglas, prioridades y supuestos; experimentos de imprevistos, aprobación humana y comparativas contra una política fija.
+- Interfaces legacy de explicación: `/asistente`, `/duelo`, `/memoria`, `/caos`, `/informe`, entre otras. Son rutas del servidor legacy, **no una lista de pantallas operativas certificadas**.
+- Adaptadores históricos de voz, Telegram y otros canales. Su código o configuración no prueba que todos los workflows estén publicados ni que todos los canales funcionen ahora.
+
+No se mantiene como promesa del MVP que «recoge por todos los canales», «llama de verdad» o «ensaya cada decisión en un gemelo» de forma universal. El plano y los experimentos del recinto no son un gemelo calibrado con un evento real. El modo operativo valida y persiste sus propias transiciones.
+
+## Lanzador y seguridad
+
+Desde la raíz, tras instalar dependencias con `uv`:
+
+```sh
+./mvp.sh preflight --seed 1701 --output /tmp/resqval-preflight-nuevo
+./mvp.sh check
 ```
- avisos: voz · Telegram · email · SMS · web · sensores
-        │
-        ▼
- HappyRobot  ── entiende (AI Extract + AI Classify) ──►  /hr/events
-        ▲                                                   │
-        │  llama por teléfono: orden → ACEPTA / RECHAZA     ▼
-        │  Signals: cambia la orden en plena llamada     MANDO (backend propio)
-        └──────────────────────────────────────────────  triaje → prioridad → ENSAYO en el gemelo
-                                                          → plan con SUPUESTOS → acciones
- persona del centro de control  ◄── tarjeta de decisión ──┘        │
-        └── aprueba · veta · corrige · toma la llamada             ▼
-                                                     simulador del recinto  ◄── CAOS (el jurado)
-```
 
-- **HappyRobot habla y entiende; Mando decide; una persona manda en lo grave.** Workflows montados por
-  MCP en el workspace del equipo: despacho por teléfono, despacho por Web call, e ingesta por voz, email,
-  SMS y texto (Telegram y sensores). Detalle en `motor/happyrobot/PLATAFORMA_REAL.md`.
-- **El núcleo que decide es un planificador de bucle cerrado con reglas, determinista y explicable**, no
-  un LLM: cada decisión tiene su número y su porqué, y se puede reproducir con la misma semilla. Los
-  modelos de lenguaje están donde aportan: en la conversación y en entender texto libre.
-- **Seguridad por diseño:** evacuar, parar el espectáculo o pedir ayuda externa NUNCA se ejecutan sin una
-  persona; una parada cardiaca nunca espera a nadie; lo sensible (agresiones, menores) va enmascarado;
-  no se marca ningún número fuera de la lista blanca; ningún número de emergencias real.
+Son los perfiles recomendados de comprobación sin proveedores. `check` genera **SIMULACIÓN train N=3000 y heldout N=1000**, semilla 1, en una copia temporal; ejecuta suites core/server y `check-world` (**SIMULACIÓN N=12 casos demo**). No basta ver corpus generado para declarar que los tests pasaron: manda su código de salida y el resumen de unittest.
 
-## Qué es real y qué es simulado
+Los perfiles siguientes son herramientas legacy; no son el ensayo del producto persistente:
 
-| Real | Simulado |
-|---|---|
-| Llamadas de voz por HappyRobot a móviles de la lista blanca, con aceptación o rechazo | El recinto, la multitud, los recursos y el tiempo (simulador determinista, 1 tick = 1 min) |
-| Bot de Telegram, Web call, email y SMS de entrada | Las personas al otro lado cuando no se usa HappyRobot (`--comms sim`) |
-| Webhooks en los dos sentidos, servidor MCP propio, northstars y tests en la plataforma | Sensores de aforo y meteorología |
-| Las decisiones, los ensayos en el gemelo y las aprobaciones humanas | — |
+- `./mvp.sh local`: servidor local del simulador si el entorno no activa el operativo.
+- `./mvp.sh lan`: expone el servidor a la red; exige revisar permisos, origen y configuración.
+- `./mvp.sh demo`: presentación legacy; no equivale al preflight operativo.
+- `./mvp.sh real`: lee `.env`, diagnostica y puede contactar proveedores. No usar sin autorización, contactos consentidos y whitelist. `doctor --sin-red` no certifica la conectividad real.
+- `./mvp.sh cifras`: recalcula comparativas del harness; no es telemetría de operaciones reales.
 
-## Cómo se ha medido
+Para aislar el legacy, revisar `.env` antes de arrancar: `TELEGRAM_MODE=off`, LLM/cerebro externo desactivados, canales simulados y una ruta `MANDO_DB` nueva. **`MANDO_DB` es el ledger legacy; no reemplaza `MANDO_OPERATIONAL_DB`.** No usar la base de una presentación o de una operación para experimentos.
 
-Contra un agente de lista fija, en los MISMOS casos y semillas, con intervalos de confianza y sin excluir
-ninguna ejecución. Es simulación, no dato de campo. Cifras vigentes en `motor/harness/out/report.md`
-(se regeneran con `./mvp.sh cifras`): en **1.000 casos que el agente no había visto nunca**, Mando
-mejora a la lista fija en **+8,9 puntos [7,7 – 10,1]** y baja los incidentes críticos fallidos del 18,6 %
-al 13,2 %; **con un adversario que ataca el mundo** (3 golpes), **+15,5 [13,0 – 18,2]** (N = 300).
+## Cifras, aprendizaje y evidencia
 
-## Límites que decimos nosotros antes de que los pregunten
+No se reproducen aquí porcentajes históricos sin un artefacto verificable del árbol actual. Toda cifra futura debe decir **SIMULACIÓN**, su N, semilla, corpus/política, revisión y métrica; las latencias del simulador no son tiempos de llegada de equipos ni latencias telefónicas. Un porcentaje sobre casos sintéticos no mide vidas salvadas.
 
-- **Falla menos, no llega antes**: el tiempo hasta la primera atención es parecido al de la lista fija
-  (2,4 frente a 1,9 min); lo que el banco sostiene es que Mando deja menos incidentes críticos sin atender.
-- **El ensayo en el gemelo no mueve la media** (−0,09 [−0,33 – 0,13], N = 1.200): su valor es de caso y de
-  explicación (la puerta B, los dos futuros de la tarjeta de decisión), no es la fuente del +8,9.
-- **Muchos frentes a la vez**: con 5 frentes Mando saca ventaja clara (70,0 frente a 63,8); con 6 y 7 los
-  intervalos se solapan: se degrada como cualquiera cuando faltan recursos. Lo que sí hace siempre es decir
-  a quién deja esperando y por qué.
-- **«Aprende», con su letra pequeña.** Medido (N = 400 por brazo, mismos casos, IC 99 % pareado): tras
-  observar el día 1 que reponer el agua tardaba 28,7 min y no los 10 de ficha (N = 50), proponerlo con su N
-  y aprobarlo una persona, las **roturas de stock bajan de 0,33 a 0,18 por caso**, y de 0,38 a 0,25 en 400
-  casos nunca usados para la memoria; la **búsqueda de la persona baja 1,4–1,8 min**. Lo que NO mejora: la
-  puntuación global ni los críticos fallidos (sin evidencia). Se aprende PARÁMETROS con reglas, no se
-  entrena un modelo; y los tiempos ocultos del recinto simulado los pusimos nosotros.
+El harness permite comparar políticas y manuales fuera de línea. No hay evidencia aquí de aprendizaje online autónomo en producción. La adaptación demostrable del operativo consiste en revisar el plan frente a información nueva persistida; aprobar una regla para ensayos posteriores no acredita entrenamiento de un modelo.
 
-## De MVP a producto (qué haría falta para incorporarlo en un recinto de verdad)
+Los resultados finales de preflight y suites están pendientes de consolidar sobre la candidata local; no reutilizar recuentos de otra fase como si fueran una validación nueva. La evidencia histórica real es **Telegram → Vercel → Railway → HappyRobot, N=1 llamada telefónica de prueba**, `accept`, destino confirmado y ETA de **2 minutos**, con callbacks aplicados. No corresponde a webcall ni a `followup_question`, y no acredita el SHA/árbol actual.
 
-1. **El recinto es un fichero** (`motor/world/festival.json`): zonas, aforos, vecinos, recursos y programa.
-   Cambiar de festival, estadio o feria es cambiar ese fichero; el motor no se toca. El Plan de
-   Autoprotección del evento (obligatorio por el RD 393/2007 desde 20.000 personas al aire libre) es la
-   fuente natural de esos datos y de las reglas que no se pueden romper.
-2. **Sensores reales** en lugar del simulador: contadores de aforo por puerta, estación meteorológica y
-   posición de equipos entran por el mismo contrato (`Observation`); el gemelo se alimenta de ellos.
-3. **Telefonía local** (número español, SIP del recinto) y, donde el mando es por radio, el agente se queda
-   con el teléfono del centro de control: proveedores, transporte, relevos, servicios externos.
-4. **Identidad y permisos**: quién puede avisar, quién puede aprobar y quién puede tomar una llamada;
-   registro auditable de cada decisión con su porqué (ya existe el log; falta firmarlo y conservarlo).
-5. **El simulacro anual que exige la norma, cada noche**: el mismo banco de pruebas y el mismo adversario,
-   sobre el plan real del evento, con informe de por dónde se rompe.
-6. **Despliegue**: `Dockerfile` en la raíz; un contenedor detrás de un proxy con TLS, secretos por
-   variables de entorno (`.env.example`), `MANDO_OPERATOR_TOKEN` obligatorio si se expone a internet.
+El rápido operativo tiene un fork adaptado **no publicado/no live**; las pruebas de contrato adjuntas (**SIMULACIÓN N=11 casos de nodos puros y N=7 tests locales**) no validan el agente completo ni reemplazan las regresiones legacy. Estado y bloqueos: [runbook](MVP-OPERATIVO.md#estado-del-workflow-rápido).
 
-Segundo vertical con el mismo motor: **cuadrillas de avería de una eléctrica** (recibir el aviso,
-despachar por voz, confirmar y cerrar el bucle), que es la operación que HappyRobot ya vende en Utilities.
+El inventario detectó límites de las puertas legacy: `motor.evals` puede devolver cero aunque haya fallos y el harness puede aceptar un conjunto vacío al descartar fixtures obsoletos. Su corte estático de **SIMULACIÓN N=11 fixtures** tenía 0 vigentes y 11 obsoletos, sin ejecutar el harness. Conservar y revisar expectativas; no actualizar huellas automáticamente ni borrar casos para conseguir verde. Ver [pendientes](PENDIENTE.md).
+
+## Documentos de referencia
+
+- [motor/harness/README.md](motor/harness/README.md): evaluación y experimentos sintéticos.
+- [motor/INTERFACES.md](motor/INTERFACES.md): contratos compartidos y contexto histórico del simulador; no sustituyen el contrato operativo.
+- [motor/server/README.md](motor/server/README.md): servidor operativo frente a rutas legacy.
+- [PRESENTACION.md](PRESENTACION.md): guion actual, plan B y afirmaciones permitidas.
+- [PENDIENTE.md](PENDIENTE.md): puertas de aceptación, sin fechas de hackathon caducadas.
+
+La documentación de experimentos es contexto histórico, no una garantía de disponibilidad ni un protocolo sanitario validado.

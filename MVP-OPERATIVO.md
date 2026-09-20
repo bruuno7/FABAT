@@ -1,82 +1,56 @@
-# MVP multicanal persistente
+# Runbook del MVP operativo persistente
 
-## Arranque local
+Este documento describe el recorrido **ResQval → MANDO SQLite → proveedores → MANDO**, no el reloj del simulador. Requisitos, variables y despliegue: [README.md](README.md). Guion: [PRESENTACION.md](PRESENTACION.md). Pendientes de aceptación: [PENDIENTE.md](PENDIENTE.md).
 
-Python 3.12 o posterior, `uv` y Node 22 para el puente. Copiar `.env.example` a
-`.env`, definir `MANDO_OPERATOR_TOKEN` y ejecutar `./mvp.sh operational`.
-La raíz sirve la Sala operativa. El enlace «Iniciar sesión» permite introducir
-el token en `/acceso` y obtener una cookie HttpOnly. Sin token configurado el acceso se rechaza.
+## Arranque y autoridad
 
-El modo operativo se activa con `MANDO_OPERATIONAL=1`; no avanza el reloj del
-simulador ni crea víctimas, recursos o confirmaciones ficticias. El simulador
-anterior sigue disponible arrancando sin esa variable.
+- `./mvp.sh operational` exporta `MANDO_OPERATIONAL=1`, exige credencial de operador y deja `MANDO_EXTERNAL_DELIVERY=0` salvo configuración explícita. Lee el `.env` privado; revisar que no active entregas reales accidentalmente.
+- `/`, `/sala` y `/interfaz` sirven la sala operativa de `motor/server/static/sala-operativa.html`, no el prototipo Next de `web/`. Autenticación en `/acceso`, cookie HttpOnly same-origin; con token configurado también se exige en loopback. `POST /salir` borra las cookies y redirige al acceso; no revoca una credencial copiada.
+- `MANDO_OPERATIONAL_DB` selecciona la SQLite persistente (por defecto `motor/server/data/operations.sqlite`). Para ensayo, escoger una base nueva fuera del checkout; para alojamiento, una ruta en volumen, por ejemplo `/data/operations.sqlite`.
+- Una sola instancia backend/worker escritor para este MVP. WAL ayuda a la concurrencia local; **no es alta disponibilidad entre máquinas**.
+- Incidentes, actores, tareas, reservas, propuestas, aprobaciones, inbox, outbox y auditoría pertenecen a MANDO. El plano y las tarjetas son proyecciones, no almacenamientos alternativos.
+- Este modo no crea automáticamente víctimas, aceptación, ETA ni desenlaces ficticios. La simulación de transporte significa que **no hubo comunicación externa**, no que un equipo haya aceptado.
 
-El estado se guarda en `MANDO_OPERATIONAL_DB`, por defecto
-`motor/server/data/operations.sqlite`. En Docker debe montarse un volumen
-persistente en `/app/motor/server/data`. Mantener un único backend y su worker
-en un disco local; SQLite WAL no es una solución de alta disponibilidad entre
-máquinas. La base, WAL y copias contienen información privada: no subirlos al
-repositorio. Para una copia consistente utilizar la API de backup de SQLite.
+La instalación limpia, aceptación en navegador y validación del despliegue son comprobaciones distintas del preflight sin red. Sus resultados finales deben corresponder al árbol que se vaya a presentar; ver [pendientes](PENDIENTE.md).
 
-## Recorrido de demostración
+## Recorrido de una tarea
 
-1. Registrar desde la Sala un coordinador `organizador` y trabajadores disponibles
-   con roles `medico`, `policia`, `bomberos` o `staff_entradas`.
-2. Con canal `web` se puede probar el ciclo sin proveedores. Con Telegram,
-   el identificador debe ser `tg:<from.id>` y el contacto el mismo `from.id`
-   numérico privado; un chat de grupo no identifica a un trabajador.
-3. Registrar avisos distintos de calor, desmayo y aglomeración. Un aviso sin zona
-   permanece pendiente de ubicación; no recibe un destino inventado.
-4. Aceptar una asignación y confirmar su destino al comunicar ETA. Llegada,
-   localización y finalización son transiciones diferentes y explícitas.
-5. Abrir dos vistas: un botón revisado con una versión antigua devuelve conflicto
-   y obliga a revisar de nuevo. La Sala no repite comandos de resultado incierto.
-6. Reiniciar el backend conservando la base. Los incidentes, reservas, decisiones,
-   inbox y outbox permanecen; la Sala recupera el estado por SSE o polling.
+1. Registrar personal con roles autorizados (`organizador`, `medico`, `policia`, `bomberos`, `staff_entradas`) y canal. `web` permite registrar manualmente hechos del ensayo sin llamar. Para Telegram, el ID es `tg:<from.id>` y el contacto privado debe corresponder a esa persona, no a un chat de grupo.
+2. Registrar el aviso. Si falta ubicación o aclaración, mantener el pendiente y pedirla; no despachar a una zona deducida sin confirmación ni confundir dos víctimas distintas. Una referencia ambigua no permite escoger arbitrariamente un incidente previo: aclarar identidad antes de actualizarlo.
+3. Ofrecer tarea a un actor disponible con rol/capacidad adecuados. La oferta reserva capacidad antes de la aceptación.
+4. Recibir aceptación o rechazo. Registrar únicamente lo realmente recibido. El rechazo es un imprevisto que obliga a revisar/replanificar; una reserva no se convierte en disponibilidad por un cambio visual.
+5. Comunicar ETA con destino confirmado. Un destino incorrecto invalida la confirmación. ETA no significa llegada.
+6. Confirmar llegada, localización cuando sea obligatoria y finalización, cada una por separado. Una revocación tardía se procesa según la versión vigente.
+7. Si cambia un dato, corregir el incidente; reducir gravedad o necesidades exige rectificación confirmada por operador. Se cancelan ofertas que ya no hacen falta, pero se conserva al equipo activo hasta una transición autorizada. Al liberarlo se elimina la demanda retirada: no debe generarse otra oferta para esa necesidad. Revisar motivo, reservas y comunicaciones pendientes.
+8. Para evacuar, parar espectáculo o solicitar ayuda externa, revisar propuesta vigente y aprobar/vetar con identidad humana autorizada. No puede aprobarse desde una herramienta del agente.
+9. Cerrar solo cuando las necesidades y tareas lo permitan; conservar el rastro de decisión y entrega. No borrar la base para limpiar la pantalla.
 
-## Telegram y HappyRobot
+## Contrato HTTP vigente
 
-`MANDO_EXTERNAL_DELIVERY=0` registra envíos simulados, sin HTTP externo.
-Para habilitar proveedores se necesitan `MANDO_EXTERNAL_DELIVERY=1` y:
-
-| Canal | Configuración |
+| Ruta | Contrato |
 |---|---|
-| Telegram backend | `TELEGRAM_BOT_TOKEN`, `MANDO_CONTROL_CHAT_ID` privado opcional |
-| Puente Telegram | `MANDO_OPERATIONAL=1`, `TELEGRAM_MODE=webhook`, `MANDO_BACKEND_URL`, `MANDO_BRIDGE_SECRET`, `TELEGRAM_WEBHOOK_SECRET` |
-| Backend del puente | El mismo `MANDO_BRIDGE_SECRET`, independiente del token de operador |
-| HappyRobot | `HR_API_BASE`, `HR_API_KEY`, `HR_ENV`, `MANDO_PUBLIC_URL` HTTPS |
-| Llamadas | `HR_WORKFLOW_DISPATCH`, `MANDO_ALLOWED_NUMBERS` con destinos autorizados |
-| Propuestas | `HR_WORKFLOW_RAPIDO`, contrato de herramientas indicado abajo |
+| `POST /salir` | Operador autenticado y validación de origen; elimina cookies y redirige a `/acceso` |
+| `GET /api/operations/state` | Snapshot autenticado con revisión, hora del servidor, incidentes, actores, asignaciones, aprobaciones, entregas, workflows y eventos; sin contactos/transcripciones privados |
+| `GET /api/operations/stream` | SSE con revisión y reconexión; recuperar snapshot tras desconexión |
+| `POST /api/operations/command` | Cookie/token de operador, `command_id`, `kind` y campos; mutaciones de entidad con `expected_version` |
+| `POST /api/operations/telegram` | Update original y `X-Mando-Bridge-Token` igual al secreto compartido |
+| `POST /hr/events` | Resultado telefónico con `X-Mando-Token` **de esa entrega**, no el secreto raíz |
+| `POST /hr/tools/{contexto,acciones_posibles,analizar_situacion,decidir,memoria/guardar,cambio}` | Capacidad vinculada a entrega; HappyRobot propone y MANDO valida |
 
-El webhook del puente conserva el update de Telegram y espera a que MANDO lo
-registre en SQLite antes de responder. `update_id` repetido con el mismo
-contenido es idempotente; otro contenido con el mismo ID se rechaza. El worker
-recupera la inbox pendiente después de un reinicio.
+Una clave `command_id` repetida con el mismo contenido recupera su resultado, no repite efectos. Reutilizarla con contenido diferente se rechaza. Un `expected_version` antiguo provoca conflicto: revisar el estado y generar una decisión nueva, no sobrescribir por fuerza.
 
-Los workflows `-tg` históricos no deben ejecutar asignaciones paralelas al
-modo operativo. Pueden aportar conversación mediante el contrato de MANDO;
-Redis y el router anterior no son otra autoridad en este recorrido.
+Los updates de Telegram conservan `update_id` y se registran en SQLite antes de que el puente confirme recepción. Repetición idéntica es idempotente; reutilización con contenido distinto se rechaza. Los workflows Telegram/Redis heredados no deben asignar recursos en paralelo al recorrido operativo.
 
-## Contrato HTTP y de workflows
+### HappyRobot: correlación, no fe en la conversación
 
-- `GET /api/operations/state`: snapshot público operativo autenticado, revisión,
-  hora del servidor, incidentes, actores, asignaciones, aprobaciones, entregas,
-  workflows y eventos. Omite contactos y transcripciones.
-- `GET /api/operations/stream`: SSE con revisión monotónica y reconexión.
-- `POST /api/operations/command`: token/cookie de operador, `command_id`, `kind`
-  y campos del comando. Los cambios sobre entidades requieren `expected_version`.
-- `POST /api/operations/telegram`: update original y `X-Mando-Bridge-Token`.
-- `POST /hr/events`: resultado de llamada con `X-Mando-Token` de la entrega.
-- `POST /hr/tools/{contexto,acciones_posibles,analizar_situacion,decidir,memoria/guardar,cambio}`:
-  token de la entrega; HappyRobot propone, MANDO valida y aplica.
+Configurar `HR_API_BASE`, `HR_API_KEY`, `HR_ENV` (por defecto `development`), `HR_SECRET`, `MANDO_PUBLIC_URL` HTTPS y:
 
-El lanzamiento por API v2 envía `environment` y `payload`, con
-`callback_token`, `callback_url`, `action_id`, `assignment_id`,
-`expected_assignment_version`, `destination_zone_id` y `correlation_id`.
-No basta con configurar el UUID de un workflow antiguo: sus nodos deben
-conservar esos campos y devolver el token de esa ejecución.
+- `HR_WORKFLOW_DISPATCH`: llamada saliente; además `MANDO_ALLOWED_NUMBERS` con destinos consentidos en formato internacional, separados por comas. Nunca números de emergencias.
+- `HR_WORKFLOW_RAPIDO`: propuesta operativa. No habilitar el fork adaptado hasta cerrar los bloqueos de publicación descritos abajo; el ID del workflow no fija por sí solo versión ni entorno.
 
-Ejemplo de resultado (identificadores ilustrativos, sin datos reales):
+El lanzamiento API v2 manda `environment` y `payload`. La llamada lleva `callback_token`, `callback_url`, `action_id`, `assignment_id`, `expected_assignment_version`, `destination_zone_id` y `correlation_id`. El callback de llamada es `/hr/events`; las herramientas viven bajo `/hr/tools/`. Los nodos del workflow deben conservar la correlación y devolver la capacidad de su ejecución. **No basta copiar un UUID de un workflow antiguo.**
+
+Ejemplo de resultado de contrato, no una llamada ejecutada (IDs ilustrativos):
 
 ```json
 {
@@ -94,59 +68,106 @@ Ejemplo de resultado (identificadores ilustrativos, sin datos reales):
 }
 ```
 
-`call_id` puede diferir de `hr_run_id`; ambos quedan vinculados al lanzamiento.
-`sequence` aumenta para correcciones. Una aceptación explícita puede incorporar
-ETA, pero no confirma llegada. `unclear`, `unknown`, `no_answer`, `timeout` y
-`provider_failed` conservan significados distintos. Un destino incorrecto
-invalida el ETA. `new_report: {id, text, zone}` permite comunicar otro incidente
-durante la llamada; su ID estable evita duplicarlo en el callback final.
+`call_id` puede diferir de `hr_run_id`, pero ambos se vinculan al lanzamiento. `sequence` ordena correcciones. Aceptar puede incorporar ETA, nunca llegada. `unclear`, `unknown`, `no_answer`, `timeout` y `provider_failed` no son equivalentes. `new_report: {id, text, zone}` permite otro aviso durante la llamada con ID estable, sin duplicarlo al terminar.
 
-Una propuesta rápida lleva `fase: "rapida"`, `agente: "rapido"`,
-`correlation_id`, `incident_id`, tipo, zona, prioridad y justificación.
-Los avisos genéricos conservan su familia: una solicitud médica sin diagnóstico
-se dirige a un sanitario para evaluación; una aglomeración a seguridad. La falta
-de ubicación sigue bloqueando el despacho, y no se inventa un diagnóstico.
+Las propuestas rápidas llevan fase, agente, correlación, incidente y justificación. Las decisiones graves requieren crítica/especialistas y aprobación humana vinculada a hash, versión y caducidad. Distinguir `aplicado`, `pendiente_persona` y error; una aprobación no demuestra ejecución física.
 
-Las acciones graves requieren crítica documentada, especialistas y aprobación
-humana vinculada a versión/hash/plazo. La respuesta distingue `aplicado`,
-`pendiente_persona` y error. No se puede aprobar desde una herramienta del agente.
+### Antecedente telefónico y harness de despacho
 
-Errores: 400 formato, 403 permisos, 409 versión/transición, 422 dominio y 503
-dependencia/persistencia. Las rutas públicas limitan cuerpos a 8 KiB.
+La evidencia histórica comunicada corresponde a **Telegram → Vercel → Railway → HappyRobot, N=1 llamada telefónica real de prueba**, `accept`, destino confirmado y ETA de **2 minutos**. Run `3a5abeb0-ff3b-463b-bbc6-b35210c22464`, despacho v8 (`01a0bc3c-2afb-7332-b874-dad3cb505d4e`), clúster EU y `HR_ENV=production`; callbacks de progreso/final aplicados en revisiones 15 y 16. No fue webcall ni `followup_question`, que pertenecían a otra fase. No se atribuye al SHA/árbol local actual ni demuestra llegada, negativos o adaptación completa.
 
-## Entregas y recuperación
+El `test_all` anterior de despacho registró dos errores por `callback_url` vacío; el run real posterior sí completó callbacks. Son contextos distintos: el éxito posterior no arregla ni valida el harness. Revalidar sus entradas/correlación con transporte mock y callback completo; no ejecutar un `test_all` que incluya telefonía para resolver un fixture incompleto. No se ha repetido esa llamada ni cerrado ese gate con la evidencia del rápido.
 
-Cada efecto se registra antes de contactar al proveedor. El worker reclama
-leases y liquida resultados. Una respuesta perdida al lanzar una llamada queda
-`uncertain`: no se vuelve a llamar automáticamente. Un lease telefónico vencido
-tampoco acredita que la llamada no se realizara. Telegram reintenta errores
-transitorios hasta tres intentos; pueden repetirse mensajes tras una respuesta
-perdida, pero no el efecto operativo de un botón.
+### Estado del workflow rápido
 
-Las revisiones de la Sala no prueban entrega externa. El modo `simulation`,
-`real`, `mixed` o `unconfirmed` y el estado de cada entrega muestran esa diferencia.
-El timeout de un workflow conserva el plan seguro existente.
+| Elemento | Estado comprobado en la evidencia adjunta |
+|---|---|
+| Workflow | `01a0ba7a-62cb-74f4-acf7-7772dd1c410c` |
+| v1 | `01a0ba7a-62d5-7dc8-8a14-b3be47d5f7e1`: publicada/live, `development` |
+| Fork v2 | `01a0bd6a-3ff9-745d-b8d7-76f8281f5884`: **Published=false, Live=false**, 15 nodos |
+| Entorno del fork | Metadata `production`; los tests de nodos se pidieron en `development`. No confundir metadata con activación |
 
-## Verificación reproducible
+El fork usa contrato operativo, validadores de entrada/propuesta/salida y consulta `cambio`; conserva seis papeles —triaje, prioridad, recursos, avisos, vigía y crítico— revisados por un agente, **no seis agentes independientes**. Se eliminó la invocación automática al equipo legacy. Las propuestas quedan `pendiente_persona`, `aplicado=false`; el modelo no puede inventar una aprobación backend.
+
+Pruebas adjuntas: **SIMULACIÓN N=11 casos de nodos Python puros** y **SIMULACIÓN N=7 tests locales worker/mock + HTTP ASGI**, con resultados esperados. La repetición de la misma suite no suma cobertura. Los fixtures de crítica son sintéticos escritos a mano: prueban forma y rechazo, no calidad de razonamiento. No se ejecutaron el agente, trigger, `test_all`, HTTP remoto ni telefonía del fork.
+
+**No publicar todavía:**
+
+1. `POST decidir` no tiene variables inferidas y la salida referencia `response`; falta observar la respuesta HTTP real y validar ese enlace. No sustituirla por datos inventados del modelo.
+2. Falta un backend candidato público aislado y validado; `candidate.invalid` es solo un fixture. No se ha probado el recorrido HappyRobot → backend actualizado → salida.
+3. El diagnóstico de prompt no había iniciado la generación de issues. «No prompt issues found» en ese estado no es una validación completa.
+4. Falta ejecutar el agente con crítica real, cambio relevante y nueva propuesta vigente; detectar/informar un cambio no demuestra por sí solo replanteamiento autónomo.
+5. Repetir el contrato offline tras congelar backend y fijar explícitamente entorno/`HR_ENV` antes de una activación autorizada.
+
+Conservar exportación saneada, DAG, resultados y guía del rápido como evidencia adjunta. Publicación y rollback no ejecutados. La v1 live no acredita compatibilidad con el contrato operativo nuevo y no debe usarse como fallback silencioso. Una futura reversión requiere detener lanzamientos y reconciliar entregas/aprobaciones; cambiar versión no deshace efectos externos.
+
+## Entregas, fallos y recuperación
+
+Cada efecto se registra en la outbox antes del intento externo. El worker reclama un lease y liquida el resultado. Con `MANDO_EXTERNAL_DELIVERY=0`, `DeliveryWorker(external=False)` registra transporte simulado: no hace HTTP al proveedor.
+
+- Una respuesta perdida al lanzar una llamada queda incierta; no volver a llamar automáticamente ni interpretar lease vencido como «no se llamó».
+- Telegram puede reintentar fallos transitorios; un mensaje puede duplicarse tras perder su respuesta. Eso no debe duplicar el efecto operativo del botón.
+- La telefonía automática soporta ofertas de tarea; avisos de actualización/cancelación y otras finalidades no soportadas quedan `local_required`. **El operador debe comunicarlas manualmente** por un canal humano y registrar solo lo confirmado; aprobación o anotación local no significa aviso entregado. Un timeout de workflow no autoriza inventar respuesta ni destruye por sí solo el plan seguro previo.
+- Cambiar disponibilidad o esperar a que venza una oferta no resuelve una entrega `uncertain`. Antes de otra llamada se exige comprobación humana y seguimiento explícito (`followup`, con versión y motivo); no es una rellamada automática ni un éxito retroactivo del envío incierto.
+- El modo `simulation`, `real`, `mixed` o `unconfirmed` y el detalle de cada entrega deben acompañar la demo. «Configurado» no equivale a «llamada atendida».
+- Ante 401/403 revisar sesión, rol, origen y secretos; ante 409 recargar y revisar. Un error de persistencia impide considerar aplicado el comando. No saltar controles para despejar la UI.
+
+## Backup, restauración y rollback
+
+La base, WAL, copias y logs pueden contener contactos o información sensible. Guardar backups fuera del checkout, con permisos restrictivos y almacenamiento cifrado administrado. Definir retención y responsables antes de uso real. **No copiar solo el archivo `.sqlite` mientras está abierto con WAL.**
+
+### Copia consistente con SQLite
+
+Procedimiento de administración local, **no ejecutado contra datos de producción**. Crear previamente un directorio privado de destino; sustituir rutas por las reales sin publicar su contenido. El destino debe ser nuevo:
 
 ```sh
-uv run --project motor/server python -m unittest motor.server.test_operational motor.server.test_operational_http motor.server.test_operational_assessment -q
-uv run --project motor/server python -m unittest discover -s motor/server -p 'test_*.py' -t .
-node --test motor/server/test_sala*.cjs
-uv run --project motor/server python -m motor.server.benchmark_operational --n 120 --seed 17 --workers 8
-cd puente
-npm ci
-npm test
-npm run typecheck
-npm run build
+BACKUP_SOURCE=/data/operations.sqlite \
+BACKUP_DEST=/ruta-privada/operations-backup.sqlite \
+uv run --project motor/server python - <<'PY'
+from contextlib import closing
+from pathlib import Path
+import os
+import sqlite3
+
+source = Path(os.environ["BACKUP_SOURCE"]).resolve(strict=True)
+destination = Path(os.environ["BACKUP_DEST"]).resolve()
+if source == destination or destination.exists():
+    raise SystemExit("El destino debe ser nuevo y distinto del origen")
+fd = os.open(destination, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+os.close(fd)
+with closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as src:
+    with closing(sqlite3.connect(destination)) as dst:
+        src.backup(dst)
+        if dst.execute("PRAGMA integrity_check").fetchone() != ("ok",):
+            raise SystemExit("Copia no válida: no utilizar para restauración")
+print("Backup consistente e integridad SQLite verificada; no imprime datos")
+PY
 ```
 
-El benchmark es **simulación**, N=120, semilla=17, 8 conexiones SQLite
-independientes con WAL: cada informante envía un aviso y su duplicado. Mide
-latencias y comprueba conservación después de reinicio y exclusividad.
-No estima tiempos de llegada humanos ni latencias reales de HappyRobot.
+Conservar junto a la copia la revisión del código y la configuración requerida (sin secretos en documentación pública). La integridad SQLite verifica estructura, no que cada decisión humana fuese correcta.
 
-La aceptación de proveedor exige un bot/chat de prueba, workflows publicados
-compatibles y backend HTTPS accesible. Las pruebas locales con HTTP simulado
-no certifican ese circuito ni llamadas entrantes; deben conservarse por separado
-las ejecuciones reales y sus evidencias privadas.
+### Ensayo de restauración
+
+1. Usar el mismo procedimiento para copiar **el backup** a otra ruta nueva; no abrir el respaldo maestro como base activa ni sobrescribir producción.
+2. Quitar credenciales de proveedores y fijar `MANDO_EXTERNAL_DELIVERY=0`. Abrir la copia con la revisión compatible del servicio; una apertura con proveedores activos podría consumir outbox pendiente.
+3. Verificar snapshot, incidentes, reservas, aprobaciones, eventos y estados inciertos. Comparar con el inventario esperado del backup y revisar integridad.
+4. Para puesta en servicio real, detener entradas y worker antiguos, conservar el conjunto anterior de SQLite/WAL/SHM y cambiar a un destino verificado. No mezclar el WAL de una base anterior con la restaurada. Reconciliar qué efectos externos pudieron ocurrir después de la copia.
+5. Solo el responsable puede reactivar proveedores, tras revisar entregas pendientes/inciertas y comunicar la ventana de pérdida potencial. La restauración no revierte llamadas o mensajes ya enviados.
+
+### Rollback de versión
+
+Congelar entradas/entregas; tomar backup consistente; identificar la revisión/imagen anterior y su compatibilidad con el esquema; ensayar esa revisión contra una copia **sin red**. Revertir versión en el alojamiento únicamente con autorización. Si exige volver a una copia anterior de datos, contabilizar los eventos posteriores y efectos externos: no existe rollback transaccional entre SQLite y un teléfono. Mantener una sola instancia consumiendo la outbox. El rollback del despliegue sigue pendiente de ensayo; no se acredita con una reapertura local de SQLite.
+
+## Evidencia y puertas de aceptación
+
+Comando de ensayo sin red, desde la raíz y con un directorio nuevo:
+
+```sh
+./mvp.sh preflight --seed 1701 --output /tmp/resqval-operativo-nuevo
+```
+
+El preflight genera `preflight.json`, `demo.json`, `demo-trace.json` y escenarios aislados. Comprueba rechazo sintético y alternativa, deduplicación, aprobación, etapas y persistencia tras reapertura. Leer su resultado real, N, semilla y fingerprint antes de presentarlo; no anticipar `ok=True`.
+
+`./mvp.sh check` añade suites core/server y corpus sintético aislado. Los recuentos finales de suites/preflight y la prueba de backup/restauración deben incorporarse con su revisión y códigos de salida; permanecen pendientes de consolidación. Ningún recuento de otra fase certifica el árbol actual. La evidencia parcial del rápido está delimitada arriba.
+
+La demo conectada requiere bot/chat autorizado, workflow compatible publicado, HTTPS, whitelist y evidencia saneada de run/callback sobre la candidata elegida. Mantener separados el antecedente telefónico histórico, las simulaciones de contrato y una futura validación conectada. Consultar [PENDIENTE.md](PENDIENTE.md) antes de declarar lista la entrega.

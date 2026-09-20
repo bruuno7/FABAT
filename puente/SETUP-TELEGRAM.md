@@ -1,5 +1,9 @@
 # Setup bot Telegram → puente → HappyRobot
 
+Esta guía corresponde al modo legado. Para `MANDO_OPERATIONAL=1`, seguir
+[ingreso operativo duradero](README.md#ingreso-operativo-duradero-opt-in):
+webhook único hacia MANDO, sin hooks Telegram de HappyRobot ni polling.
+
 HappyRobot = backend de conversación. Este server (local o Vercel) solo es el **puente HTTPS**.
 
 ```

@@ -36,6 +36,13 @@
     director: "director", externos: "externos", difusion: "difusión", relevo: "relevo",
     dispatch: "genérico", webcall: "llamada web", notify: "genérico", ask: "genérico", followup: "genérico" };
   const SPEEDS = [1, 4, 16];
+  const TAB_IDS = ["ahora", "equipo", "enjambre", "recursos", "comunicaciones", "aprendizaje", "historial"];
+  const AGENT_ROLES = [
+    { id: "triaje", label: "Triaje" }, { id: "prioridad", label: "Prioridad" },
+    { id: "recursos", label: "Recursos" }, { id: "avisos", label: "Avisos" },
+    { id: "vigia", label: "Vigía" }, { id: "critico", label: "Crítico" },
+  ];
+  const AGENT_EXTRA = { coordinador: "Coordinador", aprende: "Aprende" };
 
   // ---------------------------------------------------------------- estado local
   let S = null, F = null, plano = null, connected = false, firstPaint = true;
@@ -43,9 +50,40 @@
   let filter = "todos", query = "", showOldPlan = false;
   let chats = [], chatAt = 0, webcalls = [], webcallAt = 0;
   let whatif = null, toastTimer = 0;
+  let currentTab = "ahora", adaptacion = null, adaptAt = 0, lecciones = null, leccAt = 0;
+  let historial = null, histAt = 0, agentCache = {}, agentFetch = {};
+  let historyDetail = null, historyError = "", historyRequest = 0, sessionEpoch = 0;
+  let workflowBusy = false, workflowRequest = null;
   const beacons = new Map();
   const notes = new Map();   // nota escrita por el operador, por acción: sobrevive a cada repintado
   const armed = new Set();   // acciones graves esperando el segundo clic de confirmación
+  const signatures = new Map(), deciding = new Set();
+  const graveAction = (a) => ["evacuate", "stop_show", "request_external", "set_zone"].includes(a.kind);
+
+  function resetSession() {
+    sessionEpoch += 1;
+    sel = { incident: null, zone: null, resource: null };
+    filter = "todos"; query = ""; showOldPlan = false;
+    $("search").value = "";
+    chats = []; chatAt = 0; webcalls = []; webcallAt = 0; whatif = null;
+    adaptacion = null; adaptAt = 0; lecciones = null; leccAt = 0;
+    historial = null; histAt = 0; historyDetail = null; historyError = ""; historyRequest += 1;
+    agentCache = {}; agentFetch = {}; workflowBusy = false; workflowRequest = null;
+    $("workflow-form").reset();
+    $("workflow-text").disabled = false; $("workflow-zone").disabled = false;
+    $("workflow-result").textContent = "";
+    $("workflow-zone").querySelectorAll("option:not(:first-child)").forEach((o) => o.remove());
+    delete $("workflow-zone").dataset.loaded;
+    notes.clear(); armed.clear(); signatures.clear(); deciding.clear(); tgSince.clear();
+    beacons.forEach((b) => b.remove());
+    beacons.clear();
+    closeAll();
+  }
+
+  function scoped(promise, callback) {
+    const epoch = sessionEpoch;
+    return promise.then((value) => { if (epoch === sessionEpoch) callback(value); });
+  }
 
   // ---------------------------------------------------------------- utilidades
   function toast(text, bad) {
@@ -189,8 +227,39 @@
     s.session = s.session || {}; s.metrics = s.metrics || {}; s.clock = s.clock || {};
     s.calls = s.calls || {}; s.calls.calls = s.calls.calls || [];
     s.happyrobot = s.happyrobot || {}; s.presentation = s.presentation || {};
+    if (!s.agentes || typeof s.agentes !== "object" || Array.isArray(s.agentes)) s.agentes = {};
+    if (s.enjambre != null && (typeof s.enjambre !== "object" || Array.isArray(s.enjambre))) s.enjambre = null;
     return s;
   }
+
+  function cerebroMode() { return (S && S.session && S.session.cerebro) || "reglas"; }
+  function cerebroSimLabel() {
+    const mode = S.calls && S.calls.mode === "happyrobot";
+    const label = (S.presentation && S.presentation.happyrobot) || (mode ? "conectado" : "simulado");
+    const sim = !mode || /simulad/i.test(label);
+    const session = S.session || {};
+    return { mode: session.cerebro_cadena || cerebroMode(), configured: cerebroMode(),
+      degraded: session.modo_degradado || "", sim, label };
+  }
+  function switchTab(id) {
+    if (!TAB_IDS.includes(id)) return;
+    currentTab = id;
+    TAB_IDS.forEach((t) => {
+      const panel = $("tab-" + t), btn = $("tab-btn-" + (t === "comunicaciones" ? "comms" : t));
+      if (panel) { panel.classList.toggle("on", t === id); panel.hidden = t !== id; }
+      if (btn) btn.setAttribute("aria-selected", String(t === id));
+    });
+    try { sessionStorage.setItem("mando-sala-tab", id); } catch (e) { /* sin almacenamiento */ }
+    render();
+  }
+  try {
+    const saved = sessionStorage.getItem("mando-sala-tab");
+    if (saved && TAB_IDS.includes(saved)) currentTab = saved;
+  } catch (e) { /* idem */ }
+  $("tabs").addEventListener("click", (ev) => {
+    const b = ev.target.closest("button[data-tab]");
+    if (b) switchTab(b.dataset.tab);
+  });
 
   const ROL_TG = { medico: "médico", enfermero: "enfermero", sanitario: "sanitario", ambulancia: "ambulancia",
     seguridad: "seguridad", tecnico: "técnico", logistica: "logística", voluntario: "voluntario",
@@ -260,12 +329,23 @@
   }
 
   function connect() {
-    const poll = () => U.api("/api/state").then((s) => { online(true); S = normalize(s); schedule(); }).catch(() => online(false));
-    poll();
-    if (!window.EventSource) { setInterval(poll, 2000); return; }
-    const src = new EventSource("/api/stream");
-    src.addEventListener("state", (ev) => { online(true); S = normalize(JSON.parse(ev.data)); schedule(); });
-    src.onerror = () => online(false);
+    const gate = window.SALA_SYNC.snapshotGate({
+      revision: "version", session: (s) => s.session && s.session.id, onReset: resetSession,
+    });
+    window.SALA_SYNC.connect({
+      stateURL: "/api/state", streamURL: "/api/stream",
+      accept(s) {
+        if (!gate.accept(s)) return false;
+        S = normalize(s);
+        for (const id of armed) if (!S.approvals.some((a) => a.id === id)) armed.delete(id);
+        schedule();
+        return true;
+      },
+      onStatus(status) {
+        online(status === "live" || status === "poll");
+        if (status === "auth") toast("Sesión de operador caducada. Entra en /acceso y recarga.", true);
+      },
+    });
   }
   function online(ok) { connected = ok; $("reconnect").hidden = ok; $("sync-dot").style.background = ok ? "var(--ok)" : "var(--bad)"; }
   let queued = false;
@@ -281,6 +361,7 @@
       z.g.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pick({ zone: id }); } });
     });
     connect();
+    if (currentTab !== "ahora") switchTab(currentTab);
     setInterval(() => {
       const tg = telegramState();
       if (tg && (tg.asignaciones || []).some((a) => a.estado === "pending")) schedule();
@@ -290,7 +371,15 @@
   // ---------------------------------------------------------------- pintado
   function render() {
     if (!S || !plano) return;
-    head(); sidebar(); band(); map(); queue(); aside(); ficha();
+    head(); sidebar(); renderModo(); renderEquipoStrip(); renderTabBadges();
+    if (currentTab === "ahora") { band(); map(); queue(); renderAhoraExtras(); }
+    else if (currentTab === "equipo") { renderWorkflow(); panelEquipo(); }
+    else if (currentTab === "enjambre") panelEnjambre();
+    else if (currentTab === "recursos") { aside(); panelCalls(); }
+    else if (currentTab === "comunicaciones") { chatPanel(); panelCommsCalls(); }
+    else if (currentTab === "aprendizaje") panelAprendizaje();
+    else if (currentTab === "historial") panelHistorial();
+    ficha();
     if ($("inyeccion").hidden === false) injection();
     if ($("externa").hidden === false) external();
     firstPaint = false;
@@ -340,6 +429,133 @@
     $("hr-link-text").textContent = `Enlace directo · ${label} · ${wired} workflows configurados`;
     link.title = `Modo de comunicaciones: ${S.calls.mode} · llamadas reales enviadas: ${S.calls.real_sent || 0}`
       + ` · caídas a simulación: ${S.calls.fallbacks || 0} · voz: ${S.presentation.voice || "—"}`;
+
+    const cb = cerebroSimLabel();
+    const chip = $("cerebro-chip"), lbl = $("cerebro-label");
+    chip.className = "cerebro-chip" + (cb.degraded ? " degradado" : "");
+    lbl.textContent = `Cerebro: ${cb.mode === "llm_local" ? "LLM local" : cb.mode}${cb.degraded ? " · DEGRADADO" : ""}`;
+    chip.title = `Configurado: ${cb.configured} · razonamiento: ${cb.mode}${cb.degraded ? " · " + cb.degraded : ""} · voz: ${cb.label}`;
+  }
+
+  function renderModo() {
+    const now = Date.now();
+    if (now - adaptAt > 5000) {
+      adaptAt = now;
+      scoped(fetch("/api/adaptacion").then((r) => (r.ok ? r.json() : null)), (d) => { adaptacion = d; schedule(); }).catch(() => {});
+    }
+    const ej = S.enjambre && S.enjambre.modo;
+    const m = (adaptacion && adaptacion.modo) || (ej && ej.nombre) || (ej && ej.id) || null;
+    const why = (adaptacion && adaptacion.porque) || (ej && ej.porque) || (ej && ej.texto) || "";
+    const chip = $("modo-chip");
+    if (!m) { chip.hidden = true; return; }
+    chip.hidden = false;
+    const cls = String(m).toLowerCase();
+    chip.className = "modo-chip" + (cls.includes("crisis") ? " m-crisis" : cls.includes("carga") ? " m-carga" : " m-calma");
+    $("modo-label").textContent = String(m).toUpperCase();
+    $("modo-why").textContent = why;
+    chip.title = why || "Modo adaptativo del sistema";
+  }
+
+  function agentStatusText(role) {
+    const cards = S.agentes || {};
+    let bestS = null, latest = null, latestH = "";
+    Object.keys(cards).forEach((iid) => {
+      const card = cards[iid] || {};
+      const hit = ((card.abanico || {}).llegados || []).find((x) => x && x.papel === role);
+      const ag = (card.agentes || {})[role];
+      const s = (hit && hit.s != null) ? hit.s : (ag && ag.s);
+      if (s != null && (bestS == null || s < bestS)) bestS = s;
+      if (ag && ag.hora && (!latest || ag.hora > latestH)) { latest = ag; latestH = ag.hora; }
+    });
+    const lat = fmtLatency(bestS);
+    if (lat) return lat;
+    const ej = S.enjambre;
+    if (ej && ej.equipo_vivo && ej.equipo_vivo[role]) return ej.equipo_vivo[role];
+    if (latest) return `decidió · ${latest.hora}`;
+    if (cerebroMode() === "reglas") return "plan B de reglas activo";
+    return "en espera";
+  }
+
+  function renderEquipoStrip() {
+    const strip = $("equipo-strip");
+    const cb = cerebroSimLabel();
+    const pills = AGENT_ROLES.map((r) => {
+      const st = agentStatusText(r.id);
+      const cls = /pensando/i.test(st) ? "think" : /espera|pendiente/i.test(st) ? "wait"
+        : /plan B|reglas/i.test(st) ? "rules" : "";
+      return `<div class="equipo-pill ${cls}"><b>${E(r.label)}</b><span>${E(st)}</span></div>`;
+    }).join("");
+    setHTML(strip, `<div class="equipo-pill ${cb.degraded ? "rules" : ""}"><b>Razonamiento</b><span>${E(cb.mode === "llm_local" ? "LLM local" : cb.mode)}${cb.degraded ? " · DEGRADADO" : ""}</span></div>${pills}`);
+    strip.hidden = false;
+  }
+
+  function renderTabBadges() {
+    const pend = (S.approvals || []).length;
+    const badgeA = $("badge-ahora");
+    if (badgeA) { badgeA.hidden = !pend; badgeA.textContent = pend ? `${pend} decisión${pend > 1 ? "es" : ""}` : ""; }
+    const agentInc = Object.keys(S.agentes || {}).length;
+    const badgeE = $("badge-equipo");
+    if (badgeE) { badgeE.hidden = !agentInc; badgeE.textContent = agentInc ? `${agentInc} inc.` : ""; }
+    if (Date.now() - leccAt > 8000) {
+      leccAt = Date.now();
+      scoped(U.api("/api/memoria"), (d) => { lecciones = d.cerebro_lecciones || []; schedule(); }).catch(() => {});
+    }
+    const nuevas = (lecciones || []).filter((l) => l.estado === "propuesta").length;
+    const badgeL = $("badge-aprendizaje");
+    if (badgeL) { badgeL.hidden = !nuevas; badgeL.textContent = nuevas ? `${nuevas} nueva${nuevas > 1 ? "s" : ""}` : ""; }
+  }
+
+  function buildRecomendacion() {
+    const cards = S.agentes || {};
+    const open = openIncidents().sort((a, b) => (b.priority || 0) - (a.priority || 0));
+    for (const i of open) {
+      const c = cards[i.id];
+      if (!c) continue;
+      const rec = (c.agentes || {}).recursos, pri = (c.agentes || {}).prioridad;
+      const parts = [];
+      if (rec && rec.razonamiento) parts.push(rec.razonamiento);
+      else if (pri && pri.razonamiento) parts.push(pri.razonamiento);
+      const res = (c.ejecutado || []).filter((x) => x.recurso || x.resource).map((x) => x.recurso || x.resource);
+      const eta = (S.resources || []).filter((r) => res.includes(r.id) && r.eta != null).map((r) => `${shortName(r)} ${r.eta} min`);
+      if (parts.length || res.length) {
+        return `Recomendado: ${parts[0] || i.label || i.id}${res.length ? "; " + res.map((r) => {
+          const rr = (S.resources || []).find((x) => x.id === r);
+          return rr ? shortName(rr) + (rr.eta != null ? " en camino, " + rr.eta + " min" : "") : r;
+        }).join(", ") : ""}`;
+      }
+    }
+    const top = open[0];
+    if (!top) return "";
+    const f = (S.fronts || []).find((x) => x.id === top.id);
+    if (f && f.resources && f.resources.length) {
+      return `Recomendado: ${f.resources.join(", ")}${f.eta != null ? "; ETA " + f.eta + " min" : ""}`;
+    }
+    return "";
+  }
+
+  function renderAhoraExtras() {
+    const rec = buildRecomendacion();
+    const el = $("recom-main");
+    if (rec) { el.hidden = false; setHTML(el, `<b>Equipo de agentes:</b> ${E(rec)}`); }
+    else el.hidden = true;
+    const pend = (S.approvals || []);
+    const box = $("ahora-pend");
+    if (!pend.length) { box.hidden = true; return; }
+    box.hidden = false;
+    setHTML(box, pend.map((a) => {
+      const i = (S.incidents || []).find((x) => x.id === a.incident) || {};
+      return `<div class="ahora-card" data-incident="${E(a.incident)}"><b>${E(i.label || a.incident)}</b> · ${E(KIND_ES[a.kind] || a.kind)}
+        <p class="tiny">${E((a.card && a.card.question) || a.why || "")}</p>
+        <div class="row" style="margin-top:6px">
+          <button class="btn-ok" data-decide="1" data-id="${E(a.id)}" data-grave="0">APROBAR</button>
+          <button class="btn-no" data-decide="0" data-id="${E(a.id)}" data-grave="0">VETAR</button></div></div>`;
+    }).join(""));
+    box.onclick = (ev) => {
+      const d = ev.target.closest("[data-decide]");
+      if (d) decide(d.dataset.id, d.dataset.decide === "1", d.dataset.grave === "1");
+      const row = ev.target.closest("[data-incident]");
+      if (row) pick({ incident: row.dataset.incident });
+    };
   }
 
   function sidebar() {
@@ -543,7 +759,377 @@
     if (tr && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); pick({ incident: tr.dataset.incident, zone: tr.dataset.zone || null }); }
   });
 
-  // ---------------------------------------------------------------- panel derecho
+  function fmtLatency(s) {
+    if (s == null || !Number.isFinite(Number(s))) return null;
+    const n = Math.max(0, Math.round(Number(s)));
+    if (n < 60) return n + " s";
+    const m = Math.floor(n / 60), r = n % 60;
+    return r ? m + " min " + r + " s" : m + " min";
+  }
+
+  function velocidadLine(card) {
+    const parts = [];
+    const v = (card && card.velocidad) || {};
+    const rap = fmtLatency(v.rapida_s);
+    if (rap != null || v.revision || (card && card.fases && (card.fases.rapida || card.fases.revision))) {
+      const ver = String(v.revision || "pendiente");
+      const verShow = ver.toUpperCase() === "PENDIENTE" ? "pendiente" : ver.toUpperCase();
+      const line = "Decisión rápida en " + (rap || "—") + " · enjambre: " + verShow;
+      let cls = "";
+      if (ver.toUpperCase() === "CORRIGE") cls = " corrige";
+      else if (ver.toUpperCase() === "CONFIRMA") cls = " confirma";
+      let extra = "";
+      if (ver.toUpperCase() === "CORRIGE") {
+        const fase = (card.fases || {}).revision || {};
+        const cambio = card.plan_cambio || {};
+        const why = fase.porque || cambio.porque || "";
+        const plan = cambio.nuevo || cambio.objetivo || "";
+        extra = `<p class="tiny">${E(why)}${plan ? " · plan nuevo: " + E(plan) : ""}</p>`;
+      }
+      parts.push(`<p class="velocidad-line${cls}">${E(line)}</p>${extra}`);
+    }
+    const ab = card && card.abanico;
+    if (ab && (ab.lanzados || ab.llegados || ab.primera_decision_s != null || ab.fuente)) {
+      const first = fmtLatency(ab.primera_decision_s);
+      const fin = fmtLatency(ab.final_s);
+      let line = first ? ("Primera decisión en " + first) : "Enjambre en curso";
+      line += " · enjambre completo " + (fin ? ("en " + fin) : "pendiente");
+      let cls = "";
+      if (ab.fuente === "reglas") cls = " corrige";
+      else if (ab.fuente === "local") cls = " confirma";
+      const to = (ab.timeouts || []).length ? `<p class="tiny">Sin respuesta a tiempo: ${E(ab.timeouts.join(", "))}</p>` : "";
+      parts.push(`<p class="velocidad-line${cls}">${E(line)}</p>${to}`);
+    }
+    return parts.join("");
+  }
+
+  function agentCardHtml(name, ag, extra) {
+    const label = (AGENT_ROLES.find((r) => r.id === name) || {}).label || AGENT_EXTRA[name] || name;
+    const row = ag || {};
+    const lat = fmtLatency(row.s);
+    const title = lat ? (label + " · " + lat) : label;
+    const conf = row.confianza != null ? ` · confianza ${num(row.confianza, 2)}` : "";
+    const sup = (row.supuestos || []).length
+      ? `<ul>${row.supuestos.map((s) => `<li>${E(s)}</li>`).join("")}</ul>` : "";
+    return `<article class="agent-card"><h4>${E(title)}${E(conf)}</h4>
+      <p>${E(row.razonamiento || "—")}</p>
+      ${row.hora ? `<p class="tiny">Hora ${E(row.hora)}</p>` : ""}${sup}${extra || ""}</article>`;
+  }
+
+  function agentDetailBox(iid, card) {
+    const bloq = (card.bloqueado || []).map((b) =>
+      `<p class="blocked">Bloqueado: ${E(b.motivo || b.kind || JSON.stringify(b))}</p>`).join("");
+    const ejec = (card.ejecutado || []).length
+      ? `<p class="tiny"><b>Ejecutado:</b> ${E(card.ejecutado.map((x) => x.kind || x.recurso || x.id).join(", "))}</p>` : "";
+    const espera = (card.espera_persona || []).length
+      ? `<p class="tiny"><b>Espera a una persona:</b> ${E(card.espera_persona.map((x) => x.kind || x.motivo).join(", "))}</p>` : "";
+    const latBy = {};
+    ((card.abanico || {}).llegados || []).forEach((x) => { if (x && x.papel != null) latBy[x.papel] = x.s; });
+    const agents = AGENT_ROLES.map((r) => {
+      const ag = Object.assign({}, (card.agentes || {})[r.id] || {});
+      if (ag.s == null && latBy[r.id] != null) ag.s = latBy[r.id];
+      if (!ag.razonamiento) ag.razonamiento = "—";
+      return agentCardHtml(r.id, ag, "");
+    }).join("");
+    const vel = velocidadLine(card);
+    const planB = cerebroMode() === "reglas" ? '<p class="tiny">Plan B de reglas activo (modo degradado).</p>' : "";
+    return `<div class="box"><h3>CÓMO LO HA DECIDIDO EL EQUIPO</h3>${vel}${planB}
+      <div class="agent-grid">${agents}</div>
+      ${ejec}${bloq}${espera}</div>`;
+  }
+
+  function ensureAgentDetail(iid, cb) {
+    if (agentCache[iid]) { cb(agentCache[iid]); return; }
+    if (agentFetch[iid]) return;
+    const local = (S.agentes || {})[iid];
+    if (local && Object.keys(local.agentes || {}).length) {
+      agentCache[iid] = local;
+      cb(local);
+      return;
+    }
+    agentFetch[iid] = true;
+    const epoch = sessionEpoch;
+    scoped(U.api("/api/agentes/" + encodeURIComponent(iid)), (d) => {
+      agentCache[iid] = d;
+      delete agentFetch[iid];
+      schedule();
+    }).catch(() => { if (epoch === sessionEpoch) delete agentFetch[iid]; });
+  }
+
+  function renderWorkflow() {
+    const cfg = S.workflow_rapido || { ready: false, missing: ["Backend sin integración del workflow rápido"] };
+    $("workflow-config").textContent = cfg.ready
+      ? `Configurado para ${cfg.environment} · espera máxima ${cfg.timeout_s} s. La publicación y conectividad se verifican al ejecutar.`
+      : "Pendiente: " + (cfg.missing || []).join(", ");
+    $("workflow-launch").disabled = workflowBusy || !cfg.ready;
+    $("workflow-launch").textContent = workflowBusy ? "Registrando aviso…" : `Lanzar en HappyRobot (${cfg.environment || "—"})`;
+    const zone = $("workflow-zone");
+    if (!zone.dataset.loaded && S.zones) {
+      S.zones.forEach((z) => {
+        const option = document.createElement("option");
+        option.value = z.id; option.textContent = z.name || z.id; zone.appendChild(option);
+      });
+      zone.dataset.loaded = "true";
+    }
+    const labels = { pendiente: "Pendiente", en_curso: "En curso", esperando_callback: "Run terminado; esperando decisión",
+      decision_recibida: "Decisión rápida recibida", decision_bloqueada: "Decisión bloqueada por MANDO",
+      fallido: "Error de HappyRobot", timeout: "Sin decisión dentro del plazo" };
+    setHTML($("workflow-runs"), (cfg.runs || []).slice().reverse().map((r) => `
+      <div class="workflow-run">
+        <button data-workflow-incident="${E(r.incident_id)}">${E(r.incident_id)} · ${E(labels[r.status] || r.status)}</button>
+        <p class="tiny">Run: ${E(r.run_id || "sin confirmar")} · Aviso: ${E(r.report_id)}</p>
+        <p class="tiny">Revisión del equipo: ${E(r.revision ? "recibida" : "pendiente")}</p>
+        ${r.error ? `<p>${E(r.error)}</p>` : ""}
+      </div>`).join(""));
+  }
+  $("workflow-form").addEventListener("input", () => { workflowRequest = null; });
+  $("workflow-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (workflowBusy) return;
+    const text = $("workflow-text").value.trim();
+    if (!text) { $("workflow-result").textContent = "Escribe un aviso."; return; }
+    if (!workflowRequest) workflowRequest = `sala-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const epoch = sessionEpoch;
+    workflowBusy = true;
+    $("workflow-text").disabled = true; $("workflow-zone").disabled = true;
+    renderWorkflow();
+    const result = await post("/api/workflows/rapido", {
+      text, zone: $("workflow-zone").value || null, request_id: workflowRequest,
+    });
+    if (epoch !== sessionEpoch) return;
+    workflowBusy = false;
+    $("workflow-text").disabled = false; $("workflow-zone").disabled = false;
+    if (result.ok) {
+      $("workflow-result").textContent = result.workflow_status === "sin_ejecucion"
+        ? `Aviso ${result.report_id} registrado sin nuevo run: no abrió un incidente pendiente de decisión.`
+        : `Aviso ${result.report_id} registrado. El estado del run se actualiza abajo.`;
+      $("workflow-text").value = ""; workflowRequest = null;
+    } else {
+      $("workflow-result").textContent = result.error || "No se pudo registrar el aviso.";
+    }
+    renderWorkflow();
+  });
+  $("workflow-runs").addEventListener("click", (ev) => {
+    const button = ev.target.closest("[data-workflow-incident]");
+    if (button) pick({ incident: button.dataset.workflowIncident });
+  });
+
+  function panelEquipo() {
+    const cards = S.agentes || {};
+    const ids = Object.keys(cards);
+    const el = $("panel-equipo");
+    if (!ids.length) {
+      setHTML(el, '<p class="tiny empty-tab">Sin votos del equipo de agentes todavía.</p>');
+      return;
+    }
+    const open = openIncidents().map((i) => i.id);
+    const sorted = ids.sort((a, b) => {
+      const ao = open.includes(a) ? 1 : 0, bo = open.includes(b) ? 1 : 0;
+      if (ao !== bo) return bo - ao;
+      const ia = (S.incidents || []).find((x) => x.id === a);
+      const ib = (S.incidents || []).find((x) => x.id === b);
+      return (ib && ib.priority || 0) - (ia && ia.priority || 0);
+    });
+    setHTML(el, sorted.map((iid) => {
+      const card = cards[iid];
+      const inc = (S.incidents || []).find((x) => x.id === iid) || {};
+      return `<section class="box"><h3>${E(inc.label || iid)} <span class="tiny">${E(iid)}</span></h3>
+        ${agentDetailBox(iid, card)}</section>`;
+    }).join(""));
+  }
+
+  function panelEnjambre() {
+    const ej = S.enjambre;
+    const el = $("panel-enjambre");
+    if (!ej || typeof ej !== "object") {
+      setHTML(el, '<p class="tiny empty-tab">Sin datos de enjambre todavía.</p>');
+      return;
+    }
+    const nodes = ["triaje", "prioridad", "recursos", "avisos", "vigia", "critico", "coordinador", "aprende"];
+    const msgs = (ej.mensajes || ej.pizarra || []).slice(-40);
+    const revs = (ej.revisiones || []).slice(-12);
+    const conf = ej.confianza || {};
+    const autonomia = ej.autonomia || {};
+    const ritmo = ej.ritmo_vigia || ej.vigia_ritmo;
+    const edges = {};
+    msgs.forEach((m) => {
+      const f = m.de || m.from, t = m.a || m.to;
+      if (!f || !t) return;
+      const k = f + "→" + t;
+      edges[k] = (edges[k] || 0) + 1;
+    });
+    const cx = 400, cy = 180, R = 130;
+    const pos = {};
+    nodes.forEach((n, i) => {
+      const a = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
+      pos[n] = { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
+    });
+    let svg = `<svg id="enjambre-svg" viewBox="0 0 800 360" role="img" aria-label="Red de agentes">`;
+    Object.keys(edges).forEach((k) => {
+      const parts = k.split("→"), f = parts[0], t = parts[1];
+      const p1 = pos[f], p2 = pos[t];
+      if (!p1 || !p2) return;
+      const w = Math.min(8, 1 + edges[k]), x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
+      svg += `<line class="enj-edge" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${w}"/>`;
+    });
+    nodes.forEach((n) => {
+      const p = pos[n], px = p.x, py = p.y;
+      const lbl = AGENT_EXTRA[n] || (AGENT_ROLES.find((r) => r.id === n) || {}).label || n;
+      svg += `<g class="enj-node"><circle cx="${px}" cy="${py}" r="22" fill="var(--paper)" stroke="var(--brand)"/>`;
+      svg += `<text x="${px}" y="${py + 4}" text-anchor="middle" font-size="9" font-weight="700">${E(lbl.slice(0, 8))}</text></g>`;
+    });
+    svg += "</svg>";
+    const msgList = msgs.length
+      ? msgs.slice(-10).reverse().map((m) =>
+        `<div class="enj-msg"><b>${E(m.de || m.from)} → ${E(m.a || m.to)}:</b> ${E(m.texto || m.text || "")}</div>`).join("")
+      : '<p class="tiny">Sin mensajes recientes en la pizarra.</p>';
+    const revList = revs.length
+      ? revs.map((r) => `<div class="enj-msg"><b>${E(r.de || r.from)} → ${E(r.a || r.to)}:</b> ${E(r.tipo || r.kind || "revisión")}: ${E(r.texto || r.text || "")}</div>`).join("")
+      : "";
+    const confList = Object.keys(conf).length
+      ? Object.entries(conf).map(([k, v]) => {
+        const n = (v && v.n) != null ? v.n : (typeof v === "object" ? v.N : "");
+        const score = (v && v.score) != null ? v.score : (typeof v === "number" ? v : "");
+        const trend = (v && v.tendencia) ? ` · ${v.tendencia}` : "";
+        return `<p class="tiny"><b>${E(k)}</b>: ${E(num(score, 2))}${n ? ` (N=${E(n)})` : ""}${E(trend)}</p>`;
+      }).join("")
+      : '<p class="tiny">Sin confianza aprendida publicada.</p>';
+    const autoList = Object.keys(autonomia).length
+      ? Object.entries(autonomia).map(([k, v]) => `<p class="tiny"><b>${E(k)}</b>: ${E(String(v))}</p>`).join("")
+      : '<p class="tiny">Sin autonomía adaptativa publicada.</p>';
+    const lecAct = (ej.lecciones_activas || {});
+    const lecHtml = Object.keys(lecAct).length
+      ? Object.entries(lecAct).map(([ag, ls]) =>
+        `<p class="tiny"><b>${E(ag)}</b>: ${E((ls || []).map((l) => l.texto || l).join(" · "))}</p>`).join("")
+      : "";
+    setHTML(el, `<div class="enjambre-grid"><div>${svg}<h3 class="tiny" style="margin-top:8px">MENSAJES RECIENTES</h3>${msgList}
+      ${revList ? `<h3 class="tiny" style="margin-top:8px">REVISIONES</h3>${revList}` : ""}</div>
+      <div><h3 class="tiny">CONFIANZA</h3>${confList}
+      <h3 class="tiny" style="margin-top:10px">AUTONOMÍA</h3>${autoList}
+      ${ritmo ? `<p class="tiny"><b>Ritmo del vigía:</b> ${E(String(ritmo))}</p>` : ""}
+      ${lecHtml ? `<h3 class="tiny" style="margin-top:10px">LECCIONES ACTIVAS</h3>${lecHtml}` : ""}</div></div>`);
+  }
+
+  function panelCalls() {
+    const calls = (S.calls.calls || []).slice(-12).reverse();
+    const el = $("calls-block");
+    if (!calls.length) { setHTML(el, ""); return; }
+    setHTML(el, `<h3>LLAMADAS RECIENTES</h3>${calls.map((c) => {
+      const res = c.result === "accept" ? "ACEPTA" : c.result === "reject" ? "RECHAZA" : c.result === "no_answer" ? "SIN RESPUESTA" : (c.stage || "—");
+      return `<div class="call-line"><b>${E(c.incident || "—")}</b> · ${E(c.title || c.to || "")}: <b>${E(res)}</b>
+        ${c.real ? " · real" : " · simulada"}${c.eta_min != null ? " · ETA " + E(c.eta_min) + " min" : ""}</div>`;
+    }).join("")}`);
+  }
+
+  function panelCommsCalls() {
+    panelCalls();
+    const el = $("comms-calls");
+    const calls = (S.calls.calls || []).slice(-20).reverse();
+    const byCh = {};
+    calls.forEach((c) => { const ch = c.channel || "voz"; (byCh[ch] = byCh[ch] || []).push(c); });
+    const chs = Object.keys(byCh);
+    if (!chs.length && !chats.length) {
+      setHTML(el, '<p class="tiny">Sin llamadas ni mensajes todavía.</p>');
+      return;
+    }
+    setHTML(el, chs.map((ch) => `<section class="box"><h3>${E(ch.toUpperCase())}</h3>
+      ${byCh[ch].map((c) => `<p class="tiny">${E(c.title || c.to || "")}: ${E(c.result || c.stage || "—")}</p>`).join("")}</section>`).join(""));
+  }
+
+  function renderPromptDiff(ev) {
+    if (!ev) return "";
+    if (ev.diff) return String(ev.diff).split("\n").map((ln) => {
+      if (ln.startsWith("+")) return `<span class="add">${E(ln)}</span>`;
+      if (ln.startsWith("-")) return `<span class="del">${E(ln)}</span>`;
+      return E(ln);
+    }).join("\n");
+    if (ev.anterior && ev.nuevo) {
+      return `<span class="del">${E(ev.anterior)}</span>\n<span class="add">${E(ev.nuevo)}</span>`;
+    }
+    return "";
+  }
+
+  function panelAprendizaje() {
+    const el = $("panel-aprendizaje");
+    const rows = lecciones || [];
+    const prompts = rows.filter((l) => (l.evidencia && l.evidencia.tipo === "prompt") || /^prompt/i.test(l.id || ""));
+    const normales = rows.filter((l) => !prompts.includes(l));
+    if (!rows.length) {
+      setHTML(el, '<p class="tiny empty-tab">Sin lecciones todavía.</p>');
+      return;
+    }
+    const card = (l, extra) => {
+      const n = l.n || (l.evidencia && l.evidencia.n) || "";
+      const diff = renderPromptDiff(l.evidencia);
+      return `<article class="lesson-card ${E(l.estado || "")}"><p><b>${E(l.id)}</b> · ${E(l.estado || "")}${n ? ` · N=${E(n)}` : ""}</p>
+        <p>${E(l.texto || "")}</p>${diff ? `<pre class="prompt-diff">${diff}</pre>` : ""}${extra || ""}</article>`;
+    };
+    const prop = normales.filter((l) => l.estado === "propuesta");
+    const ok = normales.filter((l) => l.estado === "aprobada");
+    const no = normales.filter((l) => l.estado === "rechazada");
+    const btns = (l) => l.estado === "propuesta" ? `<div class="row" style="margin-top:8px">
+      <button class="btn-ok" data-leccion="aprobar" data-id="${E(l.id)}">APROBAR</button>
+      <button class="btn-no" data-leccion="rechazar" data-id="${E(l.id)}">RECHAZAR</button></div>` : "";
+    const revert = (l) => l.estado === "aprobada" ? `<button data-leccion="rechazar" data-id="${E(l.id)}">VOLVER ATRÁS</button>` : "";
+    setHTML(el, `${prop.length ? `<h3 class="tiny">PROPUESTAS</h3>${prop.map((l) => card(l, btns(l))).join("")}` : ""}
+      ${prompts.length ? `<h3 class="tiny">VERSIONES DE PROMPT</h3>${prompts.map((l) => card(l, btns(l) + revert(l))).join("")}` : ""}
+      ${ok.length ? `<h3 class="tiny">ACTIVAS</h3>${ok.map((l) => card(l, `<p class="tiny">Aplica desde aprobación${l.by ? " · " + E(l.by) : ""}</p>` + revert(l))).join("")}` : ""}
+      ${no.length ? `<h3 class="tiny">RECHAZADAS</h3>${no.map((l) => card(l, "")).join("")}` : ""}`);
+    el.onclick = async (ev) => {
+      const b = ev.target.closest("[data-leccion]");
+      if (!b) return;
+      const epoch = sessionEpoch;
+      const r = await post("/api/memoria/lecciones", { id: b.dataset.id, accion: b.dataset.leccion, by: "operador-sala" });
+      if (epoch !== sessionEpoch) return;
+      if (r.ok !== false) { leccAt = 0; lecciones = null; toast("Lección actualizada."); schedule(); }
+    };
+  }
+
+  function panelHistorial() {
+    const el = $("panel-historial");
+    if (Date.now() - histAt > 12000) {
+      histAt = Date.now();
+      scoped(U.api("/api/historial/incidentes?tamano=20").then((data) => ({ data }), (error) => ({ error })), (result) => {
+        historyError = result.error ? "Historial no disponible: " + result.error.message : "";
+        historial = result.data ? result.data.items || [] : null;
+        schedule();
+      });
+    }
+    const items = historial || [];
+    setHTML(el, `${historyError ? `<p role="alert">${E(historyError)}</p>` : ""}
+      ${items.length ? items.map((h) =>
+      `<button class="hist-row" data-hist="${E(h.id)}" data-scene="${E(h.escena_id)}"><b>${E(h.id)}</b> · ${E(h.etiqueta || h.tipo || "")}
+      · ${E(h.zona || "")} · ${E(h.estado || "")} · escena ${E(h.escena_id)}</button>`).join("")
+      : `<p class="tiny empty-tab">${historial ? "Sin incidentes guardados." : historyError ? "No se puede consultar la memoria persistente." : "Cargando historial…"}</p>`}
+      ${historyDetailHTML()}`);
+    el.onclick = (ev) => {
+      const row = ev.target.closest("[data-hist]");
+      if (!row) return;
+      const request = ++historyRequest;
+      historyDetail = null;
+      scoped(U.api("/api/historial/incidente/" + encodeURIComponent(row.dataset.hist)
+        + "?escena=" + encodeURIComponent(row.dataset.scene)).then((data) => ({ data }), (error) => ({ error })), (result) => {
+        if (request !== historyRequest) return;
+        historyDetail = result.data || null;
+        historyError = result.error ? result.error.message : "";
+        schedule();
+      });
+    };
+  }
+
+  function historyDetailHTML() {
+    if (!historyDetail) return "";
+    const d = historyDetail, i = d.incident || {};
+    const linked = [["reports", "Avisos"], ["plans", "Planes"], ["calls", "Llamadas"], ["decisions", "Decisiones"]];
+    return `<section class="box"><h3>${E(i.id)} · escena ${E(i.escena_id)}</h3>
+      <p>${E(i.etiqueta || i.tipo || "")}</p><h4>Cronología</h4>
+      <ul class="timeline">${(d.timeline || []).map((e) => `<li><time>min ${E(e.minuto)} · ${E(e.tipo)}</time>${E(e.texto)}</li>`).join("")}</ul>
+      ${!(d.timeline || []).length ? '<p class="tiny">Sin eventos guardados para este incidente.</p>' : ""}
+      ${linked.map(([key, title]) => `<details><summary>${E(title)} (${E((d[key] || []).length)})</summary>
+        ${(d[key] || []).map((item) => `<pre class="parte">${E(JSON.stringify(item, null, 2))}</pre>`).join("")}</details>`).join("")}</section>`;
+  }
+
+  // ---------------------------------------------------------------- recursos (pestaña)
   function aside() {
     const html = GROUPS.map((grp) => {
       const list = (S.resources || []).filter((r) => grp.kinds.includes(r.kind));
@@ -571,7 +1157,7 @@
     setHTML($("sev-bars"), counts.map((c) => `<div class="bar g-${c.g}"><span>${E(({ vital: "Vital", emergencia: "Emerg.", urgente: "Urg.", leve: "Leve" })[c.g])} (${c.n})</span>
       <i><b style="width:${Math.round(c.n / max * 100)}%"></b></i></div>`).join(""));
 
-    chatPanel();
+    if (currentTab === "comunicaciones") chatPanel();
   }
   /* STAFF POR TELEGRAM: solo si el espejo ha publicado S.telegram. */
   function staffTelegramCard() {
@@ -613,7 +1199,7 @@
     const chs = new Set((S.reports || []).map((r) => r.via || r.channel).filter(Boolean));
     $("chat-channels").textContent = chs.size ? Array.from(chs).join(" · ") : "sin canales";
     if (!$("chat-panel").open) return;
-    if (Date.now() - chatAt > 3500) { chatAt = Date.now(); U.api("/api/chats").then((d) => { chats = d.chats || []; paintChats(); }).catch(() => {}); }
+    if (Date.now() - chatAt > 3500) { chatAt = Date.now(); scoped(U.api("/api/chats"), (d) => { chats = d.chats || []; paintChats(); }).catch(() => {}); }
     paintChats();
   }
   function paintChats() {
@@ -667,7 +1253,13 @@
       : zone ? `Sector ${zoneName(zone)} · ${(S.zones.find((z) => z.id === zone) || {}).occupancy || 0} personas` : "";
 
     const parts = [];
-    if (i) parts.push(quePasa(i), fuentes(i), planBox(i), decisionBox(i), tgBox(i), hrBox(i), cronologia(i));
+    if (i) {
+      parts.push(quePasa(i), fuentes(i), planBox(i));
+      const agCard = (S.agentes || {})[i.id];
+      if (agCard) parts.push(agentDetailBox(i.id, agCard));
+      else ensureAgentDetail(i.id, () => schedule());
+      parts.push(decisionBox(i), tgBox(i), hrBox(i), cronologia(i));
+    }
     parts.push(previsiones(zone || (i && i.zone)), whatifBox(zone || (i && i.zone)));
     setHTML($("ficha-body"), parts.filter(Boolean).join(""));
   }
@@ -715,7 +1307,9 @@
       const c = a.card || {};
       const branch = (b, cls, title) => b ? `<div class="future ${cls}"><h4>${E(title)}</h4>${b.text ? `<p>${E(b.text)}</p>` : ""}
         ${(b.figures || []).map((f) => `<div class="fig"><b>${E(typeof f.v === "number" ? num(f.v, Number.isInteger(f.v) ? 0 : 2) : f.v)}</b><span>${E(f.k)}</span></div>`).join("")}</div>` : "";
-      const grave = ["evacuate", "stop_show", "request_external", "set_zone"].includes(a.kind);
+      const grave = graveAction(a), signature = signatures.get(a.id);
+      const votes = signature ? signature.votes : a.votes || 0;
+      const required = signature ? signature.required : a.required || 1;
       return `<div class="box decision" data-card="${E(a.id)}"><h3>TARJETA DE DECISIÓN · ${E(KIND_ES[a.kind] || a.kind)}</h3>
         <p><b>${E(c.question || a.why || "")}</b></p>
         <p class="tiny">Decide: <b>${E(c.role || "Director del Plan de Actuación")}</b>${c.deputy ? " · suplente: " + E(c.deputy) : ""}
@@ -728,7 +1322,8 @@
           <button class="btn-ok" data-decide="1" data-id="${E(a.id)}" data-grave="${grave ? 1 : 0}">${armed.has(a.id) ? "CONFIRMAR: ES UNA ACCIÓN GRAVE" : "APROBAR (A)"}</button>
           <button class="btn-no" data-decide="0" data-id="${E(a.id)}" data-grave="0">VETAR (V)</button></div>
         ${grave ? '<p class="tiny">Acción grave: se pedirá confirmación antes de ejecutarla.</p>' : ""}
-        <p class="status" id="st-${E(a.id)}"></p></div>`;
+        <p class="tiny">${E(votes)} de ${E(required)} firmas registradas.</p>
+        <p class="status" role="status" id="st-${E(a.id)}">${signature ? E(signature.text) : ""}</p></div>`;
     }).join("");
   }
   function tgBox(i) {
@@ -772,7 +1367,7 @@
   function webcallLink(c) {
     if (Date.now() - webcallAt > 3000) {
       webcallAt = Date.now();
-      fetch("/api/webcalls").then((r) => (r.ok ? r.json() : [])).then((w) => { webcalls = w; schedule(); }).catch(() => {});
+      scoped(fetch("/api/webcalls").then((r) => (r.ok ? r.json() : [])), (w) => { webcalls = w; schedule(); }).catch(() => {});
     }
     const w = webcalls[0];
     return w ? `<p class="tiny">Llamada web esperando: <a href="/llamada/${encodeURIComponent(w.call_id)}" target="_blank" rel="noopener">abrir en este equipo</a></p>` : '<p class="tiny">Llamada web esperando a que descuelguen.</p>';
@@ -810,7 +1405,7 @@
   // ---------------------------------------------------------------- acciones de la ficha
   $("ficha-body").addEventListener("click", async (ev) => {
     const d = ev.target.closest("[data-decide]");
-    if (d) return decide(d.dataset.id, d.dataset.decide === "1", d.dataset.grave === "1");
+    if (d) return decide(d.dataset.id, d.dataset.decide === "1");
     const take = ev.target.closest("[data-take]"), listen = ev.target.closest("[data-listen]");
     if (take || listen) {
       const id = (take || listen).dataset.take || listen.dataset.listen;
@@ -821,7 +1416,9 @@
     if (ev.target.id === "wi-run") return runWhatif(ev.target.dataset.zone);
     if (ev.target.id === "wi-order") {
       if (!whatif) return;
+      const epoch = sessionEpoch;
       const r = await post("/api/whatif/order", { action: whatif.action, note: "Alternativa ensayada en la Sala de control" });
+      if (epoch !== sessionEpoch) return;
       if (r.ok !== false) { toast("Orden enviada como corrección del operador."); whatif = null; render(); }
     }
   });
@@ -837,11 +1434,14 @@
     const n = ev.target.closest("[data-note]");
     if (n) notes.set(n.dataset.note, n.value);
   });
-  async function decide(id, ok, grave) {
+  async function decide(id, ok) {
+    const action = S && S.approvals.find((a) => a.id === id);
+    if (!action || deciding.has(id)) return;
+    const epoch = sessionEpoch;
     // Lo grave (evacuar, parar el concierto, cerrar zona, pedir ayuda externa) exige un segundo clic.
-    if (grave && !armed.has(id)) {
+    if (ok && graveAction(action) && !armed.has(id)) {
       armed.add(id);
-      setTimeout(() => { armed.delete(id); render(); }, 8000);
+      setTimeout(() => { if (epoch === sessionEpoch) { armed.delete(id); render(); } }, 8000);
       render();
       return;
     }
@@ -849,20 +1449,33 @@
     const note = notes.get(id) || "";
     const st = $("st-" + id);
     if (st) st.textContent = "Enviando la decisión…";
-    const r = await post("/api/approve", { action_id: id, ok, note });
-    if (r.ok !== false) notes.delete(id);
-    if (st) { st.textContent = r.ok === false ? r.error : (ok ? "Aprobado" : "Vetado") + " y registrado con tu identidad de operador."; st.className = "status" + (r.ok === false ? " err" : ""); }
+    deciding.add(id);
+    const r = await post("/api/approve", { action_id: id, session_id: S.session.id, ok, note });
+    if (epoch !== sessionEpoch) return;
+    deciding.delete(id);
+    const text = r.ok === false ? r.error : r.pending
+      ? `Firma registrada; esperando segunda persona (${r.votes} de ${r.required}).`
+      : "Decisión registrada; esperando confirmación del estado.";
+    if (r.ok !== false) {
+      signatures.set(id, { votes: r.votes || 0, required: r.required || action.required || 1, text });
+      if (!r.pending) notes.delete(id);
+    }
+    render();
+    const status = $("st-" + id);
+    if (status) { status.textContent = text; status.className = "status" + (r.ok === false ? " err" : ""); }
   }
   async function runWhatif(zone) {
+    const epoch = sessionEpoch;
     const kind = ($("wi-kind") || {}).value || "reroute";
     const to = ($("wi-to") || {}).value;
     const body = { kind, zone, to, fraction: 0.5, state: "restricted", minutes: 15 };
     $("wi-status").textContent = "Ensayando los próximos 15 minutos en el gemelo…";
     try {
       const r = await U.api("/api/whatif", body);
+      if (epoch !== sessionEpoch) return;
       whatif = Object.assign({}, r, { action: body });
       render();
-    } catch (e) { $("wi-status").textContent = e.message; $("wi-status").className = "status err"; }
+    } catch (e) { if (epoch === sessionEpoch && $("wi-status")) { $("wi-status").textContent = e.message; $("wi-status").className = "status err"; } }
   }
 
   // ---------------------------------------------------------------- mesa de inyección
@@ -920,7 +1533,7 @@
           <div class="row" style="margin-top:8px">
             <button class="btn-ok" data-decide="1" data-id="${E(a.id)}" data-grave="1">${armed.has(a.id) ? "CONFIRMAR: ES UNA ACCIÓN GRAVE" : "AUTORIZAR EL ENVÍO"}</button>
             <button class="btn-no" data-decide="0" data-id="${E(a.id)}" data-grave="0">VETAR</button></div>
-          <p class="status" id="st-${E(a.id)}"></p></div>`).join("")
+          <p class="status" role="status" id="st-${E(a.id)}">${E((signatures.get(a.id) || {}).text || `${a.votes || 0} de ${a.required || 1} firmas registradas.`)}</p></div>`).join("")
         : `<div class="box"><h3>NO HAY NINGUNA PETICIÓN PENDIENTE</h3>
           <p class="tiny">Mando propone «pedir ayuda externa» cuando el caso lo necesita (por ejemplo, una parada cardiaca
             que corresponde a una ambulancia del 112). Cuando lo haga, aparecerá aquí para que una persona lo autorice.
@@ -928,7 +1541,7 @@
   }
   $("ext-body").addEventListener("click", (ev) => {
     const d = ev.target.closest("[data-decide]");
-    if (d) decide(d.dataset.id, d.dataset.decide === "1", d.dataset.grave === "1");
+    if (d) decide(d.dataset.id, d.dataset.decide === "1");
   });
 
   // ---------------------------------------------------------------- cajones
@@ -991,7 +1604,7 @@
   } catch (e) { /* idem */ }
 
   document.addEventListener("keydown", (ev) => {
-    if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.repeat) return;
     if (ev.key === "Escape") { closeAll(); return; }
     if (/INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)) return;
     if ((ev.key === " " || ev.key === "Enter") && /BUTTON|A|SUMMARY/.test(ev.target.tagName)) return;
@@ -1011,7 +1624,8 @@
       const a = (S.approvals || [])[0];
       if (!a) return toast("No hay ninguna decisión pendiente.");
       pick({ incident: a.incident, zone: a.zone });
-      decide(a.id, k === "a", false);
-    } else if (k === "e") document.body.classList.toggle("escena");
+      decide(a.id, k === "a");
+    }     else if (k === "e") document.body.classList.toggle("escena");
+    else if (/^[1-7]$/.test(k)) switchTab(TAB_IDS[Number(k) - 1]);
   });
 })();

@@ -44,7 +44,12 @@ class BaselineRerouteTests(unittest.TestCase):
             world.step()
         return world.truth(), agent.snapshot(), emitted, world.observe()
 
-    def test_demo_reroute_overloads_gate_a_and_is_never_removed(self):
+    def test_demo_with_destination_inflow_overloads_gate_a_and_is_never_removed(self):
+        # Simulación N=1, semilla 7: la demo sin tráfico propio del destino alcanza 4.77/m²,
+        # no >5. Este fixture añade llegadas explícitas a A; no cambia el mundo ni el umbral.
+        self.case["events"].append({"t": 2, "kind": "world", "effect": {
+            "kind": "zone_inflow", "zone": "gate_a", "per_min": 20, "n": 45,
+            "reason": "fixture sintético: tráfico propio del destino"}})
         truth, snapshot, emitted, obs = self._run()
         reroutes = [a for a in emitted if a["kind"] == ActionKind.REROUTE]
         self.assertTrue(any(a["zone"] == "gate_b" and a["params"] ==

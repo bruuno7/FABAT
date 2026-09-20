@@ -234,6 +234,8 @@ class TestTriage(unittest.TestCase):
                  "someone fainted at the food court", "chico desmallado en la barra, venid",
                  "en restauración hay un desmayado", "un tio se ha desvanecido en la barra",
                  "desmayo zona de comida", "sigue el chico desmayado en la barra"]
+        # Los avisos posteriores identifican explícitamente a la víctima; similitud y zona no son identidad.
+        texts = [texts[0]] + [text + ". Es la misma persona del incidente M-001." for text in texts[1:]]
         actions = []
         for i in range(5):
             w.report(texts[2 * i])
@@ -1233,7 +1235,7 @@ class TestOperationalMemoryAndParams(unittest.TestCase):
                             "reports": [{"channel": "whatsapp", "source": "asistente", "zone_hint": "general",
                                          "text": "Una chica se ha desmayado en la pista general, ayuda"},
                                         {"channel": "whatsapp", "source": "asistente", "zone_hint": "general",
-                                         "text": "Hay una persona desmayada en la pista general"}]}]}
+                                         "text": "La misma persona del incidente M-001 sigue desmayada en la pista general"}]}]}
         learned = self.Params({"require_precise_location": {"general": True}}, {"require_precise_location[general]": "N=23"})
         w0, _, before = _play(case, params=self.Params.initial())
         w1, mando, after = _play(case, params=learned)

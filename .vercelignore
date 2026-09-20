@@ -1,3 +1,4 @@
+# Vercel construye puente/ desde fuentes; no subir datos locales ni credenciales.
 .git
 .devin
 .claude
@@ -6,15 +7,32 @@
 !**/.env.example
 **/contacts.local.json
 **/*.local.json
+**/*.pem
+**/*.key
 **/*.sqlite
 **/*.sqlite-*
+**/*.sqlite3
+**/*.sqlite3-*
 **/*.db
 **/*.db-*
+**/*.bak
+**/*.log
+motor/server/data
+motor/server/regression_live
+motor/harness/out
+motor/harness/runs
+motor/evals/out
 **/.venv
 **/__pycache__
 **/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
 **/node_modules
 **/dist
-motor/server/data
-motor/harness/runs
-motor/harness/out
+**/.next
+**/.vercel
+**/.turbo
+**/coverage
+# puente/dist se genera en build y vercel.json lo incluye en la función.
+# Se conservan api/, public/, lockfiles, tests y fixtures sintéticos.

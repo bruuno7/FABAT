@@ -22,13 +22,14 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from motor.contracts import ALWAYS_APPROVE, Action, ActionKind, ActionStatus
 from motor.world import SimComms, World, load_festival
 
-from . import intake, memoria, regression_live, views, whatif, validation, privacy
+from . import intake, memoria, regression_live, views, whatif, validation, privacy, cerebro
+from .rapido import RapidoRunner, configuration as rapido_configuration
 from .comms_happyrobot import HappyRobotComms, load_contacts, public_base, shared_secret
 from . import telegram_bot, hr_config, llm_parser_factory
 from .ledger import open_ledger
@@ -42,6 +43,7 @@ from .espejo_telegram import TelegramMirror
 from . import tg_roster
 from .state_refresh import StateRefresh
 from .evidence_runtime import ReceiptService, action_from_dict, evidence
+from .operational_http import create_operational_app
 
 HERE = Path(__file__).resolve().parent
 MOTOR = HERE.parent
@@ -218,6 +220,7 @@ def needs_approval(a: Action) -> bool:
 # ---------------------------------------------------------------- sesión
 
 class Session:
+    _cerebro_decided: set[str]
     callback_url = ""  # lo fija create_app: adónde devuelve HappyRobot los webhooks
     chat_router: Any = None    # lo fija create_app: (session, action) -> canal. Preguntas a quien está en una conversación de recogida
     ask_router: Any = None     # lo fija create_app: (session, action) -> bool. El bot de Telegram se queda las preguntas a los suyos
@@ -267,6 +270,8 @@ class Session:
         self.web_asks: dict[str, dict[str, Any]] = {}       # action_id -> {report, question}: pregunta de Mando a un informante web
         self.report_refs: dict[str, str] = {}               # report_ref de la plataforma (una conversación) -> primer report_id
         self.operator_orders: list[dict[str, Any]] = []     # correcciones del operador tras un «¿y si…?»: lecciones candidatas
+        self._equipo: dict[str, dict[str, Any]] = {}
+        self._equipo_raw: dict[tuple[str, str], dict[str, Any]] = {}
 
         self.festival = load_festival()
         self.world = World.from_case(case, self.seed)
@@ -313,6 +318,8 @@ class Session:
             self.log("chaos", "Mando no arranca: " + traceback.format_exc(limit=1).strip().splitlines()[-1] + ". Entra el agente de relleno")
             from .fallback_agent import FallbackAgent
             self.agent, self.agent_name = FallbackAgent(comms=self.comms), "relleno (Mando falló al arrancar)"
+        self.rapido = RapidoRunner(self)
+        cerebro.attach(self)
         self.chaos = load_chaos(self.seed)
 
         self.operators = Operators(self)
@@ -365,6 +372,7 @@ class Session:
 
     def close(self) -> None:
         self._stop.set()
+        self.rapido.close()
         self.refresh.close()
         self.receipts.close()
         self._wake.set()
@@ -401,6 +409,7 @@ class Session:
                 self.engine_error = {"type": type(exc).__name__, "t": self.world.t, "source": "agent"}
                 self.log("engine_error", f"ERROR del agente: {type(exc).__name__}. El mundo sigue")
                 actions = []
+            actions = cerebro.after_tick(self, actions)
             for a in actions:
                 if a.status == ActionStatus.AWAITING_APPROVAL:
                     continue
@@ -638,6 +647,7 @@ class Session:
                                       "wristband": {k: prof[k] for k in ("code", "access", "tags", "verified_staff")} if prof else None}
             self._report_meta[rid]["reserved"] = bool((first or {}).get("reserved")) or (str((extracted or {}).get("sensitive")).lower() == "true") or privacy.sensitive(
                 self.world.reports[-1], self.world.observe().zones)
+            self.rapido.note_report(rid, said, real, zone, lang)
             how = "entendido por HappyRobot" if understood == "happyrobot" else "entendido en local"
             self.log("report", f"Aviso de {source} por {real}: «{rep['text'][:80]}» · {how}"
                      + (f" · pulsera {prof['access']}" + (f" ({', '.join(prof['tags'])})" if prof["tags"] else "") if prof else ""),
@@ -813,17 +823,30 @@ class Session:
             self._state["forecasts"] = self._forecast.view() if self._forecast is not None else []
             self._state["service_health"] = {"comms_down": dict(self.world.comms_down)}
             self._state["event_name"] = self.festival.get("name")
+            from . import equipo as equipo_mod
+            from . import enjambre as enjambre_mod
+            self._state["agentes"] = equipo_mod.public_view(self, self._state)
+            self._state["enjambre"] = enjambre_mod.public_view(self, self._state)
             self._state_json = json.dumps(self._state, ensure_ascii=False, default=str)
             self.version += 1
         recorder = getattr(self, "recorder", None)
         if recorder is not None:
             recorder.offer(self._state)
 
+    def _with_live_channels(self, st: dict[str, Any]) -> dict[str, Any]:
+        """Telegram / enlaces / HappyRobot no esperan al siguiente tick: el bot puede pasar a 'on' entre reconstrucciones."""
+        extra = Session.extra_state() if Session.extra_state is not None else None
+        return {**st, **extra} if extra else st
+
     def state(self) -> dict[str, Any]:
-        return self._state
+        with self.lock:
+            return self._with_live_channels(self._state)
 
     def state_json(self) -> str:
-        return self._state_json
+        extra = Session.extra_state() if Session.extra_state is not None else None
+        if extra is None:
+            return self._state_json
+        return json.dumps(self._with_live_channels(self._state), ensure_ascii=False, default=str)
 
     def _build_state(self, snap: dict[str, Any]) -> dict[str, Any]:
         w = self.world
@@ -846,6 +869,10 @@ class Session:
         res_by_id = {r["id"]: r for r in resources}
         incidents = [dict(i) for i in _as_list(snap.get("incidents"))]
         actions = [dict(a) for a in _as_list(snap.get("actions"))]
+        for a in actions:
+            origen = a.get("origen") or (a.get("params") or {}).get("origen")
+            if origen:
+                a["origen"] = origen
         plans = _as_list(snap.get("plans"))
         by_action = {a.get("id"): a for a in actions}
         rep_inc = {rid: i.get("id") for i in incidents for rid in i.get("reports", [])}
@@ -929,7 +956,10 @@ class Session:
                         "story": meta.get("story", ""), "seed": self.seed, "running": self.running, "speed": self.speed,
                         "done": w.done(), "comms_mode": self.comms_mode, "agent": self.agent_name, "playbook": self.playbook_name,
                         "chaos": self.chaos is not None, "duration_min": self.case.get("duration_min"),
-                        "agent_kind": self.agent_kind, "twin": self.twin,
+                        "agent_kind": self.agent_kind, "twin": self.twin, "cerebro": cerebro.mode(),
+                        "cerebro_cadena": getattr(self, "_cerebro_cadena", None) or (
+                            "plataforma" if cerebro.mode() in ("agente", "abanico") else cerebro.mode()),
+                        "modo_degradado": cerebro.ETIQUETA_DEGRADADO if getattr(self, "_cerebro_degradado", False) else None,
                         "replay": dict({k: self.replay[k] for k in ("n", "author", "before")}, result=self.replay_result) if self.replay else None},
             "engine_error": self.engine_error,
             "fronts": fronts, "scoreboard": board,
@@ -937,6 +967,7 @@ class Session:
             "zones": zones, "resources": resources, "incidents": incidents, "reports": reports,
             "plans": plan_view, "approvals": approvals, "actions": actions[-60:], "log": log,
             "calls": self.comms.view(), "strikes": self.strikes[-10:],
+            "workflow_rapido": self.rapido.view(),
             "metrics": self._metrics(snap, incidents, plans, truth),
             "lessons": snap.get("lessons", {}), "counters": snap.get("counters", {}),
             "funnel": self._funnel(w, incidents, truth),
@@ -1277,6 +1308,8 @@ def lan_ip() -> str:
 def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: float = 1.0, comms_mode: str = "sim",
                autoplay: bool = False, threaded: bool = True, secret: str | None = None, port: int = 8000,
                playbook: str = "auto", local_params: bool = True) -> FastAPI:
+    if os.environ.get("MANDO_OPERATIONAL") == "1":
+        return create_operational_app(port=port)
     import contextlib
 
     @contextlib.asynccontextmanager
@@ -1429,6 +1462,29 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         if not hmac.compare_digest(got.encode(), expected.encode()):
             raise HTTPException(401, "Token incorrecto")
 
+    from . import cerebro_tools
+    cerebro_tools.mount(app, S, check_token, operator)
+
+    @app.post("/api/workflows/rapido")
+    async def launch_rapido(request: Request) -> dict:
+        operator(request)
+        d = await body(request)
+        text, zone, request_id = d.get("text"), d.get("zone"), d.get("request_id")
+        if not isinstance(text, str) or not 1 <= len(text.strip()) <= 400:
+            raise HTTPException(422, "text debe contener entre 1 y 400 caracteres")
+        if zone is not None and (not isinstance(zone, str) or zone not in S().world.L.idx):
+            raise HTTPException(422, "Zona desconocida")
+        if not isinstance(request_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", request_id):
+            raise HTTPException(422, "request_id debe ser un identificador de hasta 80 caracteres")
+        if not rapido_configuration()["ready"]:
+            raise HTTPException(503, "Completa la configuración indicada en Equipo")
+        try:
+            return await asyncio.to_thread(S().rapido.submit, request_id, text.strip(), zone)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc))
+        except RuntimeError as exc:
+            raise HTTPException(503, str(exc))
+
     _FIELD = re.compile(r'"(action_id|type|message|result|resultado|eta_min|hr_run_id|hr_session_id|reason|call_status|report_ref|'
                         r'channel|stage|reply_to|event_id|field|value)"\s*:\s*"((?:[^"\\\n]|\\.)*)"')
 
@@ -1484,26 +1540,30 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         return data
 
     # ---- páginas
-    # `/` es la Sala de control (el diseño de las compañeras). `/centro` conserva la pantalla anterior
-    # y `/clasico` la técnica oscura; las tres enlazan entre sí.
-    pages = {"/": "sala.html", "/sala": "sala.html", "/jurado": "jurado.html", "/caos": "caos.html",
-             "/informe": "informe.html", "/curva": "curva.html", "/memoria": "memoria.html", "/centro": "centro.html"}
+    # Interfaz de supervisión: Sala. Público / jurado: /asistente y /jurado.
+    # Las pantallas viejas viven en archivo/motor/server/static/; las rutas redirigen aquí.
+    pages = {"/": "sala.html", "/sala": "sala.html", "/jurado": "jurado.html"}
     for route, fname in pages.items():
         app.add_api_route(route, (lambda f=fname: FileResponse(STATIC / f, headers={"Cache-Control": "no-store"})),
                           methods=["GET"], include_in_schema=False)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
-    @app.get("/clasico", include_in_schema=False)
-    def classic_page(request: Request) -> FileResponse:
-        # El alias nuevo conserva la protección de la antigua página principal.
-        if os.environ.get("MANDO_PUBLIC_URL", "").strip():
-            operator(request)
-        return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-store"})
+    def _archived_page() -> HTMLResponse:
+        return HTMLResponse(
+            '<!doctype html><meta charset="utf-8"><title>MANDO</title>'
+            '<p>Pantalla archivada. <a href="/">Sala de control</a>.</p>',
+            headers={"Cache-Control": "no-store"})
+
+    for _old in ("/centro", "/clasico", "/curva", "/caos", "/memoria", "/informe"):
+        def _redir(_name=_old.strip("/")) -> HTMLResponse:
+            return _archived_page()
+        _redir.__name__ = f"old_{_old.strip('/')}"
+        app.add_api_route(_old, _redir, methods=["GET"], include_in_schema=False)
 
     @app.get("/duelo", include_in_schema=False)
-    def duel_page() -> FileResponse:
-        D()
-        return FileResponse(STATIC / "duelo.html", headers={"Cache-Control": "no-store"})
+    def duel_page() -> HTMLResponse:
+        D()  # la API /api/duel/* sigue viva; GET /duelo no carga el HTML archivado
+        return _archived_page()
 
     @app.get("/asistente", include_in_schema=False)
     def asistente_page() -> FileResponse:
@@ -1832,7 +1892,11 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
     # ---- memoria día 1 → día 2
     @app.get("/api/memoria")
     def memoria_view() -> dict[str, Any]:
-        return memoria.overview(S().operator_orders)
+        out = memoria.overview(S().operator_orders)
+        led = getattr(S(), "ledger", None)
+        if led is not None:
+            out["cerebro_lecciones"] = led.list_lecciones()
+        return out
 
     @app.get("/api/ledger/stats")
     def ledger_stats(request: Request) -> dict[str, Any]:
@@ -2053,6 +2117,29 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         return {"ok": True, "n": len(events), "events": events, "results": salidas,
                 "telegram": mirror, "escaladas": mirror.get("escaladas", [])}
 
+    @app.post("/api/demo/abanico")
+    async def demo_abanico(request: Request) -> dict[str, Any]:
+        """Lanza un aviso de prueba por el enjambre en abanico (operador). No espera a los especialistas."""
+        operator(request)
+        d = await body(request)
+        zone = str(d.get("zone") or "front_pit")
+        s = S()
+        from . import abanico
+        out = s.report("voice", "Una chica se ha mareado por el calor, está muy roja y casi no habla",
+                       zone=zone)
+        s.tick()
+        s.tick()
+        rid = str(out.get("report_id") or "")
+        iid = next((i["id"] for i in s.state().get("incidents") or [] if rid in (i.get("reports") or [])), None)
+        if iid is None:
+            open_ = [i for i in s.state().get("incidents") or []
+                     if i.get("status") not in ("resolved", "false_alarm", "failed")]
+            iid = open_[-1]["id"] if open_ else rid or "nuevo"
+        abanico.arrancar(s, iid, {"texto": "Una chica se ha mareado por el calor, está muy roja y casi no habla",
+                                  "zona": zone, "incident_id": iid, "tipo": "crowd"})
+        card = (s.state().get("agentes") or {}).get(iid) or {}
+        return {"ok": True, "incident_id": iid, "report_id": rid, "abanico": card.get("abanico")}
+
     @app.post("/api/approve")
     async def approve(request: Request) -> dict[str, Any]:
         operator(request)
@@ -2061,6 +2148,17 @@ def create_app(case_id: str = "demo-gates", *, seed: int | None = None, speed: f
         if not d.get("action_id") or ok is None:
             raise HTTPException(400, "Hacen falta «action_id» y «ok»")
         return S().operators.decide(str(d["action_id"]), ok, str(d.get("note") or "")[:200], identity(request))
+
+    @app.get("/api/explica")
+    @app.get("/porque")
+    def api_explica(incident_id: str | None = None) -> dict[str, Any]:
+        from .explica import explica
+        return privacy.scrub(explica(S().state(), incident_id))
+
+    @app.get("/api/explica/{incident_id}")
+    def api_explica_id(incident_id: str) -> dict[str, Any]:
+        from .explica import explica
+        return privacy.scrub(explica(S().state(), incident_id))
 
     @app.get("/api/informe")
     def informe() -> dict[str, Any]:

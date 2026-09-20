@@ -590,6 +590,11 @@ class Planner:
         """True si el plan se queda en preguntar (todavía no se puede actuar con sentido)."""
         inc, m = b.inc, b.m
         what = label(inc)
+        if "identity" in m.missing:
+            b.ask("identity", "¿Es otra persona o la misma víctima de un aviso anterior? "
+                  "Si es la misma persona, confírmalo e indica el identificador del incidente. "
+                  "Si no lo sabes, mantenemos ambos avisos separados.",
+                  "identidad sin confirmar: se mantiene la demanda médica mientras se aclara")
         if "zone" in m.missing and not m.sitewide:
             b.ask("zone", f"Hemos recibido tu aviso ({what}). ¿Dónde estás? Dime la puerta o la zona más cercana.",
                   "falta la zona: sin saber dónde, mandar un equipo es perderlo")

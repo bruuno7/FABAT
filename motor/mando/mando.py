@@ -19,7 +19,7 @@ from .parser import HeuristicParser, Parser
 from .planner import KIND_ES, RECALL_COOLDOWN, Draft, Planner, Travel, es, label
 from .playbook import Adjustments, Playbook
 from .rehearsal import Rehearsal
-from .triage import HOLD_MAX, IncidentMeta, Triage, TriageEvent
+from .triage import HOLD_MAX, IncidentMeta, Triage, TriageEvent, confirmed_person_reference
 from .tuning import NOMINAL_DUPLICATE_WINDOW, NOMINAL_RESUPPLY_MIN, RESUPPLY_MARGIN_MIN, Params
 
 MAX_REPLANS = 6          # a partir de aquí Mando deja de insistir y pide una decisión humana
@@ -241,7 +241,7 @@ class Mando:
             d.update(label=label(inc), explain=priority.explain(inc.priority, m.factors), origin=m.origin,
                      life_threat=m.life_threat, threat=m.threat, hold=m.hold, contradicted=m.contradicted,
                      plan=m.plan, replans=m.replans, level=m.level, waiting=self._waiting.get(inc.id, []),
-                     first_action_t=m.first_action_t, members=m.members, reserved=m.reserved)
+                     first_action_t=m.first_action_t, members=m.members, reserved=m.reserved, merged_into=m.merged_into)
             if inc.id in hidden:
                 d.update(label=mask, type="reserved", zone=None, notes=[], explain=f"prioridad {es(inc.priority)}")
             incidents.append(d)
@@ -616,7 +616,7 @@ class Mando:
 
     def _forget(self, act: Action) -> None:
         sig = self.sig_of.pop(act.id, None)
-        inc = self.incidents.get(act.incident or "")
+        inc = self.triage.canonical(act.incident or "")
         if sig and inc is not None:
             self.meta[inc.id].sigs.discard(sig)
         self._inflight.pop(act.id, None)
@@ -650,7 +650,7 @@ class Mando:
             self._on_status(a)
 
     def _on_status(self, a: Action) -> None:
-        inc = self.incidents.get(a.incident or "")
+        inc = self.triage.canonical(a.incident or "")
         moves = a.kind in (ActionKind.DISPATCH, ActionKind.RESUPPLY)
         r = self.resources.get(a.resource or "")
         who = r.name if r else (a.resource or "")
@@ -760,7 +760,7 @@ class Mando:
             text = str(reply.get("text") or "")
             if self.memory is not None:
                 self.memory.on_reply(a, result, self.t)
-            inc = self.incidents.get(a.incident or "")
+            inc = self.triage.canonical(a.incident or "")
             r = self.resources.get(a.resource or "")
             who = r.name if r else a.params.get("to") or "destinatario"
             if result == "accept":
@@ -793,6 +793,9 @@ class Mando:
         if m.ask == a.id:
             m.ask = None
         if inc.status in CLOSED:
+            return
+        if a.params.get("purpose") == "identity":
+            self._on_identity(a, inc, text)
             return
         if a.params.get("purpose") == "point":
             self._on_point(a, inc, str(data.get("point") or ""))
@@ -837,7 +840,8 @@ class Mando:
             return
         was_blocked = m.hold or m.missing or m.contradicted
         inc.confidence = max(inc.confidence, 0.9)
-        m.hold, m.contradicted, m.missing = False, False, []
+        m.hold, m.contradicted = False, False
+        m.missing = [item for item in m.missing if item == "identity"]
         have: dict[str, int] = {}
         for rid in inc.assigned:
             k = self.assign.get(rid, (None, ""))[1]
@@ -845,6 +849,84 @@ class Mando:
         deficit = any(n > have.get(k, 0) + (have.get("ambulance", 0) if k == "medical" else 0) for k, n in inc.needs.items())
         if was_blocked or deficit:
             m.dirty = "confirmado por quien está en el sitio" + (": " + ", ".join(changed) if changed else "")
+
+    def _on_identity(self, a: Action, inc: Incident, text: str) -> None:
+        """Reconciliar una víctima confirmada, no el parecido entre dos avisos.
+
+        Los equipos que ya salieron siguen atendiendo; sus callbacks se resuelven por el alias,
+        sin reescribir la orden original ni volver a despachar. Se elimina solo la demanda doble.
+        """
+        m = self.meta[inc.id]
+        ref = confirmed_person_reference(text)
+        other = self.triage.canonical(ref or "")
+        if (a.kind != ActionKind.ASK or a.incident != inc.id or "identity" not in m.missing
+                or a.status in (ActionStatus.CANCELLED, ActionStatus.REJECTED, ActionStatus.FAILED)
+                or other is None or other is inc or other.status in CLOSED
+                or inc.family != Family.MEDICAL or other.family != Family.MEDICAL
+                or m.origin != "report" or self.meta[other.id].origin != "report"
+                or (inc.zone and other.zone and inc.zone != other.zone)):
+            self._log("outcome", f"Identidad no confirmada en respuesta a {a.id}; se mantienen ambas demandas",
+                      a.id, incident=inc.id)
+            return
+        om = self.meta[other.id]
+        other.reports.extend(r for r in inc.reports if r not in other.reports)
+        other.zone = other.zone or inc.zone
+        if inc.severity > other.severity:
+            other.type, other.severity, om.group = inc.type, inc.severity, m.group
+        for kind, n in inc.needs.items():
+            other.needs[kind] = max(other.needs.get(kind, 0), n)
+        if inc.deadline is not None:
+            other.deadline = min(other.deadline, inc.deadline) if other.deadline is not None else inc.deadline
+        other.confidence = max(other.confidence, inc.confidence)
+        om.sources |= m.sources
+        om.last_report_t = max(om.last_report_t, m.last_report_t)
+        om.life_threat, om.reserved = om.life_threat or m.life_threat, om.reserved or m.reserved
+        om.heat, om.minors = om.heat or m.heat, om.minors or m.minors
+        om.threat = om.threat or m.threat
+        om.count = max(om.count, m.count)
+        om.seen_on_scene = om.seen_on_scene or m.seen_on_scene
+        om.contradicted = om.contradicted or m.contradicted
+        om.excluded |= m.excluded
+        om.avoid |= m.avoid
+        om.vetoed |= m.vetoed
+        om.sigs |= m.sigs
+        if inc.id in self.points and other.id not in self.points:
+            self.points[other.id] = self.points[inc.id]
+        om.missing = [x for x in om.missing if x != "identity" and (x != "zone" or not other.zone)]
+        m.missing = [x for x in m.missing if x != "identity"]
+        times = [t for t in (om.first_action_t, m.first_action_t) if t is not None]
+        om.first_action_t = min(times) if times else None
+        for rid in inc.assigned:
+            _, need = self.assign[rid]
+            self.assign[rid] = (other.id, need)
+            if rid not in other.assigned:
+                other.assigned.append(rid)
+        inc.assigned.clear()  # _close no debe soltar una reserva que ahora pertenece al incidente canónico
+        if other.assigned:
+            other.status = IncidentStatus.IN_PROGRESS if om.seen_on_scene else IncidentStatus.ASSIGNED
+        source_plan = self.live_plans.get(m.plan or "")
+        target_plan = self.live_plans.get(om.plan or "")
+        if source_plan is not None:
+            for assumption in source_plan.assumptions:
+                if assumption.check.get("incident") == inc.id:
+                    assumption.check["incident"] = other.id
+            if target_plan is not None:
+                target_plan.assumptions.extend(source_plan.assumptions)
+                target_plan.steps.extend(source_plan.steps)
+            else:
+                self.plan_incident[source_plan.id] = other.id
+                om.plan, m.plan = source_plan.id, None
+        m.merged_into = other.id
+        inc.needs.clear()
+        inc.notes.append(f"Identidad confirmada por {a.id}: duplicado de {other.id}")
+        other.notes.append(f"Identidad confirmada por {a.id}: incorpora {inc.id}")
+        self.counters["merges"] += 1
+        self._emit(ActionKind.MERGE, other, f"{a.id} confirma que {inc.id} es la misma persona que {other.id}; "
+                   "se elimina la demanda redundante y se conservan los equipos en curso",
+                   params={"merged": inc.id, "identity_answer": a.id, "reports": list(other.reports)},
+                   status=ActionStatus.DONE)
+        self._close(inc, IncidentStatus.RESOLVED, f"identidad confirmada: duplicado de {other.id}, no alta de la víctima")
+        om.dirty = f"identidad confirmada por {a.id}: demanda reconciliada con {inc.id}"
 
     def _on_point(self, a: Action, inc: Incident, point: str) -> None:
         """Quien avisó da un punto concreto: se le pasa al equipo que va de camino (o que ya está buscando)."""
@@ -866,7 +948,7 @@ class Mando:
     def _fold_duplicate(self, inc: Incident) -> bool:
         """Al saber por fin dónde (o qué) es, puede resultar que ya se estaba atendiendo: se funde, no se duplica."""
         m = self.meta[inc.id]
-        if inc.assigned or not inc.zone:
+        if inc.assigned or not inc.zone or inc.family == Family.MEDICAL:
             return False
         for other in self.live:
             om = self.meta[other.id]
@@ -1254,4 +1336,3 @@ class Mando:
             return a
         self._launch(a, inc)
         return a
-

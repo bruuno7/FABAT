@@ -3,16 +3,16 @@
 Install with ``app.add_middleware(SecurityGuard)`` and use ``require_operator``
 for conditional operator actions. Tokens never belong in URLs or browser storage.
 """
-from collections import OrderedDict
 import hashlib
 import hmac
 import ipaddress
-from http.cookies import CookieError, SimpleCookie
 import json
 import math
 import os
 import posixpath
 import time
+from collections import OrderedDict
+from http.cookies import CookieError, SimpleCookie
 from urllib.parse import urlsplit
 
 from starlette.exceptions import HTTPException
@@ -65,7 +65,7 @@ def _signature(value, token):
 
 def _auth_status(scope):
     request = Request(scope)
-    if not _public() and not os.environ.get('MANDO_OPERATORS', '').strip() and request.client and request.client.host in ('127.0.0.1', '::1', 'localhost', 'testclient'):
+    if not _public() and not os.environ.get('MANDO_OPERATORS', '').strip() and not os.environ.get('MANDO_OPERATOR_TOKEN', '').strip() and request.client and request.client.host in ('127.0.0.1', '::1', 'localhost', 'testclient'):
         return 0
     from .multi import configured
     tokens = [r['token'] for r in configured()]
@@ -97,7 +97,7 @@ def operator_authenticated(request):
     return verify_operator(request.scope)
 
 
-def require_operator(request):
+def require_operator(request: Request) -> None:
     """Raise 401 missing credential, 403 bad credential, or 503 unconfigured token."""
     status = _auth_status(request.scope)
     if status:
@@ -181,6 +181,10 @@ class SecurityGuard:
         login = path == '/api/operator/login' and method == 'POST'
         public_intake = path == '/api/personal/status' or path.startswith('/api/personal/order/') or path in ('/api/chat', '/api/report', '/api/strike') or (
             path.startswith('/api/report/') and path.endswith('/answer'))
+        if os.environ.get('MANDO_OPERATIONAL') == '1' and (
+                path == '/api/operations/telegram' or path == '/hr/events'
+                or path.startswith('/hr/tools/')):
+            public_intake = True
         headers = Request(scope).headers
         cors = _cors(headers.get('origin'))
         if cors and method == 'OPTIONS' and headers.get('access-control-request-method'):
@@ -194,8 +198,7 @@ class SecurityGuard:
         # Webcall IDs are existing capability links; they retain their own access policy.
         public_call = path.startswith('/api/webcall/') and path.endswith(('/answer', '/mock_answer'))
         operator_action = mutation and path.startswith('/api/') and not (public_intake or public_call or login)
-        operator_page = _public() and path in ('/', '/static/index.html', '/centro', '/static/centro.html',
-                                               '/sala', '/static/sala.html')
+        operator_page = _public() and path in ('/', '/sala', '/static/sala.html')
         if operator_action or operator_page:
             status = _auth_status(scope)
             if status:

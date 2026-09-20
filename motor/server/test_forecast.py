@@ -63,12 +63,19 @@ class ForecastTests(unittest.TestCase):
 
     def test_both_density_thresholds_are_separate_stable_risks(self):
         w = world()
-        for zone in ('corridor_n', 'corridor_s', 'general'):
-            w.inject({'kind':'zone_inflow', 'zone':zone, 'rate':3000})
-        predictions = [p for p in forecast(w) if p['zone']=='corridor_n' and p['metric']=='density']
+        w.inject({'kind': 'zone_inflow', 'zone': 'gate_a', 'per_min': 1000})
+        predictions = [p for p in forecast(w) if p['zone']=='gate_a' and p['metric']=='density']
         self.assertEqual({p['threshold'] for p in predictions}, {4, 5})
-        self.assertEqual(len({p['id'] for p in predictions}), 2)
+        self.assertEqual({p['id'] for p in predictions}, {'density:gate_a:4', 'density:gate_a:5'})
         self.assertTrue(all(p['current'] < p['threshold'] <= p['predicted'] for p in predictions))
+        tracker = ForecastTracker()
+        tracker.ingest(predictions, w.t)
+        for _ in range(15):
+            w.step()
+            tracker.observe(w)
+        observed = tracker.view(w.t)
+        self.assertEqual({p['threshold'] for p in observed}, {4, 5})
+        self.assertTrue(all(p['status'] == 'CUMPLIDO' for p in observed))
 
     def test_resource_exhaustion(self):
         w = world()

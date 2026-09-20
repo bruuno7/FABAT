@@ -9,12 +9,14 @@ Triaje no emite acciones: devuelve `TriageEvent` y Mando decide qué hacer con e
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from ..contracts import Channel, Family, Incident, IncidentStatus, Report
 from .assumptions import CLOSED
 from .lexicon import TYPES, spec_for
+from .parser import normalize
 
 MERGE_WINDOW = 15        # minutos sin avisos nuevos a partir de los cuales un aviso igual es otro incidente
 CONFIRM_BELOW = 0.5      # por debajo, no se gasta un equipo sin confirmar (salvo riesgo vital)
@@ -24,6 +26,27 @@ NEIGHBOR_FAMILIES = (Family.CROWD, Family.INFRA, Family.WEATHER, Family.SUPPLY, 
 CONTRADICTION_GAP = 4    # diferencia de gravedad entre versiones que cuenta como contradicción
 # «asistente» no identifica a nadie: dos avisos con ese origen son dos personas distintas
 GENERIC_SOURCES = frozenset({"", "asistente", "publico", "público", "attendee", "anonimo", "anónimo", "whatsapp", "sms"})
+_DISTINCT_PERSON = re.compile(
+    r"\b(otr[oa] (?:persona|victima|paciente|chic[oa]|herid[oa])|"
+    r"(?:another|different|second) (?:person|victim|patient)|"
+    r"autre (?:personne|victime)|andere person|outra pessoa|"
+    r"no es (?:la |el )?mism[oa] (?:persona|victima|paciente)|"
+    r"not the same (?:person|victim|patient))\b")
+_SAME_PERSON = re.compile(
+    r"\b(mism[oa] (?:persona|victima|paciente|chic[oa]|herid[oa])|"
+    r"same (?:person|victim|patient)|meme (?:personne|victime)|"
+    r"selbe person|mesma pessoa)\b")
+
+
+def confirmed_person_reference(text: str) -> str | None:
+    """Una respuesta ambigua no prueba identidad, aunque contenga un ID conocido."""
+    norm = normalize(text)
+    if (_DISTINCT_PERSON.search(norm) or not _SAME_PERSON.search(norm) or "?" in text or "¿" in text
+            or re.search(r"\b(no|not|nunca|quizas?|tal vez|creo|puede|podria|parece|probablemente|posiblemente|"
+                         r"supongo|dudo|maybe|perhaps|probably|might|could|think|unsure)\b", norm)):
+        return None
+    refs = set(re.findall(r"\bM-[0-9]{3,}\b", text.upper()))
+    return next(iter(refs)) if len(refs) == 1 else None
 
 
 @dataclass
@@ -68,6 +91,7 @@ class IncidentMeta:
     sigs: set[tuple] = field(default_factory=set)     # acciones ya lanzadas: un replan no las repite
     review_times: list[int] = field(default_factory=list)   # minutos en que «reevaluar en N min» salió mal
     broken_kind: str | None = None
+    merged_into: str | None = None    # alias confirmado; las acciones ya emitidas conservan su ID e incidente
 
 
 @dataclass
@@ -96,6 +120,13 @@ class Triage:
         self.zones: dict[str, Any] = {}           # última observación, para saber qué zonas son vecinas
         self._pattern_until: dict[str, int] = {}
         self.merge_window = MERGE_WINDOW          # parámetro `duplicate_window_min` (solo se alarga con aprobación)
+        self._intake_roots: dict[str, tuple[str, Channel]] = {}
+
+    def canonical(self, incident_id: str) -> Incident | None:
+        inc = self.incidents.get(incident_id)
+        while inc is not None and self.meta[inc.id].merged_into:
+            inc = self.incidents.get(self.meta[inc.id].merged_into or "")
+        return inc
 
     # ---------------------------------------------------------------- correlación
     def _find(self, p: dict[str, Any], report: Report, t: int) -> Incident | None:
@@ -104,9 +135,18 @@ class Triage:
         Con 2 puntos o menos solo se funde si no hay ambigüedad, y nunca un riesgo vital: dos desmayos sin zona
         pueden ser dos personas, así que se pregunta."""
         spec = spec_for(p["type"], p["family"])
+        identity_text = normalize(report.text)
+        if re.fullmatch(r"R-.+-[0-9]+\.u[0-9]+", report.id):
+            return self._find_intake_update(report)  # una actualización inválida no cae en similitud como alternativa
+        if spec.family == Family.MEDICAL or _SAME_PERSON.search(identity_text) or any(
+                re.search(rf"\b{re.escape(normalize(inc.id))}\b", identity_text)
+                for inc in self.live if inc.family == Family.MEDICAL):
+            return self._find_person(report, p["zone"], t)
         best, best_score, ties = None, 0, 0
         for inc in self.live:
             m = self.meta[inc.id]
+            if inc.family == Family.MEDICAL:
+                continue
             # la ventana aprendida (más larga) NUNCA se aplica a un riesgo vital: a los 20 min puede ser otra persona
             window = MERGE_WINDOW if (spec.life_threat or m.life_threat or p.get("life_threat")) else self.merge_window
             if m.origin == "pattern" or t - m.last_report_t > window:
@@ -142,6 +182,34 @@ class Triage:
                 ties += 1
         return None if best_score <= 2 and ties > 1 else best
 
+    def _find_intake_update(self, report: Report) -> Incident | None:
+        """El ID del hilo, su cabecera y el origen deben concordar con una raíz ya recibida.
+
+        No se usa similitud ni solo el informante: una sesión puede contener varias víctimas.
+        """
+        match = re.fullmatch(r"(R-.+-[1-9][0-9]*)\.u[1-9][0-9]*", report.id)
+        if match is None or _DISTINCT_PERSON.search(normalize(report.text)):
+            return None
+        root = match.group(1)
+        if self._intake_roots.get(root) != (report.source, report.channel):
+            return None
+        if not re.match(r"^(?:\[[^\]]+\]\s*)*ACTUALIZACIÓN del aviso " + re.escape(root) + ":", report.text):
+            return None
+        candidates = [inc for inc in self.live if root in inc.reports and self.meta[inc.id].origin == "report"]
+        return candidates[0] if len(candidates) == 1 else None
+
+    def _find_person(self, report: Report, zone: str | None, t: int) -> Incident | None:
+        reference = confirmed_person_reference(report.text)
+        if reference is None:
+            return None
+        candidates = [
+            inc for inc in self.live
+            if inc.family == Family.MEDICAL and self.meta[inc.id].origin != "pattern"
+            and t - self.meta[inc.id].last_report_t <= MERGE_WINDOW
+            and (not zone or not inc.zone or inc.zone == zone)
+        ]
+        return next((inc for inc in candidates if inc.id == reference), None)
+
     def ingest(self, report: Report, p: dict[str, Any], t: int) -> TriageEvent:
         if p.get("informational"):
             return TriageEvent("noise", None, f"lectura normal de {report.source or report.channel}")
@@ -150,9 +218,12 @@ class Triage:
             if inc is None:
                 return TriageEvent("noise", None, "aviso de «todo en orden» sin incidente asociado")
             return self._all_clear(inc, report, p, t)
-        if inc is None:
-            return self._open(report, p, t)
-        return self._merge(inc, report, p, t)
+        event = self._open(report, p, t) if inc is None else self._merge(inc, report, p, t)
+        if (re.fullmatch(r"R-.+-[1-9][0-9]*", report.id)
+                and report.source.lower() not in GENERIC_SOURCES
+                and re.match(r"^(?:\[[^\]]+\]\s*)*Aviso (?:reservado )?" + re.escape(report.id) + ":", report.text)):
+            self._intake_roots.setdefault(report.id, (report.source, report.channel))
+        return event
 
     def _open(self, report: Report, p: dict[str, Any], t: int) -> TriageEvent:
         spec = spec_for(p["type"], p["family"])
@@ -170,6 +241,14 @@ class Triage:
                          missing=list(p["missing"]), dirty="nuevo")
         m.hold = not life and inc.confidence < CONFIRM_BELOW
         m.hold_since = t
+        if inc.family == Family.MEDICAL and not _DISTINCT_PERSON.search(normalize(report.text)):
+            nearby = [other for other in self.live if other.family == Family.MEDICAL
+                      and self.meta[other.id].origin != "pattern"
+                      and (not inc.zone or not other.zone or other.zone == inc.zone)
+                      and t - self.meta[other.id].last_report_t <= MERGE_WINDOW]
+            if nearby:
+                m.missing.append("identity")
+                inc.notes.append("Identidad sin confirmar; se conserva la demanda de otra posible víctima.")
         self.incidents[inc.id], self.meta[inc.id] = inc, m
         self.live.append(inc)
         return TriageEvent("new", inc, "", {"hold": m.hold})
@@ -195,11 +274,18 @@ class Triage:
             contradiction = f"las versiones no coinciden en la gravedad ({inc.severity} frente a {p['severity']})"
 
         data: dict[str, Any] = {"quiet_min": quiet_min, "gap_min": t - inc.t_open}
-        if p["zone"] and not inc.zone:
+        verified_location = (report.zone_hint == p["zone"] and self._find_intake_update(report) is inc)
+        if p["zone"] and (not inc.zone or (verified_location and inc.zone != p["zone"])):
+            previous_zone = inc.zone
             inc.zone = p["zone"]
             m.missing = [x for x in m.missing if x != "zone"]
             m.dirty = m.dirty or f"ya se sabe la zona: {inc.zone}"
             data["zone_found"] = inc.zone
+            if previous_zone:
+                note = f"{report.id} corrige la zona de {previous_zone} a {inc.zone} en el mismo hilo verificado"
+                inc.notes.append(note)
+                m.dirty = note
+                data["previous_zone"] = previous_zone
 
         if contradiction:
             m.contradicted = True
@@ -277,7 +363,7 @@ class Triage:
                 continue
             members = [i for i in self.incidents.values()
                        if t - i.t_open <= window and i.status != IncidentStatus.FALSE_ALARM
-                       and not self.meta[i.id].hold and self._counts_for(name, i)]
+                       and not self.meta[i.id].hold and not self.meta[i.id].merged_into and self._counts_for(name, i)]
             zones: dict[str, int] = {}
             for i in members:
                 if i.zone:

@@ -67,9 +67,17 @@ INPUTS = {
                      'chat_id': '{{%s.data.chat_id}}' % T_RES, 'alias': '{{%s.data.reporter.display_name}}' % T_RES, 'now': '{{time.now_iso}}'},
 }
 
+# Coordinador: mismo núcleo puro que operaciones, más los pasos que rodean la propuesta del LLM.
+# La propuesta entra ya estructurada; este Sandbox no llama al modelo ni elige contactos.
+COORDINATOR = {
+    'fa_coordinador': ('coordinator_rpc_input', ('event_id', 'state_status', 'status_code', 'event_json', 'snapshot_json', 'proposal_json')),
+    'fa_coordinador_contexto': ('context_input', ('event_json', 'snapshot_json', 'state_status', 'status_code')),
+    'fa_coordinador_entidades': ('request_input', ('event_json', 'proposal_json', 'event_id')),
+}
+
 
 def updates(name, **override):
-    if name in ('fa_operaciones', 'fa_consumidor', 'fa_snapshot', 'fa_finish', 'fa_result'):
+    if name in ('fa_operaciones', 'fa_consumidor', 'fa_snapshot', 'fa_finish', 'fa_result') or name in COORDINATOR:
         raw = override.get('TRIGGER_PID')
         if not isinstance(raw, str) or not raw:
             raise ValueError('TRIGGER_PID must be a persistent UUID')
@@ -77,7 +85,10 @@ def updates(name, **override):
         source = (plate.HERE / 'fa_operaciones.py').read_text()
         keys = ('event_json', 'snapshot_json')
         entry = 'run_input'
-        if name != 'fa_operaciones':
+        if name in COORDINATOR:
+            source += '\n' + (plate.HERE / 'fa_coordinador.py').read_text()
+            entry, keys = COORDINATOR[name]
+        elif name != 'fa_operaciones':
             source += '\n' + (plate.HERE / 'fa_consumidor.py').read_text()
             entry, keys = {
                 'fa_consumidor': ('consumer_input', ('event_id', 'state_json', 'response_json', 'status_code')),

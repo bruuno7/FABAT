@@ -88,3 +88,68 @@ def bindings(nodes, trigger):
             "event_id": ref(trigger, "event_id"), "status_json": ref(result, "result_json"), "status_code": ref(result, "api_status_code"),
         })},
     }
+
+
+COORDINATOR_NAMES = ("Leer contexto", "Preparar contexto público", "Cargar entidades necesarias",
+                     "Leer contexto ampliado", "Componer transición", "Confirmar transición",
+                     "Leer estado final", "Registrar resultado")
+
+
+def coordinator_nodes(trigger, llm):
+    """Cadena del workflow fa-coordinador: contexto → contexto público → LLM → entidades → contexto
+    ampliado → composición → commit → resultado.
+
+    El nodo que llama al modelo ya existe en la plataforma: se referencia por su persistent ID y no se
+    recrea aquí. Se asume colocado justo después de «Preparar contexto público», de modo que el LLM
+    recibe el contexto sin contactos y el Sandbox de operaciones sigue validando toda transición."""
+    llm = str(UUID(llm))
+    initial = {"event_id": ref(trigger, "event_id"), "state_status": "unconfigured", "status_code": "0",
+               "event_json": "{}", "snapshot_json": "{}", "proposal_json": "{}"}
+    return [
+        {"type": "action", "name": "Leer contexto", "event_id": EVENTS["post"], "parent_node_id": trigger,
+         "configuration": post_config("/coordinator/context", "read", status_body(trigger))},
+        {"type": "action", "name": "Preparar contexto público", "event_id": EVENTS["python"], "parent_node_index": 0,
+         "configuration": python_config("fa_coordinador_contexto", trigger, initial)},
+        {"type": "action", "name": "Cargar entidades necesarias", "event_id": EVENTS["python"], "parent_node_id": llm,
+         "configuration": python_config("fa_coordinador_entidades", trigger, initial)},
+        {"type": "action", "name": "Leer contexto ampliado", "event_id": EVENTS["post"], "parent_node_index": 2,
+         "configuration": post_config("/coordinator/context", "read", status_body(trigger))},
+        {"type": "action", "name": "Componer transición", "event_id": EVENTS["python"], "parent_node_index": 3,
+         "configuration": python_config("fa_coordinador", trigger, initial)},
+        {"type": "action", "name": "Confirmar transición", "event_id": EVENTS["post"], "parent_node_index": 4,
+         "configuration": post_config("/coordinator/context", "commit", status_body(trigger))},
+        {"type": "action", "name": "Leer estado final", "event_id": EVENTS["post"], "parent_node_index": 5,
+         "configuration": post_config("/inbox/status", "commit", status_body(trigger))},
+        {"type": "action", "name": "Registrar resultado", "event_id": EVENTS["python"], "parent_node_index": 6,
+         "configuration": python_config("fa_result", trigger, initial)},
+    ]
+
+
+def coordinator_bindings(nodes, trigger, llm, proposal_field="proposal_json"):
+    """Enlaza los nodos ya creados con IDs persistentes reales. `proposal_field` es el nombre con el
+    que el nodo del LLM publica su propuesta: se declara explícitamente para no inventarlo."""
+    llm = str(UUID(llm))
+    pid = lambda name: nodes[name]["persistent_id"]
+    read, entities = pid("Leer contexto"), pid("Cargar entidades necesarias")
+    extended, compose, final = pid("Leer contexto ampliado"), pid("Componer transición"), pid("Leer estado final")
+    proposal = ref(llm, proposal_field)
+    return {
+        "Preparar contexto público": {"configuration": python_config("fa_coordinador_contexto", trigger, {
+            "event_json": ref(read, "event_json"), "snapshot_json": ref(read, "snapshot_json"),
+            "state_status": ref(read, "status"), "status_code": ref(read, "api_status_code"),
+        })},
+        "Cargar entidades necesarias": {"configuration": python_config("fa_coordinador_entidades", trigger, {
+            "event_json": ref(read, "event_json"), "proposal_json": proposal, "event_id": ref(trigger, "event_id"),
+        })},
+        "Leer contexto ampliado": {"configuration": post_config("/coordinator/context", "read", raw_ref(entities, "body_json"))},
+        "Componer transición": {"configuration": python_config("fa_coordinador", trigger, {
+            "event_id": ref(trigger, "event_id"), "state_status": ref(extended, "status"),
+            "status_code": ref(extended, "api_status_code"), "event_json": ref(extended, "event_json"),
+            "snapshot_json": ref(extended, "snapshot_json"), "proposal_json": proposal,
+        })},
+        "Confirmar transición": {"configuration": post_config(ref(compose, "path"), "commit", raw_ref(compose, "body_json"))},
+        "Registrar resultado": {"configuration": python_config("fa_result", trigger, {
+            "event_id": ref(trigger, "event_id"), "status_json": ref(final, "result_json"),
+            "status_code": ref(final, "api_status_code"),
+        })},
+    }

@@ -1,6 +1,20 @@
 import { timingSafeEqual } from "node:crypto";
 import express, { Router, type ErrorRequestHandler } from "express";
-import { FETCH_TIMEOUT_MS, type Env } from "../lib/hr-client.js";
+import {
+  FETCH_TIMEOUT_MS,
+  forwardToHappyRobot,
+  type Env,
+} from "../lib/hr-client.js";
+import type { PublicReport } from "../lib/contract.js";
+import {
+  displayNameFromUser,
+  parseCommand,
+  parseCommandLine,
+  parseStaffRole,
+  telegramUpdateToStaffResponse,
+  type TelegramUpdate,
+  type TelegramUser,
+} from "../lib/telegram-map.js";
 
 const UPDATE_LIMIT = 1024 * 1024;
 const ACCEPTANCE_LIMIT = 8192;
@@ -137,6 +151,12 @@ export function operationalTelegramRouter(env: Env): Router {
         || !Number.isSafeInteger(accepted.revision) || Number(accepted.revision) < 0) {
         throw new Error("invalid_acceptance");
       }
+      // MANDO ya persistió: es la autoridad. HappyRobot decide a quién avisar; se le
+      // entrega el aviso también a él, pero su caída no cambia el ACK al ciudadano.
+      // Un duplicado de Telegram ya se entregó antes: no se repite el despacho.
+      if (accepted.duplicate !== true) {
+        await dispatchToHappyRobot(env, update, Number(update.update_id));
+      }
       res.status(200).json({ ok: true, duplicate: accepted.duplicate, revision: accepted.revision });
     } catch {
       res.status(503).set("Retry-After", "5").json({ ok: false, error: "backend_unavailable" });
@@ -155,4 +175,106 @@ export function operationalTelegramRouter(env: Env): Router {
   };
   router.use(parseError);
   return router;
+}
+
+/**
+ * Entrega a HappyRobot lo que necesita para decidir: el aviso, las pulsaciones de
+ * botones de su personal y los comandos de puesto. HappyRobot decide a quién avisar
+ * (médico, bomberos, policía, staff…); MANDO sigue siendo la autoridad durable y su
+ * caída no cambia el ACK al ciudadano.
+ */
+async function dispatchToHappyRobot(
+  env: Env,
+  update: Record<string, unknown>,
+  updateId: number,
+): Promise<void> {
+  try {
+    if (record(update.callback_query)) {
+      const response = telegramUpdateToStaffResponse(update as TelegramUpdate);
+      if (response) await safeForward(env, env.hrHookTgResponse, response, "HR_HOOK_TG_RESPONSE");
+      return;
+    }
+    const message = record(update.message) ? update.message : undefined;
+    if (!message) return;
+    const text = typeof message.text === "string" ? message.text.trim() : "";
+    const command = text ? parseCommand(text) : null;
+    if (command) {
+      if (!["rol", "estado", "baja"].includes(command)) return;
+      const chat = record(message.chat) ? message.chat : undefined;
+      const chatId = chat && chat.id != null ? String(chat.id) : "";
+      if (!chatId) return;
+      const line = parseCommandLine(text);
+      const roleArg = line?.args[0];
+      const pinArg = line?.args[1];
+      if (command === "rol") {
+        if (env.staffPin) {
+          if (!pinArg) return;
+          if (!pinsEqual(env.staffPin, pinArg)) return;
+        }
+        const role = roleArg ? parseStaffRole(roleArg) : null;
+        if (!role) return;
+        const from = record(message.from) ? message.from as TelegramUser : undefined;
+        const display = displayNameFromUser(from, chatId);
+        await safeForward(env, env.hrHookTgRoster, { action: "claim", role, chat_id: chatId, alias: display }, "HR_HOOK_TG_ROSTER");
+        return;
+      }
+      await safeForward(env, env.hrHookTgRoster, { action: command === "baja" ? "release" : "list", chat_id: chatId }, "HR_HOOK_TG_ROSTER");
+      return;
+    }
+    const report = publicReportFromUpdate(update, updateId);
+    if (report) await safeForward(env, env.hrHookTg, report, "HR_HOOK_TG");
+  } catch {
+    console.warn("[telegram] happyrobot handoff failed", { update_id: updateId });
+  }
+}
+
+async function safeForward(
+  env: Env,
+  hook: string | undefined,
+  payload: unknown,
+  missing: string,
+): Promise<void> {
+  if (!hook) {
+    console.warn(`[telegram] ${missing} not configured`);
+    return;
+  }
+  await forwardToHappyRobot(hook, payload, env.hrHookApiKey, missing);
+}
+
+function pinsEqual(expected: string, got: string): boolean {
+  const a = Buffer.from(expected);
+  const b = Buffer.from(got);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+function publicReportFromUpdate(
+  update: Record<string, unknown>,
+  updateId: number,
+): PublicReport | null {
+  const message = record(update.message) ? update.message : undefined;
+  if (!message) return null;
+  const chat = record(message.chat) ? message.chat : undefined;
+  const chatId = chat && chat.id != null ? String(chat.id) : "";
+  if (!chatId) return null;
+  const from = record(message.from) ? message.from : undefined;
+  const fromId = from && from.id != null ? String(from.id) : chatId;
+  const text = typeof message.text === "string" ? message.text.trim()
+    : typeof message.caption === "string" ? message.caption.trim() : "";
+  const hasLocation = record(message.location);
+  const hasPhoto = Array.isArray(message.photo) && message.photo.length > 0;
+  if (!text && !hasLocation && !hasPhoto) return null;
+  const display = from && typeof from.first_name === "string" ? from.first_name
+    : from && typeof from.username === "string" ? from.username : "Informante";
+  return {
+    event: "public_report",
+    channel: "telegram",
+    reported_at: new Date().toISOString(),
+    text: text || (hasLocation ? "Ubicación compartida (GPS)" : "Foto recibida sin descripción"),
+    reporter: {
+      external_id: `tg:${fromId}`,
+      display_name: display,
+      chat_id: chatId,
+    },
+    correlation_id: `tg-${chatId}-${updateId}`,
+  };
 }

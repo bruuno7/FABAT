@@ -110,7 +110,8 @@ describe("operational Telegram ingress", () => {
     const response = await s.post(update, "/api/telegram/webhook");
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { ok: true, duplicate: false, revision: 7 });
-    assert.equal(calls.length, 1);
+    // MANDO recibe el update intacto; HappyRobot recibe el aviso para decidir a quién avisar.
+    assert.equal(calls.length, 2);
     assert.equal(calls[0].url, "https://mando.invalid/festival/api/operations/telegram");
     assert.deepEqual(JSON.parse(String(calls[0].init?.body)), update);
     assert.deepEqual(calls[0].init?.headers, {
@@ -119,6 +120,13 @@ describe("operational Telegram ingress", () => {
     });
     assert.equal(calls[0].init?.redirect, "manual");
     assert.ok(calls[0].init?.signal instanceof AbortSignal);
+    assert.equal(calls[1].url, "https://hr.invalid/intake");
+    const report = JSON.parse(String(calls[1].init?.body));
+    assert.equal(report.event, "public_report");
+    assert.equal(report.channel, "telegram");
+    assert.equal(report.reporter.chat_id, String(update.message.chat.id));
+    assert.equal(report.reporter.external_id, `tg:${update.message.from.id}`);
+    assert.equal(report.correlation_id, `tg-${update.message.chat.id}-${update.update_id}`);
     assert.deepEqual(s.store.list(), []);
     assert.deepEqual(s.staff.list(), []);
   });
@@ -132,8 +140,16 @@ describe("operational Telegram ingress", () => {
       assert.equal(response.status, 200);
       assert.deepEqual(await response.json(), { ok: true, duplicate: i > 0, revision: 7 });
     }
-    assert.equal(calls.length, 10);
-    for (const call of calls) assert.deepEqual(JSON.parse(String(call.init?.body)), callback);
+    // Cada pulsación llega a MANDO (autoridad, dueño de la deduplicación); HappyRobot
+    // sólo recibe la primera, no el botón repetido.
+    const mando = calls.filter((call) => call.url === "https://mando.invalid/festival/api/operations/telegram");
+    const response = calls.filter((call) => call.url === "https://hr.invalid/response");
+    assert.equal(mando.length, 10);
+    assert.equal(response.length, 1);
+    for (const call of mando) assert.deepEqual(JSON.parse(String(call.init?.body)), callback);
+    const mapped = JSON.parse(String(response[0].init?.body));
+    assert.equal(mapped.event, "staff_response");
+    assert.equal(mapped.callback_data, callback.callback_query.data);
   });
 
   it("does not derive sender identity from group chat or reply author when from is absent", async (t) => {
@@ -168,24 +184,42 @@ describe("operational Telegram ingress", () => {
     assert.deepEqual(await (await pending).json(), { ok: true, duplicate: false, revision: 8 });
   });
 
-  it("never uses legacy intake, role, response, dispatch hooks, local stores or Telegram sends", async (t) => {
+  it("keeps MANDO as authority, hands reports to HappyRobot and leaves legacy hooks off", async (t) => {
     const calls = transport();
     const s = await server(t);
-    for (const text of ["/start", "/ping", "/rol medico test-pin", "/estado", "/baja", "Persona caída", "/fin"]) {
+    const texts = ["/start", "/ping", "/rol medico test-pin", "/estado", "/baja", "Persona caída", "/fin"];
+    for (const text of texts) {
       assert.equal((await s.post({ ...update, message: { ...update.message, text } })).status, 200);
     }
     assert.equal((await s.post(callback)).status, 200);
-    assert.equal(calls.length, 8);
-    assert.ok(calls.every((call) => call.url === "https://mando.invalid/festival/api/operations/telegram"));
+
+    const mando = calls.filter((call) => call.url === "https://mando.invalid/festival/api/operations/telegram");
+    const intake = calls.filter((call) => call.url === "https://hr.invalid/intake");
+    const roster = calls.filter((call) => call.url === "https://hr.invalid/roster");
+    const response = calls.filter((call) => call.url === "https://hr.invalid/response");
+    // Cada update va una vez a MANDO (autoridad) y HappyRobot recibe lo suyo para decidir:
+    // el aviso al intake, los comandos de puesto al roster y los botones a su respuesta.
+    assert.equal(mando.length, texts.length + 1);
+    assert.equal(intake.length, 1);
+    assert.equal(roster.length, 3);
+    assert.equal(response.length, 1);
+    const total = mando.length + intake.length + roster.length + response.length;
+    assert.equal(calls.length, total);
+    for (const call of intake) {
+      assert.equal(JSON.parse(String(call.init?.body)).event, "public_report");
+    }
     assert.deepEqual(s.store.list(), []);
     assert.deepEqual(s.staff.list(), []);
-    for (const path of ["/hr/events", "/hr/tg/dispatch", "/hr/tg/staff-response", "/hr/tg-reply", "/demo/public-report"]) {
+
+    // Sólo el espejo/mensajes de HappyRobot siguen vivos bajo /hr; el resto está apagado.
+    assert.equal((await s.post({ event: "telegram_send", chat_id: "1", text: "test" }, "/hr/events")).status, 401);
+    for (const path of ["/hr/tg/dispatch", "/hr/tg/staff-response", "/hr/tg-reply", "/demo/public-report"]) {
       assert.equal((await s.post({ event: "telegram_send", chat_id: "1", text: "test" }, path)).status, 409);
     }
-    assert.equal(calls.length, 8);
+    assert.equal(calls.length, total);
     assert.equal((await s.post({}, "/hr/state/inbox")).status, 503);
     await assert.rejects(() => handleTelegramUpdate(loadEnv(settings), callback), /authenticated webhook/);
-    assert.equal(calls.length, 8);
+    assert.equal(calls.length, total);
   });
 
   it("refuses to start the poller before making a provider request", () => {
@@ -255,6 +289,8 @@ describe("operational downstream failures", () => {
     assert.deepEqual(await failed.json(), { ok: false, error: "backend_unavailable" });
     fail = false;
     assert.deepEqual(await (await s.post()).json(), { ok: true, duplicate: true, revision: 7 });
+    // El reintento va otra vez a MANDO (idempotente por update). Como MANDO lo marca
+    // duplicado, no se vuelve a despachar a HappyRobot: ni avisos ni ofertas dobles.
     assert.equal(calls.length, 2);
     assert.equal(calls[0].init?.body, calls[1].init?.body);
   });

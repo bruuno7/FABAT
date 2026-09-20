@@ -162,6 +162,37 @@ function mandoUrl(
   return `${base}${path}`;
 }
 
+/**
+ * POST autenticado con el token del puente (`X-Mando-Bridge-Token`) a las rutas
+ * de ingreso operativo, p. ej. el espejo `/api/operations/happyrobot`.
+ */
+export async function forwardMandoBridge(
+  backendUrl: string | undefined,
+  bridgeSecret: string | undefined,
+  path: string,
+  body: unknown,
+): Promise<ForwardResult> {
+  if (!backendUrl) {
+    return {
+      ok: false,
+      status: 0,
+      body: "MANDO_BACKEND_URL not configured",
+      skipped: true,
+    };
+  }
+  const res = await fetch(mandoUrl(backendUrl, path), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "X-Mando-Bridge-Token": bridgeSecret ?? "",
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  const text = await res.text();
+  return { ok: res.ok, status: res.status, body: text };
+}
+
 /** POST/GET autenticado a una ruta de MANDO (`/hr/tg/dispatch`, `/hr/tg/staff-response`, …). */
 export async function forwardMandoPath(
   backendUrl: string | undefined,

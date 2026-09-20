@@ -14,9 +14,38 @@ Telegram → POST /telegram/webhook → POST <MANDO_BACKEND_URL>/api/operations/
 El backend MANDO valida identidad/permisos y persiste el update antes de confirmar.
 El puente conserva el JSON original completo: `update_id`, `message_id`,
 `callback_query.from.id`, `message.from.id`, captions, fotos, ubicación y contexto
-de respuesta. No sustituye `from.id` por `chat.id`, no interpreta comandos ni
-botones, no guarda roles/incidentes y no descarta duplicados. Cada entrega, incluso
-un callback repetido, llega al backend para su deduplicación duradera.
+de respuesta. No sustituye `from.id` por `chat.id` y no descarta duplicados: cada
+entrega, incluso un callback repetido, llega al backend para su deduplicación
+duradera.
+
+**HappyRobot decide, MANDO es la autoridad.** Tras confirmar MANDO y sólo si el
+update no es duplicado, el puente entrega a HappyRobot lo que necesita para decidir:
+el aviso (`public_report` a `HR_HOOK_TG`, incluye fotos/ubicación), los comandos de
+puesto `/rol` `/estado` `/baja` (`HR_HOOK_TG_ROSTER`) y los botones del personal
+(`staff_response` a `HR_HOOK_TG_RESPONSE`). Es best-effort: si HappyRobot no
+responde, el ACK al ciudadano no cambia porque MANDO ya persistió.
+
+En operativo vive `POST /hr/events` (única ruta `/hr/*` permitida además de
+`/hr/state`): ejecuta `telegram_send`/`telegram_edit`/`answer_callback`, manda la
+respuesta al ciudadano de `agent_reply` (`reply_text`) y reenvía el espejo `mirror`
+de HappyRobot a MANDO (`POST /api/operations/happyrobot`) para que la interfaz
+pinte quién acude, su ETA y sus preguntas. El espejo es **solo lectura**: no crea
+ofertas ni reserva capacidad. La coordinación normal es de HappyRobot; los botones
+de la Sala quedan para el override humano.
+
+### Quién decide a quién avisar
+
+Los avisos que entran por el bot los coordina **HappyRobot**: decide el rol, ofrece
+con botones, recoge aceptación/ETA, traslada preguntas del equipo al informante y
+cierra. MANDO no auto-oferta esos avisos (`MANDO_HAPPYROBOT_DECIDES=1`) y sólo los
+espeja. Si el operador hace **override** desde la Sala, MANDO registra el hecho y
+delega el mensaje en HappyRobot: lanza `fa-despacho-tg` (`HR_WORKFLOW_TG_OFFER`) con
+modo normal, de forma que HappyRobot ofrece, conversa y traslada las preguntas al
+informante. Sin `HR_WORKFLOW_TG_OFFER`, MANDO vuelve a usar su propio bot.
+
+El nodo Sandbox `Espejo a MANDO` (`motor/happyrobot/sandbox/fa_espejo.py`) compone el
+`mirror` dentro del mensaje que va al puente; se regenera con
+`python3 build_nodes.py --add fa_espejo <PID-padre> PAYLOAD=<PID> INC=<PID>`.
 
 Configuración del **puente**:
 
@@ -63,10 +92,11 @@ lectura. No se acusa al usuario con `sendMessage` ni `answerCallbackQuery`; las
 respuestas al bot corresponden al outbox del backend. Un timeout después del commit
 puede provocar repetición: MANDO debe devolver `duplicate:true` sin repetir efectos.
 
-En modo operativo se bloquean las rutas legadas `/hr/*` y `/demo/*` con 409, incluidos
-los envíos Telegram directos desde HappyRobot, roles y despacho. `/hr/state/*`
-conserva su implementación y flag independientes; **no activar Redis v2 para este
-recorrido**. `npm run poll` se niega a arrancar en modo operativo. No arrancar otro
+En modo operativo se bloquean las rutas legadas `/hr/*` y `/demo/*` con 409
+(despacho, `tg-dispatch`, `tg-staff-response`, `tg-reply`, demo), salvo
+`POST /hr/events`, que queda reducido a mensajes del bot, respuesta al ciudadano y
+espejo `mirror` hacia MANDO. `/hr/state/*` conserva su implementación y flag
+independientes; **no activar Redis v2 para este recorrido**. `npm run poll` se niega a arrancar en modo operativo. No arrancar otro
 consumidor del mismo bot: el **backend Python** debe usar `TELEGRAM_MODE=send_only`
 u `off`, nunca `poll`. Mantener el webhook como único ingreso y desactivar los
 workflows legados de ese bot durante el cambio; este código no modifica workflows

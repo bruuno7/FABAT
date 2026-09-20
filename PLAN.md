@@ -37,6 +37,28 @@
 - Aviso de efecto lateral: `fix_broken_vars` ejecuta `test-all` como paso previo, así que ya invocó los nodos contra el Preview. Su corrección automática sugerida (reapuntar `status` a otro nodo) era errónea; se revisó en dry run y no se aplicó.
 - `admin.py`: `install-coordinador` e `install-comunicaciones` añaden los nodos de uno en uno, porque un lote con el código completo de cada Sandbox devuelve `Payload Too Large`. Requiere invocarse como módulo (`python -m motor.happyrobot.admin`), no como script.
 - Nada publicado: ningún workflow nuevo está en dev o live, no se ha hecho fork de operaciones y no se ha enviado ningún mensaje ni llamada.
+
+### Bloqueo principal detectado: el Preview configurado es anterior a las rutas nuevas
+
+Al probar los nodos POST uno a uno contra el Preview de `STATE_API_URL`, **todos devuelven 404 con el cuerpo HTML de la plataforma**:
+
+- `Cannot POST /hr/state/coordinator/context` (coordinador, los tres nodos POST)
+- `Cannot POST /hr/state/outbox/recover` (comunicaciones)
+- `Cannot POST /hr/state/inbox/batch` (comunicaciones)
+
+`https://fabat-4qa23r3q0-fabat1.vercel.app` es un despliegue inmutable anterior a `c738a03`, que es donde entraron esas rutas. Por eso las referencias a salidas de nodo webhook no se resuelven: los nodos no llegan a devolver nada. No es un problema de formato de las referencias (son idénticas a las del nodo LIVE de operaciones), sino de que **el destino no existe**.
+
+Arreglo necesario, en este orden:
+
+1. Desplegar un Preview de la rama con las rutas nuevas y con las variables de preview (namespace `test-pr22-6e506af`, los cuatro secretos y el modo de entrega). Ojo: las variables de preview están limitadas a `gitBranch=integracion/coordinacion-multicanal`, así que una rama distinta no las hereda.
+2. Actualizar `STATE_API_URL` en `fa-coordinador` y `fa-comunicaciones` (y `preview_url` en `workflows-v2.json`) con ese URL verificado.
+3. Reejecutar los nodos POST y volver a validar.
+
+**Acceso a Vercel:** el MCP de Vercel está autenticado como `sequin_geisha5a@icloud.com` (plan hobby) y **no tiene acceso al scope `fabat1`** (`403 forbidden`). Por eso no he podido ni inspeccionar ni desplegar. Hace falta un token con acceso al equipo `team_BlUk2LQTWR2ARD4AZ2Z3EJdQ` o que el despliegue lo haga una persona. La CLI de Vercel tampoco está instalada.
+
+### Invocación del coordinador (aclarada)
+
+El coordinador se invoca por evento de canal: un mensaje al bot o una llamada. El trigger creado ya lo soporta sin cambios, porque tiene `callable_by_workflows: true` (voz: workflow → coordinador) y admite HTTP con el parámetro `event_id` (puente: Telegram → coordinador). Lo que sigue faltando es que alguien **llame** a ese trigger: hoy nada enruta `needs_coordination` hacia él.
 - Todos los cambios de implementación realizados hasta ese corte están commiteados y subidos.
 - La implementación se detuvo por indicación del usuario. Este documento registra el plan y el traspaso; no significa que se haya terminado ni que se deba reanudar sin pedirlo.
 - La decisión confirmada es **continuar el plan original HappyRobot/Redis**, no sustituirlo por la arquitectura MANDO/SQLite del PR #23.

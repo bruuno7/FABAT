@@ -220,6 +220,12 @@ class OperationalHTTPTest(unittest.TestCase):
         self.assertEqual(self.records("assignments")[0]["status"], "en_route")
         self.callback("synthetic-invalid", body, 403)
         self.callback(token, {**body, "sequence": 3, "action_id": "other"}, 409)
+        stale = context["initial_assignment_version"] + 1
+        self.callback(
+            token, {**body, "sequence": 3, "expected_assignment_version": stale}, 409
+        )
+        self.callback(token, {**body, "sequence": 3, "assignment_id": "other"}, 409)
+        self.assertEqual(self.records("assignments")[0]["status"], "en_route")
 
     def test_unclear_voicemail_and_call_end_do_not_accept_or_complete(self) -> None:
         _, _, token = self.phone()

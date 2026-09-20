@@ -53,6 +53,7 @@ def canonical_phone(body: Document) -> Document:
     for key in (
         "action_id",
         "assignment_id",
+        "expected_assignment_version",
         "call_id",
         "hr_run_id",
         "message",

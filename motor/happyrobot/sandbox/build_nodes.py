@@ -75,9 +75,16 @@ COORDINATOR = {
     'fa_coordinador_entidades': ('request_input', ('event_json', 'proposal_json', 'event_id')),
 }
 
+# Comunicaciones: pasos puros del tick de recuperación. No envían nada; acotan y resumen.
+COMMS = {
+    'fa_comunicaciones_recover': ('recover_input', ('limit',)),
+    'fa_comunicaciones_inbox': ('inbox_input', ('items_json',)),
+    'fa_comunicaciones_resumen': ('summary_input', ('results_json',)),
+}
+
 
 def updates(name, **override):
-    if name in ('fa_operaciones', 'fa_consumidor', 'fa_snapshot', 'fa_finish', 'fa_result') or name in COORDINATOR:
+    if name in ('fa_operaciones', 'fa_consumidor', 'fa_snapshot', 'fa_finish', 'fa_result') or name in COORDINATOR or name in COMMS:
         raw = override.get('TRIGGER_PID')
         if not isinstance(raw, str) or not raw:
             raise ValueError('TRIGGER_PID must be a persistent UUID')
@@ -88,6 +95,9 @@ def updates(name, **override):
         if name in COORDINATOR:
             source += '\n' + (plate.HERE / 'fa_coordinador.py').read_text()
             entry, keys = COORDINATOR[name]
+        elif name in COMMS:
+            source += '\n' + (plate.HERE / 'fa_comunicaciones.py').read_text()
+            entry, keys = COMMS[name]
         elif name != 'fa_operaciones':
             source += '\n' + (plate.HERE / 'fa_consumidor.py').read_text()
             entry, keys = {

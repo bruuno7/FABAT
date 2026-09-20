@@ -3,7 +3,7 @@ import { Router, type Response } from "express";
 import { ContractError, object, parseId, parseSnapshotRequest, unwrapEvent } from "../lib/event-contract.js";
 import { RedisStateStore, StateStoreError, upstashCommand } from "../lib/redis-state.js";
 import type { StateApiConfig } from "../lib/state-env.js";
-import { deliver, type DeliveryConfig } from "../lib/state-delivery.js";
+import { deliver, recoverDeliveries, type DeliveryConfig } from "../lib/state-delivery.js";
 import { operationContext } from "../lib/operation-context.js";
 
 function matches(expected: string, actual: string): boolean {
@@ -79,6 +79,15 @@ export function stateRouter(config: StateApiConfig = { enabled: false }, injecte
   route("/outbox/pending", "deliverySecret", (s, body) => s.pending("outbox", body.limit === undefined ? 16 : body.limit as number));
   route("/outbox/claim", "deliverySecret", (s, body) => s.claim(parseId(body.id)));
   route("/outbox/deliver", "deliverySecret", (s, body) => deliver(s, parseId(body.id), delivery));
+  // Un tick acotado de recuperación: el Cron llama una vez y el lease decide
+  // qué se puede reintentar. No se reenvía a ciegas ni se procesa más de `limit`.
+  route("/outbox/recover", "deliverySecret", (s, body) => {
+    const limit = body.limit === undefined ? 8 : body.limit;
+    if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 16) {
+      throw new ContractError("invalid_recovery_limit");
+    }
+    return recoverDeliveries(s, delivery, limit as number);
+  });
   route("/outbox/settle", "deliverySecret", (s, body) => {
     if (typeof body.lease !== "string" || !["succeeded", "failed", "unknown"].includes(String(body.status))) {
       throw new ContractError("invalid_delivery_result");

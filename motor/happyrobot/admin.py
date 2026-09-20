@@ -103,6 +103,54 @@ async def install_operations(session, workflow):
     print(json.dumps({"workflow_id": workflow, "version_id": version, "nodes": nodes}, ensure_ascii=False))
 
 
+async def call_tool(session, tool, arguments):
+    result = await session.call_tool(tool, arguments)
+    if result.isError:
+        raise RuntimeError("workflow_operation_failed:" + tool)
+    return text(result)
+
+
+async def install_communications(session, workflow, schedule=None):
+    """Monta el tick de recuperación sobre un workflow ya creado con trigger Cron.
+
+    No crea el workflow ni el trigger: eso los decide la persona autorizada. Aquí
+    solo se añaden los nodos, se enlazan con IDs persistentes reales y, si se pasa
+    `--schedule`, se configura el Cron con el esquema que declara la plataforma."""
+    from . import workflow_artifacts as artifacts
+
+    async def inventory():
+        details = await call_tool(session, "get_workflow_details", {"workflow_id": workflow, "include_nodes": True})
+        if "- Published: true" in details or "- Live: true" in details:
+            raise RuntimeError("fork_published_version_first")
+        section = details.split("## Latest Version", 1)[1]
+        return re.search(r"- ID: ([0-9a-f-]{36})", section)[1], parse_nodes(details)
+
+    if schedule is not None:
+        artifacts.cron_config(schedule)
+    version, nodes = await inventory()
+    by_name = {node["name"]: node for node in nodes}
+    trigger = next(node for node in nodes if node["parent_id"] is None)
+    if artifacts.COMMUNICATION_NAMES[0] not in by_name:
+        await call_tool(session, "update_workflow_nodes", {"version_id": version, "action": "add", "nodes": json.dumps(
+            artifacts.communication_nodes(trigger["persistent_id"]), ensure_ascii=False)})
+        await call_tool(session, "fix_broken_vars", {"version_id": version, "dry_run": True})
+        version, nodes = await inventory()
+        by_name = {node["name"]: node for node in nodes}
+    for name, updates in artifacts.communication_bindings(by_name, trigger["persistent_id"]).items():
+        node = by_name[name]
+        await call_tool(session, "get_node_details", {"version_id": version, "node_id": node["id"]})
+        await call_tool(session, "update_workflow_nodes", {"version_id": version, "action": "update",
+                                                           "node_id": node["id"], "updates": json.dumps(updates)})
+    if schedule is not None:
+        current = json.loads(re.search(r"```json\s*(.*?)\s*```", await call_tool(
+            session, "get_node_details", {"version_id": version, "node_id": trigger["id"]}), re.S)[1])
+        current.update(artifacts.cron_config(schedule))
+        await call_tool(session, "update_workflow_nodes", {"version_id": version, "action": "update",
+                                                          "node_id": trigger["id"], "updates": json.dumps({"configuration": current})})
+    await call_tool(session, "fix_broken_vars", {"version_id": version, "dry_run": True})
+    print(json.dumps({"workflow_id": workflow, "version_id": version, "schedule": schedule}, ensure_ascii=False))
+
+
 async def main(args):
     params = StdioServerParameters(command="npm", args=["exec", "--yes", "--package=mcp-remote@0.13.5", "--",
                                   "mcp-remote", SERVER, "--silent"], cwd=ROOT)
@@ -130,6 +178,9 @@ async def main(args):
                 raise ValueError("workflow_not_in_manifest")
             if args.command == "install-operations":
                 await install_operations(session, args.workflow)
+                return
+            if args.command == "install-comunicaciones":
+                await install_communications(session, args.workflow, args.schedule)
                 return
             if args.command == "probe-operations":
                 from .probe_workflows import probe_operations
@@ -202,8 +253,9 @@ async def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("info", "describe", "sync-vars", "variables", "install-operations", "test-operations", "probe-operations"))
+    parser.add_argument("command", choices=("info", "describe", "sync-vars", "variables", "install-operations", "install-comunicaciones", "test-operations", "probe-operations"))
     parser.add_argument("--workflow")
+    parser.add_argument("--schedule")
     parser.add_argument("--tool")
     parser.add_argument("--field")
     logging.disable(logging.CRITICAL)

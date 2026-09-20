@@ -6,6 +6,16 @@ from .sandbox import build_nodes, plate
 
 EVENTS = {"post": "01926f2b-2973-7ebf-ada1-e984251e27ec", "python": "019dde7b-3500-7a3c-8f5e-1c2d4e6a8b9c"}
 
+# Descubiertos con list_integrations/get_node_config_schema (solo lectura). El Cron es el
+# root del workflow de recuperación; el bucle solo se usa si el grafo llega a necesitarlo.
+CRON_TRIGGER = "0192fff4-4da6-7712-a139-53c87250339f"
+LOOP_EVENT = "8d8ec06c-4d69-4f40-9f9d-1e1f7a1e6d7c"
+CRON_MAX = 8
+# Campo del nodo POST /outbox/recover que devuelve las entregas del tick. Es lo único del
+# grafo del Cron que debe confirmarse contra el nodo desplegado antes de instalarlo.
+RECOVER_RESULTS_FIELD = "results"
+INBOX_ITEMS_FIELD = "items"
+
 
 def ref(pid, field):
     return "{{%s.%s}}" % (str(UUID(pid)), field)
@@ -152,4 +162,55 @@ def coordinator_bindings(nodes, trigger, llm, proposal_field="proposal_json"):
             "event_id": ref(trigger, "event_id"), "status_json": ref(final, "result_json"),
             "status_code": ref(final, "api_status_code"),
         })},
+    }
+
+
+COMMUNICATION_NAMES = ("Acotar tick de recuperación", "Recuperar entregas", "Resumir entregas",
+                       "Leer inbox pendiente", "Planificar reenvío")
+
+
+def cron_config(expression, timezone="Europe/Madrid"):
+    """Configuración del trigger Cron tal y como la declara la plataforma
+    (`{cron: {expression, timezone}}`). Se valida aquí para no publicar un Cron
+    que la plataforma vaya a rechazar o que dispare cada minuto por error."""
+    if not isinstance(expression, str) or len(expression.split()) != 5:
+        raise ValueError("cron expression must have five fields")
+    if not isinstance(timezone, str) or "/" not in timezone:
+        raise ValueError("cron timezone must be an IANA name")
+    return {"cron": {"expression": expression, "timezone": timezone}}
+
+
+def communication_nodes(trigger, limit=CRON_MAX):
+    """Grafo del tick de recuperación: un solo POST acotado al puente, el resumen,
+    y la lectura del inbox pendiente. Sin bucle: el puente ya reclama un lease por
+    mensaje, así que repetir el tick no reenvía ni duplica."""
+    if type(limit) is not int or not 1 <= limit <= 16:
+        raise ValueError("invalid_recovery_limit")
+    return [
+        {"type": "action", "name": COMMUNICATION_NAMES[0], "event_id": EVENTS["python"], "parent_node_id": trigger,
+         "configuration": python_config("fa_comunicaciones_recover", trigger, {"limit": str(limit)})},
+        {"type": "action", "name": COMMUNICATION_NAMES[1], "event_id": EVENTS["post"], "parent_node_index": 0,
+         "configuration": post_config("/outbox/recover", "delivery", json.dumps({"limit": limit}))},
+        {"type": "action", "name": COMMUNICATION_NAMES[2], "event_id": EVENTS["python"], "parent_node_index": 1,
+         "configuration": python_config("fa_comunicaciones_resumen", trigger, {"results_json": "[]"})},
+        {"type": "action", "name": COMMUNICATION_NAMES[3], "event_id": EVENTS["post"], "parent_node_index": 2,
+         "configuration": post_config("/inbox/batch", "read", json.dumps({}))},
+        {"type": "action", "name": COMMUNICATION_NAMES[4], "event_id": EVENTS["python"], "parent_node_index": 3,
+         "configuration": python_config("fa_comunicaciones_inbox", trigger, {"items_json": "[]"})},
+    ]
+
+
+def communication_bindings(nodes, trigger):
+    """Enlaza el grafo con los persistent IDs reales. `RECOVER_RESULTS_FIELD` e
+    `INBOX_ITEMS_FIELD` son los nombres que publica cada nodo POST; si la versión
+    desplegada los expone con otro nombre, se cambia aquí y el grafo sigue igual."""
+    pid = lambda name: nodes[name]["persistent_id"]
+    recovered, inbox = pid(COMMUNICATION_NAMES[1]), pid(COMMUNICATION_NAMES[3])
+    return {
+        COMMUNICATION_NAMES[1]: {"configuration": post_config(
+            ref(pid(COMMUNICATION_NAMES[0]), "path"), "delivery", raw_ref(pid(COMMUNICATION_NAMES[0]), "body_json"))},
+        COMMUNICATION_NAMES[2]: {"configuration": python_config("fa_comunicaciones_resumen", trigger, {
+            "results_json": raw_ref(recovered, RECOVER_RESULTS_FIELD)})},
+        COMMUNICATION_NAMES[4]: {"configuration": python_config("fa_comunicaciones_inbox", trigger, {
+            "items_json": raw_ref(inbox, INBOX_ITEMS_FIELD)})},
     }

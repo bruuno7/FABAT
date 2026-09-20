@@ -11,9 +11,20 @@
 
 - La exportación del coordinador ya está en código: `build_nodes.py` emite `fa_coordinador` (`coordinator_rpc_input`), `fa_coordinador_contexto` (`context_input`) y `fa_coordinador_entidades` (`request_input`) con la fuente exacta de `fa_operaciones.py` + `fa_coordinador.py`, sin recortes por expresiones regulares.
 - `workflow_artifacts.py` monta el grafo `fa-coordinador`: contexto → contexto público → LLM → entidades → contexto ampliado → composición → commit → resultado. El nodo del LLM se referencia por su persistent ID y el nombre de su campo de propuesta se declara explícitamente: no se inventa un nodo de IA.
-- Verificación local: 14 pruebas nuevas del artefacto del coordinador y 77 en la batería del plan, `OK`; `sandbox/test_local.py` con 44 mensajes simulados, `OK`.
+- Verificación local: 14 pruebas nuevas del artefacto del coordinador y 93 en la batería del plan, `OK`; `sandbox/test_local.py` con 44 mensajes simulados, `OK`.
 - Sigue **sin tocarse la plataforma**: no se ha creado ni instalado `fa-coordinador`, no hay trigger ni comprobación con el modelo real. `admin.py` todavía solo monta operaciones.
 - Pendiente inmediato: comando de instalación autorizado, fork de la versión publicada de operaciones, `workflows-v2.json` con el estado LIVE real y el arnés, y `fa-comunicaciones` con recuperación programada.
+
+### Actualización — Fase 2, comunicaciones y recuperación programada
+
+- **Dependencia descubierta:** `main` está roto sin el arreglo de `stage_2`. `festival.json` declara la zona `stage_2` (11 referencias) pero `phrasing.py` no tiene frases para ella y la genera con `LOC_PUBLIC[lang][zone]` directo: `motor.cases.test_cases` falla en `setUpClass` con `KeyError: 'stage_2'`. La rama de esta integración se rebasa sobre `fix/cases-ubicaciones-stage-2`, que convierte los cuatro accesos a `public_location`/`staff_location` y añade las frases en los cinco idiomas. **Ese arreglo debe entrar en `main` antes o con esta integración.**
+- `puente/src/hr/state-router.ts`: nueva ruta `POST /outbox/recover` (secreto de entrega). Un solo tick acotado que reutiliza `recoverDeliveries`: el lease decide qué se puede reintentar, así que repetir el tick no reenvía a ciegas. Rechaza límites fuera de 1..16 sin tocar la cola.
+- `motor/happyrobot/sandbox/fa_comunicaciones.py` (puro): acota el tick, planifica el reintento de inbox sin duplicados y resume resultados. `unknown` se cuenta aparte y exige atención: nunca se presenta como entregado ni autoriza reenvío automático.
+- `motor/happyrobot/sandbox/build_nodes.py`: exporta `fa_comunicaciones_recover`, `fa_comunicaciones_inbox` y `fa_comunicaciones_resumen` con la fuente exacta de operaciones más comunicaciones.
+- `workflow_artifacts.py`: grafo del tick (sin bucle) y `cron_config`, con el esquema que declara la plataforma. IDs de la plataforma verificados en solo lectura con `list_integrations`/`get_node_config_schema`: Cron `0192fff4-4da6-7712-a139-53c87250339f`, Loop `8d8ec06c-4d69-4f40-9f9d-1e1f7a1e6d7c`.
+- `admin.py`: nuevo `install-comunicaciones --workflow … --schedule "<cron>"`, que exige estar en el manifiesto, hace fork si la versión está publicada y enlaza con persistent IDs reales. **No ejecutado.**
+- Lo único del grafo del Cron que debe confirmarse contra el nodo desplegado es el campo con el que `POST /outbox/recover` publica sus entregas (`RECOVER_RESULTS_FIELD`), declarado como constante y no inventado.
+- Verificación local: 93 pruebas Python en la batería del plan y 99 pruebas Node en el puente (97 pasan, 2 omitidas). Sin ejecución real: no hay entrega, llamada ni run verificados.
 - Todos los cambios de implementación realizados hasta ese corte están commiteados y subidos.
 - La implementación se detuvo por indicación del usuario. Este documento registra el plan y el traspaso; no significa que se haya terminado ni que se deba reanudar sin pedirlo.
 - La decisión confirmada es **continuar el plan original HappyRobot/Redis**, no sustituirlo por la arquitectura MANDO/SQLite del PR #23.
@@ -131,7 +142,8 @@ Editores devueltos por la plataforma:
 2. El manifiesto no incluye todavía el arnés de pruebas.
 3. El núcleo y coordinador del commit `c738a03` no se han vuelto a exportar completos a HappyRobot. El código en Git y el workflow publicado no están sincronizados.
 4. No existen aún los nuevos workflows integrados de coordinador, comunicaciones, recuperación, voz, revisor o aprendizaje. No asumir que los nombres del diseño ya son recursos creados.
-5. No hay un Cron v2 de recuperación activado por este trabajo.
+5. No hay un Cron v2 de recuperación activado por este trabajo. La plataforma sí ofrece un trigger Cron nativo (Schedule, `0192fff4-4da6-7712-a139-53c87250339f`), que evita depender de `crons` de Vercel.
+6. `main` está roto sin `fix/cases-ubicaciones-stage-2`: `festival.json` declara `stage_2` y `phrasing.py` no tiene frases para esa zona, con acceso directo que revienta la generación de casos.
 
 ### Vercel y Redis
 
@@ -169,7 +181,8 @@ No incluir valores en este documento, código, prompts, fixtures, logs o commits
 | Pruebas iniciales contra Redis | 7 pruebas pasaron en la sesión anterior, con prefijos aislados y caducidad |
 | API de Preview con Redis real | 8 tests pasaron: permisos, deduplicación, listas JSON, CAS concurrente Telegram/teléfono, reconciliación, cuarentena, entrega simulada y diferidos |
 | Última suite Python ejecutada antes de las últimas ampliaciones | 61 tests pasaron, incluyendo las primeras pruebas del coordinador local |
-| Batería del plan tras la Fase 2 (`integracion/fase2-coordinador`) | 77 tests pasaron, incluidos los 14 del artefacto del coordinador; `test_local.py` con 44 mensajes simulados |
+| Batería del plan tras la Fase 2 (`integracion/fase2-coordinador`) | 93 tests Python pasaron (coordinador, comunicaciones y artefactos) y 99 en el puente Node (97 pasan, 2 omitidas); `test_local.py` con 44 mensajes simulados |
+| `main` sin el arreglo de `stage_2` | **Roto**: `motor.cases.test_cases` falla en `setUpClass` con `KeyError: 'stage_2'` |
 | Última suite Node ejecutada antes de las últimas ampliaciones | 95 tests pasaron; 2 suites remotas opt-in se omitieron en esa ejecución local |
 | Escenarios v1 | Los 11 escenarios existentes pasaron; 44 mensajes **simulados** |
 | Typecheck/build | Pasaron durante el trabajo; el check de Vercel del último commit también figura como satisfactorio |

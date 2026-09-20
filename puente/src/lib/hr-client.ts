@@ -1,3 +1,4 @@
+import { loadStateApiConfig, type StateApiConfig } from "./state-env.js";
 import type {
   MandoPublicReport,
   TelegramOutbound,
@@ -9,6 +10,7 @@ export type Env = {
   telegramWebhookSecret: string | undefined;
   telegramMode: "webhook" | "poll";
   hrHookTg: string | undefined;
+  stateApi?: StateApiConfig;
   hrHookTgResponse: string | undefined;
   /** Incoming Hook de `fa-rol-tg`: directorio rol↔chat_id en HappyRobot (Redis). */
   hrHookTgRoster: string | undefined;
@@ -30,6 +32,7 @@ export function loadEnv(env: NodeJS.ProcessEnv = process.env): Env {
     telegramWebhookSecret: emptyToUndef(env.TELEGRAM_WEBHOOK_SECRET),
     telegramMode: mode === "poll" ? "poll" : "webhook",
     hrHookTg: emptyToUndef(env.HR_HOOK_TG),
+    stateApi: loadStateApiConfig(env),
     hrHookTgResponse: emptyToUndef(env.HR_HOOK_TG_RESPONSE),
     hrHookTgRoster: emptyToUndef(env.HR_HOOK_TG_ROSTER),
     hrHookApiKey: emptyToUndef(env.HR_HOOK_API_KEY),

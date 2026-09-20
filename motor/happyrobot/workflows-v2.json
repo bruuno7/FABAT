@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "environment": "development",
+  "preview_url": "https://fabat-4qa23r3q0-fabat1.vercel.app",
+  "namespace": "test-pr22-6e506af",
+  "folder_id": "01a0bbc8-0fa0-74cc-be7d-e9a9c255aa9a",
+  "workflows": {
+    "operaciones": {
+      "name": "fa-pr22-operaciones",
+      "id": "01a0bbc8-0fde-77ab-937d-c26d69dddf8e",
+      "version_id": "01a0bbc8-0fec-77d8-8a67-e16efe47cfd7",
+      "editor_url": "https://platform.eu.happyrobot.ai/hackspainteam6/workflows/ytrf1jn1zefs/editor/r8iby4ztthjp",
+      "status": "draft",
+      "trigger_id": "01a0bbc8-0ff5-76f5-afc6-a0958b065cf5",
+      "response_node_id": "01a0bbd9-bc31-78d9-9c2b-372bdee613f2",
+      "api_url_variable_id": "01a0bbcc-5ee5-7ee6-bedc-4cb72f761620"
+    }
+  }
+}

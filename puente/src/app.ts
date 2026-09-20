@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import { loadEnv, type Env } from "./lib/hr-client.js";
 import { createIncidentStore, type IncidentStore } from "./hr/store.js";
 import { demoRouter, hrRouter } from "./hr/router.js";
+import { stateRouter } from "./hr/state-router.js";
 import { telegramRouter } from "./telegram/router.js";
 import {
   createStaffStore,
@@ -39,6 +40,10 @@ export function createApp(
   });
 
   app.use("/telegram", telegramRouter(env, store, staff));
+  app.use("/hr/state", stateRouter(env.stateApi, undefined, {
+    mode: env.stateApi?.deliveryMode ?? "sink", telegramToken: env.telegramBotToken,
+    allowedTelegramChats: env.stateApi?.allowedTelegramChats ?? [],
+  }));
   app.use("/hr", hrRouter(env, store));
   app.use("/demo", demoRouter(env, store));
 

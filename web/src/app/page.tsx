@@ -698,7 +698,7 @@ export default function ControlPage() {
                 }}
                 busy={busy}
                 error={actionError}
-                decidedByDefault={board.decided_by_default ?? "Mesa MANDO"}
+                decidedByDefault={board.decided_by_default ?? "Mesa ResQval"}
               />
             ) : (
               <>

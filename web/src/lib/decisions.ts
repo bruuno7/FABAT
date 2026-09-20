@@ -72,4 +72,4 @@ export function proposeSummary(row: Pick<IncidentRow, "extract">): string {
   return `Propuesta: ${triage}, asignar ${kinds.join(" + ")}`;
 }
 
-export const DECIDED_BY_DEFAULT = "Mesa MANDO";
+export const DECIDED_BY_DEFAULT = "Mesa ResQval";

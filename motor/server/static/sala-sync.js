@@ -25,9 +25,21 @@
   }
 
   function connect({ stateURL, streamURL, accept, onStatus, fetcher = root.fetch.bind(root),
-    Source = root.EventSource, later = root.setTimeout.bind(root), cancel = root.clearTimeout.bind(root) }) {
-    let source = null, timer = null, retry = null, stopped = false, inFlight = null;
+    Source = root.EventSource, later = root.setTimeout.bind(root), cancel = root.clearTimeout.bind(root), staleAfter = 0 }) {
+    let source = null, timer = null, retry = null, health = null, stopped = false, inFlight = null;
     let streamSerial = 0, delay = 2000, live = false;
+
+    // El SSE del servidor usa comentarios keepalive, invisibles a EventSource.
+    // Una lectura de verificación acotada detecta conexiones silenciosamente congeladas.
+    function armHealth() {
+      cancel(health); health = null;
+      if (stopped || !live || staleAfter <= 0) return;
+      health = later(() => {
+        health = null;
+        onStatus("stale");
+        refresh(true).finally(armHealth);
+      }, staleAfter);
+    }
 
     function schedulePoll() {
       if (stopped || live || timer !== null) return;
@@ -53,13 +65,18 @@
         const accepted = accept(state);
         if (accepted) {
           delay = 2000;
-          if (!live) onStatus("poll");
+          onStatus(live ? "live" : "poll");
+          armHealth();
         }
         return accepted;
       } catch {
-        if (!stopped && !live) {
+        if (!stopped && serial === streamSerial) {
+          live = false;
+          cancel(health); health = null;
           delay = Math.min(delay * 2, 15000);
           onStatus("offline");
+          schedulePoll();
+          scheduleReconnect();
         }
         return false;
       } finally {
@@ -97,6 +114,7 @@
           cancel(timer); timer = null;
           cancel(retry); retry = null;
           onStatus("live");
+          armHealth();
         } catch {
           active.onerror();
         }
@@ -104,6 +122,7 @@
       active.onerror = () => {
         if (stopped || active !== source) return;
         live = false;
+        cancel(health); health = null;
         onStatus("reconnecting");
         schedulePoll();
         scheduleReconnect();
@@ -122,7 +141,7 @@
     function stop() {
       stopped = true;
       if (source) source.close();
-      cancel(timer); cancel(retry);
+      cancel(timer); cancel(retry); cancel(health);
     }
 
     onStatus("connecting");

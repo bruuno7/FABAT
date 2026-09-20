@@ -395,7 +395,9 @@ const snapshot = (revision = 1) => ({
 });
 
 function mounted() {
-  const c = context(), document = mockDocument(), requests = [], pageListeners = {};
+  // El indicador de antigüedad usa reloj real en producto; el DOM de prueba controla sus timers.
+  const clock = timers();
+  const c = context({ setTimeout: clock.later, clearTimeout: clock.cancel }), document = mockDocument(), requests = [], pageListeners = {};
   let config, result = response({ ok: true }), serial = 0;
   c.crypto = { randomUUID: () => `dom-test-${++serial}` };
   c.fetch = async (url, options) => { requests.push({ url, body: JSON.parse(options.body) }); return result; };

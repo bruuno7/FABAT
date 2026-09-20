@@ -71,6 +71,7 @@
     offer_expired: "La oferta ha caducado; revisa el estado actual.",
     task_covered: "Esa necesidad ya está cubierta por otra asignación.",
     coordinator_unavailable: "No hay ningún organizador disponible que reciba la acción. Registra en Personal a alguien con rol Organizador y disponibilidad Disponible.",
+    telegram_identity_must_match_from_id: "Para el canal Telegram el contacto debe ser el ID numérico de Telegram de la persona y el identificador debe ser exactamente tg:<ese ID>. Para un organizador sin Telegram usa canal Web.",
     coordinator_required: "La persona elegida no tiene rol Organizador.",
     recipient_required: "Elige un destinatario para el aviso.",
     location_required: "El incidente no tiene ubicación confirmada; confírmala antes.",

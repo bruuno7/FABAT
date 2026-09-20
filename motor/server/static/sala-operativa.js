@@ -63,14 +63,17 @@
     return channel.status || (channel.ready === true ? "ready" : "unknown");
   }
 
-  const CONFLICTS = {
+  const EXPLAINED = {
     address_already_registered: "Ese contacto ya está registrado en otro miembro del personal. Usa el mismo identificador para actualizarlo o un contacto distinto.",
     actor_busy: "Ese miembro del personal tiene una asignación activa; libérala o espera a que termine antes de cambiar su ficha.",
     actor_unavailable: "Ese miembro del personal no está disponible ahora.",
     incident_closed: "El incidente ya está cerrado.",
     offer_expired: "La oferta ha caducado; revisa el estado actual.",
     task_covered: "Esa necesidad ya está cubierta por otra asignación.",
-    coordinator_unavailable: "No hay organizador disponible para autorizar la acción.",
+    coordinator_unavailable: "No hay ningún organizador disponible que reciba la acción. Registra en Personal a alguien con rol Organizador y disponibilidad Disponible.",
+    coordinator_required: "La persona elegida no tiene rol Organizador.",
+    recipient_required: "Elige un destinatario para el aviso.",
+    location_required: "El incidente no tiene ubicación confirmada; confírmala antes.",
     approval_expired_or_decided: "La aprobación ya caducó o se decidió.",
     approval_content_changed: "La propuesta cambió desde que la abriste; revísala de nuevo.",
     operator_review_required: "Requiere revisión del operador antes de continuar.",
@@ -99,7 +102,7 @@
           const result = await response.json().catch(() => ({}));
           if (response.status === 409) {
             await refresh(true);
-            const explained = CONFLICTS[result.error];
+            const explained = EXPLAINED[result.error];
             onMessage(explained
               ? `${explained} No se reenvió el comando.`
               : "Conflicto de versión: el estado cambió. Se ha solicitado una actualización; revisa los datos y abre de nuevo la acción. No se reenvió el comando.", true);
@@ -108,7 +111,7 @@
           if (!response.ok || result.ok !== true) {
             const message = response.status === 401 || response.status === 403
               ? "Sesión de operador o permiso insuficiente. Vuelve a identificarte y recarga."
-              : result.message || result.error || `No se pudo registrar (HTTP ${response.status}).`;
+              : EXPLAINED[result.error] || result.message || result.error || `No se pudo registrar (HTTP ${response.status}).`;
             onMessage(message, true);
             return { ok: false, error: result.error || "request" };
           }

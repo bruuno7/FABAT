@@ -67,7 +67,11 @@ class DeliveryWorker:
             elif channel == "phone":
                 provider = self._happyrobot(delivery, "HR_WORKFLOW_DISPATCH")
             elif channel == "happyrobot":
-                provider = self._happyrobot(delivery, "HR_WORKFLOW_RAPIDO")
+                provider = (
+                    self._happyrobot_coordination(delivery)
+                    if delivery["purpose"] in {"offer", "task", "status", "question", "cancelled"}
+                    else self._happyrobot(delivery, "HR_WORKFLOW_RAPIDO")
+                )
             else:
                 provider = "local"
             self.service.settle(did, lease, "delivered", provider_id=provider)
@@ -182,6 +186,90 @@ class DeliveryWorker:
                 ],
             ]
         return []
+
+    def _happyrobot_coordination(self, delivery: Document) -> str:
+        """Entrega a HappyRobot la coordinación que decidió MANDO (override).
+
+        Se lanza `fa-despacho-tg` con el modo normal: HappyRobot ofrece con sus
+        propios botones y lleva la conversación (aceptar/ETA/preguntas al
+        informante). MANDO no manda el mensaje ni lo redacta: sólo aporta el hecho.
+        """
+        workflow = os.environ.get("HR_WORKFLOW_TG_OFFER", "").strip()
+        if not workflow or not abanico.api_key() or not abanico.api_base().strip():
+            raise OperationalError("happyrobot_unconfigured", 503)
+        did = str(delivery["id"])
+        lease = str(delivery["lease_token"])
+        context = self.service.execute(
+            {
+                "command_id": "start:" + did,
+                "kind": "delivery_start",
+                "delivery_id": did,
+                "lease_token": lease,
+            },
+            principal="worker",
+            scope="system",
+        )
+        callback = self.service.capability(did)
+        base = os.environ.get("MANDO_PUBLIC_URL", "").strip().rstrip("/")
+        if not base.startswith("https://"):
+            raise OperationalError("public_callback_unconfigured", 503)
+        payload = cast(Document, delivery.get("payload") or {})
+        rol = str(payload.get("role") or "")
+        chat = str(payload.get("chat_id") or "")
+        alias = str(payload.get("alias_staff") or "")
+        # HappyRobot elige al puesto de ese rol según SU roster. Para que el aviso
+        # llegue exactamente a la persona que eligió el operador, se le asigna antes
+        # ese puesto; así el despacho y la conversación apuntan a su chat.
+        roster = os.environ.get("HR_HOOK_TG_ROSTER", "").strip()
+        if roster and rol and chat:
+            try:
+                claim = httpx.post(
+                    roster,
+                    json={"action": "claim", "role": rol, "chat_id": chat, "alias": alias},
+                    timeout=8,
+                )
+                claim.raise_for_status()
+            except (httpx.HTTPError, ValueError) as exc:
+                raise OperationalError("happyrobot_roster_failed", 503) from exc
+        request: Document = {
+            "mode": "new",
+            "incident_id": str(delivery["incident_id"] or ""),
+            "correlation_id": str(delivery["incident_id"] or ""),
+            "texto": self.service.public_text(str(delivery["text"])),
+            "summary": self.service.public_text(str(delivery["text"])),
+            "tipo": str(payload.get("tipo") or "otro"),
+            "zona": context["zone"] or "",
+            "gravedad": str(payload.get("gravedad") or ""),
+            "prioridad": payload.get("prioridad"),
+            "alias_informante": str(payload.get("alias_informante") or "Asistente"),
+            "reporter_chat_id": str(payload.get("reporter_chat_id") or ""),
+            "rol": rol,
+            "roles_orden": rol,
+            "instruccion_staff": str(payload.get("instruccion_staff") or ""),
+            "assignment_id": context["assignment_id"],
+            "expected_assignment_version": context["initial_assignment_version"],
+            "override": "true",
+            "callback_url": base + "/hr/events",
+            "callback_token": callback,
+        }
+        response = httpx.post(
+            f"{abanico.api_base().strip().rstrip('/')}/workflows/{workflow}/runs",
+            json={
+                "environment": os.environ.get("HR_ENV") or "development",
+                "payload": request,
+            },
+            headers={"Authorization": f"Bearer {abanico.api_key()}"},
+            timeout=8,
+        )
+        response.raise_for_status()
+        result = response.json()
+        queued = result.get("queued_run_ids")
+        run_id = result.get("run_id") or (
+            queued[0] if isinstance(queued, list) and queued else ""
+        )
+        if not isinstance(run_id, str) or not run_id:
+            raise ValueError("missing_run_id")
+        return run_id
 
     def _happyrobot(self, delivery: Document, variable: str) -> str:
         workflow = os.environ.get(variable, "").strip()

@@ -1,0 +1,21 @@
+# Contexto que se sube a Railway en `railway up`: fuera secretos, datos locales y artefactos.
+.git
+.venv
+**/__pycache__
+**/*.pyc
+.DS_Store
+.env
+.env.*
+!.env.example
+motor/server/contacts.local.json
+motor/server/data
+motor/harness/runs
+motor/harness/out
+motor/cases/data/train.jsonl
+motor/cases/data/heldout.jsonl
+web/node_modules
+puente/node_modules
+web/.next
+dist
+coverage
+*.log

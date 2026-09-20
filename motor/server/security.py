@@ -182,8 +182,8 @@ class SecurityGuard:
         public_intake = path == '/api/personal/status' or path.startswith('/api/personal/order/') or path in ('/api/chat', '/api/report', '/api/strike') or (
             path.startswith('/api/report/') and path.endswith('/answer'))
         if os.environ.get('MANDO_OPERATIONAL') == '1' and (
-                path == '/api/operations/telegram' or path == '/hr/events'
-                or path.startswith('/hr/tools/')):
+                path in ('/api/operations/telegram', '/api/operations/happyrobot')
+                or path == '/hr/events' or path.startswith('/hr/tools/')):
             public_intake = True
         headers = Request(scope).headers
         cors = _cors(headers.get('origin'))

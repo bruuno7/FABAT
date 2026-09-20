@@ -112,3 +112,7 @@ class State(TypedDict):
     deliveries: dict[str, Delivery]
     events: list[Event]
     reservations: dict[str, str]
+    # Espejo de solo lectura de la coordinación que decide HappyRobot por Telegram
+    # (`fa-entrada-tg` / `fa-despacho-tg` / `fa-respuesta-tg`). No es autoridad:
+    # la interfaz lo pinta y los botones quedan para override humano.
+    hr_mirror: NotRequired[Document]

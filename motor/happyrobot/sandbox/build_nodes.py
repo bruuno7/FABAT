@@ -65,6 +65,7 @@ INPUTS = {
     'fa_respuesta': {'inc_json': '{{%s.value}}' % INC_R, 'seats_json': '{{%s.value}}' % SEATS_R, 'kind': '{{%s.kind}}' % P_RES,
                      'callback_data': '{{%s.data.callback_data}}' % T_RES, 'assignment_id': '{{%s.assignment_id}}' % P_RES,
                      'chat_id': '{{%s.data.chat_id}}' % T_RES, 'alias': '{{%s.data.reporter.display_name}}' % T_RES, 'now': '{{time.now_iso}}'},
+    'fa_espejo': {'payload_json': '{{PAYLOAD.payload_json}}', 'inc_json': '{{INC.value}}'},
 }
 
 
@@ -105,7 +106,22 @@ def updates(name, **override):
     return json.dumps({'configuration': n['configuration']})
 
 
+def node_add(name, parent, label=None, **override):
+    """Nodo `action` (Sandbox) listo para update_workflow_nodes action=add."""
+    data = json.loads(updates(name, **override))
+    return json.dumps([{
+        'type': 'action', 'event_id': plate.EV['py'],
+        'name': label or name.replace('fa_', '').replace('_', ' '),
+        'parent_node_id': parent, 'configuration': data['configuration'],
+    }])
+
+
 if __name__ == '__main__':
-    name = sys.argv[1]
-    over = dict(a.split('=') for a in sys.argv[2:])
-    print(updates(name, **over))
+    if sys.argv[1] == '--add':
+        args = sys.argv[2:]
+        kwargs = dict(a.split('=', 1) for a in args if '=' in a)
+        print(node_add(args[0], args[1], kwargs.pop('label', None) or None, **kwargs))
+    else:
+        name = sys.argv[1]
+        over = dict(a.split('=') for a in sys.argv[2:])
+        print(updates(name, **over))

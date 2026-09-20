@@ -124,6 +124,15 @@ dialog::backdrop { background: #071120aa; }
   .resource-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* Override: la coordinación normal la lleva HappyRobot por Telegram. Estos avisos
+   solo aparecen cuando el operador va a anular una decisión ya tomada por él. */
+.override-hint { margin: .5rem 0 0; padding: .5rem .6rem; border-left: 3px solid #d97706; background: #fffbeb; border-radius: 6px; font-size: .88rem; }
+.override-notice { margin: 0 0 .6rem; padding: .6rem .7rem; border-left: 3px solid #d97706; background: #fffbeb; border-radius: 6px; }
+.override-notice p { margin: 0 0 .4rem; font-size: .9rem; }
+.override-notice label { display: flex; gap: .5rem; align-items: flex-start; font-size: .9rem; }
+@media (prefers-color-scheme: dark) {
+  .override-hint, .override-notice { background: #3a2c0a; border-left-color: #f59e0b; }
+}
 @media (max-width: 700px) {
   .sidebar { position: static; width: auto; padding: .8rem; }
   .brand { padding: .3rem .3rem .8rem; }

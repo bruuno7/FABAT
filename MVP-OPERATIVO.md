@@ -34,12 +34,53 @@ La instalación limpia, aceptación en navegador y validación del despliegue so
 | `GET /api/operations/stream` | SSE con revisión y reconexión; recuperar snapshot tras desconexión |
 | `POST /api/operations/command` | Cookie/token de operador, `command_id`, `kind` y campos; mutaciones de entidad con `expected_version` |
 | `POST /api/operations/telegram` | Update original y `X-Mando-Bridge-Token` igual al secreto compartido |
+| `POST /api/operations/happyrobot` | Espejo de solo lectura (`tg_incident`, `tg_assignment`, `tg_staff`) y `X-Mando-Bridge-Token`; no crea ofertas ni reserva capacidad |
 | `POST /hr/events` | Resultado telefónico con `X-Mando-Token` **de esa entrega**, no el secreto raíz |
 | `POST /hr/tools/{contexto,acciones_posibles,analizar_situacion,decidir,memoria/guardar,cambio}` | Capacidad vinculada a entrega; HappyRobot propone y MANDO valida |
 
 Una clave `command_id` repetida con el mismo contenido recupera su resultado, no repite efectos. Reutilizarla con contenido diferente se rechaza. Un `expected_version` antiguo provoca conflicto: revisar el estado y generar una decisión nueva, no sobrescribir por fuerza.
 
-Los updates de Telegram conservan `update_id` y se registran en SQLite antes de que el puente confirme recepción. Repetición idéntica es idempotente; reutilización con contenido distinto se rechaza. Los workflows Telegram/Redis heredados no deben asignar recursos en paralelo al recorrido operativo.
+Los updates de Telegram conservan `update_id` y se registran en SQLite antes de que el puente confirme recepción. Repetición idéntica es idempotente; reutilización con contenido distinto se rechaza.
+
+### Quién decide a quién avisar
+
+El ciudadano escribe al bot y el puente entrega el mismo aviso a MANDO (autoridad y
+pantalla) y a HappyRobot (`fa-entrada-tg` / `fa-despacho-tg` / `fa-respuesta-tg`), que
+decide el rol (médico, bomberos, policía, staff…), ofrece con botones aceptar/no
+puedo, pide y devuelve la ETA, traslada las preguntas del equipo al informante y su
+respuesta de vuelta, y cierra el incidente. Cada decisión se refleja en MANDO por
+`POST /api/operations/happyrobot` y aparece en el snapshot como `telegram`: personal
+disponible, asignaciones por Telegram (rol, alias, estado, ETA, desde dónde) y
+preguntas. Es un espejo de **solo lectura**: no crea ofertas, no reserva capacidad ni
+toca versiones de asignación.
+
+La coordinación normal es de HappyRobot. Los botones de la Sala sobre una asignación
+que HappyRobot ya decidió se presentan como **override** y exigen confirmación
+explícita de que el operador anula esa decisión; sin decisión de HappyRobot, siguen
+siendo la coordinación operativa normal. Los workflows Telegram/Redis no deben asignar
+recursos por su cuenta: su efecto en MANDO es el espejo, no una segunda autoridad.
+
+### Quién manda el mensaje
+
+`MANDO_HAPPYROBOT_DECIDES=1` (por defecto): MANDO **no auto-oferta** los avisos que
+entran por el bot. Deciden HappyRobot y su despacho; MANDO sólo espeja. Si el operador
+hace override, MANDO registra el hecho y delega la coordinación en HappyRobot: lanza
+`fa-despacho-tg` (`HR_WORKFLOW_TG_OFFER` con su slug/UUID) para que sea HappyRobot
+quien ofrezca, recoja aceptación/ETA y traslade las preguntas del equipo al informante.
+MANDO no redacta ni envía ese Telegram.
+
+El espejo se compone en el workflow con el nodo Sandbox **`Espejo a MANDO`**
+(`motor/happyrobot/sandbox/fa_espejo.py`): toma el `payload_json` ya construido y el
+incidente (`inc_json`) y añade la lista `mirror`. Se regenera y despliega así:
+
+```bash
+cd motor/happyrobot/sandbox
+python3 build_nodes.py --add fa_espejo <PID-nodo-padre> label="Espejo a MANDO" \
+  PAYLOAD=<PID-del-sandbox-anterior> INC=<PID-de-Leer-incidente>   # → update_workflow_nodes action=add
+```
+
+Publicado en `development`: `fa-despacho-tg` v7 y `fa-respuesta-tg` v6 (cada una con su
+nodo `Espejo a MANDO` y el `telegram_send` de coordinación apuntando a él).
 
 ### HappyRobot: correlación, no fe en la conversación
 

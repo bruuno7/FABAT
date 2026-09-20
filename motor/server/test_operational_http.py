@@ -432,7 +432,10 @@ class OperationalHTTPTest(unittest.TestCase):
         self.assertEqual(self.records("assignments")[0]["eta_min"], 6)
 
     def test_telegram_transient_failure_is_retryable(self) -> None:
-        self.telegram(self.message(500, 71, "Persona desmayada en escenario 1"))
+        # Aviso registrado por el operador (no por el bot): MANDO sí oferta y sigue
+        # usando su propio bot de Telegram cuando no delega en HappyRobot.
+        self.register("telegram", "tg:71")
+        self.command("report", text="Una persona desmayada", zone="front_pit")
         delivery = next(
             d for d in self.store.claim("worker") if d["channel"] == "telegram"
         )
@@ -520,6 +523,142 @@ class OperationalHTTPTest(unittest.TestCase):
             ).status_code,
             403,
         )
+
+    def test_staff_with_active_task_does_not_open_a_new_incident(self) -> None:
+        # Las preguntas/notas del personal en servicio no deben crear avisos nuevos.
+        self.register("telegram", "tg:71")
+        self.command("report", text="Una persona desmayada", zone="front_pit")
+        # El planificador ya oferta al personal libre: tg:71 tiene una tarea activa.
+        self.assertEqual(len(self.records("assignments")), 1)
+        self.assertEqual(self.records("assignments")[0]["actor_id"], "tg:71")
+        self.telegram(self.message(500, 71, "¿Cuántas personas afectadas?"))
+        self.telegram(self.message(501, 71, "Salgo desde la puerta A"))
+        self.assertEqual(len(self.records("incidents")), 1)
+
+    def test_happyrobot_decides_for_bot_reports_and_mando_does_not_offer(self) -> None:
+        # Decisión 100% HappyRobot: un aviso que entra por el bot no genera ofertas
+        # de MANDO, ni siquiera habiendo personal libre de sobra.
+        self.register("telegram", "tg:81")
+        self.telegram(self.message(600, 90, "Persona desmayada en el escenario 1"))
+        incident = self.records("incidents")[0]
+        self.assertIn("coordinacion_happyrobot", incident["why_waiting"])
+        self.assertEqual(self.records("assignments"), [])
+        self.assertEqual(
+            [d for d in self.records("deliveries") if d["channel"] == "telegram"], []
+        )
+
+    def test_operator_override_routes_the_offer_through_happyrobot(self) -> None:
+        # El operador anula la decisión de HappyRobot: MANDO crea la asignación, pero
+        # quien manda el mensaje y conversa es HappyRobot.
+        self.store.telegram_via_happyrobot = True
+        self.register("telegram", "tg:82")
+        self.telegram(self.message(601, 91, "Persona desmayada en el escenario 1"))
+        incident = self.records("incidents")[0]
+        self.command(
+            "offer",
+            incident_id=incident["id"],
+            actor_id="tg:82",
+            role="medico",
+            expected_version=incident["version"],
+        )
+        delivery = next(d for d in self.records("deliveries") if d["channel"] == "happyrobot")
+        self.assertEqual(delivery["purpose"], "offer")
+        self.assertEqual(delivery["recipient_id"], "tg:82")
+        # MANDO no manda nada por su bot: delega el mensaje en HappyRobot.
+        self.assertEqual(
+            [d for d in self.records("deliveries") if d["channel"] == "telegram"], []
+        )
+
+        claimed = next(
+            item for item in self.store.claim("worker") if item["id"] == delivery["id"]
+        )
+        self.assertEqual(claimed["payload"]["chat_id"], "82")
+
+        seen: list[Document] = []
+
+        def fake_post(url: str, **kwargs: object) -> httpx.Response:
+            seen.append(cast(Document, kwargs["json"]))
+            return httpx.Response(
+                200, json={"run_id": "run-offer-1"}, request=httpx.Request("POST", url)
+            )
+
+        with (
+            patch("motor.server.operational_worker.httpx.post", side_effect=fake_post),
+            patch.dict(
+                os.environ,
+                {
+                    "HR_WORKFLOW_TG_OFFER": "wf-tg-offer",
+                    "HR_API_KEY": "synthetic-hr-key",
+                    "HR_API_BASE": "https://hr.invalid/api/v2",
+                    "MANDO_PUBLIC_URL": "https://mando.invalid/festival",
+                },
+            ),
+        ):
+            DeliveryWorker(self.store, external=True)._deliver(claimed)
+        payload = cast(Document, seen[0]["payload"])
+        self.assertEqual(payload["mode"], "new")
+        self.assertEqual(payload["rol"], "medico")
+        self.assertEqual(payload["roles_orden"], "medico")
+        self.assertEqual(payload["reporter_chat_id"], "91")
+        self.assertEqual(payload["correlation_id"], incident["id"])
+        self.assertEqual(payload["zona"], "front_pit")
+        self.assertEqual(payload["override"], "true")
+        # HappyRobot es quien manda el mensaje y lleva la conversación.
+        self.assertIn("¿Puedes atender el aviso", payload["texto"])
+        self.assertEqual(
+            next(d for d in self.records("deliveries") if d["id"] == delivery["id"])["status"],
+            "delivered",
+        )
+
+
+    def test_reset_incidents_clears_state_and_is_operator_only(self) -> None:
+        self.register("telegram", "tg:91")
+        self.command("report", text="Una persona desmayada", zone="front_pit")
+        self.assertNotEqual(self.records("incidents"), [])
+        self.assertNotEqual(self.records("assignments"), [])
+
+        # Sin confirmación explícita no se toca nada.
+        with self.assertRaises(OperationalError) as denied:
+            self.store.execute(
+                {"command_id": "reset-1", "kind": "reset_incidents"},
+                principal="operador-1",
+                scope="operator",
+                channel="web",
+            )
+        self.assertEqual(denied.exception.code, "confirmation_required")
+        self.assertNotEqual(self.records("incidents"), [])
+
+        # El alcance de Telegram no puede vaciar el estado.
+        with self.assertRaises(OperationalError) as forbidden:
+            self.store.execute(
+                {"command_id": "reset-2", "kind": "reset_incidents", "confirm": True},
+                principal="tg:91",
+                scope="telegram",
+                channel="telegram",
+            )
+        self.assertEqual(forbidden.exception.code, "forbidden")
+
+        body = {
+            "command_id": "reset-known",
+            "kind": "reset_incidents",
+            "confirm": True,
+        }
+        reset = self.client.post("/api/operations/command", json=body)
+        self.assertEqual(reset.status_code, 200, reset.text)
+        self.assertEqual(reset.json()["removed"]["incidents"], 1, reset.text)
+        state = self.snapshot()
+        for key in ("incidents", "assignments", "approvals", "deliveries"):
+            self.assertEqual(state[key], [], key)
+        self.assertEqual(state["telegram"]["assignments"], [])
+        # Queda el rastro del reinicio y el personal sigue registrado.
+        self.assertEqual([e["kind"] for e in state["events"]], ["reset_incidents"])
+        self.assertEqual([a["id"] for a in state["actors"]], ["tg:91"])
+        self.assertEqual(state["actors"][0]["availability"], "available")
+
+        # La misma `command_id` no vuelve a reiniciar.
+        again = self.client.post("/api/operations/command", json=body)
+        self.assertEqual(again.status_code, 200, again.text)
+        self.assertTrue(again.json()["duplicate"])
 
 
 if __name__ == "__main__":

@@ -117,6 +117,11 @@ payload = {'event': 'agent_reply', 'correlation_id': s(input_data.get('correlati
            'extract': {'incident_type': tipo, 'sector': zona or 'desconocido', 'severity': sev,
                        'triage_color': s(input_data.get('triage'), 20) or 'desconocido', 'summary': s(input_data.get('description'), 300)}}
 incident_out = ctx_inc if mode not in ('new', 'chat', 'answer_availability') else ('none' if mode != 'new' else s(input_data.get('correlation_id'), 60))
+if mode == 'new':
+    # Espejo para la interfaz: el aviso que HappyRobot ha decidido atender.
+    payload['mirror'] = [{'type': 'tg_incident', 'id': incident_out, 'texto': texto, 'tipo': tipo, 'zona': zona,
+                          'gravedad': GRAVEDAD.get(sev, 'urgente'), 'alias_informante': s(input_data.get('alias'), 40),
+                          'recursos_requeridos': []}]
 output = {'payload_json': dumps(payload), 'has_reply': 'true' if (chat_id and reply) else 'false', 'mode': mode, 'hito': hito,
           'relacion': relacion, 'incident_id': incident_out, 'role': role, 'minutes': -1 if minutes is None else minutes,
           'roles_orden_json': dumps(roles), 'pregunta': pregunta, 'instruccion_staff': instr_staff, 'zona': zona, 'tipo': tipo,

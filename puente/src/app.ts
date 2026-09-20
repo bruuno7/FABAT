@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import { loadEnv, type Env } from "./lib/hr-client.js";
 import { createIncidentStore, type IncidentStore } from "./hr/store.js";
 import { demoRouter, hrRouter } from "./hr/router.js";
+import { operationalHrRouter } from "./hr/operational-router.js";
 import { stateRouter } from "./hr/state-router.js";
 import { telegramRouter } from "./telegram/router.js";
 import { operationalReadiness, operationalTelegramRouter } from "./telegram/operational.js";
@@ -54,6 +55,9 @@ export function createApp(
     allowedTelegramChats: env.stateApi?.allowedTelegramChats ?? [],
   }));
   if (env.mandoOperational) {
+    // HappyRobot sigue decidiendo, pero sólo puede reflejar y hablar por el bot:
+    // el espejo va a MANDO y la coordinación (ofertas, capacidad) no se toca aquí.
+    app.use("/hr", operationalHrRouter(env));
     app.use(["/hr", "/demo"], (_req, res) => {
       res.status(409).json({ ok: false, error: "legacy_route_disabled" });
     });

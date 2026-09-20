@@ -125,12 +125,18 @@ def create_operational_app(*, port: int = 8000) -> FastAPI:
     )
     data_path.parent.mkdir(parents=True, exist_ok=True)
     festival = cast(Document, load_festival())
+    # HappyRobot decide por Telegram; MANDO refleja y sólo actúa si el operador
+    # hace override. La entrega por Telegram se delega a HappyRobot cuando hay
+    # workflow configurado para ello.
+    happyrobot_decides = os.environ.get("MANDO_HAPPYROBOT_DECIDES", "1") != "0"
     service = OperationalService(
         data_path,
         festival,
         callback_secret=os.environ.get("HR_SECRET", ""),
         workflow_enabled=bool(os.environ.get("HR_WORKFLOW_RAPIDO")),
         control_chat=os.environ.get("MANDO_CONTROL_CHAT_ID", ""),
+        happyrobot_plans_telegram=happyrobot_decides,
+        telegram_via_happyrobot=bool(os.environ.get("HR_WORKFLOW_TG_OFFER", "").strip()),
     )
     worker = DeliveryWorker(
         service, external=os.environ.get("MANDO_EXTERNAL_DELIVERY") == "1"
@@ -232,6 +238,22 @@ def create_operational_app(*, port: int = 8000) -> FastAPI:
             service.receive_telegram,
             update,
         )
+
+    @app.post("/api/operations/happyrobot", response_model=None)
+    async def happyrobot_mirror(request: Request) -> Document:
+        """Espejo de solo lectura de lo que decide HappyRobot por Telegram.
+
+        El puente lo alimenta tras cada oferta, aceptación, ETA, hito o pregunta.
+        No sustituye a la autoridad: no crea ofertas ni reserva capacidad.
+        """
+        expected = os.environ.get("MANDO_BRIDGE_SECRET", "")
+        supplied = request.headers.get("x-mando-bridge-token", "")
+        if not expected or not hmac.compare_digest(
+            expected.encode(), supplied.encode()
+        ):
+            raise OperationalError("bridge_forbidden", 403)
+        body = await json_body(request)
+        return await run_in_threadpool(service.receive_happyrobot, body)
 
     async def callback_context(
         request: Request, body: Document

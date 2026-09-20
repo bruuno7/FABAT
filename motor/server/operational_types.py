@@ -1,7 +1,7 @@
 """Private persisted records for the operational authority."""
 from __future__ import annotations
 
-from typing import TypeAlias, TypedDict
+from typing import NotRequired, TypeAlias, TypedDict
 
 JSON: TypeAlias = None | bool | int | float | str | list["JSON"] | dict[str, "JSON"]
 Document: TypeAlias = dict[str, JSON]
@@ -43,6 +43,7 @@ class Incident(Entity):
     updates: list[Update]
     life_threat: bool
     merged_into: str | None
+    review_required: NotRequired[bool]
 
 
 class Assignment(Entity):
@@ -56,6 +57,7 @@ class Assignment(Entity):
     expires_at: float
     reason: str
     communication: Document
+    followup_confirmed: NotRequired[bool]
 
 
 class Approval(Entity):

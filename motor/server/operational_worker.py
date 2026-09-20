@@ -185,7 +185,7 @@ class DeliveryWorker:
 
     def _happyrobot(self, delivery: Document, variable: str) -> str:
         workflow = os.environ.get(variable, "").strip()
-        if not workflow or not abanico.api_key() or not abanico.api_base():
+        if not workflow or not abanico.api_key() or not abanico.api_base().strip():
             raise OperationalError("happyrobot_unconfigured", 503)
         did = str(delivery["id"])
         lease = str(delivery["lease_token"])
@@ -200,7 +200,7 @@ class DeliveryWorker:
             scope="system",
         )
         callback = self.service.capability(did)
-        base = os.environ.get("MANDO_PUBLIC_URL", "").rstrip("/")
+        base = os.environ.get("MANDO_PUBLIC_URL", "").strip().rstrip("/")
         if not base.startswith("https://"):
             raise OperationalError("public_callback_unconfigured", 503)
         if delivery["channel"] == "phone":
@@ -222,7 +222,7 @@ class DeliveryWorker:
                 "correlation_id": did,
                 "to_number": number,
                 "role": "equipo operativo",
-                "order_text": delivery["text"],
+                "order_text": self.service.public_text(str(delivery["text"])),
                 "zone_spoken": context["zone"],
                 "priority": "operativa",
                 "callback_url": base + "/hr/events",
@@ -252,7 +252,7 @@ class DeliveryWorker:
                 "callback_token": callback,
             }
         response = httpx.post(
-            f"{abanico.api_base()}/workflows/{workflow}/runs",
+            f"{abanico.api_base().strip().rstrip('/')}/workflows/{workflow}/runs",
             json={
                 "environment": os.environ.get("HR_ENV") or "development",
                 "payload": payload,

@@ -3,16 +3,16 @@
 Install with ``app.add_middleware(SecurityGuard)`` and use ``require_operator``
 for conditional operator actions. Tokens never belong in URLs or browser storage.
 """
-from collections import OrderedDict
 import hashlib
 import hmac
 import ipaddress
-from http.cookies import CookieError, SimpleCookie
 import json
 import math
 import os
 import posixpath
 import time
+from collections import OrderedDict
+from http.cookies import CookieError, SimpleCookie
 from urllib.parse import urlsplit
 
 from starlette.exceptions import HTTPException
@@ -65,7 +65,7 @@ def _signature(value, token):
 
 def _auth_status(scope):
     request = Request(scope)
-    if not _public() and not os.environ.get('MANDO_OPERATORS', '').strip() and request.client and request.client.host in ('127.0.0.1', '::1', 'localhost', 'testclient'):
+    if not _public() and not os.environ.get('MANDO_OPERATORS', '').strip() and not os.environ.get('MANDO_OPERATOR_TOKEN', '').strip() and request.client and request.client.host in ('127.0.0.1', '::1', 'localhost', 'testclient'):
         return 0
     from .multi import configured
     tokens = [r['token'] for r in configured()]

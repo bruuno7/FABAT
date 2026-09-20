@@ -57,6 +57,18 @@ class OperationalTest(unittest.TestCase):
     def records(self, collection: str) -> list[Document]:
         return cast(list[Document], self.store.state()[collection])
 
+    def assert_rejected_without_mutation(self, before: Document, count: int = 1) -> None:
+        after = self.store.state()
+        self.assertEqual(
+            {k: v for k, v in before.items() if k not in {"revision", "events"}},
+            {k: v for k, v in after.items() if k not in {"revision", "events"}},
+        )
+        previous = cast(list[Document], before["events"])
+        events = cast(list[Document], after["events"])
+        self.assertEqual(events[:len(previous)], previous)
+        self.assertEqual([e["kind"] for e in events[len(previous):]], ["command.rejected"] * count)
+        self.assertEqual(after["revision"], cast(int, before["revision"]) + count)
+
     def record(self, collection: str, identifier: str) -> Document:
         return next(item for item in self.records(collection) if item["id"] == identifier)
 
@@ -150,7 +162,7 @@ class OperationalTest(unittest.TestCase):
                 self.store.execute({"command_id": f"forbidden-{index}", **command},
                                    principal="bob", scope="telegram", channel="telegram")
             self.assertEqual(denied.exception.status, 403)
-        self.assertEqual(before, self.store.state())
+        self.assert_rejected_without_mutation(before, 3)
 
     def test_wrong_transport_and_body_principal_are_rejected(self) -> None:
         self.identify("alice")
@@ -472,7 +484,7 @@ class OperationalTest(unittest.TestCase):
                 {"kind": "notify", "actor_id": "coordinator", "text": "No debe enviarse"},
                 {"kind": "offer", "actor_id": "coordinator", "role": "medico"},
             ])
-        self.assertEqual(before, self.store.state())
+        self.assert_rejected_without_mutation(before)
 
     def test_competing_actions_roll_back_reservations_and_outbox(self) -> None:
         self.register()
@@ -484,7 +496,7 @@ class OperationalTest(unittest.TestCase):
                 {"kind": "offer", "actor_id": "medic", "role": "medico"},
                 {"kind": "offer", "actor_id": "medic", "role": "medico"},
             ])
-        self.assertEqual(before, self.store.state())
+        self.assert_rejected_without_mutation(before)
         self.store.reconcile()
         self.assertEqual(len(self.records("assignments")), 1)
 

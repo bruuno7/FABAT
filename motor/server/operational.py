@@ -53,7 +53,8 @@ FIELDS = {
     "register_actor": {"actor_id", "name", "roles", "channel", "address", "zone", "availability"},
     "identify": {"actor_id", "name", "channel", "address", "zone"},
     "report": {"text", "zone"},
-    "update": {"incident_id", "text", "zone", "expected_version"},
+    "update": {"incident_id", "text", "zone", "expected_version", "confirmed"},
+    "followup": {"assignment_id", "expected_version", "reason"},
     "offer": {"incident_id", "actor_id", "role", "task_id", "expected_version", "ttl_seconds"},
     "accept": {"assignment_id", "expected_version"},
     "decline": {"assignment_id", "expected_version", "reason"},
@@ -229,6 +230,7 @@ class OperationalStore:
             self._db.execute("PRAGMA busy_timeout=10000")
             self._db.execute("CREATE TABLE IF NOT EXISTS operational_state (id INTEGER PRIMARY KEY CHECK(id=1), body TEXT NOT NULL)")
             self._db.execute("CREATE TABLE IF NOT EXISTS operational_commands (id TEXT PRIMARY KEY, content_hash TEXT NOT NULL, result TEXT NOT NULL)")
+            self._db.execute("CREATE TABLE IF NOT EXISTS operational_rejections (id TEXT PRIMARY KEY)")
             self._db.execute("INSERT OR IGNORE INTO operational_state VALUES (1, ?)", (_encode(initial),))
             with self._transaction() as (data, _):
                 if data["schema"] != 1 or data["zones"] != zones:
@@ -270,6 +272,25 @@ class OperationalStore:
 
     def execute(self, command: Document, *, principal: str = "operator",
                 scope: str = "operator", channel: str = "web") -> Document:
+        try:
+            return self._execute(command, principal=principal, scope=scope, channel=channel)
+        except OperationalError as exc:
+            if exc.status < 500:
+                # Solo códigos e identidad autenticada; nunca el cuerpo rechazado.
+                kind = command.get("kind") if isinstance(command, dict) else None
+                kind = kind if isinstance(kind, str) and kind in self.command_fields else "invalid"
+                who = principal if isinstance(principal, str) and ID.fullmatch(principal) else "unverified"
+                cid = command.get("command_id") if isinstance(command, dict) else None
+                key = _hash([cid if isinstance(cid, str) else "invalid", who, kind, exc.code])
+                with self._transaction() as (data, now):
+                    inserted = self._db.execute("INSERT OR IGNORE INTO operational_rejections VALUES (?)", (key,))
+                    if inserted.rowcount:
+                        self._event(data, now, "command.rejected", who)
+                        data["events"][-1]["summary"] = f"{kind}: {exc.code}"
+            raise
+
+    def _execute(self, command: Document, *, principal: str,
+                 scope: str, channel: str) -> Document:
         _bounded_json(command)
         if not isinstance(command, dict) or len(_encode(command)) > 16384:
             raise OperationalError("invalid_command", 400)
@@ -331,7 +352,7 @@ class OperationalStore:
                          for incident in data["incidents"].values()]
             assignments = [{k: v for k, v in _document(assignment).items() if k in {
                 "id", "version", "incident_id", "actor_id", "role", "task_id", "zone",
-                "status", "eta_min", "expires_at",
+                "status", "eta_min", "expires_at", "reason", "followup_confirmed",
             }}
                            for assignment in sorted(data["assignments"].values(),
                                                     key=lambda row: assignment_order.get(row["id"], -1))]
@@ -343,7 +364,7 @@ class OperationalStore:
             deliveries = [
                 {k: v for k, v in _document(delivery).items() if k in {
                     "id", "version", "channel", "purpose", "status", "attempts",
-                    "incident_id", "assignment_id", "last_error",
+                    "incident_id", "assignment_id", "last_error", "recipient_id", "text",
                 }} for delivery in data["deliveries"].values()
             ]
             snapshot = _document({
@@ -353,6 +374,10 @@ class OperationalStore:
                 "deliveries": deliveries, "events": data["events"][-500:],
             })
             return cast(Document, _public(snapshot, [a["address"] for a in data["actors"].values()]))
+
+    def public_text(self, text: str) -> str:
+        with self._transaction() as (data, _):
+            return cast(str, _public(text, [a["address"] for a in data["actors"].values()]))
 
     def recipient(self, actor_id: str) -> Document:
         with self._transaction() as (data, _):
@@ -396,16 +421,25 @@ class OperationalStore:
         actor = data["actors"].get(recipient)
         if actor is None or not actor["address"]:
             return
+        local_only = actor["channel"] == "phone" and purpose != "offer"
         did = "delivery-" + secrets.token_hex(12)
         body = dict(payload or {})
+        if local_only:
+            body["requested_channel"] = "phone"
+            self._event(data, now, "communication.local_required", "system", incident_id)
+            data["events"][-1]["summary"] = (
+                "Canal telefónico limitado a ofertas: coordinación debe comunicar " + purpose
+            )
         if assignment:
             body.update(assignment_id=assignment["id"], expected_version=assignment["version"],
                         destination_zone_id=assignment["zone"])
         data["deliveries"][did] = {
-            "id": did, "version": 1, "channel": actor["channel"], "recipient_id": recipient,
+            "id": did, "version": 1, "channel": "web" if local_only else actor["channel"], "recipient_id": recipient,
             "purpose": purpose, "text": text, "incident_id": incident_id,
-            "assignment_id": assignment["id"] if assignment else None, "status": "pending",
-            "attempts": 0, "payload": body, "last_error": "", "private_detail": "",
+            "assignment_id": assignment["id"] if assignment else None,
+            "status": "local_required" if local_only else "pending",
+            "attempts": 0, "payload": body,
+            "last_error": "phone_purpose_unsupported" if local_only else "", "private_detail": "",
             "provider_id": "", "lease_token": "", "lease_until": 0, "worker": "",
             "next_attempt_at": now,
         }
@@ -425,7 +459,7 @@ class OperationalStore:
                 if delivery["channel"] == "phone" and any(
                     other["channel"] == "phone" and other["status"] == "uncertain"
                     and other["recipient_id"] == delivery["recipient_id"]
-                    and other["incident_id"] == delivery["incident_id"]
+                    and not other["payload"].get("followup_confirmed")
                     for other in data["deliveries"].values()
                 ):
                     delivery.update({"status": "failed", "last_error": "prior_call_uncertain",
@@ -489,6 +523,27 @@ class OperationalStore:
                     if assignment["actor_id"] == aid and assignment["status"] == "offered":
                         self._release(data, assignment, "cancelled", now, "actor_unavailable")
             return {"actor_id": aid}
+        if kind == "followup":
+            aid = _id(command.get("assignment_id"), "assignment_id")
+            previous = data["assignments"].get(aid)
+            if previous is None:
+                raise OperationalError("assignment_missing")
+            assignment = previous
+            _version(assignment, command)
+            if assignment["status"] not in {"declined", "expired", "cancelled"}:
+                raise OperationalError("followup_not_terminal", 409)
+            _text(command.get("reason"), "reason", 500)
+            actor = self._actor(data, assignment["actor_id"])
+            if "actor:" + actor["id"] in data["reservations"]:
+                raise OperationalError("actor_busy", 409)
+            assignment.update({"followup_confirmed": True, "version": assignment["version"] + 1})
+            actor.update({"availability": "available", "version": actor["version"] + 1})
+            for delivery in data["deliveries"].values():
+                if delivery["assignment_id"] == aid and delivery["status"] == "uncertain":
+                    delivery["payload"]["followup_confirmed"] = True
+                    delivery["version"] += 1
+            self._event(data, now, "assignment.followup_confirmed", principal, assignment["incident_id"], aid)
+            return {"incident_id": assignment["incident_id"], "assignment_id": aid}
         if kind == "decide":
             return self._decide(data, command, principal, now)
         if kind in {"accept", "decline", "eta", "arrive", "locate", "complete", "call_result"}:
@@ -499,10 +554,20 @@ class OperationalStore:
         if kind == "update":
             if scope not in {"operator", "system"} and principal not in incident["reporter_ids"]:
                 raise OperationalError("incident_forbidden", 403)
+            confirmed = _boolean(command.get("confirmed", False), "confirmed")
+            if confirmed and scope != "operator":
+                raise OperationalError("confirmation_requires_operator", 403)
             text = _text(command.get("text"), "text")
             zone = self._zone(command.get("zone", incident["zone"]))
             parsed_zone, priority, needs, life = self._parse(text, zone)
             zone = parsed_zone or zone
+            all_clear = self._all_clear(text, zone)
+            if all_clear and not confirmed:
+                incident["review_required"] = True
+                incident["updates"].append({"principal": principal, "channel": channel, "text": text, "occurred_at": now})
+                incident.update({"version": incident["version"] + 1, "updated_at": now})
+                self._event(data, now, "incident.review_required", principal, iid)
+                return {"incident_id": iid, "review_required": True}
             if zone != incident["zone"]:
                 active = [a for a in data["assignments"].values()
                           if a["incident_id"] == iid and a["status"] in ACTIVE]
@@ -510,12 +575,29 @@ class OperationalStore:
                     raise OperationalError("destination_in_use", 409, "No se cambia el destino de un equipo activo.")
                 for assignment in active:
                     self._release(data, assignment, "cancelled", now, "destination_changed")
-            incident.update({"text": text, "zone": zone, "priority": max(priority, incident["priority"]),
-                             "life_threat": life or incident["life_threat"], "updated_at": now,
-                             "version": incident["version"] + 1})
-            for role, count in needs.items():
-                incident["needs"][role] = max(incident["needs"].get(role, 0), count)
+            incident.update({"text": text, "zone": zone,
+                             "priority": priority if confirmed else max(priority, incident["priority"]),
+                             "life_threat": life if confirmed else life or incident["life_threat"],
+                             "updated_at": now, "version": incident["version"] + 1})
+            if confirmed:
+                incident["needs"] = needs
+                incident["review_required"] = False
+                incident["tasks"] = {}
+            else:
+                for role, count in needs.items():
+                    incident["needs"][role] = max(incident["needs"].get(role, 0), count)
             self._tasks(incident)
+            if confirmed:
+                for assignment in list(data["assignments"].values()):
+                    if assignment["incident_id"] != iid or assignment["status"] not in ACTIVE:
+                        continue
+                    if assignment["task_id"] not in incident["tasks"]:
+                        if assignment["status"] == "offered":
+                            self._release(data, assignment, "cancelled", now, "assessment_corrected")
+                        else:
+                            # Una rectificación no retira un equipo que ya está atendiendo.
+                            incident["tasks"][assignment["task_id"]] = assignment["role"]
+                self._event(data, now, "incident.assessment_corrected", principal, iid)
             incident["updates"].append({"principal": principal, "channel": channel, "text": text, "occurred_at": now})
             for assignment in data["assignments"].values():
                 if assignment["incident_id"] == iid and assignment["status"] in ACTIVE:
@@ -588,6 +670,10 @@ class OperationalStore:
         }
         return {"actor_id": aid}
 
+    def _all_clear(self, text: str, zone: str | None) -> bool:
+        parsed = self._parser.parse(Report("review", 0, Channel.WHATSAPP, text, zone_hint=zone), self._zones)
+        return parsed["all_clear"] is True
+
     def _parse(self, text: str, zone: str | None) -> tuple[str | None, float, dict[str, int], bool]:
         parsed = cast(Mapping[str, object], self._parser.parse(
             Report("operational", 0, Channel.WHATSAPP, text, zone_hint=zone), self._zones,
@@ -625,7 +711,10 @@ class OperationalStore:
             self._actor(data, principal)
         text = _text(command.get("text"), "text")
         zone, priority, needs, life = self._parse(text, self._zone(command.get("zone")))
-        if not needs:
+        review = self._all_clear(text, zone)
+        if review:
+            needs = {}
+        elif not needs:
             needs["organizador"] = 1
         iid = _reference("incident", str(command["command_id"]))
         incident: Incident = {
@@ -633,6 +722,7 @@ class OperationalStore:
             "status": "open", "needs": needs, "tasks": {}, "why_waiting": "",
             "created_at": now, "updated_at": now, "reporter_id": principal,
             "reporter_ids": [principal], "life_threat": life, "merged_into": None,
+            "review_required": review,
             "updates": [{"principal": principal, "channel": channel, "text": text, "occurred_at": now}],
         }
         self._tasks(incident)
@@ -656,6 +746,8 @@ class OperationalStore:
 
     def _offer(self, data: State, incident: Incident, actor_id: str, role: str,
                now: float, *, task_id: str | None = None, ttl: int = 120) -> Assignment:
+        if incident.get("review_required"):
+            raise OperationalError("operator_review_required", 409)
         if incident["zone"] is None:
             raise OperationalError("location_required")
         actor = self._actor(data, actor_id)
@@ -674,8 +766,7 @@ class OperationalStore:
             raise OperationalError("task_capacity_mismatch")
         if self._covered(data, task_id):
             raise OperationalError("task_covered", 409)
-        if any(a["incident_id"] == incident["id"] and a["actor_id"] == actor_id
-               and a["status"] in {"declined", "expired"} for a in data["assignments"].values()):
+        if self._requires_followup(data, actor_id, incident["id"]):
             raise OperationalError("actor_requires_followup", 409)
         aid = "assignment-" + secrets.token_hex(12)
         assignment: Assignment = {
@@ -695,10 +786,23 @@ class OperationalStore:
         return assignment
 
     @staticmethod
+    def _requires_followup(data: State, actor_id: str, incident_id: str) -> bool:
+        return any(
+            a["incident_id"] == incident_id and a["actor_id"] == actor_id
+            and a["status"] in {"declined", "expired"} and not a.get("followup_confirmed")
+            for a in data["assignments"].values()
+        ) or any(
+            d["recipient_id"] == actor_id and d["channel"] == "phone"
+            and d["status"] == "uncertain" and not d["payload"].get("followup_confirmed")
+            for d in data["deliveries"].values()
+        )
+
+    @staticmethod
     def _cancel_deliveries(data: State, assignment_id: str) -> None:
         for delivery in data["deliveries"].values():
             if delivery["assignment_id"] == assignment_id and delivery["status"] in {"pending", "retry", "leased"}:
-                delivery.update({"status": "cancelled", "lease_token": "", "lease_until": 0,
+                uncertain = delivery["status"] == "leased" and delivery["channel"] in {"phone", "happyrobot"}
+                delivery.update({"status": "uncertain" if uncertain else "cancelled", "lease_token": "", "lease_until": 0,
                                  "version": delivery["version"] + 1})
 
     def _release(self, data: State, assignment: Assignment, status: str,
@@ -921,6 +1025,11 @@ class OperationalStore:
 
     def _maintain(self, data: State, now: float) -> None:
         for delivery in data["deliveries"].values():
+            if (delivery["channel"] == "phone" and delivery["purpose"] != "offer"
+                    and delivery["status"] in {"pending", "retry"}):
+                delivery.update({"channel": "web", "status": "local_required",
+                                 "last_error": "phone_purpose_unsupported", "version": delivery["version"] + 1})
+                self._event(data, now, "communication.local_required", "system", delivery["incident_id"])
             if delivery["status"] == "leased" and delivery["lease_until"] <= now:
                 delivery.update({
                     "status": "uncertain" if delivery["channel"] in {"phone", "happyrobot"} else "retry",
@@ -951,8 +1060,18 @@ class OperationalStore:
         for incident in ordered:
             if incident["status"] in {"closed", "merged"}:
                 continue
+            incident["tasks"] = {
+                a["task_id"]: a["role"] for a in data["assignments"].values()
+                if a["incident_id"] == incident["id"] and a["status"] in ACTIVE
+            }
+            self._tasks(incident)
             waiting: list[str] = []
-            if incident["zone"] is None:
+            if incident.get("review_required"):
+                waiting.append("operator_review_required: aviso de fin de riesgo pendiente de revisión humana")
+                for assignment in list(data["assignments"].values()):
+                    if assignment["incident_id"] == incident["id"] and assignment["status"] == "offered":
+                        self._release(data, assignment, "cancelled", now, "review_required")
+            elif incident["zone"] is None:
                 waiting.append("location_required: esperando ubicación del informante")
             else:
                 for task_id, role in incident["tasks"].items():
@@ -961,8 +1080,7 @@ class OperationalStore:
                     eligible = [
                         actor for actor in data["actors"].values()
                         if role in actor["roles"] and actor["availability"] == "available" and actor["address"]
-                        and not any(a["actor_id"] == actor["id"] and a["incident_id"] == incident["id"]
-                                    and a["status"] in {"declined", "expired"} for a in data["assignments"].values())
+                        and not self._requires_followup(data, actor["id"], incident["id"])
                     ]
                     eligible.sort(key=lambda a: (a["zone"] != incident["zone"], a["id"]))
                     free = next((a for a in eligible if "actor:" + a["id"] not in data["reservations"]), None)
@@ -972,6 +1090,11 @@ class OperationalStore:
                             aid = data["reservations"].get("actor:" + actor["id"])
                             current = data["assignments"].get(aid or "")
                             if (current and current["status"] == "offered"
+                                    and not current["communication"]
+                                    and not any(d["assignment_id"] == current["id"]
+                                                and d["channel"] == "phone"
+                                                and d["status"] in {"leased", "delivered", "uncertain"}
+                                                for d in data["deliveries"].values())
                                     and data["incidents"][current["incident_id"]]["priority"] < incident["priority"]):
                                 candidates.append(current)
                         if candidates:
@@ -986,7 +1109,7 @@ class OperationalStore:
             assignments = [a for a in data["assignments"].values() if a["incident_id"] == incident["id"]]
             complete = {a["task_id"] for a in assignments if a["status"] == "completed"}
             status = "waiting" if waiting else "open"
-            if incident["tasks"] and set(incident["tasks"]) <= complete:
+            if not incident.get("review_required") and incident["tasks"] and set(incident["tasks"]) <= complete:
                 status = "closed"
                 for sibling in assignments:
                     if sibling["status"] == "offered":

@@ -14,13 +14,18 @@ from typing import cast
 
 from fastapi import FastAPI, Request
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import (
+    FileResponse,
+    JSONResponse,
+    RedirectResponse,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 
 from motor.world import load_festival
 
-from .multi import identity
-from .operational import OperationalError, _hash
+from .multi import LOCAL_COOKIE, identity
+from .operational import OperationalError, _boolean, _hash, _id, _integer
 from .operational_service import (
     SPECIALISTS,
     OperationalService,
@@ -29,7 +34,7 @@ from .operational_service import (
 )
 from .operational_types import JSON, Document
 from .operational_worker import DeliveryWorker
-from .security import SecurityGuard, require_operator
+from .security import COOKIE_NAME, SecurityGuard, require_operator
 
 HERE = Path(__file__).resolve().parent
 STATIC = HERE / "static"
@@ -52,6 +57,9 @@ def canonical_phone(body: Document) -> Document:
     result: Document = {}
     for key in (
         "action_id",
+        "event_id",
+        "correlation_id",
+        "final",
         "assignment_id",
         "expected_assignment_version",
         "call_id",
@@ -69,6 +77,12 @@ def canonical_phone(body: Document) -> Document:
     ):
         if key in body:
             result[key] = body[key]
+    for key in ("event_id", "correlation_id"):
+        if key in result:
+            result[key] = _id(result[key], key)
+    result["sequence"] = _integer(body.get("sequence"), "sequence", 1, 1000)
+    if "final" in result:
+        result["final"] = _boolean(result["final"], "final")
     if isinstance(body.get("new_report"), dict):
         report = cast(Document, body["new_report"])
         result["new_report"] = {
@@ -145,9 +159,19 @@ def create_operational_app(*, port: int = 8000) -> FastAPI:
     async def operational_error(_: Request, exc: OperationalError) -> JSONResponse:
         return error_response(exc)
 
+    @app.post("/salir")
+    def logout(request: Request) -> RedirectResponse:
+        require_operator(request)
+        response = RedirectResponse("/acceso", status_code=303, headers={"Cache-Control": "no-store"})
+        response.delete_cookie(COOKIE_NAME, path="/", httponly=True, samesite="strict")
+        response.delete_cookie(LOCAL_COOKIE, path="/", httponly=True, samesite="strict")
+        return response
+
     @app.get("/")
     @app.get("/sala")
-    def sala() -> FileResponse:
+    @app.get("/interfaz")
+    def sala(request: Request) -> FileResponse:
+        require_operator(request)
         return FileResponse(STATIC / "sala-operativa.html")
 
     @app.get("/api/operations/state", response_model=None)
@@ -155,11 +179,13 @@ def create_operational_app(*, port: int = 8000) -> FastAPI:
         require_operator(request)
         result = service.state()
         result["channels"] = channel_status()
+        result["operator"] = dict(identity(request))
         return result
 
     @app.get("/api/operations/stream")
     async def stream(request: Request) -> StreamingResponse:
         require_operator(request)
+        who: Document = dict(identity(request))
 
         async def events() -> AsyncIterator[str]:
             revision = -1
@@ -168,6 +194,7 @@ def create_operational_app(*, port: int = 8000) -> FastAPI:
                 if current["revision"] != revision:
                     revision = cast(int, current["revision"])
                     current["channels"] = channel_status()
+                    current["operator"] = who
                     yield f"id: {revision}\nevent: state\ndata: {json.dumps(current, ensure_ascii=False)}\n\n"
                 else:
                     yield ": keepalive\n\n"
@@ -225,9 +252,7 @@ def create_operational_app(*, port: int = 8000) -> FastAPI:
         if context["channel"] != "phone":
             raise OperationalError("call_correlation_invalid", 403)
         body = canonical_phone(raw)
-        sequence = body.get(
-            "sequence", 1 if body.get("message") == "dispatch_progress" else 2
-        )
+        sequence = body["sequence"]
         event = str(
             body.get("event_id")
             or f"{sequence}:{body.get('result') or body.get('call_status') or 'unknown'}"
@@ -304,7 +329,6 @@ def create_operational_app(*, port: int = 8000) -> FastAPI:
     async def workflow_change(request: Request) -> Document:
         raw = await json_body(request)
         context, _ = await workflow_context(request, raw)
-        result = await run_in_threadpool(service.context, str(context["delivery_id"]))
-        return {"ok": True, "cambio": False, "revision": result["revision"]}
+        return await run_in_threadpool(service.changes, str(context["delivery_id"]))
 
     return app

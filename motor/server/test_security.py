@@ -60,10 +60,15 @@ class SecurityTests(unittest.TestCase):
 
     def test_local_bypass_disappears_in_public_mode(self):
         os.environ['MANDO_PUBLIC_URL'] = ''
-        self.assertEqual(self.client.post('/api/control').status_code, 200)
+        self.assertEqual(self.client.post('/api/control').status_code, 401)
+        self.assertEqual(self.client.post('/api/control', headers={'X-Mando-Operator': TOKEN}).status_code, 200)
         other = TestClient(self.app, client=('192.0.2.1', 80))
         self.assertEqual(other.post('/api/control').status_code, 401)
         self.assertEqual(other.get('/conditional', headers={'X-Mando-Operator': TOKEN}).status_code, 200)
+        os.environ['MANDO_OPERATOR_TOKEN'] = ''
+        self.assertEqual(self.client.post('/api/control').status_code, 200)
+        os.environ['MANDO_PUBLIC_URL'] = 'https://example.invalid'
+        self.assertEqual(self.client.post('/api/control').status_code, 503)
 
     def test_login_cookie_is_signed_expiring_and_not_the_secret(self):
         self.assertEqual(self.client.get('/acceso').status_code, 200)

@@ -12,18 +12,21 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import ClassVar, cast
 
+from . import abanico
 from .operational import (
     ACTIVE,
     FIELDS,
     PERMISSIONS,
     OperationalError,
     OperationalStore,
+    _boolean,
     _choice,
     _document,
     _encode,
     _hash,
     _id,
     _integer,
+    _public,
     _reference,
     _text,
 )
@@ -72,6 +75,7 @@ def telegram_command(update: Document) -> Document:
     if sender.get("is_bot") is True:
         raise OperationalError("bot_sender", 403)
     text = message.get("text") or message.get("caption") or ""
+    location_only = not text and isinstance(message.get("location"), dict)
     if not text and message.get("photo"):
         text = "Foto recibida; falta una descripción del incidente y su ubicación."
     return {
@@ -84,6 +88,7 @@ def telegram_command(update: Document) -> Document:
         "text": _text(text, "text", 2000, empty=True),
         "callback": _text(callback.get("data", ""), "callback", 64, empty=True),
         "callback_id": _text(callback.get("id", ""), "callback_id", 200, empty=True),
+        "location_only": location_only,
         "reply_to": document(message.get("reply_to_message", {}), "reply").get(
             "message_id"
         ),
@@ -101,6 +106,7 @@ class OperationalService(OperationalStore):
             "callback_id",
             "reply_to",
             "payload_hash",
+            "location_only",
         },
         "delivery_start": {"delivery_id", "lease_token"},
         "phone_event": {"delivery_id", "body"},
@@ -240,42 +246,89 @@ class OperationalService(OperationalStore):
                 raise OperationalError("callback_expired", 409)
             return context
 
+    @staticmethod
+    def _planning_context(data: State) -> Document:
+        # Sin revisiones de transporte: reclamar una entrega no invalida el plan.
+        return _document({
+            "incidents": {iid: {k: v for k, v in _document(i).items() if k in {
+                "id", "version", "zone", "priority", "status", "needs", "life_threat", "review_required",
+            }} for iid, i in data["incidents"].items()},
+            "resources": {aid: {k: v for k, v in _document(a).items() if k in {
+                "id", "version", "roles", "zone", "availability",
+            }} for aid, a in data["actors"].items() if a["roles"]},
+            "assignments": {aid: {k: v for k, v in _document(a).items() if k in {
+                "id", "version", "incident_id", "actor_id", "role", "zone", "status", "eta_min",
+            }} for aid, a in data["assignments"].items()},
+            "reservations": data["reservations"],
+        })
+
+    def _changes(self, data: State, launch: Document) -> Document:
+        current = self._planning_context(data)
+        original = document(launch.get("planning_context", {}), "planning_context")
+        affected: Document = {}
+        for group, values in current.items():
+            before = document(original.get(group, {}), group)
+            after = document(values, group)
+            changed = [key for key in sorted(before.keys() | after.keys()) if before.get(key) != after.get(key)]
+            if changed:
+                affected[group] = cast(JSON, changed)
+        reasons = [f"{group}_changed" for group in affected]
+        return {
+            "cambio": bool(affected), "motivos": cast(JSON, reasons), "afectados": affected,
+            "motivo": "; ".join(reasons) if reasons else "context_unchanged",
+            "context_version": _hash(current),
+            "launch_context_version": _hash(original),
+        }
+
+    def changes(self, delivery_id: str) -> Document:
+        self.reconcile()
+        with self._transaction() as (data, _):
+            launch = self._meta("launch:" + delivery_id)
+            if not launch:
+                raise OperationalError("correlation_missing", 409)
+            incident = data["incidents"][str(launch["incident_id"])]
+            return {"ok": True, **self._changes(data, launch), "revision": data["revision"],
+                    "expected_version": launch["expected_version"], "current_version": incident["version"],
+                    "incident_id": incident["id"], "correlation_id": delivery_id,
+                    "siguiente_accion": "Revisar el plan vigente en MANDO; no repetir llamadas inciertas."}
+
     def context(self, delivery_id: str) -> Document:
+        self.reconcile()
         with self._transaction() as (data, _):
             context = self._meta("launch:" + delivery_id)
             incident = data["incidents"].get(str(context.get("incident_id")))
             if not incident:
                 raise OperationalError("correlation_missing", 409)
-            return {
-                "correlation_id": delivery_id,
-                "incident_id": incident["id"],
-                "expected_version": context["expected_version"],
-                "revision": data["revision"],
-                "incident": {
-                    k: v
-                    for k, v in _document(incident).items()
-                    if k not in {"reporter_id", "reporter_ids", "updates", "tasks"}
-                },
-                "resources": [
-                    {k: v for k, v in _document(actor).items() if k != "address"}
-                    for actor in data["actors"].values()
-                    if actor["roles"]
-                ],
-                "assignments": [
-                    _document(a)
-                    for a in data["assignments"].values()
-                    if a["incident_id"] == incident["id"]
-                ],
-                "actions": [
-                    "offer",
-                    "notify",
-                    "evacuate",
-                    "stop_show",
-                    "request_external",
-                ],
-                "required_specialists": cast(JSON, sorted(SPECIALISTS)),
-                "authority": "MANDO",
-            }
+            resources: list[Document] = []
+            for actor in data["actors"].values():
+                if not actor["roles"]:
+                    continue
+                aid = data["reservations"].get("actor:" + actor["id"])
+                assignment = data["assignments"].get(aid or "")
+                resources.append({
+                    **{k: v for k, v in _document(actor).items() if k != "address"},
+                    "available_for_assignment": actor["availability"] == "available" and not aid
+                    and not self._requires_followup(data, actor["id"], incident["id"]),
+                    "occupancy": assignment["status"] if assignment else "free",
+                    "assignment_id": aid, "incident_id": assignment["incident_id"] if assignment else None,
+                    "requires_followup": self._requires_followup(data, actor["id"], incident["id"]),
+                })
+            incidents = [{k: v for k, v in _document(i).items() if k not in {
+                "reporter_id", "reporter_ids", "updates", "tasks",
+            }} for i in data["incidents"].values() if i["status"] not in {"closed", "merged"} or i["id"] == incident["id"]]
+            snapshot = _document({
+                "correlation_id": delivery_id, "incident_id": incident["id"],
+                "expected_version": context["expected_version"], "current_version": incident["version"],
+                "revision": data["revision"], **self._changes(data, context),
+                "incident": next(i for i in incidents if i["id"] == incident["id"]),
+                "incidents": incidents, "resources": resources,
+                "assignments": [{k: v for k, v in _document(a).items() if k not in {"communication", "reason"}}
+                                for a in data["assignments"].values() if a["status"] in ACTIVE],
+                "reservations": data["reservations"],
+                "actions": ["offer", "notify", "evacuate", "stop_show", "request_external"],
+                "required_specialists": sorted(SPECIALISTS), "authority": "MANDO",
+            })
+            return cast(Document, _public(snapshot, [a["address"] for a in data["actors"].values()]))
 
     def _dispatch(
         self,
@@ -312,7 +365,7 @@ class OperationalService(OperationalStore):
         if command["kind"] == "workflow_decision":
             did = str(command["delivery_id"])
             context = self._meta("launch:" + did)
-            if context and context["status"] not in {"pending_human", "applied"}:
+            if context and context["status"] not in {"pending_human", "applied", "stale", "timeout"}:
                 context.update(status="failed", last_error=error.code)
                 self._save_meta("launch:" + did, context)
                 self._event(
@@ -379,6 +432,11 @@ class OperationalService(OperationalStore):
             principal,
             "telegram",
         )
+        if command.get("location_only") is True:
+            self._say(data, now, principal, "question",
+                      "Ubicación GPS recibida. Indica por escrito la zona del recinto y qué ocurre; "
+                      "no podemos convertir coordenadas en una zona con seguridad.", "")
+            return {"actor_id": principal, "location_requested": True}
         text = str(command["text"])
         callback = str(command["callback"])
         if callback:
@@ -500,7 +558,7 @@ class OperationalService(OperationalStore):
                     "kind": "update",
                     "incident_id": target["id"],
                     "expected_version": target["version"],
-                    "text": target["text"] + "\n" + text,
+                    "text": text if self._all_clear(text, zone) else target["text"] + "\n" + text,
                     "zone": zone or target["zone"],
                 },
                 principal,
@@ -582,6 +640,7 @@ class OperationalService(OperationalStore):
             "status": "launched",
             "last_result": "",
             "call_id": "",
+            "planning_context": self._planning_context(data),
         }
         capability = self.capability(did)
         self._save_meta(
@@ -615,19 +674,18 @@ class OperationalService(OperationalStore):
             raise OperationalError("call_expired", 409)
         for key, expected in (
             ("action_id", did),
+            ("correlation_id", did),
             ("assignment_id", context["assignment_id"]),
             ("expected_assignment_version", context["initial_assignment_version"]),
         ):
             if body.get(key) not in (None, "", expected):
                 raise OperationalError("call_correlation_invalid", 409)
-        sequence = _integer(
-            body.get(
-                "sequence", 1 if body.get("message") == "dispatch_progress" else 2
-            ),
-            "sequence",
-            1,
-            1000,
-        )
+        if "event_id" in body:
+            _id(body["event_id"], "event_id")
+        sequence = _integer(body.get("sequence"), "sequence", 1, 1000)
+        final = _boolean(body.get("final", False), "final")
+        if context.get("final") is True:
+            raise OperationalError("call_finalized", 409)
         if sequence <= cast(int, context["sequence"]):
             raise OperationalError("call_out_of_order", 409)
         call_id = _text(
@@ -644,6 +702,11 @@ class OperationalService(OperationalStore):
         ):
             raise OperationalError("run_id_mismatch", 409)
         result = phone_result(body)
+        # Un callback autenticado acredita que la oferta llegó al proveedor, no aceptación.
+        delivery.update({"status": "delivered", "lease_token": "", "lease_until": 0,
+                         "version": delivery["version"] + 1})
+        if body.get("hr_run_id"):
+            delivery["provider_id"] = _text(body["hr_run_id"], "hr_run_id", 200)
         assignment = data["assignments"][str(context["assignment_id"])]
         notice = body.get("new_report")
         new_incident: JSON = None
@@ -783,6 +846,7 @@ class OperationalService(OperationalStore):
             last_result=result,
             assignment_version=assignment["version"],
             status="stale" if stale else "result",
+            final=final,
         )
         self._save_meta("launch:" + did, context)
         self._event(
@@ -832,8 +896,11 @@ class OperationalService(OperationalStore):
         }:
             raise OperationalError("critical_review_failed")
         incident = self._incident(data, iid)
-        if incident["version"] != context["expected_version"]:
+        if (incident["version"] != context["expected_version"]
+                or self._changes(data, context)["cambio"] or context["status"] in {"stale", "timeout"}):
             raise OperationalError("workflow_stale", 409)
+        if context.get("approval_id"):
+            raise OperationalError("workflow_already_decided", 409)
         if body.get("fase") != "rapida" or body.get("agente") != "rapido":
             raise OperationalError("workflow_phase_invalid")
         result = self._propose(
@@ -892,8 +959,41 @@ class OperationalService(OperationalStore):
                         )
             return result
 
+    def _maintain(self, data: State, now: float) -> None:
+        super()._maintain(data, now)
+        rows = cast(list[tuple[str, str]], self._db.execute(
+            "SELECT key,value FROM operational_metadata WHERE key LIKE 'launch:%'"
+        ).fetchall())
+        for key, encoded in rows:
+            launch = cast(Document, json.loads(encoded))
+            if launch["channel"] != "happyrobot" or launch["status"] not in {"launched", "pending_human"}:
+                continue
+            approval = data["approvals"].get(str(launch.get("approval_id")))
+            if approval and approval["status"] != "pending":
+                launch["status"] = "applied" if approval["status"] == "approved" else approval["status"]
+                self._save_meta(key, launch)
+                self._event(data, now, "workflow." + str(launch["status"]), "system", str(launch["incident_id"]))
+                continue
+            status = ""
+            if launch["status"] == "launched" and cast(float, launch["deadline"]) <= now:
+                status = "timeout"
+            elif self._changes(data, launch)["cambio"]:
+                status = "stale"
+            if not status:
+                continue
+            launch.update(status=status, last_error="workflow_" + status)
+            self._save_meta(key, launch)
+            approval = data["approvals"].get(str(launch.get("approval_id")))
+            if approval and approval["status"] == "pending":
+                approval.update({"status": "stale", "version": approval["version"] + 1})
+            self._event(data, now, "workflow." + status, "system", str(launch["incident_id"]))
+            data["events"][-1]["summary"] = (
+                "Workflow " + status + ": se conserva el plan seguro de MANDO; revisar el contexto vigente."
+            )
+
     def state(self) -> Document:
         with self._lock:
+            self.reconcile()
             result = super().state()
             rows = cast(
                 list[tuple[str]],
@@ -931,11 +1031,6 @@ class OperationalService(OperationalStore):
                         {},
                     )
                     workflow["status"] = approval.get("status", "pending_human")
-                elif (
-                    workflow["status"] == "launched"
-                    and cast(float, workflow["deadline"]) < self._clock()
-                ):
-                    workflow["status"] = "timeout"
             return result
 
 
@@ -944,7 +1039,9 @@ def channel_status() -> Document:
     telegram = bool(
         os.environ.get("TELEGRAM_BOT_TOKEN") and os.environ.get("MANDO_BRIDGE_SECRET")
     )
-    voice = all(
+    provider = bool(abanico.api_key() and abanico.api_base().strip()
+                    and os.environ.get("MANDO_PUBLIC_URL", "").strip().startswith("https://"))
+    voice = provider and all(
         os.environ.get(key)
         for key in (
             "HR_API_KEY",
@@ -954,7 +1051,7 @@ def channel_status() -> Document:
             "MANDO_ALLOWED_NUMBERS",
         )
     )
-    workflow = all(
+    workflow = provider and all(
         os.environ.get(key)
         for key in (
             "HR_API_KEY",

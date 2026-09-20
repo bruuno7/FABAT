@@ -338,6 +338,20 @@ test("failed SSE health verification falls back to polling and recovers; auth fa
   assert.equal(t.timers.jobs.size, 0); assert.equal(t.sources[0].closed, true);
 });
 
+test("backend down: SSE reconnect errors keep the stable offline indicator until state is readable again", async () => {
+  let down = false;
+  const t = connection(async () => { if (down) throw new Error("offline"); return response({ revision: 6 }); });
+  await tick(); t.sources[0].emit(6); down = true;
+  await t.timers.run(30000); assert.equal(t.statuses.at(-1), "offline");
+  const next = () => t.timers.run([...t.timers.jobs.values()][0].ms);
+  for (let i = 0; i < 6; i++) { await next(); if (t.sources.at(-1).receive) t.sources.at(-1).onerror(); assert.equal(t.statuses.at(-1), "offline"); }
+  assert.ok(!t.statuses.slice(t.statuses.indexOf("offline")).includes("reconnecting"));
+  down = false; for (let i = 0; i < 3 && t.statuses.at(-1) !== "poll"; i++) await next();
+  assert.equal(t.statuses.at(-1), "poll");
+  t.sources.at(-1).onerror(); assert.equal(t.statuses.at(-1), "reconnecting");
+  t.sync.stop();
+});
+
 test("a late failed bootstrap cannot downgrade a newer healthy SSE snapshot", async () => {
   let reject;
   const pending = new Promise((_, fail) => { reject = fail; });

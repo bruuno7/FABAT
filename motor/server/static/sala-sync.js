@@ -27,7 +27,7 @@
   function connect({ stateURL, streamURL, accept, onStatus, fetcher = root.fetch.bind(root),
     Source = root.EventSource, later = root.setTimeout.bind(root), cancel = root.clearTimeout.bind(root), staleAfter = 0 }) {
     let source = null, timer = null, retry = null, health = null, stopped = false, inFlight = null;
-    let streamSerial = 0, delay = 2000, live = false;
+    let streamSerial = 0, delay = 2000, live = false, stateFailed = false;
 
     // El SSE del servidor usa comentarios keepalive, invisibles a EventSource.
     // Una lectura de verificación acotada detecta conexiones silenciosamente congeladas.
@@ -63,6 +63,7 @@
         const state = await response.json();
         if (stopped || serial !== streamSerial) return false;
         const accepted = accept(state);
+        stateFailed = false;
         if (accepted) {
           delay = 2000;
           onStatus(live ? "live" : "poll");
@@ -72,6 +73,7 @@
       } catch {
         if (!stopped && serial === streamSerial) {
           live = false;
+          stateFailed = true;
           cancel(health); health = null;
           delay = Math.min(delay * 2, 15000);
           onStatus("offline");
@@ -123,7 +125,7 @@
         if (stopped || active !== source) return;
         live = false;
         cancel(health); health = null;
-        onStatus("reconnecting");
+        onStatus(stateFailed ? "offline" : "reconnecting");
         schedulePoll();
         scheduleReconnect();
       };

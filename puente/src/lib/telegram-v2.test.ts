@@ -54,6 +54,19 @@ describe("isolated v2 Telegram normalization", () => {
     }
   });
 
+  it("anchors a text reply to the exact delivered question rather than the last incident", async () => {
+    const input = update("Sí, está consciente");
+    input.message!.reply_to_message = { message_id: 51 };
+    const record = { status: "succeeded", provider_message_id: "51", message: { id: "question-message", channel: "telegram",
+      recipient_id: "tg-123", incident_id: "incident-2", question_id: "question-2", purpose: "question", text: "¿Está consciente?" } };
+    const event = await mapTelegramV2(input, "test-pin", async () => null, now, async () => record);
+    assert.equal(event.event_type, "message.received");
+    assert.equal(event.incident_id, "incident-2");
+    assert.equal(event.question_id, "question-2");
+    record.message.recipient_id = "tg-999";
+    await assert.rejects(() => mapTelegramV2(input, "test-pin", async () => null, now, async () => record), /unverified_reply_reference/);
+  });
+
   it("binds a callback to the stored delivered message and assignment", async () => {
     const input: TelegramUpdate = { update_id: 43, callback_query: {
       id: "callback-1", from: { id: 123 }, data: "v2|acc|m1",

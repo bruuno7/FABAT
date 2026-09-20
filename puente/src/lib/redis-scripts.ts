@@ -133,6 +133,9 @@ for _, message in ipairs(request.messages) do
     return result({status='message_conflict'})
   end
 end
+for _, child in ipairs(request.derived or {}) do
+  if redis.call('EXISTS', KEYS[child.index]) ~= 0 then return result({status='event_conflict'}) end
+end
 for _, write in ipairs(request.writes) do
   local version = versions[write.entity] + 1
   redis.call('SET', KEYS[write.index], '{"version":' .. version .. ',"value":' .. write.value_json .. '}')
@@ -142,8 +145,13 @@ for _, message in ipairs(request.messages) do
   redis.call('SET', KEYS[message.index], result({message=message.value, status='pending', attempts=0}))
   redis.call('ZADD', KEYS[3], ARGV[2], message.value.id)
 end
+for _, child in ipairs(request.derived or {}) do
+  redis.call('SET', KEYS[child.index], child.record_json)
+  redis.call('ZADD', KEYS[2], child.due, child.event_id)
+end
 redis.call('XADD', KEYS[4], '*', 'event_id', inbox.event.event_id,
-           'event', inbox.event_json or result(inbox.event), 'versions', result(versions))
+           'event', inbox.event_json or result(inbox.event), 'versions', result(versions),
+           'writes', request.writes_json or '[]', 'messages', request.messages_json or '[]')
 inbox.status = 'applied'
 inbox.versions = versions
 redis.call('SET', KEYS[1], result(inbox))
@@ -178,13 +186,18 @@ return result({status='claimed', lease=record.lease, message=record.message, lea
 `;
 
 export const SETTLE_MESSAGE = TYPES + `
-if not valid_type(KEYS[1], 'string') or not valid_type(KEYS[2], 'zset') then
+if not valid_type(KEYS[1], 'string') or not valid_type(KEYS[2], 'zset') or (#KEYS == 3 and not valid_type(KEYS[3], 'string')) then
   return result({status='storage_error'})
 end
 local record = decode(redis.call('GET', KEYS[1]))
 if not record then return result({status='missing'}) end
 if record.status ~= 'sending' or record.lease ~= ARGV[1] then return result({status='lease_conflict'}) end
 if tonumber(record.lease_until or 0) <= tonumber(ARGV[4]) then return result({status='lease_expired'}) end
+if #KEYS == 3 then
+  local old = redis.call('GET', KEYS[3])
+  if old and old ~= record.message.id then return result({status='message_conflict'}) end
+  redis.call('SET', KEYS[3], record.message.id)
+end
 record.status = ARGV[2]
 record.provider_message_id = ARGV[3]
 record.lease = nil

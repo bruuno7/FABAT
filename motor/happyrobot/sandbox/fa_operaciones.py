@@ -161,7 +161,7 @@ def apply_event(event, snapshot):
         put(conversation_key, conversation)
         put(key, {"status": "open", "reporter_id": actor_id, "text": text(),
                   "location": text("location") if payload.get("location") else None,
-                  "assignment_ids": [], "tasks": {}, "created_at": event["received_at"]})
+                  "assignment_ids": [], "tasks": {}, "conversation_id": event["conversation_id"], "created_at": event["received_at"]})
         say(actor_id, "He registrado tu aviso. La coordinación del equipo está pendiente.", iid)
     elif kind == "assignment.offered":
         coordinator()
@@ -394,6 +394,65 @@ def apply_event(event, snapshot):
             raise OperationError("unsupported_operation")
     else:
         raise OperationError("unsupported_operation")
+
+    def link_actor(recipient, field, value, remove=False):
+        key = "actor/" + identifier(recipient)
+        person = required(key)
+        items = person.get(field, [])
+        if not isinstance(items, list):
+            raise OperationError("invalid_actor_context")
+        updated = [item for item in items if item != value]
+        if not remove:
+            updated.append(value)
+        if len(updated) > 16:
+            raise OperationError("actor_context_limit")
+        if updated != items:
+            person[field] = updated
+            put(key, person)
+
+    if kind == "incident.reported":
+        link_actor(actor_id, "incident_ids", event["incident_id"])
+    if kind == "assignment.offered":
+        link_actor(payload["recipient_id"], "incident_ids", event["incident_id"])
+    for key, value in list(writes.items()):
+        if key.startswith("question/"):
+            qid = key.split("/", 1)[1]
+            link_actor(value["recipient_id"], "pending_question_ids", qid, value.get("status") != "pending")
+            incident_key = "incident/" + identifier(value["incident_id"])
+            incident_value = required(incident_key)
+            questions = incident_value.get("question_ids", [])
+            if not isinstance(questions, list):
+                raise OperationError("invalid_question_index")
+            pending = [item for item in questions if item != qid]
+            if value.get("status") == "pending":
+                pending.append(qid)
+            if len(pending) > 16:
+                raise OperationError("question_limit")
+            if pending != questions:
+                incident_value["question_ids"] = pending
+                put(incident_key, incident_value)
+    for key, value in list(writes.items()):
+        if key.startswith("incident/") and value.get("status") == "closed":
+            iid = key.split("/", 1)[1]
+            closed = required(key)
+            people = {closed["reporter_id"]} | {item["actor_id"] for _, item in assignments(closed)}
+            for person in sorted(people):
+                link_actor(person, "incident_ids", iid, True)
+            for qid in closed.get("question_ids", []):
+                question = required("question/" + identifier(qid))
+                if question.get("status") == "pending":
+                    question["status"] = "cancelled"
+                    put("question/" + qid, question)
+                    link_actor(question["recipient_id"], "pending_question_ids", qid, True)
+            closed["question_ids"] = []
+            put(key, closed)
+            if closed.get("conversation_id"):
+                conversation_key = "conversation/" + identifier(closed["conversation_id"])
+                conversation = required(conversation_key)
+                if conversation.get("actor_id") != closed["reporter_id"]:
+                    raise OperationError("conversation_for_other_actor")
+                conversation["incident_ids"] = [item for item in conversation.get("incident_ids", []) if item != iid]
+                put(conversation_key, conversation)
 
     return {"event_id": event_id, "expected": expected,
             "writes": [{"entity": key, "value": value} for key, value in writes.items()], "messages": messages}

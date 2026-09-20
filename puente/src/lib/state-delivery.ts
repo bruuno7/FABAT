@@ -11,13 +11,14 @@ export type DeliveryResult = { id: string; status: string };
 
 async function destination(store: DeliveryStore, message: PendingMessage): Promise<string> {
   const actorKey = `actor/${message.recipient_id}`;
-  const incidentKey = `incident/${message.incident_id}`;
-  const keys = [actorKey, incidentKey];
+  const incidentKey = message.incident_id ? `incident/${message.incident_id}` : null;
+  const keys = [actorKey];
+  if (incidentKey) keys.push(incidentKey);
   if (message.assignment_id) keys.push(`assignment/${message.assignment_id}`);
   if (message.question_id) keys.push(`question/${message.question_id}`);
   const snapshot = await store.snapshot(keys);
   const actor = object(snapshot[actorKey]?.value);
-  const incident = object(snapshot[incidentKey]?.value);
+  const incident = incidentKey ? object(snapshot[incidentKey]?.value) : {};
   if (message.purpose === "offer") {
     const assignment = object(snapshot[`assignment/${message.assignment_id}`]?.value);
     if (incident.status === "closed" || assignment.status !== "offered" || assignment.actor_id !== message.recipient_id || assignment.incident_id !== message.incident_id) {

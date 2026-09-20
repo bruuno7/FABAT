@@ -168,6 +168,25 @@ describe("state transport boundaries", () => {
     assert.equal(calls.length, 1);
   });
 
+  it("binds successful Telegram receipts to the recipient and updates the index in the settlement script", async () => {
+    const calls: (string | number)[][] = [];
+    const message = { id: "m1", recipient_id: "tg-123", channel: "telegram", purpose: "conversation", text: "Hola" };
+    const store = new RedisStateStore(async (args) => {
+      calls.push(args);
+      if (args[0] === "GET") return JSON.stringify({ status: "sending", message });
+      return JSON.stringify({ status: "succeeded" });
+    }, "test-receipt");
+    await store.settle("m1", "11111111-1111-4111-8111-111111111111", "succeeded", "51");
+    assert.equal(calls[1][2], 3);
+    assert.match(String(calls[1][5]), /^fa:v2:\{test-receipt\}:receipt:[a-f0-9]{64}$/);
+    const reads: (string | number)[][] = [];
+    const reader = new RedisStateStore(async (args) => { reads.push(args); return null; }, "test-receipt");
+    await reader.messageForReply("tg-123", "51");
+    await reader.messageForReply("tg-999", "51");
+    assert.equal(reads[0][1], calls[1][5]);
+    assert.notEqual(reads[0][1], reads[1][1]);
+  });
+
   it("rejects untrusted URLs and never includes secrets or provider errors in thrown errors", async () => {
     assert.throws(() => upstashCommand("http://example.invalid", "token"), StateStoreError);
     assert.throws(() => upstashCommand("https://upstash.io.evil.invalid", "token"), StateStoreError);

@@ -43,7 +43,8 @@ export function telegramRouter(
         return;
       }
       try {
-        const event = await mapTelegramV2(update, env.staffPin, (id) => state!.message(id));
+        const event = await mapTelegramV2(update, env.staffPin, (id) => state!.message(id), Date.now,
+          (providerId) => state!.messageForReply(`tg-${sender}`, providerId));
         const result = await state.ingestTelegram(event, String(sender));
         if (!["accepted", "duplicate"].includes(result.status)) {
           res.status(409).json({ error: "state_conflict" });

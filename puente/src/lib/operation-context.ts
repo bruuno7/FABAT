@@ -9,7 +9,8 @@ function reservation(kind: "actor" | "task" | "role", id: unknown): string {
   return `reservation/${joined.length <= 120 ? joined : `${kind}:${createHash("sha256").update(joined).digest("hex").slice(0, 32)}`}`;
 }
 
-export async function operationContext(store: Pick<RedisStateStore, "event" | "snapshot">, id: string): Promise<OperationContext> {
+export async function operationContext(store: Pick<RedisStateStore, "event" | "snapshot">, id: string,
+  options: { coordinator?: boolean; extraEntities?: string[] } = {}): Promise<OperationContext> {
   parseId(id);
   const record = await store.event(id);
   if (!record) return { status: "missing", event_id: id, event_json: "null", snapshot_json: "{}", api_status_code: 404 };
@@ -37,10 +38,17 @@ export async function operationContext(store: Pick<RedisStateStore, "event" | "s
   ref("approval", event.payload.grant_id);
   if (event.payload.task_id !== undefined) add(reservation("task", event.payload.task_id));
   if (event.payload.role !== undefined) add(reservation("role", event.payload.role));
+  for (const entity of options.extraEntities ?? []) add(entity);
+  if (options.coordinator) {
+    ref("actor", "service-coordinator");
+    for (const role of ["medico", "bomberos", "policia", "staff_entradas", "organizador"]) add(reservation("role", role));
+  }
   const discover = (key: string, value: JsonObject) => {
     if (key.startsWith("incident/")) {
       ref("actor", value.reporter_id);
       for (const id of list(value.assignment_ids)) ref("assignment", id);
+      for (const id of list(value.question_ids)) ref("question", id);
+      ref("conversation", value.conversation_id);
     } else if (key.startsWith("assignment/")) {
       ref("actor", value.actor_id);
       if (value.task_id !== undefined) add(reservation("task", value.task_id));
@@ -48,11 +56,19 @@ export async function operationContext(store: Pick<RedisStateStore, "event" | "s
       add(reservation("actor", key.slice("actor/".length)));
       if (key === `actor/${event.actor_id}`) {
         for (const role of list(value.roles)) add(reservation("role", role));
+        for (const id of list(value.incident_ids)) ref("incident", id);
+        for (const id of list(value.pending_question_ids)) ref("question", id);
       }
     } else if (key.startsWith("question/")) {
       ref("actor", value.requester_id);
       ref("actor", value.recipient_id);
       ref("assignment", value.assignment_id);
+      ref("incident", value.incident_id);
+    } else if (key === `conversation/${event.conversation_id}`) {
+      if (value.actor_id !== event.actor_id) throw new ContractError("conversation_for_other_actor");
+      for (const id of list(value.incident_ids)) ref("incident", id);
+    } else if (options.coordinator && key.startsWith("reservation/role:")) {
+      ref("actor", value.actor_id);
     }
   };
   for (let round = 0; round < 8; round++) {

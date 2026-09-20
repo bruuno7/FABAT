@@ -47,6 +47,34 @@ describe("bounded operation snapshot", () => {
     }
   });
 
+  it("rejects a conversation owned by another actor", async () => {
+    await assert.rejects(() => operationContext({
+      event: async () => ({ status: "pending", event: eventFixture }),
+      snapshot: async (names) => Object.fromEntries(names.map((key) => [key, key.startsWith("conversation/")
+        ? { version: 1, value: { actor_id: "other" } } : { version: 0, value: null }])),
+    }, eventFixture.event_id), /conversation_for_other_actor/);
+  });
+
+  it("reads roster availability without traversing other workers' unrelated incidents", async () => {
+    const requested = new Set<string>();
+    const docs: StateSnapshot = {
+      "reservation/role:medico": { version: 1, value: { actor_id: "other" } },
+      "actor/other": { version: 1, value: { roles: ["medico"], incident_ids: ["unrelated"] } },
+    };
+    const result = await operationContext({
+      event: async () => ({ status: "pending", event: eventFixture }),
+      snapshot: async (names) => Object.fromEntries(names.map((key) => {
+        requested.add(key);
+        return [key, docs[key] ?? { version: 0, value: null }];
+      })),
+    }, eventFixture.event_id, { coordinator: true, extraEntities: ["decision/new-plan"] });
+    assert.equal(result.status, "pending");
+    assert.ok(requested.has("actor/other"));
+    assert.ok(requested.has("reservation/actor:other"));
+    assert.ok(requested.has("decision/new-plan"));
+    assert.ok(!requested.has("incident/unrelated"));
+  });
+
   it("requires a complete final MGET rather than merging snapshots from different reads", async () => {
     let count = 0;
     const result = await operationContext({
@@ -54,7 +82,7 @@ describe("bounded operation snapshot", () => {
       snapshot: async (names) => {
         count++;
         return Object.fromEntries(names.map((key) => [key, { version: count,
-          value: key.startsWith("incident/") ? { reporter_id: "reporter" } : {} }]));
+          value: key.startsWith("incident/") ? { reporter_id: "reporter" } : key.startsWith("conversation/") ? { actor_id: eventFixture.actor_id } : {} }]));
       },
     }, eventFixture.event_id);
     assert.ok(count > 1);

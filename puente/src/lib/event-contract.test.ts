@@ -85,6 +85,14 @@ describe("multichannel event contract", () => {
     assert.throws(() => parseCommit({ ...commitFixture, messages: [{ ...commitFixture.messages[0], channel: "phone", purpose: "call" }] }), ContractError);
   });
 
+  it("allows a conversational reply without inventing an incident but forbids operational references on it", () => {
+    const message = { id: "reply-1", recipient_id: "actor-1", channel: "telegram", purpose: "conversation", text: "¿A qué aviso te refieres?" };
+    const commit = { event_id: "event-1", expected: {}, writes: [], messages: [message] };
+    assert.deepEqual(parseCommit(commit).messages[0], message);
+    assert.throws(() => parseCommit({ ...commit, messages: [{ ...message, incident_id: "fake" }] }), ContractError);
+    assert.throws(() => parseCommit({ ...commit, messages: [{ ...message, purpose: "offer" }] }), ContractError);
+  });
+
   it("accepts only allowlisted entities and bounded JSON objects", () => {
     assert.deepEqual(parseSnapshotRequest({ entities: ["incident/incident-1", "question/question-1"] }), ["incident/incident-1", "question/question-1"]);
     for (const entity of ["fa:seats", "secret/key", "actor/a/extra", "actor/{live}"]) {

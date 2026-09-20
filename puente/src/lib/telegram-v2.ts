@@ -5,6 +5,7 @@ import { parseCommandLine, parseStaffRole, type TelegramUpdate } from "./telegra
 export async function mapTelegramV2(
   update: TelegramUpdate, staffPin: string | undefined,
   lookupDelivery: (id: string) => Promise<Record<string, unknown> | null>, clock = Date.now,
+  lookupReply?: (providerId: string) => Promise<Record<string, unknown> | null>,
 ): Promise<CanonicalEvent> {
   if (!Number.isSafeInteger(update.update_id) || update.update_id < 0 || Boolean(update.message) === Boolean(update.callback_query)) {
     throw new ContractError("invalid_telegram_update");
@@ -61,10 +62,20 @@ export async function mapTelegramV2(
     return parseEvent({ ...base, event_type: "actor.role_released", payload: {} });
   }
   payload = { text };
+  const references: Partial<Pick<CanonicalEvent, "incident_id" | "assignment_id" | "question_id">> = {};
   if (message.reply_to_message) {
     const reply = object(message.reply_to_message);
     if (!Number.isSafeInteger(reply.message_id) || (reply.message_id as number) <= 0) throw new ContractError("invalid_reply_reference");
-    payload.reply_to_message_id = String(reply.message_id);
+    const providerId = String(reply.message_id);
+    payload.reply_to_message_id = providerId;
+    const receipt = lookupReply ? await lookupReply(providerId) : null;
+    if (receipt) {
+      const sent = parseMessage(receipt.message);
+      if (receipt.status !== "succeeded" || receipt.provider_message_id !== providerId || sent.recipient_id !== actorId || sent.channel !== "telegram") {
+        throw new ContractError("unverified_reply_reference");
+      }
+      for (const key of ["incident_id", "assignment_id", "question_id"] as const) if (sent[key]) references[key] = sent[key];
+    }
   }
-  return parseEvent({ ...base, payload });
+  return parseEvent({ ...base, ...references, payload });
 }

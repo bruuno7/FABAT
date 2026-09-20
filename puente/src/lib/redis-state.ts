@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
-  ContractError, object, parseCommit, parseEntity, parseEvent, parseId, parseSnapshotRequest,
+  ContractError, object, parseCommit, parseEntity, parseEvent, parseId, parseMessage, parseSnapshotRequest,
   type CanonicalEvent, type Json, type JsonObject,
 } from "./event-contract.js";
 import { STAFF_ROLES } from "./contract.js";
@@ -91,7 +91,7 @@ export class RedisStateStore {
   async enqueue(input: unknown): Promise<StoreResult> {
     const event = parseEvent(input);
     return this.eval(ENQUEUE_EVENT, [this.key(`inbox:${event.event_id}`), this.key("inbox-pending")],
-      [JSON.stringify(event), eventFingerprint(event), this.clock()]);
+      [JSON.stringify(event), eventFingerprint(event), event.not_before ? Math.max(this.clock(), Date.parse(event.not_before)) : this.clock()]);
   }
 
   async ingestTelegram(input: unknown, chatId: string): Promise<StoreResult> {
@@ -129,6 +129,17 @@ export class RedisStateStore {
   async message(id: string): Promise<Record<string, unknown> | null> {
     const raw = await this.command(["GET", this.key(`outbox:${parseId(id)}`)]);
     return raw === null ? null : decode(raw);
+  }
+
+  private receiptKey(actorId: string, providerId: string): string {
+    parseId(actorId);
+    if (!/^[1-9][0-9]{0,15}$/.test(providerId)) throw new ContractError("invalid_provider_message_id");
+    return this.key("receipt:" + createHash("sha256").update(JSON.stringify(["telegram", actorId, providerId])).digest("hex"));
+  }
+
+  async messageForReply(actorId: string, providerId: string): Promise<Record<string, unknown> | null> {
+    const id = await this.command(["GET", this.receiptKey(actorId, providerId)]);
+    return id === null ? null : this.message(parseId(id));
   }
 
   async settleEvent(id: string, status: "rejected" | "deferred", reason: string): Promise<StoreResult> {
@@ -170,7 +181,14 @@ export class RedisStateStore {
       keys.push(this.key(`outbox:${message.id}`));
       return { index: keys.length, value: message };
     });
-    return this.eval(COMMIT_STATE, keys, [JSON.stringify({ reads, writes, messages }), this.clock()]);
+    const now = this.clock();
+    const derived = (commit.events ?? []).map((event) => {
+      keys.push(this.key(`inbox:${event.event_id}`));
+      return { index: keys.length, event_id: event.event_id, due: event.not_before ? Math.max(now, Date.parse(event.not_before)) : now,
+        record_json: JSON.stringify({ event, event_json: JSON.stringify(event), fingerprint: eventFingerprint(event), status: "pending" }) };
+    });
+    return this.eval(COMMIT_STATE, keys, [JSON.stringify({ reads, writes, messages, derived,
+      writes_json: JSON.stringify(commit.writes), messages_json: JSON.stringify(commit.messages) }), now]);
   }
 
   async pending(queue: "inbox" | "outbox", limit = 16): Promise<string[]> {
@@ -190,7 +208,14 @@ export class RedisStateStore {
     if (!/^[0-9a-f-]{36}$/.test(lease) || !["succeeded", "failed", "unknown", "simulated", "retry"].includes(status) ||
         typeof providerMessageId !== "string" || providerMessageId.length > 120 ||
         !Number.isInteger(retryAfterMs) || retryAfterMs < 1000 || retryAfterMs > 300000) throw new ContractError("invalid_delivery_result");
-    return this.eval(SETTLE_MESSAGE, [this.key(`outbox:${id}`), this.key("outbox-pending")],
-      [lease, status, providerMessageId, this.clock(), retryAfterMs]);
+    const keys = [this.key(`outbox:${id}`), this.key("outbox-pending")];
+    if (status === "succeeded" && /^[1-9][0-9]{0,15}$/.test(providerMessageId)) {
+      const record = await this.message(id);
+      if (record) {
+        const message = parseMessage(record.message);
+        if (message.channel === "telegram") keys.push(this.receiptKey(message.recipient_id, providerMessageId));
+      }
+    }
+    return this.eval(SETTLE_MESSAGE, keys, [lease, status, providerMessageId, this.clock(), retryAfterMs]);
   }
 }

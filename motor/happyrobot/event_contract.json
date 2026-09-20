@@ -19,7 +19,8 @@
         "assignment.offered", "assignment.accepted", "assignment.declined", "assignment.eta_updated",
         "assignment.arrived", "assignment.located", "assignment.completed", "assignment.timed_out",
         "call.started", "call.ended", "call.failed", "delivery.updated",
-        "review.requested", "review.completed", "approval.requested", "approval.decided", "deadline.elapsed"
+        "review.requested", "review.completed", "approval.requested", "approval.decided", "deadline.elapsed",
+        "coordination.requested", "lesson.proposed", "lesson.decided", "lesson.revoked"
       ]
     },
     "occurred_at": { "$ref": "#/$defs/timestamp" },
@@ -34,6 +35,7 @@
     "causation_id": { "$ref": "#/$defs/id" },
     "source_message_id": { "$ref": "#/$defs/id" },
     "call_id": { "$ref": "#/$defs/id" },
+    "not_before": { "$ref": "#/$defs/timestamp" },
     "payload": { "type": "object" }
   },
   "allOf": [

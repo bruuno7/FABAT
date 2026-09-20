@@ -63,6 +63,14 @@ describe("durable v2 communications", () => {
     assert.equal(f.settled[0][3], "42");
   });
 
+  it("delivers a conversational clarification without requiring an invented incident", async () => {
+    const f = fixture();
+    f.message.purpose = "conversation";
+    delete f.message.incident_id;
+    delete f.docs["incident/incident-1"];
+    assert.equal((await deliver(f.store, "m1", f.config, async () => new Response(JSON.stringify({ ok: true, result: { message_id: 43 } })))).status, "succeeded");
+  });
+
   it("does not blindly repeat a send after an ambiguous timeout", async () => {
     const f = fixture();
     let requests = 0;

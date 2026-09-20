@@ -56,6 +56,18 @@ export function stateRouter(config: StateApiConfig = { enabled: false }, injecte
   route("/inbox/settle", "commitSecret", (s, body) => s.settleEvent(parseId(body.id), body.status as "rejected" | "deferred", body.reason as string));
   route("/snapshot", "readSecret", (s, body) => s.snapshot(parseSnapshotRequest(body)));
   route("/operations/context", "readSecret", (s, body) => operationContext(s, parseId(body.id)));
+  route("/coordinator/context", "readSecret", (s, body) => {
+    let extra: unknown = [];
+    if (body.extra_entities_json !== undefined) {
+      if (typeof body.extra_entities_json !== "string") throw new ContractError("invalid_context_references");
+      try { extra = JSON.parse(body.extra_entities_json); } catch { throw new ContractError("invalid_context_references"); }
+    }
+    if (!Array.isArray(extra)) throw new ContractError("invalid_context_references");
+    const extraEntities = extra.length ? parseSnapshotRequest({ entities: extra }) : [];
+    return operationContext(s, parseId(body.id), { coordinator: true, extraEntities });
+  });
+  route("/inbox/batch", "readSecret", async (s) => ({ items: await s.pending("inbox", 8) }));
+  route("/outbox/batch", "deliverySecret", async (s) => ({ items: await s.pending("outbox", 8) }));
   route("/inbox/status", "commitSecret", async (s, body) => {
     const id = parseId(body.id);
     const record = await s.event(id);

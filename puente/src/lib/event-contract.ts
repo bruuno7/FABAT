@@ -6,6 +6,7 @@ export const EVENT_TYPES = [
   "assignment.arrived", "assignment.located", "assignment.completed", "assignment.timed_out",
   "call.started", "call.ended", "call.failed", "delivery.updated",
   "review.requested", "review.completed", "approval.requested", "approval.decided", "deadline.elapsed",
+  "coordination.requested", "lesson.proposed", "lesson.decided", "lesson.revoked",
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];
@@ -29,6 +30,7 @@ export type CanonicalEvent = {
   causation_id?: string;
   source_message_id?: string;
   call_id?: string;
+  not_before?: string;
   payload: JsonObject;
 };
 
@@ -36,10 +38,10 @@ export type PendingMessage = {
   id: string;
   recipient_id: string;
   channel: "telegram" | "phone" | "webcall";
-  incident_id: string;
+  incident_id?: string;
   assignment_id?: string;
   question_id?: string;
-  purpose: "status" | "offer" | "question" | "call";
+  purpose: "status" | "offer" | "question" | "call" | "conversation";
   text: string;
 };
 
@@ -48,6 +50,7 @@ export type StateCommit = {
   expected: Record<string, number>;
   writes: { entity: string; value: JsonObject }[];
   messages: PendingMessage[];
+  events?: CanonicalEvent[];
 };
 
 export class ContractError extends Error {
@@ -58,11 +61,11 @@ export class ContractError extends Error {
 }
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9_.~:-]{0,119}$/;
-const ENTITY = /^(actor|incident|assignment|question|conversation|reservation|decision|approval)\/[A-Za-z0-9][A-Za-z0-9_.~:-]{0,119}$/;
+const ENTITY = /^(actor|incident|assignment|question|conversation|reservation|decision|approval|lesson)\/[A-Za-z0-9][A-Za-z0-9_.~:-]{0,119}$/;
 const EVENT_KEYS = [
   "schema_version", "event_id", "event_type", "occurred_at", "received_at", "channel", "actor_id",
   "conversation_id", "correlation_id", "incident_id", "assignment_id", "question_id", "causation_id",
-  "source_message_id", "call_id", "payload",
+  "source_message_id", "call_id", "not_before", "payload",
 ];
 
 export function object(value: unknown): Record<string, unknown> {
@@ -144,6 +147,11 @@ export function parseEvent(value: unknown): CanonicalEvent {
     throw new ContractError("missing_question_reference");
   }
   if (event.event_type.startsWith("call.") && !event.call_id) throw new ContractError("missing_call_reference");
+  if (input.not_before !== undefined) {
+    event.not_before = date(input.not_before);
+    if (event.channel !== "system" || event.event_type !== "deadline.elapsed" ||
+        Date.parse(event.not_before) > Date.parse(event.received_at) + 86400000) throw new ContractError("invalid_schedule");
+  }
   return event;
 }
 
@@ -172,12 +180,14 @@ export function parseMessage(value: unknown): PendingMessage {
   const result: PendingMessage = {
     id: parseId(input.id), recipient_id: parseId(input.recipient_id),
     channel: oneOf(input.channel, ["telegram", "phone", "webcall"]),
-    incident_id: parseId(input.incident_id),
-    purpose: oneOf(input.purpose, ["status", "offer", "question", "call"]),
+    purpose: oneOf(input.purpose, ["status", "offer", "question", "call", "conversation"]),
     text: input.text,
   };
-  for (const key of ["assignment_id", "question_id"] as const) {
+  for (const key of ["incident_id", "assignment_id", "question_id"] as const) {
     if (input[key] !== undefined) result[key] = parseId(input[key]);
+  }
+  if (result.purpose === "conversation" ? Boolean(result.incident_id || result.assignment_id || result.question_id) : !result.incident_id) {
+    throw new ContractError("invalid_message_context");
   }
   if ((result.purpose === "offer" || result.purpose === "call") && !result.assignment_id && !result.question_id) {
     throw new ContractError("missing_delivery_reference");
@@ -188,7 +198,7 @@ export function parseMessage(value: unknown): PendingMessage {
 
 export function parseCommit(value: unknown): StateCommit {
   const input = object(value);
-  exactKeys(input, ["event_id", "expected", "writes", "messages"]);
+  exactKeys(input, ["event_id", "expected", "writes", "messages", "events"]);
   const expected = object(input.expected);
   if (Object.keys(expected).length > 32) throw new ContractError("too_many_entities");
   const versions: Record<string, number> = {};
@@ -210,7 +220,15 @@ export function parseCommit(value: unknown): StateCommit {
   const messages = input.messages.map(parseMessage);
   if (new Set(writes.map((write) => write.entity)).size !== writes.length ||
       new Set(messages.map((message) => message.id)).size !== messages.length) throw new ContractError("duplicate_write");
-  const commit = { event_id: parseId(input.event_id), expected: versions, writes, messages };
+  const commit: StateCommit = { event_id: parseId(input.event_id), expected: versions, writes, messages };
+  if (input.events !== undefined) {
+    if (!Array.isArray(input.events) || input.events.length > 8) throw new ContractError("invalid_derived_events");
+    commit.events = input.events.map(parseEvent);
+    if (new Set(commit.events.map((event) => event.event_id)).size !== commit.events.length ||
+        commit.events.some((event) => event.event_id === commit.event_id || event.causation_id !== commit.event_id || event.channel !== "system")) {
+      throw new ContractError("invalid_derived_event_reference");
+    }
+  }
   if (Buffer.byteLength(JSON.stringify(commit)) > 262144) throw new ContractError("commit_too_large");
   return commit;
 }

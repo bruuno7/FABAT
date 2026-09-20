@@ -63,6 +63,19 @@
     return channel.status || (channel.ready === true ? "ready" : "unknown");
   }
 
+  const CONFLICTS = {
+    address_already_registered: "Ese contacto ya está registrado en otro miembro del personal. Usa el mismo identificador para actualizarlo o un contacto distinto.",
+    actor_busy: "Ese miembro del personal tiene una asignación activa; libérala o espera a que termine antes de cambiar su ficha.",
+    actor_unavailable: "Ese miembro del personal no está disponible ahora.",
+    incident_closed: "El incidente ya está cerrado.",
+    offer_expired: "La oferta ha caducado; revisa el estado actual.",
+    task_covered: "Esa necesidad ya está cubierta por otra asignación.",
+    coordinator_unavailable: "No hay organizador disponible para autorizar la acción.",
+    approval_expired_or_decided: "La aprobación ya caducó o se decidió.",
+    approval_content_changed: "La propuesta cambió desde que la abriste; revísala de nuevo.",
+    operator_review_required: "Requiere revisión del operador antes de continuar.",
+  };
+
   function createClient({ fetcher = root.fetch.bind(root), refresh, onMessage, uuid = () => root.crypto.randomUUID() }) {
     let pending = false;
     return {
@@ -86,8 +99,11 @@
           const result = await response.json().catch(() => ({}));
           if (response.status === 409) {
             await refresh(true);
-            onMessage("Conflicto de versión: el estado cambió. Se ha solicitado una actualización; revisa los datos y abre de nuevo la acción. No se reenvió el comando.", true);
-            return { ok: false, error: "conflict" };
+            const explained = CONFLICTS[result.error];
+            onMessage(explained
+              ? `${explained} No se reenvió el comando.`
+              : "Conflicto de versión: el estado cambió. Se ha solicitado una actualización; revisa los datos y abre de nuevo la acción. No se reenvió el comando.", true);
+            return { ok: false, error: result.error || "conflict" };
           }
           if (!response.ok || result.ok !== true) {
             const message = response.status === 401 || response.status === 403

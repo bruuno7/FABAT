@@ -230,6 +230,11 @@ test("SSE preserves form selection, draft, focus and reviewed version while refr
   assert.equal(ui.requests[0].body.confirmed, true);
   assert.equal(ui.requests.length, 1);
   assert.equal(ui.$("command-submit").disabled, true);
+  assert.match(ui.$("error").textContent, /^Conflicto de versión/);
+  ui.result(response({ ok: false, error: "address_already_registered", message: "address_already_registered" }, 409));
+  await ui.submit("staff-form", { actor_id: "medico-2", name: "M2", channel: "phone", address: "+34600000001", zone: "gate_a", availability: "available", roles: "medic" });
+  assert.match(ui.$("error").textContent, /contacto ya está registrado.*No se reenvió/);
+  assert.equal(ui.requests.length, 2);
 });
 
 test("command forms keep lifecycle transitions and same-origin credentials, never optimistic completion", async () => {

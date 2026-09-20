@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ResQval · Demo para el jurado</title>
+  <link rel="stylesheet" href="/static/demo-jurado.css">
+  <script defer src="/static/demo-jurado.js"></script>
+</head>
+<body>
+<header><a class="brand" href="/jurado">ResQval <span>/ demo</span></a><nav><a href="/sala">Abrir Sala completa</a><a href="/acceso">Cambiar operador</a></nav></header>
+<main>
+  <p class="eyebrow">Festival de demostración · datos separados</p>
+  <h1>Un aviso. Un equipo.<br>Todo el recorrido visible.</h1>
+  <p class="intro">Presenta un incidente en cinco minutos, desde el aviso del público hasta la atención del equipo.</p>
+  <p id="mode" class="banner" role="status">Comprobando conexión…</p>
+  <p id="feedback" role="status" aria-live="polite"></p>
+  <section id="access" class="panel" hidden>
+    <h2>Entra en la demo</h2>
+    <form id="login"><label>Token de operador<input name="token" type="password" autocomplete="current-password" required></label><button>Entrar</button></form>
+    <p>En el ensayo local sin configuración, usa <code>jurado-local</code>. El modo conectado exige tu token privado.</p>
+  </section>
+  <div id="workspace" hidden>
+    <section class="panel">
+      <div class="heading"><div><p class="eyebrow">01 / Reparte los papeles</p><h2>Personajes del ensayo</h2></div><a href="/sala#personal">Ver personal</a></div>
+      <p>Estas vistas permiten al operador representar al equipo y registrar sus hitos. Comparten permisos de operador; no son cuentas de acceso restringidas.</p>
+      <div class="roles">
+        <button type="button" data-actor="demo-organizador" aria-pressed="true">Organizador<small>Sala y aprobaciones</small></button>
+        <button type="button" data-actor="demo-medico" aria-pressed="false">Médico<small>Atención y llamada</small></button>
+        <button type="button" data-actor="demo-seguridad" aria-pressed="false">Seguridad<small>Intervención en zona</small></button>
+        <button type="button" data-actor="demo-accesos" aria-pressed="false">Accesos<small>Control de entradas</small></button>
+      </div>
+      <div id="actor-state"></div><div id="tasks" class="tasks"></div>
+    </section>
+    <section class="panel">
+      <p class="eyebrow">02 / Prepara el teléfono</p><h2>Conecta al médico</h2>
+      <p>Antes de crear el incidente, asigna un móvil de la lista autorizada al médico. El registro del contacto no inicia una llamada.</p>
+      <form id="phone"><label>Móvil autorizado (E.164)<input name="number" type="password" placeholder="+34…" autocomplete="off" pattern="\+[1-9][0-9]{7,14}" required></label><button>Guardar móvil del médico</button></form>
+      <p id="phone-status"></p>
+    </section>
+    <section class="panel">
+      <p class="eyebrow">03 / Envía el aviso</p><h2>Haz de asistente al festival</h2>
+      <p>En el bot dedicado a la demo, envía este texto desde tu Telegram:</p>
+      <blockquote id="sample">SIMULACRO: una persona inconsciente, no respira, en puerta B.</blockquote>
+      <button type="button" id="copy" class="secondary">Copiar mensaje</button>
+      <details><summary>Alternativa desde la web / ensayo sin Telegram</summary>
+        <p>Registra el mismo aviso directamente en MANDO. La cronología lo identifica como web. En modo conectado puede iniciar una llamada real.</p>
+        <button type="button" id="incident">Registrar incidente de demostración</button>
+      </details>
+    </section>
+    <section class="panel">
+      <div class="heading"><div><p class="eyebrow">04 / Explica lo que ocurre</p><h2>Guion de cinco minutos</h2></div><a href="/sala#comunicaciones">Ver comunicaciones</a></div>
+      <ol class="script">
+        <li><strong>0:00 · Entrada.</strong> Envía el aviso por Telegram y muestra su aparición en la Sala.</li>
+        <li><strong>1:00 · Coordinación.</strong> Enseña el médico reservado y la entrega telefónica. Atiende el móvil y di: «Confirmo puerta B, acepto, llego en tres minutos».</li>
+        <li><strong>2:00 · Respuesta.</strong> Espera el callback: la asignación debe reflejar aceptación y ETA. En simulación, representa estos pasos desde la vista Médico.</li>
+        <li><strong>3:00 · Seguimiento.</strong> Representa Llegada → Localización → Finalización. Cada clic registra un hito manual del ensayo.</li>
+        <li><strong>4:00 · Control humano.</strong> Desde el detalle del incidente, propone una acción grave y muestra su aprobación pendiente. El organizador decide en la Sala.</li>
+      </ol>
+      <p>Para repetir, termina las llamadas y usa <a href="/sala#mantenimiento">Reiniciar incidencias</a> en esta demo. Conserva el personal. No reinicies mientras haya una llamada en curso.</p>
+    </section>
+  </div>
+  <footer>Incidentes ficticios; los mensajes y las llamadas pueden ser reales en modo conectado. No utilizar con una emergencia real.</footer>
+</main>
+</body>
+</html>

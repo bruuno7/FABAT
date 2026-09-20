@@ -35,3 +35,4 @@ motor/server/data/
 # .agents/ guarda credenciales de MCP (Authorization de HappyRobot); FABAT/ es un clon de git dentro del repo
 /.agents/
 /FABAT/
+.vercel

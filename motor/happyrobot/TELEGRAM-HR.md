@@ -61,3 +61,21 @@ Las escrituras son lectura-modificación-escritura (no atómicas). Con cinco per
 ## Variables de workflow
 
 `PUENTE_URL`, `HR_SECRET` (idéntico en los cuatro workflows y en Vercel). Nunca en el repo.
+
+## Espejo para la interfaz (solo lectura)
+
+HappyRobot decide; la Sala operativa sólo pinta. Cada mensaje que el workflow manda al
+puente puede llevar una lista `mirror` con el estado ya decidido:
+
+```json
+{"event": "telegram_send", "chat_id": "…", "text": "…", "mirror": [
+  {"type": "tg_incident", "id": "tg-…", "texto": "…", "tipo": "medica", "zona": "front_pit", "gravedad": "emergencia", "alias_informante": "…", "recursos_requeridos": [{"rol": "medico", "cantidad": 1}]},
+  {"type": "tg_assignment", "incident_id": "tg-…", "rol": "medico", "estado": "accepted", "alias": "Marta", "eta_min": 3, "from_zone": "gate_a", "intento": 1, "motivo": ""}
+]}
+```
+
+`kind` de asignación admitidos: `pending`, `accepted`, `declined`, `timeout`,
+`covered`, `llegado`, `localizado`, `finalizado` (`fa_common.tg_assignment_event`
+traduce `done` → `finalizado`). Nunca incluir `chat_id` ni teléfonos: el espejo no
+los acepta/publica. En modo operativo el puente reenvía el `mirror` a
+`POST /api/operations/happyrobot` de MANDO; en modo legado se ignora.

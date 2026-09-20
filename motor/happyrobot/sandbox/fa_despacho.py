@@ -183,9 +183,14 @@ else:  # new
     set_chat(sender, chat_state('asistente_activo', incident_id=inc['id'], pregunta=pregunta, last_at=now))
     out['incident_json'] = dumps(inc)
 
+# Espejo para la interfaz: el estado que HappyRobot ha decidido (aviso + puestos).
+mirror_events = []
+if inc.get('id'):
+    mirror_events = [tg_incident_event(inc)] + [tg_assignment_event(inc, a) for a in inc.get('assignments', [])[-8:]]
+
 for i, key in enumerate(('reporter', 'extra', 'extra2')):
     if i < len(msgs):
-        out.update({f'has_{key}': 'true', f'{key}_json': dumps(msgs[i])})
+        out.update({f'has_{key}': 'true', f'{key}_json': dumps(attach_mirror(msgs[i], mirror_events))})
 out['incident_key'] = f"fa:inc:{out['incident_id']}" if out.get('incident_json') else 'fa:inc:none'
 out['seats_key'] = 'fa:seats' if out['write_seats'] == 'true' else 'fa:scratch:seats'
 output = out

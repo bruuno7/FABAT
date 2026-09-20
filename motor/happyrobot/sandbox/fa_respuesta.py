@@ -40,6 +40,7 @@ def touch_seats():
     out.update(write_seats='true', seats_json=dumps(seats))
 
 
+mirror_events = []  # espejo para la interfaz: se cuelga en cada mensaje de salida
 fila = next((a for a in inc.get('assignments', []) if a.get('id') == aid), None)
 if not inc.get('id'):
     out['error'] = 'incidente_no_encontrado'
@@ -56,6 +57,7 @@ else:
     out['alias'] = alias
     fila['updated_at'] = now
     inc['last_at'] = now
+    mirror_events = [tg_assignment_event(inc, fila)]
     quien = ROL_SUJETO.get(rol, rol)
     zona = inc.get('zona') or 'tu posición'
     plural = rol in PLURAL
@@ -143,6 +145,9 @@ else:
     else:
         out['error'] = f'kind_desconocido:{kind}'
 
+for _key in ('outbound_json', 'next_json', 'reporter_json'):
+    if out.get(_key):
+        out[_key] = dumps(attach_mirror(json.loads(out[_key]), mirror_events))
 out['incident_json'] = dumps(inc) if inc.get('id') else ''
 out['seats_key'] = 'fa:seats' if out['write_seats'] == 'true' else 'fa:scratch:seats'
 output = out

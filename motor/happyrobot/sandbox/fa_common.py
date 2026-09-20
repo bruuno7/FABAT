@@ -129,16 +129,51 @@ def activos(inc):
     return [a for a in inc.get('assignments', []) if a.get('estado') in ('pending', 'accepted')]
 
 
+# --- Espejo para la interfaz (solo lectura) ---------------------------------
+# La decisión la toma HappyRobot; la Sala sólo pinta esto y sus botones quedan
+# para el override humano. El puente reenvía la lista `mirror` a MANDO.
+ESTADO_ESPEJO = {'pending': 'pending', 'accepted': 'accepted', 'covered': 'covered',
+                 'declined': 'declined', 'done': 'finalizado', 'timeout': 'timeout'}
+
+
+def tg_incident_event(inc):
+    return {'type': 'tg_incident', 'id': s(inc.get('id'), 60), 'texto': s(inc.get('texto'), 400),
+            'tipo': s(inc.get('tipo') or 'otro', 40), 'zona': s(inc.get('zona'), 60) or '',
+            'gravedad': s(inc.get('gravedad') or 'sin_clasificar', 20),
+            'alias_informante': s(inc.get('alias_informante'), 40), 'recursos_requeridos': []}
+
+
+def tg_assignment_event(inc, a):
+    try:
+        intento = min(20, max(1, int(a.get('intento') or 1)))
+    except (TypeError, ValueError):
+        intento = 1
+    return {'type': 'tg_assignment', 'incident_id': s(inc.get('id'), 60), 'rol': s(a.get('rol'), 30),
+            'estado': ESTADO_ESPEJO.get(s(a.get('estado'), 20), 'pending'), 'alias': s(a.get('alias'), 40),
+            'eta_min': a.get('eta_min'), 'from_zone': s(a.get('from_zone'), 60) or '',
+            'intento': intento, 'motivo': s(a.get('motivo'), 200) or ''}
+
+
+def attach_mirror(msg, events):
+    """Cuelga el espejo en un mensaje ya construido; el puente lo reenvía a MANDO."""
+    events = [e for e in events if e]
+    if isinstance(msg, dict) and events:
+        msg = dict(msg)
+        msg['mirror'] = events
+    return msg
+
+
 def offer_message(a, inc):
     rol = SEAT_ES.get(a['rol'], a['rol'])
     zona = inc.get('zona') or 'zona no indicada'
     extra = f"\nQué hacer: {inc['instruccion_staff'][:200]}" if inc.get('instruccion_staff') else ''
     body = (f"SIMULACIÓN · {rol}\nUrgencia: {inc.get('gravedad')} · {zona}\n{inc.get('texto', '')[:280]}{extra}\n\n"
             f"¿Puedes acudir? {DISCLAIMER}")
-    return {'event': 'telegram_send', 'chat_id': a['chat_id'], 'text': body, 'correlation_id': a['id'],
+    return attach_mirror({'event': 'telegram_send', 'chat_id': a['chat_id'], 'text': body, 'correlation_id': a['id'],
             'reply_markup': {'inline_keyboard': [[
                 {'text': 'Acepto', 'callback_data': cb('acc', a['id'])},
-                {'text': 'No puedo', 'callback_data': cb('dec', a['id'])}]]}}
+                {'text': 'No puedo', 'callback_data': cb('dec', a['id'])}]]}},
+            [tg_incident_event(inc), tg_assignment_event(inc, a)])
 
 
 def eta_loc_message(a):

@@ -60,7 +60,8 @@ class VictimIdentityTests(unittest.TestCase):
 
     def test_explicit_same_person_can_merge_across_channels_and_sources(self) -> None:
         self.send("one", "Una persona se ha desmayado")
-        actions = self.send("two", "La misma persona sigue desmayada", source="seguridad 1", channel=Channel.VOICE)
+        first = self.patients()[0]
+        actions = self.send("two", f"La misma persona de {first.id} sigue desmayada", source="seguridad 1", channel=Channel.VOICE)
         self.assertEqual(len(self.patients()), 1)
         self.assertEqual(self.patients()[0].reports, ["one", "two"])
         self.assertTrue([a for a in actions if a.kind == ActionKind.MERGE])
@@ -73,6 +74,16 @@ class VictimIdentityTests(unittest.TestCase):
         self.send("three", f"La misma persona del incidente {first.id} sigue desmayada")
         self.assertEqual(len(self.patients()), 2)
         self.assertEqual(first.reports, ["one", "three"])
+
+    def test_uncertain_reference_in_ingestion_preserves_separate_demand(self) -> None:
+        self.send("one", "Una persona se ha desmayado")
+        first = self.patients()[0]
+        self.send("two", f"Quizás la misma persona {first.id} sigue desmayada")
+        self.send("three", f"No sé si es la misma persona {first.id}, está desmayada")
+        self.assertEqual(len(self.patients()), 3)
+        self.assertEqual(sum(i.needs.get("medical", 0) for i in self.patients()), 3)
+        self.assertEqual(first.reports, ["one"])
+        self.assertEqual(self.agent.counters["merges"], 0)
 
     def test_same_person_without_unique_candidate_keeps_demand(self) -> None:
         self.send("one", "Una persona se ha desmayado")

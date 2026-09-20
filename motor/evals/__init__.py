@@ -45,4 +45,4 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {f['id']}: {f['fallos']}/{f['n']}  {f['ejemplo'].get('detalle', '')[:120]}")
     print(result["paths"]["informe"])
     print(result["paths"]["resultados"])
-    return 0
+    return 1 if fails else 0

@@ -31,7 +31,7 @@ def run(rapido: bool = False) -> list[EvalResult]:
 
     mapa = _read(DOCS["mapa"])
     if mapa is None:
-        out.append(EvalResult(id="P-mapa", suite="plataforma", description="MAPA-WORKFLOWS.md",
+        out.append(EvalResult(id="P-mapa-evals", suite="plataforma", description="MAPA-WORKFLOWS.md",
                               n=1, passed=0, failures=[fail_ex(0, "MAPA-WORKFLOWS.md", "fichero no encontrado")]))
     else:
         found = []

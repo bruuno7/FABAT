@@ -412,8 +412,15 @@ class IntakeSession:
     def _set(self, th: Thread, slot: str, value: Any, conf: float, source: str) -> bool:
         old = th.slots.get(slot)
         if old is not None and old.value == value:
-            old.confidence = max(old.confidence, conf)
-            return False
+            confidence = max(old.confidence, conf)
+            authority = {"understand": 0, "mando_parser": 0, "inherited": 1, "channel": 2,
+                         "user": 3, "answer": 4}
+            if authority.get(source, 0) > authority.get(old.source, 0):
+                th.slots[slot] = SlotValue(value, round(confidence, 2), source, self.turn_no)
+                th.gave_up.pop(slot, None)
+            else:
+                old.confidence = confidence
+            return False  # cambió la procedencia, no el dato: no se emite un aviso redundante
         if old is not None and source in ("understand", "mando_parser", "inherited"):
             return False                      # lo que dijo la persona no lo pisa una fuente más débil
         if old is not None and conf < 0.65 <= old.confidence:
@@ -428,7 +435,12 @@ class IntakeSession:
         point = f"{m.group(1)} {m.group(2).strip()}" if m else None
         old = th.val(slot) or {}
         zone = zones[0] if zones else None
-        if (old.get("zone") and zone and zone != old["zone"] and not pending
+        correction = (len(zones) == 1 and not re.search(r"[?¿]", low)
+                      and not nlu.HEDGE.search(norm) and not nlu.DUNNO.search(norm)
+                      and not re.search(r"\b(?:no|not|nunca)\b", norm)
+                      and re.search(r"\b(?:correccion|me he equivocado|en realidad)\b.*"
+                                    r"\b(?:estamos|esta|ubicacion|lugar)\b", norm))
+        if (old.get("zone") and zone and zone != old["zone"] and not pending and not correction
                 and th.slots[slot].source != "channel"):
             zone = None                      # «ha ido al baño» en otra respuesta no mueve el incidente
         if not zone and not point and pending and not nlu.DUNNO.search(norm) and nlu.bare_yes_no(low) is None \

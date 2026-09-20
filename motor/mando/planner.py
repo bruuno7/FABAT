@@ -592,7 +592,8 @@ class Planner:
         what = label(inc)
         if "identity" in m.missing:
             b.ask("identity", "¿Es otra persona o la misma víctima de un aviso anterior? "
-                  "Indica el identificador del incidente si lo conoces.",
+                  "Si es la misma persona, confírmalo e indica el identificador del incidente. "
+                  "Si no lo sabes, mantenemos ambos avisos separados.",
                   "identidad sin confirmar: se mantiene la demanda médica mientras se aclara")
         if "zone" in m.missing and not m.sitewide:
             b.ask("zone", f"Hemos recibido tu aviso ({what}). ¿Dónde estás? Dime la puerta o la zona más cercana.",

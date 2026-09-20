@@ -70,18 +70,18 @@ def _t(type_, family, severity, needs, deadline, group, patterns, **kw) -> TypeS
 SPECS = [
     # ------------------------------------------------------------------ médicos
     _t("cardiac_arrest", M, 10, {"medical": 1, "ambulance": 1}, 5, "person_down", [
-        r"no respira", r"no esta respirando", r"sin pulso", r"no tiene pulso", r"par[ao]da? cardi", r"paro cardi",
+        r"\bno respira\b", r"\bno esta respirando\b", r"\bsin pulso\b", r"\bno tiene pulso\b", r"par[ao]da? cardi", r"paro cardi",
         r"infarto", r"ataque al corazon", r"\brcp\b", r"\bdesa\b", r"desfibrilador", r"not breathing",
         r"isn t breathing", r"stopped breathing", r"no pulse", r"cardiac arrest", r"heart attack", r"\bcpr\b",
         r"ne respir\w* p", r"arret cardiaque", r"crise cardiaque", r"atmet nicht", r"herzstillstand",
         r"herzinfarkt", r"nao respira", r"sem pulso"], life_threat=True, notify=("medical_lead",), external="ambulance"),
     _t("unconscious_person", M, 9, {"medical": 1}, 8, "person_down", [
-        r"inconscient", r"no reacciona", r"no responde\b", r"no se mueve", r"no despierta", r"no se despierta",
+        r"inconscient", r"\bno reacciona\b", r"\bno responde\b", r"\bno se mueve\b", r"\bno despierta\b", r"\bno se despierta\b",
         r"tirad[oa] en el suelo", r"tendid[oa] en el suelo", r"unconscious", r"unresponsive",
         r"not responding", r"passed out", r"collapsed", r"not moving", r"ne reagit p", r"bewusstlos",
         r"reagiert nicht", r"desacordad", r"nao reage"], life_threat=True),
     _t("breathing_difficulty", M, 8, {"medical": 1}, 8, "person_down", [
-        r"no puede respirar", r"le cuesta respirar", r"se ahoga", r"se esta ahogando", r"atragant", r"\basma",
+        r"\bno puede respirar\b", r"le cuesta respirar", r"se ahoga", r"se esta ahogando", r"atragant", r"\basma",
         r"can t breathe", r"cannot breathe", r"choking", r"asthma", r"n arrive pas a respirer",
         r"bekommt keine luft", r"nao consegue respirar"], life_threat=True),
     _t("fainting", M, 6, {"medical": 1}, 12, "person_down", [
@@ -267,7 +267,7 @@ WEAK_RE = [(s, re.compile("|".join(f"(?:{p})" for p in s.weak))) for s in SPECS 
 
 # ---------------------------------------------------------------------------- señales genéricas (lo no reconocido)
 
-LIFE_RISK = re.compile(r"no respira|inconscient|no reacciona|no responde\b|sangra much|se muere|muriendo|atrapad|"
+LIFE_RISK = re.compile(r"\bno respira\b|inconscient|\bno reacciona\b|\bno responde\b|sangra much|se muere|muriendo|atrapad|"
                        r"aplastad|se ahoga|convuls|muy grave|dolor en el pecho|dying|trapped|bleeding (a lot|heavily|badly)|"
                        r"unconscious|not breathing|chest pain")
 THREAT = re.compile(r"\bbomba\b|explosiv|amenaza|atentado|sospechos|\barmas?\b|armad[oa]|pistola|disparo|\bbomb\b|"

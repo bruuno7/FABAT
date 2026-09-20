@@ -165,7 +165,7 @@ def _one(client, spec: dict[str, Any]) -> EvalResult:
         except Exception:
             body = {}
         if body.get("duplicate") is not True and resps[1].status_code == 200:
-            # duplicate flag es el tratamiento correcto; si no viene, aún vale 2xx si el reloj sigue
+            status_ok = False
             detail = "segundo callback 200 sin duplicate=true"
     step_code, t1 = _step(client)
     clock_ok = step_code == 200 and t1 > t0

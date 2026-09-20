@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from uuid import UUID
 
 from .sandbox import build_nodes, plate
@@ -162,6 +163,82 @@ def coordinator_bindings(nodes, trigger, llm, proposal_field="proposal_json"):
             "event_id": ref(trigger, "event_id"), "status_json": ref(final, "result_json"),
             "status_code": ref(final, "api_status_code"),
         })},
+    }
+
+
+COORDINATOR_LLM_NAME = "Coordinar con el modelo"
+COORDINATOR_LLM_EVENT = "01926f30-36a3-7394-8f73-eeead5d7f948"  # Extract (prompt + input + json_schema)
+LLM_CONTEXT_FIELD = "context_json"   # salida de «Preparar contexto público»
+# Salida del nodo Extract. La plataforma expone el resultado del esquema bajo `response`;
+# si un run real lo publica con otro nombre, se cambia aquí y el grafo no se toca.
+LLM_PROPOSAL_FIELD = "response"
+
+# Orden lineal del coordinador: cada nodo cuelga del anterior, así que se pueden añadir
+# de uno en uno (el código de cada Sandbox no cabe en un solo payload).
+COORDINATOR_CHAIN = (COORDINATOR_NAMES[0], COORDINATOR_NAMES[1], COORDINATOR_LLM_NAME,
+                     COORDINATOR_NAMES[2], COORDINATOR_NAMES[3], COORDINATOR_NAMES[4],
+                     COORDINATOR_NAMES[5], COORDINATOR_NAMES[6], COORDINATOR_NAMES[7])
+
+
+def coordinator_prompt():
+    return json.loads(Path(__file__).with_name("coordinator-prompt.json").read_text(encoding="utf-8"))
+
+
+def coordinator_llm_config(input_ref="{}"):
+    prompt = coordinator_prompt()
+    return {"prompt": prompt["prompt"], "input": input_ref, "json_schema": json.dumps(prompt["schema"])}
+
+
+def coordinator_chain(trigger):
+    """Cadena lineal completa del coordinador, incluido el paso del modelo."""
+    initial = {"event_id": ref(trigger, "event_id"), "state_status": "unconfigured", "status_code": "0",
+               "event_json": "{}", "snapshot_json": "{}", "proposal_json": "{}"}
+    return [
+        {"type": "action", "name": COORDINATOR_CHAIN[0], "event_id": EVENTS["post"],
+         "configuration": post_config("/coordinator/context", "read", status_body(trigger))},
+        {"type": "action", "name": COORDINATOR_CHAIN[1], "event_id": EVENTS["python"],
+         "configuration": python_config("fa_coordinador_contexto", trigger, initial)},
+        {"type": "action", "name": COORDINATOR_CHAIN[2], "event_id": COORDINATOR_LLM_EVENT,
+         "configuration": coordinator_llm_config()},
+        {"type": "action", "name": COORDINATOR_CHAIN[3], "event_id": EVENTS["python"],
+         "configuration": python_config("fa_coordinador_entidades", trigger, initial)},
+        {"type": "action", "name": COORDINATOR_CHAIN[4], "event_id": EVENTS["post"],
+         "configuration": post_config("/coordinator/context", "read", status_body(trigger))},
+        {"type": "action", "name": COORDINATOR_CHAIN[5], "event_id": EVENTS["python"],
+         "configuration": python_config("fa_coordinador", trigger, initial)},
+        {"type": "action", "name": COORDINATOR_CHAIN[6], "event_id": EVENTS["post"],
+         "configuration": post_config("/coordinator/context", "commit", status_body(trigger))},
+        {"type": "action", "name": COORDINATOR_CHAIN[7], "event_id": EVENTS["post"],
+         "configuration": post_config("/inbox/status", "commit", status_body(trigger))},
+        {"type": "action", "name": COORDINATOR_CHAIN[8], "event_id": EVENTS["python"],
+         "configuration": python_config("fa_result", trigger, initial)},
+    ]
+
+
+def coordinator_chain_bindings(nodes, trigger):
+    """Enlaza la cadena con persistent IDs reales. El contexto público llega al modelo como
+    `input`, y la propuesta del modelo entra en el núcleo como `proposal_json`."""
+    pid = lambda name: nodes[name]["persistent_id"]
+    read, prepared = pid(COORDINATOR_CHAIN[0]), pid(COORDINATOR_CHAIN[1])
+    entities, extended = pid(COORDINATOR_CHAIN[3]), pid(COORDINATOR_CHAIN[4])
+    compose, final = pid(COORDINATOR_CHAIN[5]), pid(COORDINATOR_CHAIN[7])
+    proposal = ref(pid(COORDINATOR_CHAIN[2]), LLM_PROPOSAL_FIELD)
+    return {
+        COORDINATOR_CHAIN[1]: {"configuration": python_config("fa_coordinador_contexto", trigger, {
+            "event_json": ref(read, "event_json"), "snapshot_json": ref(read, "snapshot_json"),
+            "state_status": ref(read, "status"), "status_code": ref(read, "api_status_code")})},
+        COORDINATOR_CHAIN[2]: {"configuration": coordinator_llm_config(ref(prepared, LLM_CONTEXT_FIELD))},
+        COORDINATOR_CHAIN[3]: {"configuration": python_config("fa_coordinador_entidades", trigger, {
+            "event_json": ref(read, "event_json"), "proposal_json": proposal, "event_id": ref(trigger, "event_id")})},
+        COORDINATOR_CHAIN[4]: {"configuration": post_config("/coordinator/context", "read", raw_ref(entities, "body_json"))},
+        COORDINATOR_CHAIN[5]: {"configuration": python_config("fa_coordinador", trigger, {
+            "event_id": ref(trigger, "event_id"), "state_status": ref(extended, "status"),
+            "status_code": ref(extended, "api_status_code"), "event_json": ref(extended, "event_json"),
+            "snapshot_json": ref(extended, "snapshot_json"), "proposal_json": proposal})},
+        COORDINATOR_CHAIN[6]: {"configuration": post_config(ref(compose, "path"), "commit", raw_ref(compose, "body_json"))},
+        COORDINATOR_CHAIN[8]: {"configuration": python_config("fa_result", trigger, {
+            "event_id": ref(trigger, "event_id"), "status_json": ref(final, "result_json"),
+            "status_code": ref(final, "api_status_code")})},
     }
 
 

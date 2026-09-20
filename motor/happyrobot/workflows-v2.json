@@ -10,10 +10,38 @@
       "id": "01a0bbc8-0fde-77ab-937d-c26d69dddf8e",
       "version_id": "01a0bbc8-0fec-77d8-8a67-e16efe47cfd7",
       "editor_url": "https://platform.eu.happyrobot.ai/hackspainteam6/workflows/ytrf1jn1zefs/editor/r8iby4ztthjp",
-      "status": "draft",
+      "status": "live",
+      "environment": "development",
       "trigger_id": "01a0bbc8-0ff5-76f5-afc6-a0958b065cf5",
       "response_node_id": "01a0bbd9-bc31-78d9-9c2b-372bdee613f2",
       "api_url_variable_id": "01a0bbcc-5ee5-7ee6-bedc-4cb72f761620"
+    },
+    "arnes": {
+      "name": "fa-pr22-pruebas-operaciones",
+      "id": "01a0bbed-be77-748c-8d48-11fbaf46e2ed",
+      "version_id": "01a0bbed-be82-77af-817d-7102a858d03c",
+      "editor_url": "https://platform.eu.happyrobot.ai/hackspainteam6/workflows/0l0vpukwtmxc/editor/mh7kyk9nf7hy",
+      "status": "draft",
+      "trigger_id": "01a0bbed-be91-7e3e-98c2-8fc674f73a25",
+      "call_node_id": "01a0bbed-be95-75f7-86b4-2368c6888adf"
+    },
+    "coordinador": {
+      "name": "fa-coordinador",
+      "id": "01a0bd70-e54b-70a6-b819-70acd195b816",
+      "version_id": "01a0bd70-e559-75f1-b9f1-b731de87d040",
+      "editor_url": "https://platform.eu.happyrobot.ai/hackspainteam6/workflows/9eloud3ee8be/editor/0ljjyqbpjd8b",
+      "status": "draft",
+      "trigger_id": "01a0bd70-e565-75bf-b385-af985fd0d2c5"
+    },
+    "comunicaciones": {
+      "name": "fa-comunicaciones",
+      "id": "01a0bd70-e90f-7768-afdb-10abbfbfc587",
+      "version_id": "01a0bd70-e91c-76d1-b092-88bc80f23e85",
+      "editor_url": "https://platform.eu.happyrobot.ai/hackspainteam6/workflows/7d2u4atitces/editor/h4j1ey2zshom",
+      "status": "draft",
+      "trigger_id": "01a0bd70-e925-7338-ae1a-dc4610aef27f",
+      "schedule": "*/5 * * * *",
+      "timezone": "Europe/Madrid"
     }
   }
 }

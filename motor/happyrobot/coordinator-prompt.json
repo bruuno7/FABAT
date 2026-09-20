@@ -13,7 +13,7 @@
       "confirmed": {"type": ["boolean", "null"]},
       "reply": {"type": "string", "maxLength": 1000},
       "reason": {"type": "string", "maxLength": 500},
-      "required_roles": {"type": "array", "maxItems": 5, "uniqueItems": true, "items": {"type": "string", "enum": ["medico", "bomberos", "policia", "staff_entradas", "organizador"]}},
+      "required_roles": {"type": "array", "maxItems": 5, "items": {"type": "string", "enum": ["medico", "bomberos", "policia", "staff_entradas", "organizador"]}},
       "offers": {
         "type": "array", "maxItems": 5,
         "items": {"type": "object", "additionalProperties": false, "properties": {

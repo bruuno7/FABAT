@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import re
 from pathlib import Path
 
@@ -110,45 +111,87 @@ async def call_tool(session, tool, arguments):
     return text(result)
 
 
-async def install_communications(session, workflow, schedule=None):
-    """Monta el tick de recuperación sobre un workflow ya creado con trigger Cron.
+async def workflow_snapshot(session, workflow):
+    details = await call_tool(session, "get_workflow_details", {"workflow_id": workflow, "include_nodes": True})
+    if "- Published: true" in details or "- Live: true" in details:
+        raise RuntimeError("fork_published_version_first")
+    version = re.search(r"- ID: ([0-9a-f-]{36})", details.split("## Latest Version", 1)[1])[1]
+    return version, parse_nodes(details)
 
-    No crea el workflow ni el trigger: eso los decide la persona autorizada. Aquí
-    solo se añaden los nodos, se enlazan con IDs persistentes reales y, si se pasa
-    `--schedule`, se configura el Cron con el esquema que declara la plataforma."""
-    from . import workflow_artifacts as artifacts
 
-    async def inventory():
-        details = await call_tool(session, "get_workflow_details", {"workflow_id": workflow, "include_nodes": True})
-        if "- Published: true" in details or "- Live: true" in details:
-            raise RuntimeError("fork_published_version_first")
-        section = details.split("## Latest Version", 1)[1]
-        return re.search(r"- ID: ([0-9a-f-]{36})", section)[1], parse_nodes(details)
+async def add_sequential(session, workflow, nodes):
+    """Añade una cadena lineal de nodos de uno en uno, colgando cada uno del anterior.
 
-    if schedule is not None:
-        artifacts.cron_config(schedule)
-    version, nodes = await inventory()
+    Un lote con el código completo de cada Sandbox supera el límite del endpoint
+    («Payload Too Large»), así que no se pueden enviar juntos. Es idempotente: si el
+    primer nodo ya existe, no vuelve a añadir nada."""
+    version, current = await workflow_snapshot(session, workflow)
+    if nodes[0]["name"] in {node["name"] for node in current}:
+        return version, current
+    parent = next(node["persistent_id"] for node in current if node["parent_id"] is None)
+    for node in nodes:
+        name = node["name"]
+        payload = {key: value for key, value in node.items() if key not in ("parent_node_index", "parent_node_id")}
+        payload["parent_node_id"] = parent
+        await call_tool(session, "update_workflow_nodes", {"version_id": version, "action": "add",
+                                                          "nodes": json.dumps([payload], ensure_ascii=False)})
+        version, current = await workflow_snapshot(session, workflow)
+        parent = next(item["persistent_id"] for item in current if item["name"] == name)
+    return version, current
+
+
+async def bind_nodes(session, version, nodes, bindings):
     by_name = {node["name"]: node for node in nodes}
-    trigger = next(node for node in nodes if node["parent_id"] is None)
-    if artifacts.COMMUNICATION_NAMES[0] not in by_name:
-        await call_tool(session, "update_workflow_nodes", {"version_id": version, "action": "add", "nodes": json.dumps(
-            artifacts.communication_nodes(trigger["persistent_id"]), ensure_ascii=False)})
-        await call_tool(session, "fix_broken_vars", {"version_id": version, "dry_run": True})
-        version, nodes = await inventory()
-        by_name = {node["name"]: node for node in nodes}
-    for name, updates in artifacts.communication_bindings(by_name, trigger["persistent_id"]).items():
+    for name, updates in bindings.items():
         node = by_name[name]
         await call_tool(session, "get_node_details", {"version_id": version, "node_id": node["id"]})
         await call_tool(session, "update_workflow_nodes", {"version_id": version, "action": "update",
-                                                           "node_id": node["id"], "updates": json.dumps(updates)})
-    if schedule is not None:
-        current = json.loads(re.search(r"```json\s*(.*?)\s*```", await call_tool(
-            session, "get_node_details", {"version_id": version, "node_id": trigger["id"]}), re.S)[1])
-        current.update(artifacts.cron_config(schedule))
-        await call_tool(session, "update_workflow_nodes", {"version_id": version, "action": "update",
-                                                          "node_id": trigger["id"], "updates": json.dumps({"configuration": current})})
+                                                          "node_id": node["id"], "updates": json.dumps(updates)})
+    return by_name
+
+
+async def install_coordinador(session, workflow):
+    """Monta la cadena del coordinador, incluido el paso del modelo, sobre un workflow
+    ya creado con trigger de webhook. No crea el workflow ni lo publica."""
+    from . import workflow_artifacts as artifacts
+    version, current = await workflow_snapshot(session, workflow)
+    trigger = next(node for node in current if node["parent_id"] is None)
+    version, current = await add_sequential(session, workflow, artifacts.coordinator_chain(trigger["persistent_id"]))
+    await bind_nodes(session, version, current, artifacts.coordinator_chain_bindings(
+        {node["name"]: node for node in current}, trigger["persistent_id"]))
     await call_tool(session, "fix_broken_vars", {"version_id": version, "dry_run": True})
-    print(json.dumps({"workflow_id": workflow, "version_id": version, "schedule": schedule}, ensure_ascii=False))
+    print(json.dumps({"workflow_id": workflow, "version_id": version,
+                      "nodes": [node["name"] for node in current]}, ensure_ascii=False))
+
+
+async def install_communications(session, workflow, schedule=None):
+    """Monta el tick de recuperación sobre un workflow ya creado con trigger Cron.
+
+    No crea el workflow: eso lo decide la persona autorizada. El Cron se configura al
+    crear el trigger según el esquema de la plataforma; si se pasa `--schedule` aquí,
+    se reescribe esa configuración."""
+    from . import workflow_artifacts as artifacts
+
+    if schedule is not None:
+        artifacts.cron_config(schedule)
+    version, current = await workflow_snapshot(session, workflow)
+    trigger = next(node for node in current if node["parent_id"] is None)
+    version, current = await add_sequential(session, workflow, artifacts.communication_nodes(trigger["persistent_id"]))
+    await bind_nodes(session, version, current, artifacts.communication_bindings(
+        {node["name"]: node for node in current}, trigger["persistent_id"]))
+    if schedule is not None:
+        block = re.search(r"```json\s*(.*?)\s*```", await call_tool(
+            session, "get_node_details", {"version_id": version, "node_id": trigger["id"]}), re.S)
+        if not block:
+            raise RuntimeError("trigger_configuration_unavailable")
+        configuration = json.loads(block[1])
+        configuration.update(artifacts.cron_config(schedule))
+        await call_tool(session, "update_workflow_nodes", {"version_id": version, "action": "update",
+                                                          "node_id": trigger["id"],
+                                                          "updates": json.dumps({"configuration": configuration})})
+    await call_tool(session, "fix_broken_vars", {"version_id": version, "dry_run": True})
+    print(json.dumps({"workflow_id": workflow, "version_id": version, "schedule": schedule,
+                      "nodes": [node["name"] for node in current]}, ensure_ascii=False))
 
 
 async def main(args):
@@ -181,6 +224,9 @@ async def main(args):
                 return
             if args.command == "install-comunicaciones":
                 await install_communications(session, args.workflow, args.schedule)
+                return
+            if args.command == "install-coordinador":
+                await install_coordinador(session, args.workflow)
                 return
             if args.command == "probe-operations":
                 from .probe_workflows import probe_operations
@@ -251,9 +297,23 @@ async def main(args):
                     print(json.dumps({"key": key, "status": "created", "environment": "development"}))
 
 
+def describe_error(error, depth=0):
+    """Aplana un ExceptionGroup anidado hasta la causa real, sin volcar payloads."""
+    if isinstance(error, BaseExceptionGroup) and depth < 8:
+        described = []
+        for item in error.exceptions:
+            described.extend(describe_error(item, depth + 1))
+        return described
+    described = ["%s: %s" % (type(error).__name__, str(error)[:400])]
+    cause = error.__cause__ or error.__context__
+    if cause is not None and cause is not error:
+        described.append("caused by %s: %s" % (type(cause).__name__, str(cause)[:400]))
+    return described
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("info", "describe", "sync-vars", "variables", "install-operations", "install-comunicaciones", "test-operations", "probe-operations"))
+    parser.add_argument("command", choices=("info", "describe", "sync-vars", "variables", "install-operations", "install-coordinador", "install-comunicaciones", "test-operations", "probe-operations"))
     parser.add_argument("--workflow")
     parser.add_argument("--schedule")
     parser.add_argument("--tool")
@@ -262,5 +322,8 @@ if __name__ == "__main__":
     try:
         asyncio.run(main(parser.parse_args()))
     except Exception as exc:
-        print(json.dumps({"ok": False, "error_type": type(exc).__name__}))
+        output = {"ok": False, "error_type": type(exc).__name__}
+        if os.environ.get("FABAT_ADMIN_DEBUG") == "1":
+            output["detail"] = describe_error(exc)
+        print(json.dumps(output))
         raise SystemExit(1) from None

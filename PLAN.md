@@ -25,6 +25,18 @@
 - `admin.py`: nuevo `install-comunicaciones --workflow … --schedule "<cron>"`, que exige estar en el manifiesto, hace fork si la versión está publicada y enlaza con persistent IDs reales. **No ejecutado.**
 - Lo único del grafo del Cron que debe confirmarse contra el nodo desplegado es el campo con el que `POST /outbox/recover` publica sus entregas (`RECOVER_RESULTS_FIELD`), declarado como constante y no inventado.
 - Verificación local: 93 pruebas Python en la batería del plan y 99 pruebas Node en el puente (97 pasan, 2 omitidas). Sin ejecución real: no hay entrega, llamada ni run verificados.
+
+### Provisionado en la plataforma (carpeta PR22, borradores, nada publicado)
+
+- `fa-coordinador` (`01a0bd70-e54b-70a6-b819-70acd195b816`, versión `01a0bd70-e559-75f1-b9f1-b731de87d040`, trigger `01a0bd70-e565-75bf-b385-af985fd0d2c5`): trigger de webhook con parámetro `event_id` y `callable_by_workflows`, más 9 nodos en cadena lineal, incluido el paso del modelo (`Coordinar con el modelo`, nodo Extract `01926f30-…`) con el prompt y el `json_schema` de `coordinator-prompt.json`.
+- `fa-comunicaciones` (`01a0bd70-e90f-7768-afdb-10abbfbfc587`, versión `01a0bd70-e91c-76d1-b092-88bc80f23e85`, trigger `01a0bd70-e925-7338-ae1a-dc4610aef27f`): trigger Cron nativo `*/5 * * * *` con zona `Europe/Madrid` (no depende de `crons` de Vercel) y los 5 nodos del tick.
+- Variables en development para ambos: `STATE_API_URL` y los cinco secretos, subidas desde `puente/.env.test` con `admin.py sync-vars`, sin que ningún valor pase por la conversación ni por logs.
+- `validate_workflow_completeness`: ambos publicables en production, staging y development, con integridad de padres en 0 incidencias.
+- **Bug real encontrado al llamar al modelo:** el proveedor rechaza `uniqueItems` en un `json_schema` de salida estructurada (`'uniqueItems' is not permitted`). Se quitó de `required_roles` en `coordinator-prompt.json`; tras el cambio, `test-all` da 10 correctos y 0 fallos. La unicidad se sigue validando en el Python de operaciones.
+- **Pendiente concreto:** 10 referencias desde nodos Sandbox a salidas de nodo webhook (`status`, `event_json`, `snapshot_json`, `api_status_code`, `result_json`) figuran como no resolubles. El formato es idéntico al del nodo LIVE de operaciones, así que la diferencia es que en operaciones cada nodo se probó individualmente y eso registra sus salidas. Falta probar los nodos POST uno a uno, y eso hace llamadas HTTP reales al Preview: **no se ha hecho a propósito**.
+- Aviso de efecto lateral: `fix_broken_vars` ejecuta `test-all` como paso previo, así que ya invocó los nodos contra el Preview. Su corrección automática sugerida (reapuntar `status` a otro nodo) era errónea; se revisó en dry run y no se aplicó.
+- `admin.py`: `install-coordinador` e `install-comunicaciones` añaden los nodos de uno en uno, porque un lote con el código completo de cada Sandbox devuelve `Payload Too Large`. Requiere invocarse como módulo (`python -m motor.happyrobot.admin`), no como script.
+- Nada publicado: ningún workflow nuevo está en dev o live, no se ha hecho fork de operaciones y no se ha enviado ningún mensaje ni llamada.
 - Todos los cambios de implementación realizados hasta ese corte están commiteados y subidos.
 - La implementación se detuvo por indicación del usuario. Este documento registra el plan y el traspaso; no significa que se haya terminado ni que se deba reanudar sin pedirlo.
 - La decisión confirmada es **continuar el plan original HappyRobot/Redis**, no sustituirlo por la arquitectura MANDO/SQLite del PR #23.
